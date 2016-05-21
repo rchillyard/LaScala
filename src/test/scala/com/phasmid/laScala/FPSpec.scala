@@ -1,6 +1,6 @@
-package edu.neu.coe.scala
+package com.phasmid.laScala
 
-import edu.neu.coe.scala.FP._
+import FP._
 import org.scalatest.{ FlatSpec, Matchers }
 import org.scalatest.concurrent._
 import java.net.URL
