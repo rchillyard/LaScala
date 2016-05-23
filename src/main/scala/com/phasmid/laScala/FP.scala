@@ -86,6 +86,8 @@ object FP {
 
   def map2[T, U](ty1: Try[T], ty2: Try[T])(f: (T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2} yield f(t1, t2)
 
+  def map3[T, U](ty1: Try[T], ty2: Try[T], ty3: Try[T])(f: (T, T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2; t3 <- ty3} yield f(t1, t2, t3)
+
   def liftTry[T, U](f: T => U): Try[T]=>Try[U] = _ map f
 
   def liftOption[T, U](f: T => U): Option[T]=>Option[U] = _ map f
