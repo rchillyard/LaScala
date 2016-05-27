@@ -61,10 +61,10 @@ case class LiftTrial[V, T](f: V => T) extends TrialBase[V, T](Lift(f))
 case class LiftMatch[T](f: PartialFunction[Any, T]) extends TrialBase[Any, T](Lift(f))
 
 /**
-  *
-  * @param f
-  * @tparam V
-  * @tparam T
+  * Class which is a V=>Try[T] function and which is lifted from the parameter f, a V=>T function
+  * @param f the function which converts a V into a T
+  * //@tparam V
+  * //@tparam T
   */
 case class Lift[V, T](f: V => T) extends (V => Try[T]) {
   def apply(v: V): Try[T] = Try(f(v))

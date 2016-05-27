@@ -1,6 +1,7 @@
 package com.phasmid.laScala
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.language.{higherKinds, postfixOps}
 import scala.util._
 
 /**
@@ -48,7 +49,7 @@ object FP {
     case Failure(e) => Future.failed(e)
   }
 
-  def sequence[M[_], N[_], T](in: M[N[T]]): N[M[T]] = ???
+//  def sequence[M[_], N[_], T](in: M[N[T]]): N[M[T]] = ???
 
   // TODO implement. 4 points. 
   def sequence[X](xy: Try[X]): Either[Throwable, X] =
@@ -93,4 +94,17 @@ object FP {
   def liftOption[T, U](f: T => U): Option[T]=>Option[U] = _ map f
 
   def liftFuture[T, U](f: T => U)(implicit executor: ExecutionContext): Future[T]=>Future[U] = _ map f
+
+  implicit val limit = 25
+  def renderLimited[A](as: => Seq[A])(implicit limit: Int): String = {
+    val iter = as.toStream.toIterator
+    val buffer = new StringBuilder("(")
+    while (iter.hasNext && buffer.length<limit) {
+      if (buffer.length > 1) buffer append ", "
+      buffer append s"${iter.next}"
+    }
+    if (iter.hasNext) buffer append "..."
+    buffer append ")"
+    buffer toString
+  }
 }

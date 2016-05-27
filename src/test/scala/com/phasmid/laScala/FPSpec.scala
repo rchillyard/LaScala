@@ -117,8 +117,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
   "lift" should "succeed" in {
     def double(x: Int) = 2*x
-    (Success(1)) map (double _) should matchPattern { case Success(2) => }
-    (Failure(new Exception("bad"))) map (double _) should matchPattern { case Failure(_) => }
+    Success(1) map double _ should matchPattern { case Success(2) => }
+    Failure(new Exception("bad")) map double _ should matchPattern { case Failure(_) => }
   }
 
   "map2" should "succeed" in {
