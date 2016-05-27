@@ -11,5 +11,6 @@ val scalaTestVersion = "2.2.6"
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 )
