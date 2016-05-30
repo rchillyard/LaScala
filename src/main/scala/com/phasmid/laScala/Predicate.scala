@@ -130,6 +130,10 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
   def apply(x: Int) = r.contains(x)
 }
 
+case class InBounds[T : Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
+  def apply(x: T) = (GT(min) :& LT(max))(x)
+}
+
 case object Always extends BasePredicate[Any]("true") {
   def apply(t: Any): Boolean = true
 }

@@ -88,6 +88,14 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "be named ok" in {
     InRange(1 to 10).toString shouldBe "in Range(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"
   }
+  "InBounds" should "work" in {
+    val p = InBounds(1, 10)
+    p(5) shouldBe true
+    p(11) shouldBe false
+  }
+  it should "be named ok" in {
+    InBounds(1, 10).toString shouldBe "in bounds 1..10"
+  }
   "Func" should "work" in {
     def even(x: Int) = x%2==0
     val p = Func(even _)
