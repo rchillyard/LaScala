@@ -1,12 +1,12 @@
 package com.phasmid.laScala.parser
 
+import com.phasmid.laScala.truth.True
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
  * @author scalaprof
  */
 class RuleParserSpec extends FlatSpec with Matchers {
-
   "value" should """parse 1 as Number("1","1")""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.value, "1")
@@ -63,96 +63,48 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.clause, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Condition("x",Predicate(">",Number("1.0","K"))) => }
+    val rule = r.get
+    rule should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1.0","K"))) => }
+  }
+  it should """evaluate x>1.0K as true""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.clause, "x>1.0K")
+    r should matchPattern { case parser.Success(_, _) => }
+    val rule = r.get
+    val variables = Map("x" -> 2000.0)
+    implicit val lookup = variables.apply _
+    val truth = rule.toTruth
+    truth() shouldBe true
   }
   "factor" should """parse x>1.0K as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.factor, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    println(r)
-    r.get should matchPattern { case Condition("x",Predicate(">",Number("1.0","K"))) => }
+    r.get should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1.0","K"))) => }
   }
   it should """parse (x>1.0K) as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.factor, "(x>1.0K)")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Parentheses(Disjunction(Conjunction(Condition("x",Predicate(">",Number("1.0","K"))),List()),List())) => }
+    r.get should matchPattern { case Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1.0","K")))))))) => }
   }
-
-  //  it should "parse 1.0 as 1.0" in {
-//    val parser = new RuleParser()
-//    val r = parser.parseAll(parser.factor, "1.0")
-//    r should matchPattern { case parser.Success(_, _) => }
-//    r.get.value should matchPattern { case Success(1.0) => }
-//  }
-//  "evaluate" should "parse 1=1 as true" in {
-//    new RuleParser().parseRule("1=1") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1.0=1.0 as true" in {
-//    new RuleParser().parseRule("1.0=1.0") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1.0=1.0000001 as true" in {
-//    new RuleParser().parseRule("1.0=1.0000001") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1.0=1.000001 as false" in {
-//    new RuleParser().parseRule("1.0=1.000001") should matchPattern { case Success(false) => }
-//  }
-//  it should "parse 1>0 as true" in {
-//    new RuleParser().parseRule("1>0") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1>0|1<0 as true" in {
-//    new RuleParser().parseRule("1 > 0 | 1 < 0") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1>0 & 1<0 as false" in {
-//    new RuleParser().parseRule("1>0 & 1<0") should matchPattern { case Success(false) => }
-//  }
-//  it should "parse 1>0 & (1<0) as false" in {
-//    new RuleParser().parseRule("1>0 & (1<0)") should matchPattern { case Success(false) => }
-//  }
-//  it should "parse Always as true" in {
-//    new RuleParser().parseRule("Always") should matchPattern { case Success(true) => }
-//  }
-//  it should "parse Never as false" in {
-//    new RuleParser().parseRule("Never") should matchPattern { case Success(false) => }
-//  }
-//  "inRange" should "parse 1 in 0 thru 10 as true" in {
-//    val parser = new RuleParser()
-//    val result = parser.parseAll(parser.inRange,"1 in 0 thru 10")
-//    result should matchPattern {case parser.Success(_,_) => }
-//    result.get.value should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 1 in 2 thru 10 as false" in {
-//    val parser = new RuleParser()
-//    val result = parser.parseAll(parser.inRange,"1 in 2 thru10")
-//    result should matchPattern {case parser.Success(_,_) => }
-//    result.get.value should matchPattern { case Success(false) => }
-//  }
-//  "bounded" should "parse 0 < 1 < 10 as true" in {
-//    val parser = new RuleParser()
-//    val result = parser.parseAll(parser.bounded,"0 < 1 < 10")
-//    result should matchPattern {case parser.Success(_,_) => }
-//    result.get.value should matchPattern { case Success(true) => }
-//  }
-//  it should "parse 2 < 1 < 10 as false" in {
-//    val parser = new RuleParser()
-//    val result = parser.parseAll(parser.bounded,"2 < 1 < 10")
-//    result should matchPattern {case parser.Success(_,_) => }
-//    result.get.value should matchPattern { case Success(false) => }
-//  }
-//  it should "parse 0.0 < 1 < 10.0 as true" in {
-//    val parser = new RuleParser()
-//    val result = parser.parseAll(parser.bounded,"0.0 < 1 < 10.0")
-//    result should matchPattern {case parser.Success(_,_) => }
-//    result.get.value should matchPattern { case Success(true) => }
-//  }
-//  "(" should "fail" in {
-//    val parser = new RuleParse
-//    val r = parser.parseAll(parser.expr, "(")
-//    r should matchPattern { case parser.Failure("factor", _) => }
-//  }
-//  "1+2=2" should "fail" in {
-//    val parser = new RuleParse
-//    val r = parser.parseAll(parser.expr, "1+2=2")
-//    r should matchPattern { case parser.Failure("expr", _) => }
-//  }
+  it should """parse x>1 as appropriate""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.factor, "x>1")
+    r should matchPattern { case parser.Success(_, _) => }
+    r.get should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1","1"))) => }
+  }
+  "term" should """parse x>1 & x<3 as appropriate""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.term, "x>1 & x<3")
+    r should matchPattern { case parser.Success(_, _) => }
+    r.get should matchPattern { case Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1","1"))), Condition(Variable("x"),Predicate("<",Number("3","1"))))) => }
+  }
+  "rule" should """parse x>1 & (x<3 | x=99) as appropriate""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.rule, "x>1 & (x<3 | x=99)")
+    r should matchPattern { case parser.Success(_, _) => }
+    val expected = Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1","1"))), Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate("<",Number("3","1"))))), Conjunction(List(Condition(Variable("x"),Predicate("=",Number("99","1"))))))))))))
+    r.get should matchPattern { case `expected` => }
+  }
 }
