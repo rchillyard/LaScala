@@ -87,24 +87,28 @@ object FP {
 
   def map2[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2} yield f(t1, t2)
 
-//  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T=>Boolean = {x: T =>true}, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-//    (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith{case z: java.util.NoSuchElementException => default}
+  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T=>Boolean = {x: T =>true}, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+    (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith{case z: java.util.NoSuchElementException => default}
 
-  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T=>Boolean = {x: T => true}, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    {
-      ty1 match {
-        case Success(t1) => if (g(t1)) {
-          ty2 match {
-            case Success(t2) => Try(f(t1,t2))
-            case Failure(x2) => Failure(x2)
-          }
-        }
-          else default
-        case Failure(x1) => Failure(x1)
-      }
-    }
+  // Alternative version of map2lazy
+//  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T=>Boolean = {x: T => true}, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+//    {
+//      ty1 match {
+//        case Success(t1) => if (g(t1)) {
+//          ty2 match {
+//            case Success(t2) => Try(f(t1,t2))
+//            case Failure(x2) => Failure(x2)
+//          }
+//        }
+//          else default
+//        case Failure(x1) => Failure(x1)
+//      }
+//    }
 
   def map3[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2; t3 <- ty3} yield f(t1, t2, t3)
+
+  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T=>Boolean = {x: T =>true}, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+    (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith{case z: java.util.NoSuchElementException => default}
 
   def lift[X, Y](f: X => Y)(xt: Try[X]): Try[Y] = xt map f
 

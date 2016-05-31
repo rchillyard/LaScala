@@ -139,6 +139,26 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     map2lazy(one,Failure(new Exception("bad")))(sum _) should matchPattern { case Failure(_) => }
   }
 
+  "map3" should "succeed" in {
+    val one = Success(1)
+    val two = Success(2)
+    val three = Success(3)
+    def sum(x: Int, y: Int,z: Int) = x+y+z
+    map3(one,two,three)(sum _) should matchPattern { case Success(6) => }
+    map3(one,two,Failure(new Exception("bad")))(sum _) should matchPattern { case Failure(_) => }
+  }
+
+  // TODO need to do more thorough testing here
+  "map3lazy" should "succeed" in {
+    val one = Success(1)
+    val two = Success(2)
+    val three = Success(3)
+    def sum(x: Int, y: Int,z: Int) = x+y+z
+    implicit val continue: Int=>Boolean = (x=>true)
+    map3lazy(one,two,three)(sum _) should matchPattern { case Success(6) => }
+    map3lazy(one,two,Failure(new Exception("bad")))(sum _) should matchPattern { case Failure(_) => }
+  }
+
   "asFuture" should "succeed" in {
     whenReady(asFuture(Success(1))) { x => x should matchPattern { case 1 => }}
     //    whenReady(toFuture(Failure[Int](new Exception("bad")))) { x => x shouldBe new Exception("bad")}
