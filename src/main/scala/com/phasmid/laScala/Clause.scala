@@ -83,7 +83,7 @@ sealed trait Clause[T] extends (()=>Try[Boolean]) { self =>
   */
 class And[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new And[U](c1 transform (f,g), c2 transform (f,g))
-  def apply(): Try[Boolean] = map2[Boolean,Boolean](c1(),c2()){_&&_}
+  def apply(): Try[Boolean] = map2(c1(),c2())(_&&_)
 }
 
 /**
@@ -96,7 +96,7 @@ class And[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   */
 class Or[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new Or[U](c1 transform (f,g), c2 transform (f,g))
-  def apply(): Try[Boolean] = map2[Boolean,Boolean](c1(),c2()){_||_}
+  def apply(): Try[Boolean] = map2(c1(),c2())(_||_)
 }
 
 /**
@@ -109,7 +109,7 @@ class Or[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   */
 class BoundPredicate[T](t: => T, p: => Predicate[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new BoundPredicate[U](f(t), p transform g)
-  def apply(): Try[Boolean] = Try(p(t))
+  def apply(): Try[Boolean] = p(t)
 }
 
 /**

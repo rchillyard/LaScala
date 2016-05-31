@@ -3,7 +3,7 @@ package com.phasmid.laScala.parser
 import com.phasmid.laScala.clause.Clause
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 /**
  * @author scalaprof
@@ -67,17 +67,15 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.condition, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    val rule = r.get
-    rule should matchPattern { case Condition(Variable("x"),PredicateExpr(">",Number("1.0","K"))) => }
+    r.get should matchPattern { case Condition(Variable("x"),PredicateExpr(">",Number("1.0","K"))) => }
   }
   it should """evaluate x>1.0K as true""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.condition, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    val rule = r.get
     val variables = Map("x" -> 2000.0)
     implicit val lookup = variables.apply _
-    val clause = rule.asClause
+    val clause = r.get.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
     truth() should matchPattern {case Success(true) => }
   }
@@ -109,10 +107,9 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.term, "x>1 & x<3")
     r should matchPattern { case parser.Success(_, _) => }
-    val rule = r.get
     val variables = Map("x" -> 2.0)
     implicit val lookup = variables.apply _
-    val clause = rule.asClause
+    val clause = r.get.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
     truth() should matchPattern {case Success(true) => }
   }
@@ -120,12 +117,22 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.term, "x>1 & x<3")
     r should matchPattern { case parser.Success(_, _) => }
-    val rule = r.get
     val variables = Map("x" -> 4.0)
+    implicit val lookup = variables.apply _
+    val clause = r.get.asClause
+    val truth: Clause[Double] = clause.transform(lookup,_.toString)
+    truth() should matchPattern {case Success(false) => }
+  }
+  it should """fail to evaluate x>1 & x<3 without x""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.term, "x>1 & x<3")
+    r should matchPattern { case parser.Success(_, _) => }
+    val rule = r.get
+    val variables: Map[String, Double] = Map()
     implicit val lookup = variables.apply _
     val clause = rule.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
-    truth() should matchPattern {case Success(false) => }
+    truth() should matchPattern {case Failure(_) => }
   }
   "rule" should """parse x>1 & (x<3 | x=99) as appropriate""" in {
     val parser = new RuleParser()

@@ -1,16 +1,18 @@
 package com.phasmid.laScala
 
 import com.phasmid.laScala.FP._
-import com.phasmid.laScala.parser.{PredicateExpr, Variable, Number}
+import com.phasmid.laScala.parser.{Number, PredicateExpr, Variable}
+
+import scala.util.{Success, Try}
 
 /**
-  * This trait extends the function class T=>Boolean.
+  * This trait extends the function class T=>Try[Boolean].
   * Predicates are intended to combine and form rules.
   * At present, a Predicate is a Functor but not a Monad.
   *
   * Created by robinhillyard on 5/24/16.
   */
-trait Predicate[T] extends (T => Boolean) {
+trait Predicate[T] extends (T => Try[Boolean]) {
   self =>
 
   /**
@@ -21,11 +23,11 @@ trait Predicate[T] extends (T => Boolean) {
     *          //@tparam S
     * @return a Predicate[S]
     */
-  def transform[S](f: S => T): Predicate[S] = new BasePredicate[S](s"$self transformed by $f") {
-    def apply(s: S): Boolean = self.apply(f(s))
+  def transform[S](f: S => T) = new BasePredicate[S](s"$self transformed by $f") {
+    def apply(s: S): Try[Boolean] = self.apply(f(s))
   }
 
-  def asFunction: T => Boolean = self
+  def asFunction: T => Try[Boolean] = self
 
   /**
     * Conjunctive combination of self with another Predicate such that
@@ -38,7 +40,7 @@ trait Predicate[T] extends (T => Boolean) {
     * @param p the other Predicate
     * @return a Predicate which is the conjunctive (and) combination of p with self
     */
-  def &:(p: T => Boolean): Predicate[T] = And(p, self)
+  def &:(p: T => Try[Boolean]) = And(p, self)
 
   /**
     * Disjunctive combination of self with another Predicate such that
@@ -51,7 +53,7 @@ trait Predicate[T] extends (T => Boolean) {
     * @param p the other Predicate
     * @return a Predicate which is the disjunctive (or) combination of p with self
     */
-  def |:(p: T => Boolean): Predicate[T] = Or(p, self)
+  def |:(p: T => Try[Boolean]) = Or(p, self)
 
   /**
     * Conjunctive combination of self with another Predicate such that
@@ -62,7 +64,7 @@ trait Predicate[T] extends (T => Boolean) {
     * @param p the other Predicate (p will not be evaluated if self evaluates as false)
     * @return a Predicate which is the conjunctive (and) combination of self with p
     */
-  def :&(p: T => Boolean): Predicate[T] = And(self, p)
+  def :&(p: T => Try[Boolean]) = And(self, p)
 
   /**
     * Disjunctive combination of self with another Predicate such that
@@ -73,7 +75,55 @@ trait Predicate[T] extends (T => Boolean) {
     * @param p the other Predicate (p will not be evaluated if self evaluates as true)
     * @return a Predicate which is the disjunctive (or) combination of self with p
     */
-  def :|(p: T => Boolean): Predicate[T] = Or(self, p)
+  def :|(p: T => Try[Boolean]) = Or(self, p)
+
+  /**
+    * Conjunctive combination of self with another Predicate such that
+    * the inputs to both predicates are the same single parameter.
+    *
+    * Associates to the right.
+    *
+    * Self will not be evaluated if f evaluates as false
+    *
+    * @param f the other function T=>Boolean (f will not be evaluated if self evaluates as false)
+    * @return a Predicate which is the conjunctive (and) combination of f with self
+    */
+  def &^:(f: T => Boolean) = And(Lift(f), self)
+
+  /**
+    * Disjunctive combination of self with another Predicate such that
+    * the inputs to both predicates are the same single parameter.
+    *
+    * Associates to the right.
+    *
+    * Self will not be evaluated if f evaluates as true
+    *
+    * @param f a T=>Boolean function
+    * @return a Predicate which is the disjunctive (or) combination of p with self
+    */
+  def |^:(f: T => Boolean) = Or(Lift(f), self)
+
+  /**
+    * Conjunctive combination of self with another Predicate such that
+    * the inputs to both predicates are the same single parameter.
+    *
+    * Associates to the left.
+    *
+    * @param f the other Predicate (p will not be evaluated if self evaluates as false)
+    * @return a Predicate which is the conjunctive (and) combination of self with p
+    */
+  def :^&(f: T => Boolean) = And(self, Lift(f))
+
+  /**
+    * Disjunctive combination of self with another Predicate such that
+    * the inputs to both predicates are the same single parameter.
+    *
+    * Associates to the left.
+    *
+    * @param f the other function T=>Boolean (f will not be evaluated if self evaluates as true)
+    * @return a Predicate which is the disjunctive (or) combination of self with f
+    */
+  def :^|(f: T => Boolean) = Or(self, Lift(f))
 }
 
 abstract class BasePredicate[T](name: String) extends Predicate[T] {
@@ -82,22 +132,22 @@ abstract class BasePredicate[T](name: String) extends Predicate[T] {
 
 /**
   * "And" sub-class of BasePredicate yielding the conjunction of p1 and p2.
-  * @param p1 a function T=>Boolean which will typically be a Predicate; this function will always be evaluated
-  * @param p2 a function T=>Boolean which will typically be a Predicate; this function may not be evaluated
+  * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
+  * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
   * //@tparam T
   */
-case class And[T](p1: T => Boolean, p2: T => Boolean) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Boolean = p1(t) && p2(t)
+case class And[T](p1: T => Try[Boolean], p2: T => Try[Boolean]) extends BasePredicate[T](s"($p1)&($p2)") {
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t),p2(t))(_&&_)({x => x}, Success(false))
 }
 
 /**
   * "Or" sub-class of BasePredicate yielding the disjunction of p1 and p2.
-  * @param p1 a function T=>Boolean which will typically be a Predicate; this function will always be evaluated
-  * @param p2 a function T=>Boolean which will typically be a Predicate; this function may not be evaluated
+  * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
+  * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
   * //@tparam T
   */
-case class Or[T](p1: T => Boolean, p2: T => Boolean) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Boolean = p1(t) || p2(t)
+case class Or[T](p1: T => Try[Boolean], p2: T => Try[Boolean]) extends BasePredicate[T](s"($p1)&($p2)") {
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t),p2(t))(_||_)({x => !x}, Success(true))
 }
 
 /**
@@ -106,7 +156,7 @@ case class Or[T](p1: T => Boolean, p2: T => Boolean) extends BasePredicate[T](s"
   * //@tparam T
   */
 case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
-  def apply(x: T) = implicitly[Ordering[T]].gt(x, y)
+  def apply(x: T) = Try(implicitly[Ordering[T]].gt(x, y))
 }
 
 /**
@@ -115,7 +165,7 @@ case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
   * //@tparam T
   */
 case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
-  def apply(x: T) = implicitly[Ordering[T]].lt(x, y)
+  def apply(x: T) = Try(implicitly[Ordering[T]].lt(x, y))
 }
 
 /**
@@ -124,7 +174,7 @@ case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
   * //@tparam T
   */
 case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
-  def apply(x: T) = implicitly[Ordering[T]].gteq(x, y)
+  def apply(x: T) = Try(implicitly[Ordering[T]].gteq(x, y))
 }
 
 /**
@@ -133,7 +183,7 @@ case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
   * //@tparam T
   */
 case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
-  def apply(x: T) = implicitly[Ordering[T]].lteq(x, y)
+  def apply(x: T) = Try(implicitly[Ordering[T]].lteq(x, y))
 }
 
 /**
@@ -142,7 +192,7 @@ case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
   * //@tparam T
   */
 case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
-  def apply(x: T) = implicitly[Ordering[T]].equiv(x, y)
+  def apply(x: T) = Try(implicitly[Ordering[T]].equiv(x, y))
 }
 
 /**
@@ -151,7 +201,7 @@ case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
   * //@tparam T
   */
 case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
-  def apply(x: T) = !implicitly[Ordering[T]].equiv(x, y)
+  def apply(x: T) = Try(!implicitly[Ordering[T]].equiv(x, y))
 }
 
 /**
@@ -160,7 +210,7 @@ case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
   * //@tparam T
   */
 case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
-  def apply(x: T) = p(x)
+  def apply(x: T) = Try(p(x))
 }
 
 /**
@@ -179,7 +229,7 @@ case class Pred[S, T](p: Predicate[T])(f: S => T) extends BasePredicate[S](s"$p 
   * //@tparam A
   */
 case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}...") {
-  def apply(x: A) = as.contains(x)
+  def apply(x: A) = Try(as.contains(x))
 }
 
 /**
@@ -188,7 +238,7 @@ case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}.
   * //@tparam T
   */
 case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s"matches $f") {
-  def apply(x: T) = f.isDefinedAt(x) && f(x)
+  def apply(x: T) = Try(f.isDefinedAt(x) && f(x))
 }
 
 /**
@@ -196,7 +246,7 @@ case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s
   * @param r a Range
   */
 case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
-  def apply(x: Int) = r.contains(x)
+  def apply(x: Int) = Try(r.contains(x))
 }
 
 /**
@@ -214,7 +264,7 @@ case class InBounds[T : Ordering](min: T, max: T) extends BasePredicate[T](s"in 
   * //@tparam T
   */
 case object Always extends BasePredicate[Any]("true") {
-  def apply(t: Any): Boolean = true
+  def apply(t: Any): Try[Boolean] = Success(true)
 }
 
 /**
@@ -222,7 +272,7 @@ case object Always extends BasePredicate[Any]("true") {
   * //@tparam T
   */
 case object Never extends BasePredicate[Any]("false") {
-  def apply(t: Any): Boolean = false
+  def apply(t: Any): Try[Boolean] = Success(false)
 }
 
 class PredicateException(s: String) extends Exception(s"rule problem: $s")
