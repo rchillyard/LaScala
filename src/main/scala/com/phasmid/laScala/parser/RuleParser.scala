@@ -1,8 +1,8 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala._
 import com.phasmid.laScala.truth.{BoundPredicate, True, Truth}
 
+import scala.language.implicitConversions
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -23,7 +23,7 @@ class RuleParser extends JavaTokenParsers {
 
   def clause: Parser[Rule] = identifier ~ predicate ^^ { case s ~ p => Condition(Variable(s),p)}
 
-  def predicate: Parser[Predicate] = booleanOp ~ value ^^ { case o ~ v => Predicate(o,v) }
+  def predicate: Parser[PredicateExpr] = booleanOp ~ value ^^ { case o ~ v => PredicateExpr(o,v) }
 
   // TODO why can't we pass Option[String] into Number and simply match on n ~ o?
   def value: Parser[Value] = (number ~ opt(suffix) | lookup | failure("problem with value")) ^^ { case s: String => Variable(s); case n ~ Some(x) => Number(n.toString,x.toString); case n ~ None => Number(n.toString,"1")}
@@ -35,31 +35,30 @@ class RuleParser extends JavaTokenParsers {
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
 }
 
-trait Rule {
+sealed trait Rule {
   def toTruth(implicit m: String=>Double): Truth
 }
 
-trait Value
-
 case class Conjunction(fs: List[Rule]) extends Rule {
-  def toTruth(implicit m: String=>Double): Truth = fs.foldLeft[Truth](True)((a, b) => a :& (b.toTruth))
+  def toTruth(implicit m: String=>Double): Truth = fs.foldLeft[Truth](True)((a, b) => a :& b.toTruth)
 }
 
 case class Disjunction(ts: List[Rule]) extends Rule {
-  def toTruth(implicit m: String=>Double): Truth = ts.foldLeft[Truth](True)((a, b) => a :| (b.toTruth))
+  def toTruth(implicit m: String=>Double): Truth = ts.foldLeft[Truth](True)((a, b) => a :| b.toTruth)
 }
 
 case class Parentheses(rule: Rule) extends Rule {
   def toTruth(implicit m: String=>Double): Truth = rule.toTruth
 }
 
-case class Condition(subject: Variable, predicate: Predicate) extends Rule {
+case class Condition(subject: Variable, predicate: PredicateExpr) extends Rule {
   import Variable._
-  import Predicate._
-  def toTruth(implicit m: String=>Double): Truth = BoundPredicate[Double](subject,predicate)
+  def toTruth(implicit m: String=>Double): Truth = new BoundPredicate[Double](subject,predicate)
 }
 
-case class Predicate(operator: String, operands: Value)
+sealed trait Value
+
+case class PredicateExpr(operator: String, operands: Value)
 
 case class Number(s: String, m: String) extends Value
 
@@ -67,44 +66,16 @@ case class Variable(s: String) extends Value
 
 class RuleException(s: String) extends Exception(s"rule problem: $s")
 
-object Rule {
-}
-
-object Predicate {
-  implicit def convertToTPredicate(x: Predicate)(implicit m: String=>Double): com.phasmid.laScala.Predicate[Double] = {
-    val p: Double = x.operands match {
-      case v: Variable =>
-        import Variable._
-        val result: Double = v
-        result
-      case n: Number =>
-        import Number._
-        val result: Double = n
-        result
-    }
-    val z: com.phasmid.laScala.Predicate[Double] = x.operator match {
-      case ">" => GT(p)
-      case ">=" => GE(p)
-      case "<" => LT(p)
-      case "<=" => LE(p)
-      case "=" => EQ(p)
-      case "!=" => NE(p)
-      case _ => throw new RuleException(s"NYI: $x")
-    }
-    z
-  }
-//  implicit def convertToTPredicate[Int](x: Predicate): com.phasmid.laScala.Predicate[Int] = ???
-}
 object Variable {
   implicit def convertToValue(x: Variable)(implicit m: String=>Double): Double = m(x.s)
-//  implicit def convertToValue[Int](x: Variable)(implicit m: String=>Int): Int = m(x.s)
+//  implicit def convertToValue(x: Variable)(implicit m: String=>Int): Int = m(x.s)
 }
 object Number {
-  implicit def convertToInteger(x: Number): Int = x match {
-    case Number(i,f) => i.toInt * getIntFactor(f)
-  }
   implicit def convertToDouble(x: Number): Double = x match {
     case Number(i,f) => i.toDouble * getDoubleFactor(f)
+  }
+  implicit def convertToInteger(x: Number): Int = x match {
+    case Number(i,f) => i.toInt * getIntFactor(f)
   }
   private def getIntFactor(f: String): Int = f match {
     case "B" => 1000 * getIntFactor("M")

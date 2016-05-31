@@ -4,70 +4,96 @@ package truth
 
 trait Truth extends (()=>Boolean) { self =>
   /**
-    * Disjunctive combination of self with another Predicate such that
-    * the inputs to both predicates are the same single parameter.
+    * Conjunctive combination of self with another Truth.
     *
     * Associates to the right.
     *
-    * Self will not be evaluates if p evaluates as false
+    * Self will not be evaluates if t evaluates as false
     *
-    * @param t the other Predicate
-    * @return a Predicate which is the disjunctive (and) combination of p with self
+    * @param t the other Truth
+    * @return a Truth which is the conjunctive (and) combination of t with self
     */
-  def &:(t: Truth): Truth = And(t, self)
+  def &:(t: => Truth): Truth = new And(t, self)
 
   /**
-    * Conjunctive combination of self with another Predicate such that
-    * the inputs to both predicates are the same single parameter.
+    * Disjunctive combination of self with another Truth.
     *
     * Associates to the right.
     *
-    * Self will not be evaluates if p evaluates as true
+    * Self will not be evaluates if t evaluates as true
     *
-    * @param t the other Predicate
-    * @return a Predicate which is the conjunctive (or) combination of p with self
+    * @param t the other Truth
+    * @return a Truth which is the disjunctive (or) combination of t with self
     */
-  def |:(t: Truth): Truth = Or(t, self)
+  def |:(t: => Truth): Truth = new Or(t, self)
 
   /**
-    * Disjunctive combination of self with another Predicate such that
-    * the inputs to both predicates are the same single parameter.
+    * Conjunctive combination of self with another Truth.
     *
     * Associates to the left.
     *
-    * @param t the other Predicate (p will not be evaluated if self evaluates as false)
-    * @return a Predicate which is the disjunctive (and) combination of self with p
+    * @param t the other Truth (t) will not be evaluated if self evaluates as false
+    * @return a Truth which is the conjunctive (and) combination of self with t
     */
-  def :&(t: Truth): Truth = And(self, t)
+  def :&(t: => Truth): Truth = new And(self, t)
 
   /**
-    * Conjunctive combination of self with another Predicate such that
-    * the inputs to both predicates are the same single parameter.
+    * Disjunctive combination of self with another Truth.
     *
     * Associates to the left.
     *
-    * @param t the other Predicate (p will not be evaluated if self evaluates as true)
-    * @return a Predicate which is the conjunctive (or) combination of self with p
+    * @param t the other Truth (t) will not be evaluated if self evaluates as true
+    * @return a Truth which is the disjunctive (or) combination of self with t
     */
-  def :|(t: Truth): Truth = Or(self, t)
+  def :|(t: => Truth): Truth = new Or(self, t)
 
 }
-case class And(p1: Truth, p2: Truth) extends Truth {
-  def apply(): Boolean = p1() && p2()
+
+/**
+  * "And" sub-class of Truth giving the conjunction of t1 and t2.
+  * Not a case class so that we can have a call-by-name parameter
+  *
+  * @param t1 the truth value which is always evaluated
+  * @param t2 the truth value which may not be evaluated
+  */
+class And(t1: Truth, t2: => Truth) extends Truth {
+  def apply(): Boolean = t1() && t2()
 }
 
-case class Or(p1: Truth, p2: Truth) extends Truth {
-  def apply(): Boolean = p1() || p2()
+/**
+  * "Or" sub-class of Truth giving the disjunction of t1 and t2.
+  * Not a case class so that we can have a call-by-name parameter
+  *
+  * @param t1 the truth value which is always evaluated
+  * @param t2 the truth value which may not be evaluated
+  */
+class Or(t1: Truth, t2: => Truth) extends Truth {
+  def apply(): Boolean = t1() || t2()
 }
 
-case class BoundPredicate[T](x: T, predicate: Predicate[T]) extends Truth {
-  def apply(): Boolean = predicate(x)
+/**
+  * Bound predicate sub-class of Truth giving the result of applying a parameter to a predicate.
+  * Not a case class so that we can have a call-by-name parameter
+  *
+  * @param t the parameter
+  * @param p the Predicate
+  */
+class BoundPredicate[T](t: => T, p: => Predicate[T]) extends Truth {
+  def apply(): Boolean = p(t)
 }
 
+/**
+  * "True" sub-class of Truth which evaluates to true
+  *
+  */
 case object True extends Truth {
   def apply(): Boolean = true
 }
 
+/**
+  * "False" sub-class of Truth which evaluates to false
+  *
+  */
 case object False extends Truth {
   def apply(): Boolean = false
 }

@@ -1,6 +1,5 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.truth.True
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -57,14 +56,14 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.predicate, ">1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Predicate(">",Number("1.0","K")) => }
+    r.get should matchPattern { case PredicateExpr(">",Number("1.0","K")) => }
   }
   "clause" should """parse x>1.0K as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.clause, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
     val rule = r.get
-    rule should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1.0","K"))) => }
+    rule should matchPattern { case Condition(Variable("x"),PredicateExpr(">",Number("1.0","K"))) => }
   }
   it should """evaluate x>1.0K as true""" in {
     val parser = new RuleParser()
@@ -80,31 +79,51 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.factor, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1.0","K"))) => }
+    r.get should matchPattern { case Condition(Variable("x"),PredicateExpr(">",Number("1.0","K"))) => }
   }
   it should """parse (x>1.0K) as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.factor, "(x>1.0K)")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1.0","K")))))))) => }
+    r.get should matchPattern { case Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),PredicateExpr(">",Number("1.0","K")))))))) => }
   }
   it should """parse x>1 as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.factor, "x>1")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Condition(Variable("x"),Predicate(">",Number("1","1"))) => }
+    r.get should matchPattern { case Condition(Variable("x"),PredicateExpr(">",Number("1","1"))) => }
   }
   "term" should """parse x>1 & x<3 as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.term, "x>1 & x<3")
     r should matchPattern { case parser.Success(_, _) => }
-    r.get should matchPattern { case Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1","1"))), Condition(Variable("x"),Predicate("<",Number("3","1"))))) => }
+    r.get should matchPattern { case Conjunction(List(Condition(Variable("x"),PredicateExpr(">",Number("1","1"))), Condition(Variable("x"),PredicateExpr("<",Number("3","1"))))) => }
+  }
+  it should """evaluate x>1 & x<3 as true""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.term, "x>1 & x<3")
+    r should matchPattern { case parser.Success(_, _) => }
+    val rule = r.get
+    val variables = Map("x" -> 2.0)
+    implicit val lookup = variables.apply _
+    val truth = rule.toTruth
+    truth() shouldBe true
+  }
+  it should """evaluate x>1 & x<3 as false""" in {
+    val parser = new RuleParser()
+    val r = parser.parseAll(parser.term, "x>1 & x<3")
+    r should matchPattern { case parser.Success(_, _) => }
+    val rule = r.get
+    val variables = Map("x" -> 4.0)
+    implicit val lookup = variables.apply _
+    val truth = rule.toTruth
+    truth() shouldBe false
   }
   "rule" should """parse x>1 & (x<3 | x=99) as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.rule, "x>1 & (x<3 | x=99)")
     r should matchPattern { case parser.Success(_, _) => }
-    val expected = Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate(">",Number("1","1"))), Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),Predicate("<",Number("3","1"))))), Conjunction(List(Condition(Variable("x"),Predicate("=",Number("99","1"))))))))))))
+    val expected = Disjunction(List(Conjunction(List(Condition(Variable("x"),PredicateExpr(">",Number("1","1"))), Parentheses(Disjunction(List(Conjunction(List(Condition(Variable("x"),PredicateExpr("<",Number("3","1"))))), Conjunction(List(Condition(Variable("x"),PredicateExpr("=",Number("99","1"))))))))))))
     r.get should matchPattern { case `expected` => }
   }
 }
