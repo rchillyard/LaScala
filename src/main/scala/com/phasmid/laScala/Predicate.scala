@@ -12,15 +12,16 @@ import com.phasmid.laScala.parser.{PredicateExpr, Variable, Number}
   */
 trait Predicate[T] extends (T => Boolean) {
   self =>
+
   /**
-    * The map function for Predicate.
-    * Note that the parameter f is an S=>T, not as you might expect, a T=>S
+    * The transform function for Predicate. Similar to map but the
+    * parameter f is an S=>T, that's to say the inverse of a T=>S
     *
-    * @param f the map function, an S=>T
+    * @param f the transform function, an S=>T
     *          //@tparam S
     * @return a Predicate[S]
     */
-  def map[S](f: S => T): Predicate[S] = new BasePredicate[S](s"$self mapped by $f") {
+  def transform[S](f: S => T): Predicate[S] = new BasePredicate[S](s"$self transformed by $f") {
     def apply(s: S): Boolean = self.apply(f(s))
   }
 
@@ -32,7 +33,7 @@ trait Predicate[T] extends (T => Boolean) {
     *
     * Associates to the right.
     *
-    * Self will not be evaluates if p evaluates as false
+    * Self will not be evaluated if p evaluates as false
     *
     * @param p the other Predicate
     * @return a Predicate which is the conjunctive (and) combination of p with self
@@ -45,7 +46,7 @@ trait Predicate[T] extends (T => Boolean) {
     *
     * Associates to the right.
     *
-    * Self will not be evaluates if p evaluates as true
+    * Self will not be evaluated if p evaluates as true
     *
     * @param p the other Predicate
     * @return a Predicate which is the disjunctive (or) combination of p with self
@@ -227,15 +228,15 @@ case object Never extends BasePredicate[Any]("false") {
 class PredicateException(s: String) extends Exception(s"rule problem: $s")
 
 object Predicate {
-//  implicit def convertFromPredicateExpr(x: PredicateExpr): Predicate[String] = {
-//    val p: String = x.operands match {
-//      case v: Variable => v.s
-//      case n: Number => n.s+n.m
-//    }
-//    getPredicate(x, p)
-//  }
+  implicit def convertFromPredicateExpr(x: PredicateExpr): Predicate[String] = {
+    val p: String = x.operand match {
+      case v: Variable => v.s
+      case n: Number => n.s+n.m
+    }
+    getPredicate(x, p)
+  }
   implicit def convertFromPredicateExpr(x: PredicateExpr)(implicit m: String=>Double): Predicate[Double] = {
-    val p: Double = x.operands match {
+    val p: Double = x.operand match {
       case v: Variable =>
         import Variable._
         v
@@ -246,7 +247,7 @@ object Predicate {
     getPredicate(x, p)
   }
   //  implicit def convertToTPredicate(x: PredicateExpr)(implicit m: String=>Int): Predicate[Int] = {
-  //    val p: Int = x.operands match {
+  //    val p: Int = x.operand match {
   //      case v: Variable =>
   //        import Variable._
   //        v

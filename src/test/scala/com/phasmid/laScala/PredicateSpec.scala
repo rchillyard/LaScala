@@ -56,18 +56,18 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   "map" should "work with toInt" in {
     val p: Predicate[Int] = GT(3)
-    val q: Predicate[String] = p map {_.toInt}
+    val q: Predicate[String] = p transform {_.toInt}
     q.apply("2") shouldBe false
   }
   it should "be named ok" in {
     val p: Predicate[Int] = GT(3)
-    val q: Predicate[String] = p map {_.toInt}
-    q.toString shouldBe ">3 mapped by <function1>"
+    val q: Predicate[String] = p transform {_.toInt}
+    q.toString shouldBe ">3 transformed by <function1>"
   }
   "it" should "work with a Map" in {
     val p: Predicate[Int] = GT(3)
     val variables: Map[String, Int] = Map("x"->2, "y"->4)
-    val q: Predicate[String] = p map (variables(_))
+    val q: Predicate[String] = p transform (variables(_))
     q.apply("x") shouldBe false
     q.apply("y") shouldBe true
   }

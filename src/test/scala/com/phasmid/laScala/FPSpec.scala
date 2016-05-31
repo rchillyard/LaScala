@@ -60,7 +60,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
   "flatten" should "succeed" in {
     val ifs: Seq[Future[Seq[Int]]] = Seq(Future(Seq(1,2)))
-    whenReady(flatten(ifs)) {x => println(x); x should matchPattern { case Seq(1,2) => }}
+    whenReady(flatten(ifs)) {x => x should matchPattern { case Seq(1,2) => }}
   }
 
   it should "succeed for http://www.google.com, etc." in {

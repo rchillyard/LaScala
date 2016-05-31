@@ -1,27 +1,32 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.truth.{BoundPredicate, True, Truth}
+import com.phasmid.laScala.clause.{Clause, Truth}
 
 import scala.language.implicitConversions
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
+  * RuleParser is a parser-combinator which parses rules. [Wow, that's a surprise!]
+  * A Rule is defined as a sealed trait which is extended by several different case classes, each defining
+  * a different method of combining rules together into a tree of rules.
+  * In general, a leaf rule is a Condition and is made up of two features: a subject and a predicate.
+  *
+  * It's important to note that all aspects of these rules are String-based. There is absolutely no conversion to numeric
+  * types anywhere in this class.
+  *
+  * The trait Rule has only one method: asClause which returns a Clause[String]
+  *
   * Created by scalaprof on 5/30/16.
   */
 class RuleParser extends JavaTokenParsers {
-
-  val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
-  val lesserOp = regex("""<|<=""".r)
-  val identifier = regex("""\w+""".r)
-  val identifierWithPeriods = regex("""[\w\.]+""".r)
 
   def rule: Parser[Rule] = repsep(term, "|") ^^ { case ts => Disjunction(ts) }
 
   def term: Parser[Rule] = repsep(factor, "&" ) ^^ { case fs => Conjunction(fs) }
 
-  def factor: Parser[Rule] = (clause | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: Rule => Parentheses(r) }
+  def factor: Parser[Rule] = (condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: Rule => Parentheses(r) }
 
-  def clause: Parser[Rule] = identifier ~ predicate ^^ { case s ~ p => Condition(Variable(s),p)}
+  def condition: Parser[Rule] = identifier ~ predicate ^^ { case s ~ p => Condition(Variable(s),p)}
 
   def predicate: Parser[PredicateExpr] = booleanOp ~ value ^^ { case o ~ v => PredicateExpr(o,v) }
 
@@ -33,36 +38,59 @@ class RuleParser extends JavaTokenParsers {
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
 
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
+
+  val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
+  val lesserOp = regex("""<|<=""".r)
+  val identifier = regex("""\w+""".r)
+  val identifierWithPeriods = regex("""[\w\.]+""".r)
 }
 
 sealed trait Rule {
-  def toTruth(implicit m: String=>Double): Truth
+  def asClause: Clause[String]
 }
 
 case class Conjunction(fs: List[Rule]) extends Rule {
-  def toTruth(implicit m: String=>Double): Truth = fs.foldLeft[Truth](True)((a, b) => a :& b.toTruth)
+  def asClause: Clause[String] = fs.foldLeft[Clause[String]](Truth(true))((a, b) => a :& b.asClause)
 }
 
 case class Disjunction(ts: List[Rule]) extends Rule {
-  def toTruth(implicit m: String=>Double): Truth = ts.foldLeft[Truth](True)((a, b) => a :| b.toTruth)
+  def asClause: Clause[String] = ts.foldLeft[Clause[String]](Truth(false))((a, b) => a :| b.asClause)
 }
 
 case class Parentheses(rule: Rule) extends Rule {
-  def toTruth(implicit m: String=>Double): Truth = rule.toTruth
+  def asClause: Clause[String] = rule.asClause
 }
 
 case class Condition(subject: Variable, predicate: PredicateExpr) extends Rule {
-  import Variable._
-  def toTruth(implicit m: String=>Double): Truth = new BoundPredicate[Double](subject,predicate)
+  def asClause: Clause[String] = new com.phasmid.laScala.clause.BoundPredicate[String](subject.toString,predicate)
 }
 
 sealed trait Value
 
-case class PredicateExpr(operator: String, operands: Value)
+/**
+  * a predicate expression consisting of an operator and an operand.
+  *
+  * CONSIDER making the second parameter a Seq[Value]
+  *
+  * @param operator the operator. for example "<", ">=", etc.
+  * @param operand the operand, i.e. the RHS of the operator.
+  */
+case class PredicateExpr(operator: String, operand: Value)
 
+/**
+  * a Number with a suffix multiplier
+  * @param s the number in string form
+  * @param m a multiplier such as B, M, K or 1 for multiples of 1000000000, 1000000, 1000, or 1 respectively.
+  */
 case class Number(s: String, m: String) extends Value
 
-case class Variable(s: String) extends Value
+/**
+  * a Variable reference.
+  * @param s the key to the variable.
+  */
+case class Variable(s: String) extends Value {
+  override def toString = s
+}
 
 class RuleException(s: String) extends Exception(s"rule problem: $s")
 
