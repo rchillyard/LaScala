@@ -2,6 +2,9 @@ package com.phasmid.laScala
 
 package clause
 
+import scala.util.{Success, Try, Failure}
+import com.phasmid.laScala.FP._
+
 /**
   * Trait Clause which extends ()=>Boolean. An alternative name might be TruthValue or just Truth.
   *
@@ -9,7 +12,7 @@ package clause
   *
   * @tparam T
   */
-sealed trait Clause[T] extends (()=>Boolean) { self =>
+sealed trait Clause[T] extends (()=>Try[Boolean]) { self =>
 
   /**
     * Method to transform this Clause[T] into a Clause[U].
@@ -80,7 +83,7 @@ sealed trait Clause[T] extends (()=>Boolean) { self =>
   */
 class And[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new And[U](c1 transform (f,g), c2 transform (f,g))
-  def apply(): Boolean = c1() && c2()
+  def apply(): Try[Boolean] = map2[Boolean,Boolean](c1(),c2()){_&&_}
 }
 
 /**
@@ -93,7 +96,7 @@ class And[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   */
 class Or[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new Or[U](c1 transform (f,g), c2 transform (f,g))
-  def apply(): Boolean = c1() || c2()
+  def apply(): Try[Boolean] = map2[Boolean,Boolean](c1(),c2()){_||_}
 }
 
 /**
@@ -106,15 +109,16 @@ class Or[T](c1: Clause[T], c2: => Clause[T]) extends Clause[T] {
   */
 class BoundPredicate[T](t: => T, p: => Predicate[T]) extends Clause[T] {
   override def transform[U](f: (T) => U, g: U=>T): Clause[U] = new BoundPredicate[U](f(t), p transform g)
-  def apply(): Boolean = p(t)
+  def apply(): Try[Boolean] = Try(p(t))
 }
 
 /**
   * This sub-class of Clause simply yields a fixed boolean value
+  *
   * @param b the fixed boolean value
   * //@tparam T
   */
 case class Truth[T](b: Boolean) extends Clause[T] {
   override def transform[U](f: (T) => U, g: (U) => T): Clause[U] = Truth(b).asInstanceOf[Clause[U]]
-  def apply(): Boolean = b
+  def apply(): Try[Boolean] = Success(b)
 }

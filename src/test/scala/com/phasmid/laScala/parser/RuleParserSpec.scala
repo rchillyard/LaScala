@@ -3,6 +3,8 @@ package com.phasmid.laScala.parser
 import com.phasmid.laScala.clause.Clause
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.util.Success
+
 /**
  * @author scalaprof
  */
@@ -77,7 +79,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
     implicit val lookup = variables.apply _
     val clause = rule.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
-    truth() shouldBe true
+    truth() should matchPattern {case Success(true) => }
   }
   "factor" should """parse x>1.0K as appropriate""" in {
     val parser = new RuleParser()
@@ -112,7 +114,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
     implicit val lookup = variables.apply _
     val clause = rule.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
-    truth() shouldBe true
+    truth() should matchPattern {case Success(true) => }
   }
   it should """evaluate x>1 & x<3 as false""" in {
     val parser = new RuleParser()
@@ -123,7 +125,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
     implicit val lookup = variables.apply _
     val clause = rule.asClause
     val truth: Clause[Double] = clause.transform(lookup,_.toString)
-    truth() shouldBe false
+    truth() should matchPattern {case Success(false) => }
   }
   "rule" should """parse x>1 & (x<3 | x=99) as appropriate""" in {
     val parser = new RuleParser()
