@@ -1,7 +1,7 @@
 package com.phasmid.laScala
 
-import com.phasmid.laScala.clause.{BoundPredicate, Clause, Truth}
 import com.phasmid.laScala.parser._
+import com.phasmid.laScala.predicate.Func
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util._
@@ -11,11 +11,11 @@ import scala.util._
   */
 class ClauseSpec extends FlatSpec with Matchers {
   "Truth" should "work for true" in {
-    val c = Truth[Nothing](true)
+    val c = Truth[Nothing](b=true)
     c() should matchPattern {case Success(true) => }
   }
   it should "work for false" in {
-    val c = Truth[Nothing](false)
+    val c = Truth[Nothing](b=false)
     c() should matchPattern {case Success(false) => }
   }
   "And" should "work" in {
@@ -46,7 +46,7 @@ class ClauseSpec extends FlatSpec with Matchers {
   ignore should "work with lookup function" in {
     val vars = Map("x"->0)
     val p: Clause[String] = new BoundPredicate("x", Func[String](_ == "0"))
-    val q: Clause[Int] = p transform (vars.apply _,_.toInt)
+    val q: Clause[Int] = p transform (vars.apply,_.toInt)
     q() should matchPattern {case Success(true) => }
   }
   ignore should """evaluate x>1.0K as true""" in {

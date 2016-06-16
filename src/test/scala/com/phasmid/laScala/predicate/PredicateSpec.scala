@@ -1,4 +1,4 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.predicate
 
 import com.phasmid.laScala.parser._
 import org.scalatest.{FlatSpec, Matchers}
@@ -75,7 +75,7 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "work with a Map" in {
     val p: Predicate[String] = GT("x")
     val variables: Map[String, Int] = Map("x"->3)
-    val q: Predicate[Int] = p map {variables.apply _}
+    val q: Predicate[Int] = p map {variables.apply}
     q.apply(2) should matchPattern {case Success( false) => }
     q.apply(4) should matchPattern {case Success( true) => }
   }

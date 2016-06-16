@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.{FP, PredicateException}
-import com.phasmid.laScala.clause.{Clause, InvalidClause, Truth}
+import com.phasmid.laScala.predicate.PredicateException
+import com.phasmid.laScala.{Clause, InvalidClause, Truth}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -41,10 +41,6 @@ class RuleParser extends JavaTokenParsers {
 
   def predicate: Parser[PredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => PredicateExpr(o,v) }
 
-  // TODO why can't we pass Option[String] into Number and simply match on n ~ o?
-//  def expression: Parser[Expression] = (number ~ opt(suffix) | lookup | failure("problem with expression")) ^^ { case s: String => Variable(s); case n ~ Some(x) => Number(n.toString,x.toString); case n ~ None => Number(n.toString,"1")}
-
-
   val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
   val lesserOp = regex("""<|<=""".r)
@@ -63,7 +59,6 @@ class RuleParser extends JavaTokenParsers {
       rpn ++ stack.elems.reverse
     }
     def asString = ts.foldLeft(t.toString)(_+_.toString)
-//    override def toString = asString
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
@@ -76,7 +71,6 @@ class RuleParser extends JavaTokenParsers {
       rpn ++ stack.elems.reverse
     }
     def asString = fs.foldLeft(f.toString)(_+_.toString)
-//    override def toString = asString
   }
   /**
     * a Number with a suffix multiplier
@@ -101,32 +95,24 @@ class RuleParser extends JavaTokenParsers {
   case class Variable(x: String) extends ExprFactor {
     def asString: String = "$"+s"$x"
     def toRPN: List[String] = List(asString)
-//    override def toString = asString
   }
 
-
-
-  //  case class Number(x: String, suffix: String = "1") extends Expression {
-//    val suffixList = (suffix match {
-//      case "1" => List[String]()
-//        // TODO support the other suffixes
-//      case "K" => List[String]("1000","*")
-//    }
-//      )
-//    def toRPN = x +: suffixList
-//    override def asString: String = x
-//  }
-
+  /**
+    * XXX this appears not to be tested
+    * @param e
+    */
   case class ExprParentheses(e: Expr) extends ExprFactor {
     def toRPN = e.toRPN
     override def asString: String = s"($e)"
-//    override def toString = asString
   }
 
+  /**
+    * XXX this appears not to be tested
+    * @param s
+    */
   case class ExprValue(s: String) extends Expression {
     def toRPN = List("$"+s)
     override def asString: String = s"($s)"
-//    override def toString = asString
   }
   def expr: Parser[Expression] = exprTerm ~ rep("+" ~ exprTerm | "-" ~ exprTerm | failure("expr")) ^^ {
     case t ~ r => r match {
@@ -155,7 +141,6 @@ class RuleParser extends JavaTokenParsers {
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
 
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
-
 }
 
 /**
@@ -192,9 +177,8 @@ case class Parentheses(rule: Rule) extends Rule {
 }
 
 case class Condition(subject: String, predicate: PredicateExpr) extends Rule {
-  def asClause: Clause[String] = new com.phasmid.laScala.clause.BoundPredicate[String](subject,predicate)
+  def asClause: Clause[String] = new com.phasmid.laScala.BoundPredicate[String](subject,predicate)
 }
-
 
 /**
   * a predicate expression consisting of an operator and an operand.
@@ -206,8 +190,5 @@ case class Condition(subject: String, predicate: PredicateExpr) extends Rule {
   */
 case class PredicateExpr(operator: String, operand: Expression)
 
-//case class Expression(s: String) extends Value {
-//  override def asString = s
-//}
 class RuleException(s: String) extends Exception(s"rule problem: $s")
 

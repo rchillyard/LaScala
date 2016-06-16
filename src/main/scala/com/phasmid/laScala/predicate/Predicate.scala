@@ -1,7 +1,7 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.predicate
 
 import com.phasmid.laScala.FP._
-import com.phasmid.laScala.parser.{rpn, _}
+import com.phasmid.laScala.parser._
 
 import scala.util.{Failure, Success, Try}
 
@@ -517,31 +517,6 @@ object Predicate {
     val p: String = x.operand.toRPN.mkString(" ")
     getPredicate(x, p)
   }
-//  implicit def convertFromPredicateExpr(x: PredicateExpr)(implicit m: String=>Double): Predicate[Double] = {
-//    val p: Double = x.operand match {
-//      case v: Variable =>
-//        import Variable._
-//        v
-//      case n: Number =>
-//        import Number._
-//        n
-//      case e: Expression =>
-//        import Expression._
-//        e
-//    }
-//    getPredicate(x, p)
-//  }
-  //  implicit def convertToTPredicate(x: PredicateExpr)(implicit m: String=>Int): Predicate[Int] = {
-  //    val p: Int = x.operand match {
-  //      case v: Variable =>
-  //        import Variable._
-  //        v
-  //      case n: Number =>
-  //        import Number._
-  //        n
-  //    }
-  //    getPredicate(x, p)
-  //  }
   private def getPredicate[T : Ordering](x: PredicateExpr, p: T): Predicate[T] = {
     x.operator match {
       case ">" => GT(p)
