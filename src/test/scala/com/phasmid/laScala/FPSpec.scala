@@ -115,9 +115,16 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     optionToTry(map.get("a")) should matchPattern { case Success("A") => }
     optionToTry(map.get("x")) should matchPattern { case Failure(_) => }
   }
+  // TODO what does this have to do with lift?
   "lift" should "succeed" in {
     def double(x: Int) = 2*x
     Success(1) map double _ should matchPattern { case Success(2) => }
+    Failure(new Exception("bad")) map double _ should matchPattern { case Failure(_) => }
+  }
+  "liftTry" should "succeed" in {
+    def double(x: Int) = 2*x
+    val liftedDouble = liftTry(double)
+    liftedDouble(Success(1)) should matchPattern { case Success(2) => }
     Failure(new Exception("bad")) map double _ should matchPattern { case Failure(_) => }
   }
 

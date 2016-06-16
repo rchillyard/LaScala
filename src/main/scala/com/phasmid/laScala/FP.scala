@@ -12,6 +12,12 @@ object FP {
   // TODO implement. 6 points. Hint: write as a for-comprehension, using the method asFuture (below).
   def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
 
+  /**
+    * this isn't a particularly useful method: basically, it just strips away the Try part, returning an un-fulfilled Future.
+    * @param xfy
+    * @tparam X
+    * @return
+    */
   def flatten[X](xfy: Try[Future[X]]): Future[X] =
     xfy match {
       case Success(xf) => xf
@@ -116,6 +122,8 @@ object FP {
 
   def liftTry[T, U](f: T => U): Try[T]=>Try[U] = _ map f
 
+  def lift2Try[T, U](f: (T,T) => U): (Try[T],Try[T])=>Try[U] = map2 (_,_) (f)
+
   def liftOption[T, U](f: T => U): Option[T]=>Option[U] = _ map f
 
   def liftFuture[T, U](f: T => U)(implicit executor: ExecutionContext): Future[T]=>Future[U] = _ map f
@@ -131,5 +139,10 @@ object FP {
     if (iter.hasNext) buffer append "..."
     buffer append ")"
     buffer toString
+  }
+
+  def named[T,R](name: String, f: T=>R) = new Function1[T,R] {
+    override def apply(v1: T): R = {println(s"applying $name to $v1"); f(v1)}
+    override def toString = name
   }
 }

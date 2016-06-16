@@ -1,8 +1,9 @@
 package com.phasmid.laScala
 
+import com.phasmid.laScala.parser._
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.util.{Failure, Success}
+import scala.util.{Success, Try}
 
 /**
   * @author scalaprof
@@ -12,6 +13,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     val p = GT(3)
     p(2) should matchPattern {case Success(false) => }
     p(3) should matchPattern {case Success(false) => }
+    p(4) should matchPattern {case Success(true) => }
   }
   it should "be named ok" in {
     GT(3).toString shouldBe ">3"
@@ -20,6 +22,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     val p = LT(3)
     p(2) should matchPattern {case Success(true) => }
     p(3) should matchPattern {case Success(false) => }
+    p(4) should matchPattern {case Success(false) => }
   }
   it should "be named ok" in {
     LT(3).toString shouldBe "<3"
@@ -57,21 +60,31 @@ class PredicateSpec extends FlatSpec with Matchers {
     NE(3).toString shouldBe "!=3"
   }
   "map" should "work with toInt" in {
-    val p: Predicate[Int] = GT(3)
-    val q: Predicate[String] = p transform {_.toInt}
-    q.apply("2") should matchPattern {case Success(false) => }
+    val p: Predicate[String] = GT("3")
+    println(p)
+    val q: Predicate[Int] = p map {_.toInt}
+    println(q)
+    q.apply(2) should matchPattern {case Success(false) => }
+    q.apply(4) should matchPattern {case Success(true) => }
   }
   it should "be named ok" in {
-    val p: Predicate[Int] = GT(3)
-    val q: Predicate[String] = p transform {_.toInt}
-    q.toString shouldBe ">3 transformed by <function1>"
+    val p: Predicate[String] = GT("3")
+    val q: Predicate[Int] = p map {_.toInt}
+    q.toString shouldBe ">3 mapped by <function1>"
   }
-  "it" should "work with a Map" in {
-    val p: Predicate[Int] = GT(3)
-    val variables: Map[String, Int] = Map("x"->2, "y"->4)
-    val q: Predicate[String] = p transform (variables(_))
-    q.apply("x") should matchPattern {case Success( false) => }
-    q.apply("y") should matchPattern {case Success( true) => }
+  it should "work with a Map" in {
+    val p: Predicate[String] = GT("x")
+    val variables: Map[String, Int] = Map("x"->3)
+    val q: Predicate[Int] = p map {variables.apply _}
+    q.apply(2) should matchPattern {case Success( false) => }
+    q.apply(4) should matchPattern {case Success( true) => }
+  }
+  "x > $z" should "be parsed" in {
+    val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->3)
+    val p = new RuleParser()
+    val rt: Try[Rule] = p.parseRule("x > $z")
+    rt should matchPattern { case Success(_) => }
+    rt.get shouldBe Disjunction(List(Conjunction(List(Condition("x",PredicateExpr(">",p.Expr(p.ExprTerm(p.Variable("z"),List()),List())))))))
   }
   "In" should "work" in {
     val values = Seq(1,2,3,5,8,13)
@@ -168,10 +181,6 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "work with function" in {
     val p = Never :| {s: Any => Success(true)}
-//    println(p())
-//    p() match {
-//      case Failure(x) => x.printStackTrace(System.out)
-//    }
     p() should matchPattern {case Success( true) => }
   }
   it should "evaluate in the correct order" in {
