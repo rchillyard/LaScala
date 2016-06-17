@@ -1,11 +1,6 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.FP
-import com.phasmid.laScala.clause.{Clause, Truth}
 import org.scalatest.{FlatSpec, Matchers}
-
-import scala.collection.generic.SeqFactory
-import scala.util.{Failure, Success, Try}
 
 /**
  * @author scalaprof
@@ -109,38 +104,6 @@ class RuleParserSpec extends FlatSpec with Matchers {
     r should matchPattern { case parser.Success(_, _) => }
     r.get should matchPattern { case Conjunction(List(Condition("x",PredicateExpr(">",parser.Expr(parser.ExprTerm(parser.Number("1","1"),List()),List()))), Condition("x",PredicateExpr("<",parser.Expr(parser.ExprTerm(parser.Number("3","1"),List()),List()))))) => }
   }
-//  it should """evaluate x>1 & x<3 as true""" in {
-//    val parser = new RuleParser()
-//    val r = parser.parseAll(parser.term, "x>1 & x<3")
-//    r should matchPattern { case parser.Success(_, _) => }
-//    val variables = Map("x" -> 2.0)
-//    implicit val lookup = variables.apply _
-//    val clause = r.get.asClause
-//    val truth: Clause[Double] = clause.transform(lookup, _.toString)
-//    truth() should matchPattern {case Success(true) => }
-//  }
-//  it should """evaluate x>1 & x<3 as false""" in {
-//    val parser = new RuleParser()
-//    val r = parser.parseAll(parser.term, "x>1 & x<3")
-//    r should matchPattern { case parser.Success(_, _) => }
-//    val variables = Map("x" -> 4.0)
-//    implicit val lookup = variables.apply _
-//    val clause = r.get.asClause
-//    val truth: Clause[Double] = clause.transform(lookup, _.toString)
-//    truth() should matchPattern {case Success(false) => }
-//  }
-//  it should """fail to evaluate x>1 & x<3 without x""" in {
-//    val parser = new RuleParser()
-//    val r = parser.parseAll(parser.term, "x>1 & x<3")
-//    r should matchPattern { case parser.Success(_, _) => }
-//    val rule = r.get
-//    val variables: Map[String, Double] = Map()
-//    implicit val lookup = variables.apply _
-//    val clause = rule.asClause
-//    val truth: Clause[Double] = clause.transform(lookup, _.toString)
-//    println(truth)
-//    truth() should matchPattern {case Failure(_) => }
-//  }
   "rule" should """parse x>1 & (x<3 | x=99) as appropriate""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.rule, "x>1 & (x<3 | x=99)")
@@ -150,27 +113,24 @@ class RuleParserSpec extends FlatSpec with Matchers {
   }
   it should """parse x>1 & (x<3 | x=99) using parseRule""" in {
     val parser = new RuleParser()
-    parser.parseRule("x>1 & (x<3 | x=99)") should matchPattern { case Success(r) => }
+    parser.parseRule("x>1 & (x<3 | x=99)") should matchPattern { case scala.util.Success(r) => }
   }
   "expression" should "parse 1 as 1" in {
     val parser = new RuleParser
     val r = parser.parseAll(parser.expr, "1")
     r should matchPattern { case parser.Success(_, _) => }
-    println(r.get)
     r.get should matchPattern { case parser.Expr(parser.ExprTerm(parser.Number("1","1"),List()),List()) => }
   }
   "exprFactor" should "parse 1 as 1" in {
     val parser = new RuleParser
     val r = parser.parseAll(parser.exprFactor, "1")
     r should matchPattern { case parser.Success(_, _) => }
-    println(r.get)
     r.get should matchPattern { case parser.Number("1","1") => }
   }
   "expr" should "parse 1 as 1" in {
     val parser = new RuleParser
     val r = parser.parseAll(parser.expr, "1")
     r should matchPattern { case parser.Success(_, _) => }
-    println(r.get)
     r.get should matchPattern { case parser.Expr(parser.ExprTerm(parser.Number("1","1"),List()),List()) => }
     r.get.toRPN should matchPattern { case List("1") => }
   }
@@ -184,7 +144,6 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val parser = new RuleParser
     val r = parser.parseAll(parser.expr, "1+1")
     r should matchPattern { case parser.Success(_, _) => }
-    println(r.get)
     r.get should matchPattern { case parser.Expr(parser.ExprTerm(parser.Number("1","1"),List()),List((parser.~("+",parser.ExprTerm(parser.Number("1","1"),List()))))) => }
     r.get.toRPN should matchPattern { case List("1","1","+") => }
   }

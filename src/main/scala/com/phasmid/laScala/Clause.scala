@@ -120,11 +120,7 @@ class Or[T](c1: Clause[T], c2: => Clause[T]) extends BaseClause[T](s"($c1 | $c2)
   * //@tparam T
   */
 class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseClause[T](s"($t $p)") { self =>
-  println(s"created new BoundPredicate with t=$t and p=$p")
-  def transform[U : Ordering](f: (T) => U, g: (T) => U): Clause[U] = {
-    println(s"transform BoundPredicate $self with $f and $g")
-    new BoundPredicate[U](f(t), p map g)
-  }
+  def transform[U : Ordering](f: (T) => U, g: (T) => U): Clause[U] = new BoundPredicate[U](f(t), p map g)
   def apply(): Try[Boolean] = p(t)
 }
 

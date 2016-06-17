@@ -61,9 +61,7 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   "map" should "work with toInt" in {
     val p: Predicate[String] = GT("3")
-    println(p)
     val q: Predicate[Int] = p map {_.toInt}
-    println(q)
     q.apply(2) should matchPattern {case Success(false) => }
     q.apply(4) should matchPattern {case Success(true) => }
   }
