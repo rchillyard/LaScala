@@ -139,18 +139,20 @@ trait Predicate[T] extends (T => Try[Boolean]) {
   def :^|(f: T => Boolean) = Or(self, Func(f))
 }
 
-abstract class BasePredicate[T](name: String) extends Predicate[T] { self =>
+abstract class BasePredicate[T](name: String) extends Predicate[T] {
+  self =>
   override def toString = name
 }
 
 /**
   * "And" sub-class of BasePredicate yielding the conjunction of p1 and p2.
+  *
   * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
   * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
-  * //@tparam T
+  *           //@tparam T
   */
 case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t),p2(t))(_&&_)({x => x}, Success(false))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
 
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -167,12 +169,13 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
 
 /**
   * "Or" sub-class of BasePredicate yielding the disjunction of p1 and p2.
+  *
   * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
   * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
-  * //@tparam T
+  *           //@tparam T
   */
 case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t),p2(t))(_||_)({x => !x}, Success(true))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
 
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -189,11 +192,14 @@ case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"
 
 /**
   * "GT" sub-class of BasePredicate which evaluates to true if x > y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
-case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") { self =>
+case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
+  self =>
   def apply(x: T) = Try(implicitly[Ordering[T]].gt(x, y))
+
   def map[U: Ordering](f: (T) => U) = new GT(f(y)) {
     override def toString = s">$y mapped by $f"
   }
@@ -201,11 +207,13 @@ case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") { self =>
 
 /**
   * "LT" sub-class of BasePredicate which evaluates to true if x < y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
 case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].lt(x, y))
+
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
     * that the mapping between T and U be isomorphic.
@@ -221,11 +229,13 @@ case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
 
 /**
   * "GE" sub-class of BasePredicate which evaluates to true if x >= y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
 case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].gteq(x, y))
+
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
     * that the mapping between T and U be isomorphic.
@@ -241,11 +251,13 @@ case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
 
 /**
   * "LE" sub-class of BasePredicate which evaluates to true if x <= y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
 case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].lteq(x, y))
+
   /**
     * The transform function for Predicate. Similar to map but the
     * parameter f is an S=>T, that's to say the inverse of a T=>S
@@ -259,8 +271,9 @@ case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
 
 /**
   * "EQ" sub-class of BasePredicate which evaluates to true if x = y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
 case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].equiv(x, y))
@@ -280,8 +293,9 @@ case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
 
 /**
   * "NE" sub-class of BasePredicate which evaluates to true if x != y where x is the parameter passed into the apply method.
+  *
   * @param y a T expression
-  * //@tparam T
+  *          //@tparam T
   */
 case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
   def apply(x: T) = Try(!implicitly[Ordering[T]].equiv(x, y))
@@ -301,8 +315,9 @@ case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
 
 /**
   * "Func" sub-class of BasePredicate which evaluates to true if p(x) where x is the parameter passed into the apply method.
+  *
   * @param p a T=> Boolean function (might be another predicate)
-  * //@tparam T
+  *          //@tparam T
   */
 case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
   def apply(x: T) = Try(p(x))
@@ -322,9 +337,10 @@ case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
 
 /**
   * "Pred" sub-class of BasePredicate which evaluates to true if p(f(x)) where x is the parameter passed into the apply method.
+  *
   * @param p a Predicate
   * @param f a S=>T function
-  * //@tparam T
+  *          //@tparam T
   */
 case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p with $f") {
   def apply(x: T) = p(f(x))
@@ -344,8 +360,9 @@ case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p 
 
 /**
   * "In" sub-class of BasePredicate which evaluates to true if as contains x where x is the parameter passed into the apply method.
+  *
   * @param as a sequence of A values
-  * //@tparam A
+  *           //@tparam A
   */
 case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}...") {
   def apply(x: A) = Try(as.contains(x))
@@ -365,8 +382,9 @@ case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}.
 
 /**
   * "Matches" sub-class of BasePredicate which evaluates to true if f.isDefinedAt(x) and f(x) where x is the parameter passed into the apply method.
+  *
   * @param f a T => Boolean partial function
-  * //@tparam T
+  *          //@tparam T
   */
 case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s"matches $f") {
   def apply(x: T) = Try(f.isDefinedAt(x) && f(x))
@@ -386,6 +404,7 @@ case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s
 
 /**
   * "InRange" sub-class of BasePredicate[Int] which evaluates to true if r contains x where x is the parameter passed into the apply method.
+  *
   * @param r a Range
   */
 case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
@@ -406,12 +425,13 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
 
 /**
   * "InBounds" sub-class of BasePredicate which evaluates to true if x > y where x is the parameter passed into the apply method.
+  *
   * @param min a T expression
   * @param max a T expression
-  * //@tparam T
+  *            //@tparam T
   */
-case class InBounds[T : Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
-  def apply(x: T) = (GT(min) :& LT(max))(x)
+case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
+  def apply(x: T) = (GT(min) :& LT(max)) (x)
 
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -443,17 +463,18 @@ case object Always extends BasePredicate[Any]("true") {
     *          //@tparam U
     * @return a Predicate[U]
     */
-  override def map[U: Ordering](f: (Any) => U): Predicate[U] = new BasePredicate[U]("Always mapped") {/**
-    * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
-    * that the mapping between T and U be isomorphic.
-    *
-    * This method will fail where the predicate does not rely on Ordering.
-    *
-    * @param f the map function, an T=>U
-    *          //@tparam U
-    * @return a Predicate[U]
-    */
-  override def map[V: Ordering](f: (U) => V): Predicate[V] = throw new PredicateException("NYI Always.map.map")
+  override def map[U: Ordering](f: (Any) => U): Predicate[U] = new BasePredicate[U]("Always mapped") {
+    /**
+      * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
+      * that the mapping between T and U be isomorphic.
+      *
+      * This method will fail where the predicate does not rely on Ordering.
+      *
+      * @param f the map function, an T=>U
+      *          //@tparam U
+      * @return a Predicate[U]
+      */
+    override def map[V: Ordering](f: (U) => V): Predicate[V] = throw new PredicateException("NYI Always.map.map")
 
     override def apply(v1: U): Try[Boolean] = Success(true)
   }
@@ -494,10 +515,12 @@ case class InvalidPredicate(x: Throwable) extends BasePredicate[Any](s"invalid: 
     */
   override def map[U: Ordering](f: (Any) => U): Predicate[U] = InvalidPredicate(x).asInstanceOf[Predicate[U]]
 }
+
 class PredicateException(s: String) extends Exception(s"rule problem: $s")
 
 object Predicate {
-  def apply[T](p: T=>Try[Boolean]): Predicate[T] = new BasePredicate[T](s"$p") { self =>
+  def apply[T](p: T => Try[Boolean]): Predicate[T] = new BasePredicate[T](s"$p") {
+    self =>
     /**
       * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
       * that the mapping between T and U be isomorphic.
@@ -512,12 +535,14 @@ object Predicate {
 
     override def apply(t: T): Try[Boolean] = p(t)
   }
+
   implicit def convertFromPredicateExpr(x: PredicateExpr): Predicate[String] = {
     // XXX for now, we will just turn an RPN list into a String
     val p: String = x.operand.toRPN.mkString(" ")
     getPredicate(x, p)
   }
-  private def getPredicate[T : Ordering](x: PredicateExpr, p: T): Predicate[T] = {
+
+  private def getPredicate[T: Ordering](x: PredicateExpr, p: T): Predicate[T] = {
     x.operator match {
       case ">" => GT(p)
       case ">=" => GE(p)

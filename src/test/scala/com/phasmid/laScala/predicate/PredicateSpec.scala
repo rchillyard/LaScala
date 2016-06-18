@@ -80,7 +80,7 @@ class PredicateSpec extends FlatSpec with Matchers {
   "x > $z" should "be parsed" in {
     val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->3)
     val p = new RuleParser()
-    val rt: Try[Rule] = p.parseRule("x > $z")
+    val rt: Try[RuleLike] = p.parseRule("x > $z")
     rt should matchPattern { case Success(_) => }
     rt.get shouldBe Disjunction(List(Conjunction(List(Condition("x",PredicateExpr(">",p.Expr(p.ExprTerm(p.Variable("z"),List()),List())))))))
   }

@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
+import com.phasmid.laScala._
 import com.phasmid.laScala.predicate.PredicateException
-import com.phasmid.laScala.{Clause, InvalidClause, Truth}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -9,21 +9,98 @@ import scala.util.Try
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
+  * Sealed trait RuleLike which describes the result of parsing a rule.
+  * In this context, a rule is defined by several different case classes, each defining
+  * a different method of combining rules together into a tree of rules.
+  * In general, a leaf rule is a Condition and is made up of two features: a subject and a predicate.
+  */
+sealed trait RuleLike {
+  /**
+    * Method to convert this (parsed) RuleLike instance into a Rule[String]
+    *
+    * @return a Rule[String] that corresponds to this (parsed) RuleLike
+    */
+  def asRule: Rule[String]
+}
+
+case class Conjunction(fs: List[RuleLike]) extends RuleLike {
+  /**
+    * Method to convert this Conjunction into a conjunction of Rules
+    *
+    * @return a Rule[String] that corresponds to this (parsed) RuleLike
+    */
+  def asRule: Rule[String] = fs match {
+    case Nil => InvalidRule(new PredicateException("empty Conjunction"))
+    case h :: Nil => h.asRule
+    case _ => fs.foldLeft[Rule[String]](Truth(true))((a, b) => a :& b.asRule)
+  }
+}
+
+case class Disjunction(ts: List[RuleLike]) extends RuleLike {
+  /**
+    * Method to convert this Disjunction into a disjunction of Rules
+    *
+    * @return a Rule[String] that corresponds to this (parsed) RuleLike
+    */
+  def asRule: Rule[String] = ts match {
+    case Nil => InvalidRule(new PredicateException("empty Disjunction"))
+    case h :: Nil => h.asRule
+    case _ => ts.foldLeft[Rule[String]](Truth(false))((a, b) => a :| b.asRule)
+  }
+}
+
+case class Parentheses(rule: RuleLike) extends RuleLike {
+  /**
+    * Method to convert this parenthetical RuleLike into a Rule
+    *
+    * @return a Rule[String] that corresponds to this (parsed) RuleLike
+    */
+  def asRule: Rule[String] = rule.asRule
+}
+
+/**
+  * Condition: defines a leaf RuleLike instance.
+  *
+  * @param subject   the subject of this condition
+  * @param predicate the predicate of this condition
+  */
+case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike {
+  def asRule: Rule[String] = new BoundPredicate[String](subject, predicate)
+}
+
+/**
+  * TODO Trait Expression which needs a better description
+  */
+trait Expression {
+  def toRPN: List[String]
+
+  def asString: String
+}
+
+/**
+  * a predicate expression consisting of an operator and an operand.
+  *
+  * @param operator the operator. for example "<", ">=", etc.
+  * @param operand  the operand, i.e. the RHS of the operator.
+  */
+case class PredicateExpr(operator: String, operand: Expression)
+
+/**
   * RuleParser is a parser-combinator which parses rules. [Wow, that's a surprise!]
-  * A Rule is defined as a sealed trait which is extended by several different case classes, each defining
+  * A RuleLike is defined as a sealed trait which is extended by several different case classes, each defining
   * a different method of combining rules together into a tree of rules.
   * In general, a leaf rule is a Condition and is made up of two features: a subject and a predicate.
   *
   * It's important to note that all aspects of these rules are String-based. There is absolutely no conversion to numeric
   * types anywhere in this class.
   *
-  * The trait Rule has only one method: asClause which returns a Clause[String]
+  * The trait RuleLike has only one method: asRule which returns a Rule[String]
   *
   * Created by scalaprof on 5/30/16.
   */
 class RuleParser extends JavaTokenParsers {
 
-  def parseRule(s: String): Try[Rule] = {
+  def parseRule(s: String): Try[RuleLike] = {
     parseAll(rule, s) match {
       case this.Success(p, _) => scala.util.Success(p)
       case this.Failure(x, _) => scala.util.Failure(new PredicateException(s"parse failure on $s: $x"))
@@ -31,15 +108,15 @@ class RuleParser extends JavaTokenParsers {
     }
   }
 
-  def rule: Parser[Rule] = repsep(term, "|") ^^ { case ts => Disjunction(ts) }
+  def rule: Parser[RuleLike] = repsep(term, "|") ^^ { case ts => Disjunction(ts) }
 
-  def term: Parser[Rule] = repsep(factor, "&" ) ^^ { case fs => Conjunction(fs) }
+  def term: Parser[RuleLike] = repsep(factor, "&") ^^ { case fs => Conjunction(fs) }
 
-  def factor: Parser[Rule] = (condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: Rule => Parentheses(r) }
+  def factor: Parser[RuleLike] = (condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: RuleLike => Parentheses(r) }
 
-  def condition: Parser[Rule] = identifier ~ predicate ^^ { case s ~ p => Condition(s,p)}
+  def condition: Parser[RuleLike] = identifier ~ predicate ^^ { case s ~ p => Condition(s, p) }
 
-  def predicate: Parser[PredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => PredicateExpr(o,v) }
+  def predicate: Parser[PredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => PredicateExpr(o, v) }
 
   val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
@@ -51,27 +128,30 @@ class RuleParser extends JavaTokenParsers {
 
   case class Expr(t: ExprTerm, ts: List[String ~ ExprTerm]) extends Expression {
     def toRPN = {
-      val stack = new mutable.Stack[String] ()
+      val stack = new mutable.Stack[String]()
       def shunt(xs: List[String], et: String ~ ExprTerm): List[String] = et match {
-        case op ~ x => stack.push (op); xs ++ x.toRPN
+        case op ~ x => stack.push(op); xs ++ x.toRPN
       }
-      val rpn: List[String] = ts.foldLeft (t.toRPN)(shunt (_, _) )
+      val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt(_, _))
       rpn ++ stack.elems.reverse
     }
-    def asString = ts.foldLeft(t.toString)(_+_.toString)
+
+    def asString = ts.foldLeft(t.toString)(_ + _.toString)
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
     def toRPN = {
-      val stack = new mutable.Stack[String] ()
+      val stack = new mutable.Stack[String]()
       def shunt(xs: List[String], et: String ~ ExprFactor): List[String] = et match {
-        case op ~ x => stack.push (op); xs ++ x.toRPN
+        case op ~ x => stack.push(op); xs ++ x.toRPN
       }
-      val rpn: List[String] = fs.foldLeft (f.toRPN)(shunt (_, _) )
+      val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt(_, _))
       rpn ++ stack.elems.reverse
     }
-    def asString = fs.foldLeft(f.toString)(_+_.toString)
+
+    def asString = fs.foldLeft(f.toString)(_ + _.toString)
   }
+
   /**
     * a Number with a suffix multiplier
     *
@@ -80,40 +160,49 @@ class RuleParser extends JavaTokenParsers {
     */
   case class Number(n: String, m: String) extends ExprFactor {
     def expand(s: String): List[String] = s match {
-      case "B" => expand("K")++expand("M")
-      case "M" => expand("K")++expand("K")
-      case "K" => List("1000","*")
+      case "B" => expand("K") ++ expand("M")
+      case "M" => expand("K") ++ expand("K")
+      case "K" => List("1000", "*")
       case "1" => List()
-      case "%" => List("100","/")
+      case "%" => List("100", "/")
       case _ => throw new RuleException("Number exprFactor must be B, M, K, %, or 1")
     }
+
     def asString: String = s"$n*${expand(m)}"
+
     def toRPN: List[String] = n +: expand(m)
-//    override def toString = asString
+
+    //    override def toString = asString
   }
 
   case class Variable(x: String) extends ExprFactor {
-    def asString: String = "$"+s"$x"
+    def asString: String = "$" + s"$x"
+
     def toRPN: List[String] = List(asString)
   }
 
   /**
     * XXX this appears not to be tested
-    * @param e
+    *
+    * @param e the expression inside the parentheses
     */
   case class ExprParentheses(e: Expr) extends ExprFactor {
     def toRPN = e.toRPN
+
     override def asString: String = s"($e)"
   }
 
   /**
     * XXX this appears not to be tested
-    * @param s
+    *
+    * @param s the String which defines this expression
     */
   case class ExprValue(s: String) extends Expression {
-    def toRPN = List("$"+s)
+    def toRPN = List("$" + s)
+
     override def asString: String = s"($s)"
   }
+
   def expr: Parser[Expression] = exprTerm ~ rep("+" ~ exprTerm | "-" ~ exprTerm | failure("expr")) ^^ {
     case t ~ r => r match {
       case x: List[String ~ ExprTerm] => Expr(t, x)
@@ -123,72 +212,24 @@ class RuleParser extends JavaTokenParsers {
   def exprTerm: Parser[ExprTerm] = exprFactor ~ rep("*" ~ exprFactor | "/" ~ exprFactor | failure("exprTerm")) ^^ {
     case f ~ r => r match {
       case x: List[String ~ Expression] => ExprTerm(f, x)
-   }
+    }
   }
 
   def exprFactor: Parser[ExprFactor] = (number ~ opt(suffix) | lookup | "(" ~ expr ~ ")" | failure("exprFactor")) ^^ {
     case "(" ~ e ~ ")" => e match {
       case x: Expr => ExprParentheses(x)
     }
-      // XXX why do we not see n and p as Strings?
-    case n ~ Some(p) => Number(n.toString,p.toString)
-    case n ~ None => Number(n.toString,"1")
+    // XXX why do we not see n and p as Strings?
+    case n ~ Some(p) => Number(n.toString, p.toString)
+    case n ~ None => Number(n.toString, "1")
     case s: String => Variable(s)
   }
 
-  def number: Parser[String] = floatingPointNumber | wholeNumber  | failure("problem with number")
+  def number: Parser[String] = floatingPointNumber | wholeNumber | failure("problem with number")
 
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
 
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
 }
 
-/**
-  *
-  */
-trait Expression {
-  def toRPN: List[String]
-  def asString: String
-}
-
-
-sealed trait Rule {
-  def asClause: Clause[String]
-}
-
-case class Conjunction(fs: List[Rule]) extends Rule {
-  def asClause: Clause[String] = fs match {
-    case Nil => InvalidClause(new PredicateException("empty Conjunction"))
-    case h :: Nil => h.asClause
-    case _ => fs.foldLeft[Clause[String]](Truth(true))((a, b) => a :& b.asClause)
-  }
-}
-
-case class Disjunction(ts: List[Rule]) extends Rule {
-  def asClause: Clause[String] = ts match {
-    case Nil => InvalidClause(new PredicateException("empty Disjunction"))
-    case h :: Nil => h.asClause
-    case _ => ts.foldLeft[Clause[String]](Truth(false))((a, b) => a :| b.asClause)
-  }
-}
-
-case class Parentheses(rule: Rule) extends Rule {
-  def asClause: Clause[String] = rule.asClause
-}
-
-case class Condition(subject: String, predicate: PredicateExpr) extends Rule {
-  def asClause: Clause[String] = new com.phasmid.laScala.BoundPredicate[String](subject,predicate)
-}
-
-/**
-  * a predicate expression consisting of an operator and an operand.
-  *
-  * CONSIDER making the second parameter a Seq[Value]
-  *
-  * @param operator the operator. for example "<", ">=", etc.
-  * @param operand the operand, i.e. the RHS of the operator.
-  */
-case class PredicateExpr(operator: String, operand: Expression)
-
-class RuleException(s: String) extends Exception(s"rule problem: $s")
 

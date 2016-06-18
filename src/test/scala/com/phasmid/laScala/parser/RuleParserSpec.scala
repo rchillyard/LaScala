@@ -66,7 +66,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
 //    r should matchPattern { case parser.Success(_, _) => }
 //    r.get should matchPattern { case Condition("x",PredicateExpr(">",parser.Expr(parser.ExprTerm(parser.ExprValue(parser.Number("1.0","K")),List()),List()))) => }
 //  }
-  // TODO remove this test (because it really belongs in ClauseSpec)
+  // TODO remove this test (because it really belongs in RuleSpec)
 //  it should """evaluate x>1.0K as true""" in {
 //    val parser = new RuleParser()
 //    val r = parser.parseAll(parser.condition, "x>1.0K")
@@ -74,9 +74,9 @@ class RuleParserSpec extends FlatSpec with Matchers {
 //    println(r.get)
 //    val variables = Map("x" -> 2000.0)
 //    implicit val lookup = variables.apply _
-//    val clause = r.get.asClause
-//    println(clause)
-//    val truth: Clause[Double] = clause.transform(FP.named("variables.apply _",lookup), FP.named("toDouble",_.toDouble))
+//    val rule = r.get.asRule
+//    println(rule)
+//    val truth: Rule[Double] = rule.transform(FP.named("variables.apply _",lookup), FP.named("toDouble",_.toDouble))
 //    println(truth)
 //    truth() should matchPattern {case Success(true) => }
 //  }
