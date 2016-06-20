@@ -25,8 +25,13 @@ import scala.util.{Failure, Try}
 case class Trial[V, T](f: V => Try[T]) extends TrialBase[V, T](f)
 
 object Trial {
-  // The following method creates a null trial which can be used at the start or end
-  // of a chain of functions
+  /**
+    * The following method creates a null trial which can be used at the start or end
+    * of a chain of functions
+    * //@tparam V
+    * //@tparam T
+    * @return a terminator trial which always fils
+    */
   def none[V, T]: Trial[V, T] = Trial.apply(v => Failure(new Exception("null trial")))
 
   def lift[V, T](f: V => T): Trial[V, T] = Trial(Lift(f))

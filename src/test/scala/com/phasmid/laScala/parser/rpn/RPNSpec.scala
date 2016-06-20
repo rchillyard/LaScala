@@ -58,8 +58,8 @@ class RPNSpec extends FlatSpec with Matchers {
   }
   it should "evaluate 5 1 2 + 4 * + 3 - correctly" in {
     // XXX why do we need to create this lookup method when there is a default defined.
-    // I believe it's because there are really two implicit values passed in to the RPN.apply method and if
-    // we define one, we must define the other.
+    // ... I believe it's because there are really two implicit values passed in to the RPN.apply method and if
+    // ... we define one, we must define the other.
     val lookupTable = Map[String,Int]()
     implicit def lookup(s: String): Option[Int] = lookupTable.get(s)
     val rpn: RPN[Int] = RPN[Int]("5 1 2 + 4 * + 3 -")

@@ -108,9 +108,13 @@ class RuleParser extends JavaTokenParsers {
     }
   }
 
-  def rule: Parser[RuleLike] = repsep(term, "|") ^^ { case ts => Disjunction(ts) }
+  def rule: Parser[RuleLike] = repsep(term, alternation) ^^ { case ts => Disjunction(ts) }
 
-  def term: Parser[RuleLike] = repsep(factor, "&") ^^ { case fs => Conjunction(fs) }
+  def alternation: Parser[String] = "|" | "(?i)or".r
+
+  def term: Parser[RuleLike] = repsep(factor, ampersand) ^^ { case fs => Conjunction(fs) }
+
+  def ampersand: Parser[String] = "&" | "(?i)and".r
 
   def factor: Parser[RuleLike] = (condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: RuleLike => Parentheses(r) }
 

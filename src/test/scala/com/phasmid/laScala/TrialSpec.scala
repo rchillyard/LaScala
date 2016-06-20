@@ -27,7 +27,7 @@ class TrialSpec extends FlatSpec with Matchers {
     val toInt: PartialFunction[Any, Any] = {
       case x: String => x.toInt
     }
-    // Note that Trial(Lift(f)) is equivalent to LiftTrial(f)
+    // NOTE that Trial(Lift(f)) is equivalent to LiftTrial(f)
     val trialIntString = toInt ^: Trial(Lift[String, Any] { case x: String => x })
     trialIntString("10.0") should matchPattern { case Success("10.0") => }
     trialIntString("10") should matchPattern { case Success(10) => }
@@ -36,7 +36,7 @@ class TrialSpec extends FlatSpec with Matchers {
     val toString: PartialFunction[Any, Any] = {
       case x: String => x
     }
-    // Note that Trial.Lift(f) is also equivalent to LiftTrial(f) and so Trial(Lift(f))
+    // NOTE that Trial.Lift(f) is also equivalent to LiftTrial(f) and so Trial(Lift(f))
     val trialStringInt = toString ^: Trial.lift[String, Any] { case x: String => x.toInt }
     trialStringInt("10.0") should matchPattern { case Success("10.0") => }
     trialStringInt("10") should matchPattern { case Success("10") => }
@@ -54,7 +54,7 @@ class TrialSpec extends FlatSpec with Matchers {
     trialIntDoubleString("10.0X") should matchPattern { case Success("10.0X") => }
   }
   it should "be composable using :| and work in correct order (1)" in {
-    // for convenience we can use LiftMatch here but it's equivalent to Lift({case x:String => x.toInt})
+    // XXX for convenience we can use LiftMatch here but it's equivalent to Lift({case x:String => x.toInt})
     val toInt = LiftMatch { case x: String => x.toInt }
     val trialStringInt = Trial(Lift[String, Any] { case x: String => x }) :| toInt
     trialStringInt("10.0") should matchPattern { case Success("10.0") => }
@@ -119,7 +119,7 @@ class TrialSpec extends FlatSpec with Matchers {
     trialIntDoubleString("10.0X") should matchPattern { case Success("10.0X") => }
   }
   it should "be composable using :| and work in correct order (1)" in {
-    // for convenience we can use Match (or LiftMatch) here
+    // XXX for convenience we can use Match (or LiftMatch) here
     val toInt = LiftMatch { case x: String => x.toInt }
     val trialStringInt = Trial[String, Any] { case x: String => Success(x) } :| toInt
     trialStringInt("10.0") should matchPattern { case Success("10.0") => }
