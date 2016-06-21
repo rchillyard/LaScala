@@ -424,14 +424,14 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
 }
 
 /**
-  * "InBounds" sub-class of BasePredicate which evaluates to true if x > y where x is the parameter passed into the apply method.
+  * "InBounds" sub-class of BasePredicate which evaluates to true if x >= min & x <= max where x is the parameter passed into the apply method.
   *
   * @param min a T expression
   * @param max a T expression
   *            //@tparam T
   */
 case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
-  def apply(x: T) = (GT(min) :& LT(max)) (x)
+  def apply(x: T) = (GE(min) :& LE(max)) (x)
 
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -443,7 +443,7 @@ case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in b
     *          //@tparam U
     * @return a Predicate[U]
     */
-  override def map[U: Ordering](f: (T) => U): Predicate[U] = throw new PredicateException("NYI InBounds.map")
+  override def map[U: Ordering](f: (T) => U): Predicate[U] = InBounds(f(min),f(max))
 }
 
 /**
@@ -536,13 +536,20 @@ object Predicate {
     override def apply(t: T): Try[Boolean] = p(t)
   }
 
-  implicit def convertFromPredicateExpr(x: PredicateExpr): Predicate[String] = {
+  implicit def convertFromRangePredicateExpr(x: RangePredicateExpr): Predicate[String] = {
+    // XXX for now, we will just turn an RPN list into a String
+    val p1: String = x.operand1.toRPN.mkString(" ")
+    val p2: String = x.operand2.toRPN.mkString(" ")
+    InBounds(p1,p2)
+  }
+
+  implicit def convertFromBooleanPredicateExpr(x: BooleanPredicateExpr): Predicate[String] = {
     // XXX for now, we will just turn an RPN list into a String
     val p: String = x.operand.toRPN.mkString(" ")
     getPredicate(x, p)
   }
 
-  private def getPredicate[T: Ordering](x: PredicateExpr, p: T): Predicate[T] = {
+  private def getPredicate[T: Ordering](x: BooleanPredicateExpr, p: T): Predicate[T] = {
     x.operator match {
       case ">" => GT(p)
       case ">=" => GE(p)

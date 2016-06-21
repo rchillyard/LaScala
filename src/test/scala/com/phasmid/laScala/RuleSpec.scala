@@ -139,4 +139,40 @@ class RuleSpec extends FlatSpec with Matchers {
       case Failure(x) => fail(x); Truth(false)
     }
   }
+  it should "be true for \"x in 1...$z\" when x=2, z=3" in {
+    val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->3)
+    val p = new RuleParser()
+    val rlt: Try[RuleLike] = p.parseRule("x in 1 ... $z")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
+        q() should matchPattern { case Success(true) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
+  }
+  it should "be true for \"x in $y*2 ... $z*2\" when x=6, y=2, z=3" in {
+    val variables: Map[String, Int] = Map("x"->6, "y"->2, "z"->3)
+    val p = new RuleParser()
+    val rlt: Try[RuleLike] = p.parseRule("x in $y*2 ... $z*2")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
+        q() should matchPattern { case Success(true) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
+  }
+  it should "be false for \"x in $y*2 ... $z*2\" when x=6, y=4, z=3" in {
+    val variables: Map[String, Int] = Map("x"->6, "y"->4, "z"->3)
+    val p = new RuleParser()
+    val rlt: Try[RuleLike] = p.parseRule("x in $y*2 ... $z*2")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
+        q() should matchPattern { case Success(false) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
+  }
 }

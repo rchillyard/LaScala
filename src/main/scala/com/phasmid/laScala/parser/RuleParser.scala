@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
 import com.phasmid.laScala._
-import com.phasmid.laScala.predicate.PredicateException
+import com.phasmid.laScala.predicate.{Predicate, PredicateException}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -65,7 +65,21 @@ case class Parentheses(rule: RuleLike) extends RuleLike {
   * @param predicate the predicate of this condition
   */
 case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike {
-  def asRule: Rule[String] = new BoundPredicate[String](subject, predicate)
+  // NOTE that this involves an implicit conversion from PredicateExpr to Predicate
+  val p: Predicate[String] = predicate match {
+    case e: RangePredicateExpr => e
+    case b: BooleanPredicateExpr => b
+  }
+  def asRule: Rule[String] = new BoundPredicate[String](subject, p)
+}
+
+/**
+  * Truth value: always or never true
+  *
+  * @param b the truth value
+  */
+case class TruthValue(b: Boolean) extends RuleLike {
+  def asRule: Rule[String] = Truth(b)
 }
 
 /**
@@ -77,13 +91,23 @@ trait Expression {
   def asString: String
 }
 
+sealed trait PredicateExpr
+
 /**
   * a predicate expression consisting of an operator and an operand.
   *
   * @param operator the operator. for example "<", ">=", etc.
   * @param operand  the operand, i.e. the RHS of the operator.
   */
-case class PredicateExpr(operator: String, operand: Expression)
+case class BooleanPredicateExpr(operator: String, operand: Expression) extends PredicateExpr
+
+/**
+  * a predicate expression consisting of an two bounds
+  *
+  * @param operand1 the lower bound
+  * @param operand2 the upper bound
+  */
+case class RangePredicateExpr(operand1: Expression, operand2: Expression) extends PredicateExpr
 
 /**
   * RuleParser is a parser-combinator which parses rules. [Wow, that's a surprise!]
@@ -116,11 +140,20 @@ class RuleParser extends JavaTokenParsers {
 
   def ampersand: Parser[String] = "&" | "(?i)and".r
 
-  def factor: Parser[RuleLike] = (condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ { case c: Condition => c; case r: RuleLike => Parentheses(r) }
+  def factor: Parser[RuleLike] = (always | never | condition | "(" ~> rule <~ ")" | failure("problem with factor")) ^^ {
+    case t: TruthValue => t
+    case c: Condition => c
+    case r: RuleLike => Parentheses(r)
+  }
+
+  def always: Parser[RuleLike] = "(?i)always".r ^^ { case _ => TruthValue(true) }
+  def never: Parser[RuleLike] = "(?i)never".r ^^ { case _ => TruthValue(false) }
 
   def condition: Parser[RuleLike] = identifier ~ predicate ^^ { case s ~ p => Condition(s, p) }
 
-  def predicate: Parser[PredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => PredicateExpr(o, v) }
+  def predicate: Parser[PredicateExpr] = booleanPredicate | rangePredicate
+  def booleanPredicate: Parser[BooleanPredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => BooleanPredicateExpr(o, v) }
+  def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case i ~ l ~ o ~ h => RangePredicateExpr(l, h) }
 
   val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
@@ -235,5 +268,6 @@ class RuleParser extends JavaTokenParsers {
 
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
 }
+
 
 

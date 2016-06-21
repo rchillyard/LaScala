@@ -82,7 +82,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     val p = new RuleParser()
     val rt: Try[RuleLike] = p.parseRule("x > $z")
     rt should matchPattern { case Success(_) => }
-    rt.get shouldBe Disjunction(List(Conjunction(List(Condition("x",PredicateExpr(">",p.Expr(p.ExprTerm(p.Variable("z"),List()),List())))))))
+    rt.get shouldBe Disjunction(List(Conjunction(List(Condition("x",BooleanPredicateExpr(">",p.Expr(p.ExprTerm(p.Variable("z"),List()),List())))))))
   }
   "In" should "work" in {
     val values = Seq(1,2,3,5,8,13)
