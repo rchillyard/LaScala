@@ -62,79 +62,79 @@ class RuleSpec extends FlatSpec with Matchers {
   "x > $z" should "be false when z=3" in {
     val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->3)
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("x > $z")
-    rt should matchPattern { case Success(_) => }
-        val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-        ct match {
-          case Success(c) =>
-            val q: Rule[Int] = Rule.convertFromStringClauseToOrderingClause(c,variables)
+    val rlt: Try[RuleLike] = p.parseRule("x > $z")
+    rlt should matchPattern { case Success(_) => }
+        val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+        rt match {
+          case Success(r) =>
+            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
             q() should matchPattern { case Success(false) => }
           case Failure(x) => fail(x); Truth(false)
         }
   }
   it should "be true when z=1" in {
     val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->1)
-    val rt: Try[RuleLike] = new RuleParser().parseRule("x > $z")
-        val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-        ct match {
-          case Success(c) =>
-            val q: Rule[Int] = Rule.convertFromStringClauseToOrderingClause(c,variables)
+    val rlt: Try[RuleLike] = new RuleParser().parseRule("x > $z")
+        val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+        rt match {
+          case Success(r) =>
+            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
             q() should matchPattern { case Success(true) => }
           case Failure(x) => fail(x); Truth(false)
         }
   }
   "Rule[String]" should "be true for 1=1" in {
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("1=1")
-    rt should matchPattern { case Success(_) => }
-    val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-    ct match {
-      case Success(c) =>
-        c() shouldBe Success(true)
+    val rlt: Try[RuleLike] = p.parseRule("1=1")
+    rlt should matchPattern { case Success(_) => }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        r() shouldBe Success(true)
       case Failure(x) => fail(x); Truth(false)
     }
   }
   it should "be true for 2>1" in {
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("2>1")
-    rt should matchPattern { case Success(_) => }
-    val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-    ct match {
-      case Success(c) =>
-        c() shouldBe Success(true)
+    val rlt: Try[RuleLike] = p.parseRule("2>1")
+    rlt should matchPattern { case Success(_) => }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        r() shouldBe Success(true)
       case Failure(x) => fail(x); Truth(false)
     }
   }
   it should "be false for 2<1" in {
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("2<1")
-    rt should matchPattern { case Success(_) => }
-    val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-    ct match {
-      case Success(c) =>
-        c() shouldBe Success(false)
+    val rlt: Try[RuleLike] = p.parseRule("2<1")
+    rlt should matchPattern { case Success(_) => }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        r() shouldBe Success(false)
       case Failure(x) => fail(x); Truth(false)
     }
   }
   it should "be false for \"x = $z - 1\"" in {
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("x = $z - 1")
-    rt should matchPattern { case Success(_) => }
-    val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-    ct match {
-      case Success(c) =>
-        c() shouldBe Success(false)
+    val rlt: Try[RuleLike] = p.parseRule("x = $z - 1")
+    rlt should matchPattern { case Success(_) => }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        r() shouldBe Success(false)
       case Failure(x) => fail(x); Truth(false)
     }
   }
   "Rule[Int]" should "be true for \"x = $z - 1\" when x=2, z=3" in {
     val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->3)
     val p = new RuleParser()
-    val rt: Try[RuleLike] = p.parseRule("x = $z - 1")
-    val ct: Try[Rule[String]] = for (r <- rt) yield r.asRule
-    ct match {
-      case Success(c) =>
-        val q: Rule[Int] = Rule.convertFromStringClauseToOrderingClause(c,variables)
+    val rlt: Try[RuleLike] = p.parseRule("x = $z - 1")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    rt match {
+      case Success(r) =>
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables)
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }

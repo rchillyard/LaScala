@@ -45,42 +45,42 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
     *
     * Self will not be evaluated if c evaluates as false
     *
-    * @param c the other Rule
-    * @return a Rule which is the conjunctive (and) combination of c with self
+    * @param r the other Rule
+    * @return a Rule which is the conjunctive (and) combination of r with self
     */
-  def &:(c: => Rule[T]): Rule[T] = new And(c, self)
+  def &:(r: => Rule[T]): Rule[T] = new And(r, self)
 
   /**
     * Disjunctive combination of self with another Rule.
     *
     * Associates to the right.
     *
-    * Self will not be evaluated if c evaluates as true
+    * Self will not be evaluated if r evaluates as true
     *
-    * @param c the other Rule
-    * @return a Rule which is the disjunctive (or) combination of c with self
+    * @param r the other Rule
+    * @return a Rule which is the disjunctive (or) combination of r with self
     */
-  def |:(c: => Rule[T]): Rule[T] = new Or(c, self)
+  def |:(r: => Rule[T]): Rule[T] = new Or(r, self)
 
   /**
     * Conjunctive combination of self with another Rule.
     *
     * Associates to the left.
     *
-    * @param c the other Rule (c will not be evaluated if self evaluates as false)
-    * @return a Rule which is the conjunctive (and) combination of self with c
+    * @param r the other Rule (r will not be evaluated if self evaluates as false)
+    * @return a Rule which is the conjunctive (and) combination of self with r
     */
-  def :&(c: => Rule[T]): Rule[T] = new And(self, c)
+  def :&(r: => Rule[T]): Rule[T] = new And(self, r)
 
   /**
     * Disjunctive combination of self with another Rule.
     *
     * Associates to the left.
     *
-    * @param c the other Rule (c will not be evaluated if self evaluates as true)
-    * @return a Rule which is the disjunctive (or) combination of self with c
+    * @param r the other Rule (r will not be evaluated if self evaluates as true)
+    * @return a Rule which is the disjunctive (or) combination of self with r
     */
-  def :|(c: => Rule[T]): Rule[T] = new Or(self, c)
+  def :|(r: => Rule[T]): Rule[T] = new Or(self, r)
 }
 
 abstract class BaseRule[T](name: String) extends Rule[T] {
@@ -88,31 +88,31 @@ abstract class BaseRule[T](name: String) extends Rule[T] {
 }
 
 /**
-  * "And" sub-class of Rule giving the conjunction of c1 and c2.
+  * "And" sub-class of Rule giving the conjunction of r1 and r2.
   * Not a case class so that we can have a call-by-name parameter
   *
-  * @param c1 the rule which is always evaluated
-  * @param c2 the rule which may not be evaluated
+  * @param r1 the rule which is always evaluated
+  * @param r2 the rule which may not be evaluated
   *           //@tparam T
   */
-class And[T](c1: Rule[T], c2: => Rule[T]) extends BaseRule[T](s"$c1 & $c2") {
-  override def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](c1 transform(f, g), c2 transform(f, g))
+class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
+  override def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1 transform(f, g), r2 transform(f, g))
 
-  def apply(): Try[Boolean] = map2(c1(), c2())(_ && _)
+  def apply(): Try[Boolean] = map2(r1(), r2())(_ && _)
 }
 
 /**
-  * "Or" sub-class of Rule giving the disjunction of c1 and c2.
+  * "Or" sub-class of Rule giving the disjunction of r1 and r2.
   * Not a case class so that we can have a call-by-name parameter
   *
-  * @param c1 the rule which is always evaluated
-  * @param c2 the rule which may not be evaluated
+  * @param r1 the rule which is always evaluated
+  * @param r2 the rule which may not be evaluated
   *           //@tparam T
   */
-class Or[T](c1: Rule[T], c2: => Rule[T]) extends BaseRule[T](s"($c1 | $c2)") {
-  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new Or[U](c1 transform(f, g), c2 transform(f, g))
+class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
+  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new Or[U](r1 transform(f, g), r2 transform(f, g))
 
-  def apply(): Try[Boolean] = map2(c1(), c2())(_ || _)
+  def apply(): Try[Boolean] = map2(r1(), r2())(_ || _)
 }
 
 /**
@@ -149,12 +149,12 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
 }
 
 object Rule {
-  def convertFromStringClauseToOrderingClause[X: Valuable](c: Rule[String], variables: Map[String, X]): Rule[X] = {
+  def convertFromStringRuleToValuableRule[X: Valuable](r: Rule[String], variables: Map[String, X]): Rule[X] = {
     val stringToInt: (String) => X = variables.apply
     implicit val lookup: (String) => Option[X] = variables.get
     // CONSIDER rewriting this (and a lot of other stuff--not easy) so that we don't have to use get
     val evaluateExpression: (String) => X = { s => RPN.evaluate[X](s).get }
-    c transform(stringToInt, evaluateExpression)
+    r transform(stringToInt, evaluateExpression)
   }
 
   def lift[T, U](f: T => U): T => Try[U] = { t => Try(f(t)) }
