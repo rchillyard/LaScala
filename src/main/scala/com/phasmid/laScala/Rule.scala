@@ -149,9 +149,9 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
 }
 
 object Rule {
-  def convertFromStringRuleToValuableRule[X: Valuable](r: Rule[String], variables: Map[String, X]): Rule[X] = {
-    val stringToInt: (String) => X = variables.apply
-    implicit val lookup: (String) => Option[X] = variables.get
+  def convertFromStringRuleToValuableRule[X: Valuable](r: Rule[String], lookup: String=>Option[X]): Rule[X] = {
+    val stringToInt: (String) => X = { s => lookup(s).get}
+    implicit val f = lookup
     // CONSIDER rewriting this (and a lot of other stuff--not easy) so that we don't have to use get
     val evaluateExpression: (String) => X = { s => RPN.evaluate[X](s).get }
     r transform(stringToInt, evaluateExpression)
