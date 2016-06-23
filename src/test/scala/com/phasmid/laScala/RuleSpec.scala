@@ -67,7 +67,7 @@ class RuleSpec extends FlatSpec with Matchers {
         val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
         rt match {
           case Success(r) =>
-            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
             q() should matchPattern { case Success(false) => }
           case Failure(x) => fail(x); Truth(false)
         }
@@ -78,7 +78,7 @@ class RuleSpec extends FlatSpec with Matchers {
         val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
         rt match {
           case Success(r) =>
-            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
             q() should matchPattern { case Success(true) => }
           case Failure(x) => fail(x); Truth(false)
         }
@@ -134,7 +134,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
     rt match {
       case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
@@ -146,7 +146,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
     rt match {
       case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
@@ -158,7 +158,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
     rt match {
       case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
@@ -170,7 +170,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
     rt match {
       case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r,variables.get)
+        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
         q() should matchPattern { case Success(false) => }
       case Failure(x) => fail(x); Truth(false)
     }
