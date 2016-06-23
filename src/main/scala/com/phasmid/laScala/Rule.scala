@@ -26,10 +26,14 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
   self =>
 
   /**
+    * TODO implement this method in terms of liftTransform
+    *
     * Method to transform this Rule[T] into a Rule[U].
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
     *
     * @param lf T=>U function to be applied to the lhs of the rule (the variable)
     * @param rf T=>U function to be applied to the rhs of the rule (the predicate)
@@ -37,6 +41,21 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
     * @return a Rule[T] which is equivalent (truth-wise) to this Rule.
     */
   def transform[U: Ordering](lf: (T) => U, rf: (T) => U): Rule[U]
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    */
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[Rule[U]]
 
   /**
     * Conjunctive combination of self with another Rule.
@@ -99,6 +118,22 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
   override def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1 transform(f, g), r2 transform(f, g))
 
   def apply(): Try[Boolean] = map2(r1(), r2())(_ && _)
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    **/
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+    for (s1 <- r1 liftTransform(lf,rf); s2 <- r2 liftTransform(lf,rf)) yield new And[U](s1,s2)
 }
 
 /**
@@ -113,6 +148,22 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
   def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new Or[U](r1 transform(f, g), r2 transform(f, g))
 
   def apply(): Try[Boolean] = map2(r1(), r2())(_ || _)
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    **/
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+    for (s1 <- r1 liftTransform(lf,rf); s2 <- r2 liftTransform(lf,rf)) yield new Or[U](s1,s2)
 }
 
 /**
@@ -128,6 +179,22 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
   def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new BoundPredicate[U](f(t), p map g)
 
   def apply(): Try[Boolean] = p(t)
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    **/
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+    for (t1 <- lf(t); p1 <- p tryMap rf) yield new BoundPredicate[U](t1,p1)
 }
 
 /**
@@ -140,21 +207,51 @@ case class Truth[T](b: Boolean) extends BaseRule[T](s"$b") {
   def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = Truth(b).asInstanceOf[Rule[U]]
 
   def apply(): Try[Boolean] = Success(b)
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    **/
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(Truth(b).asInstanceOf[Rule[U]])
 }
 
 case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
   def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = InvalidRule(x).asInstanceOf[Rule[U]]
 
   def apply(): Try[Boolean] = Failure(x)
+
+  /**
+    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    *
+    * The primary purpose of this method is to allow a lookup to occur (the xf functions).
+    * Typically, T will be String and U will be Double or Int.
+    *
+    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    *
+    * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
+    * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
+    *           //@tparam U
+    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    **/
+  override def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(InvalidRule(x).asInstanceOf[Rule[U]])
 }
 
 object Rule {
-  def convertFromStringRuleToValuableRule[X: Valuable](r: Rule[String], lookup: String=>Option[X]): Rule[X] = {
-    val stringToInt: (String) => X = { s => lookup(s).get}
+  def convertFromStringRuleToValuableRule[X: Valuable](rt: Try[Rule[String]], lookup: String=>Option[X]): Try[Rule[X]] = {
+    val stringToInt: (String) => Try[X] = { s => FP.optionToTry(lookup(s)) }
     implicit val f = lookup
     // CONSIDER rewriting this (and a lot of other stuff--not easy) so that we don't have to use get
-    val evaluateExpression: (String) => X = { s => RPN.evaluate[X](s).get }
-    r transform(stringToInt, evaluateExpression)
+    val evaluateExpression: (String) => Try[X] = { s => RPN.evaluate[X](s) }
+    for (r <- rt; z <- r liftTransform(stringToInt, evaluateExpression)) yield z
   }
 
   def lift[T, U](f: T => U): T => Try[U] = { t => Try(f(t)) }

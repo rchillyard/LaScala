@@ -64,24 +64,24 @@ class RuleSpec extends FlatSpec with Matchers {
     val p = new RuleParser()
     val rlt: Try[RuleLike] = p.parseRule("x > $z")
     rlt should matchPattern { case Success(_) => }
-        val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-        rt match {
-          case Success(r) =>
-            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
-            q() should matchPattern { case Success(false) => }
-          case Failure(x) => fail(x); Truth(false)
-        }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
+        q() should matchPattern { case Success(false) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
   }
   it should "be true when z=1" in {
     val variables: Map[String, Int] = Map("x"->2, "y"->4, "z"->1)
     val rlt: Try[RuleLike] = new RuleParser().parseRule("x > $z")
-        val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-        rt match {
-          case Success(r) =>
-            val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
-            q() should matchPattern { case Success(true) => }
-          case Failure(x) => fail(x); Truth(false)
-        }
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
+        q() should matchPattern { case Success(true) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
   }
   "Rule[String]" should "be true for 1=1" in {
     val p = new RuleParser()
@@ -132,9 +132,9 @@ class RuleSpec extends FlatSpec with Matchers {
     val p = new RuleParser()
     val rlt: Try[RuleLike] = p.parseRule("x = $z - 1")
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-    rt match {
-      case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
@@ -144,9 +144,9 @@ class RuleSpec extends FlatSpec with Matchers {
     val p = new RuleParser()
     val rlt: Try[RuleLike] = p.parseRule("x in 1 ... $z")
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-    rt match {
-      case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
@@ -156,21 +156,21 @@ class RuleSpec extends FlatSpec with Matchers {
     val p = new RuleParser()
     val rlt: Try[RuleLike] = p.parseRule("x in $y*2 ... $z*2")
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-    rt match {
-      case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
         q() should matchPattern { case Success(true) => }
       case Failure(x) => fail(x); Truth(false)
     }
   }
   it should "be false for \"x in $y*2 ... $z*2\" when x=6, y=4, z=3" in {
-    val variables: Map[String, Int] = Map("x"->6, "y"->4, "z"->3)
+    val variables: Map[String, Int] = Map("x" -> 6, "y" -> 4, "z" -> 3)
     val p = new RuleParser()
     val rlt: Try[RuleLike] = p.parseRule("x in $y*2 ... $z*2")
     val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
-    rt match {
-      case Success(r) =>
-        val q: Rule[Int] = Rule.convertFromStringRuleToValuableRule(r, variables.get)
+    val qt: Try[Rule[Int]] = Rule.convertFromStringRuleToValuableRule(rt, variables.get)
+    qt match {
+      case Success(q) =>
         q() should matchPattern { case Success(false) => }
       case Failure(x) => fail(x); Truth(false)
     }
