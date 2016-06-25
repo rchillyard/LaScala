@@ -109,7 +109,7 @@ object FP {
 
   def zip[A, B](ao: Option[A], bo: Option[B]): Option[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
 
-  def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = Try(xo.get).recoverWith { case z: java.util.NoSuchElementException => Failure[X](t) }
+  def optionToTry[T](xo: Option[T], x: => Throwable): Try[T] = Try(xo.get).recoverWith { case e: java.util.NoSuchElementException => Failure[T](x) }
 
   def optionToTry[X](xo: Option[X]): Try[X] = Try(xo.get)
 
