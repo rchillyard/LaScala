@@ -1,13 +1,13 @@
 package com.phasmid.laScala
 
-import FP._
-import org.scalatest.{ FlatSpec, Matchers }
-import org.scalatest.concurrent._
 import java.net.URL
-import scala.util._
+
+import com.phasmid.laScala.FP._
+import org.scalatest.concurrent.{FlatSpec, Matchers, _}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import org.scalatest._
+import scala.util._
 
 /**
   * @author scalaprof

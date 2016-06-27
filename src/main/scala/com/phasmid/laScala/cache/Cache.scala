@@ -1,8 +1,7 @@
 package com.phasmid.laScala.cache
 
 import scala.collection.mutable
-import scala.collection.mutable.HashMap
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.{Failure, Success, Try}
@@ -305,11 +304,9 @@ object Wrapper {
 
     override def get[V](m: Try[V]): V = m.get
   }
-  import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
   implicit val atMost: FiniteDuration = 1.second
   val futureWrapper = new FutureWrapper()
-
 }
 abstract class CacheMap[K,V, X[_]](val wrapper: Wrapper[X]) extends mutable.HashMap[K,V] { self =>
 

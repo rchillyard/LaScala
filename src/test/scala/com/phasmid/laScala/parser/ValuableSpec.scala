@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
+import com.phasmid.laScala.parser.Valuable._
 import org.scalatest.{FlatSpec, Matchers}
-import Valuable._
 
 import scala.util._
 

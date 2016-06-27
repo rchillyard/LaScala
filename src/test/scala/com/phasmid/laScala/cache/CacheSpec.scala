@@ -2,8 +2,8 @@ package com.phasmid.laScala.cache
 
 import akka.event.LoggingAdapter
 import com.phasmid.laScala.FP
-import org.scalatest.concurrent._
 import org.scalatest._
+import org.scalatest.concurrent._
 
 import scala.language.implicitConversions
 import scala.util._

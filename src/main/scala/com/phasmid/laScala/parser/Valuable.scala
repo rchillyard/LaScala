@@ -1,8 +1,8 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.FP.{map2,optionToTry}
+import com.phasmid.laScala.FP.optionToTry
 
-import scala.util.{Try,Success,Failure}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Type class Valuable.

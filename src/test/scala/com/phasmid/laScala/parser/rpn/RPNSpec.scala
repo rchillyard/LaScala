@@ -1,6 +1,5 @@
 package com.phasmid.laScala.parser.rpn
 
-import com.phasmid.laScala.{FP, Trial}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util._
