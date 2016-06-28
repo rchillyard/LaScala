@@ -3,7 +3,8 @@ package com.phasmid.laScala
 import java.net.URL
 
 import com.phasmid.laScala.FP._
-import org.scalatest.concurrent.{FlatSpec, Matchers, _}
+import org.scalatest._
+import org.scalatest.concurrent._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._

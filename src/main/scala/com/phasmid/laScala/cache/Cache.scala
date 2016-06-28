@@ -304,6 +304,7 @@ object Wrapper {
 
     override def get[V](m: Try[V]): V = m.get
   }
+  import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
   implicit val atMost: FiniteDuration = 1.second
   val futureWrapper = new FutureWrapper()
