@@ -54,6 +54,16 @@ trait Cache[K,V] extends (K=>V) {
   def clear()
 }
 
+trait Expiring[K] {
+
+  /**
+    * method to remove a key from the cache
+    *
+    * @param k the key to the element which is to be expired.
+    */
+  def expire(k: K): Unit = {}
+}
+
 /**
   * Basic self-fulfilling cache that uses Option
   *
@@ -62,7 +72,7 @@ trait Cache[K,V] extends (K=>V) {
   * //@tparam K
   * //@tparam V
   */
-case class BasicCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit) extends SelfFulfillingCache[K,V](evaluate)(carper)
+case class BasicExpiringCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit) extends SelfFulfillingExpiringCache[K,V](evaluate)(carper)
 
 /**
   * Basic self-fulfilling cache that uses Try
@@ -72,7 +82,7 @@ case class BasicCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit
   * //@tparam K
   * //@tparam V
   */
-case class NonExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>Unit) extends TryFulfillingCache[K,V](evaluate)(carper)
+case class NonExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>Unit) extends TryFulfillingExpiringCache[K,V](evaluate)(carper)
 
 /**
   * This abstract class implements a (mutable, obviously) Cache (aka Memoization) of K,V key-value pairs.
@@ -88,7 +98,7 @@ case class NonExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>U
   * an exception to be thrown when calling apply(k).
   * The advantage is that we will only ever try to evaluate a key at most once per expiration period.
   *
-  * SelfFulfillingCache defines two methods which must be implemented by subclasses:
+  * SelfFulfillingExpiringCache defines two methods which must be implemented by subclasses:
   * expire (to remove an element from the cache) and postFulfillment (designed to allow a callback method
   * to be invoked when a value is added to the cache, i.e. it is fulfilled).
   *
@@ -96,7 +106,7 @@ case class NonExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>U
   *
   * Created by scalaprof on 4/5/16.
   */
-abstract class BaseCache[K,V,X[_]](val m: CacheMap[K,V,X])(implicit carper: String=>Unit) extends Cache[K,V] {
+abstract class BaseExpiringCache[K,V,X[_]](val m: CacheMap[K,V,X])(implicit carper: String=>Unit) extends Cache[K, V] with Expiring[K] {
 
   /**
     * Return a V value for the given K value
@@ -111,13 +121,6 @@ abstract class BaseCache[K,V,X[_]](val m: CacheMap[K,V,X])(implicit carper: Stri
   def asMap = m.toMap
 
   def contains(k: K) = m.contains(k)
-
-  /**
-    * method to remove a key from the cache
-    *
-    * @param k the key to the element which is to be expired.
-    */
-  def expire(k: K): Unit = {}
 
   /**
     * method to take action whenever a key value is actually fulfilled.
@@ -153,13 +156,13 @@ abstract class BaseCache[K,V,X[_]](val m: CacheMap[K,V,X])(implicit carper: Stri
   * an exception to be thrown when calling apply(k).
   * The advantage is that we will only ever try to evaluate a key at most once per expiration period.
   *
-  * SelfFulfillingCache defines two methods which must be implemented by subclasses:
+  * SelfFulfillingExpiringCache defines two methods which must be implemented by subclasses:
   * expire (to remove an element from the cache) and postFulfillment (designed to allow a callback method
   * to be invoked when a value is added to the cache, i.e. it is fulfilled).
   *
   * Created by scalaprof on 4/5/16.
   */
-abstract class SelfFulfillingCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit) extends BaseCache[K,V,Option](new OptionHashMap[K,V]()) {
+abstract class SelfFulfillingExpiringCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit) extends BaseExpiringCache[K,V,Option](new OptionHashMap[K,V]()) {
 
   /**
     * Define T as Option[V]
@@ -167,7 +170,7 @@ abstract class SelfFulfillingCache[K,V](evaluate: K=>Option[V])(implicit carper:
   type T = Option[V]
 
   /**
-    * TODO try to define this in BaseCache
+    * TODO try to define this in BaseExpiringCache
     *
     * @param k the key we are interested in
     * @return the value wrapped as a T
@@ -175,7 +178,7 @@ abstract class SelfFulfillingCache[K,V](evaluate: K=>Option[V])(implicit carper:
   def get(k: K): T = m.getOrElseUpdateX(k, fulfill _)
 
   /**
-    * CONSIDER making this generic and putting in BaseCache
+    * CONSIDER making this generic and putting in BaseExpiringCache
     *
     * @param k the key of the element to be fulfilled
     * @return
@@ -187,12 +190,12 @@ abstract class SelfFulfillingCache[K,V](evaluate: K=>Option[V])(implicit carper:
 }
 
 /**
-  * This class is almost exactly like SelfFulfillingCache but the get method returns a Try[V] rather than a Option[V].
+  * This class is almost exactly like SelfFulfillingExpiringCache but the get method returns a Try[V] rather than a Option[V].
   * There is a corresponding change in the definition of the evaluate function (passed in as a parameter).
   *
   * Created by scalaprof on 4/5/16.
   */
-abstract class TryFulfillingCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>Unit) extends BaseCache[K,V,Try](new TryHashMap[K,V]()) {
+abstract class TryFulfillingExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>Unit) extends BaseExpiringCache[K,V,Try](new TryHashMap[K,V]()) {
 
   /**
     * Define T as Try[V]
@@ -208,12 +211,12 @@ abstract class TryFulfillingCache[K,V](evaluate: K=>Try[V])(implicit carper: Str
 }
 
 /**
-  * This class is almost exactly like SelfFulfillingCache but the get method returns a Future[V] rather than a Option[V].
+  * This class is almost exactly like SelfFulfillingExpiringCache but the get method returns a Future[V] rather than a Option[V].
   * There is a corresponding change in the definition of the evaluate function (passed in as a parameter).
   *
   * Created by scalaprof on 4/5/16.
   */
-abstract class FutureFulfillingCache[K,V](evaluate: K=>Future[V])(implicit carper: String=>Unit, executor: ExecutionContext) extends BaseCache[K,V,Future](new FutureHashMap[K,V]()) {
+abstract class FutureFulfillingExpiringCache[K,V](evaluate: K=>Future[V])(implicit carper: String=>Unit, executor: ExecutionContext) extends BaseExpiringCache[K,V,Future](new FutureHashMap[K,V]()) {
   /**
     * Define T as Future[V]
     */
@@ -273,6 +276,7 @@ trait Wrapper[M[_]] {
 
   /**
     * Just for convenience, here is map defined in terms of flatMap and unit
+    *
     * @param m the M[V] to be mapped
     * @param f the mapping function, which is a V=>V
     * //@tparam V
@@ -304,6 +308,7 @@ object Wrapper {
 
     override def get[V](m: Try[V]): V = m.get
   }
+  // XXX The following may look unnecessary -- and will be removed by Organize Imports. But we do need it!
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
   implicit val atMost: FiniteDuration = 1.second

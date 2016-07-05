@@ -172,4 +172,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     //    whenReady(toFuture(Failure[Int](new Exception("bad")))) { x => x shouldBe new Exception("bad")}
   }
 
+  "toOption" should "work" in {
+    toOption(true,"Hello") should matchPattern { case Some("Hello") => }
+    toOption(false,"X") should matchPattern { case None => }
+  }
+
 }

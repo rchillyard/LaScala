@@ -39,13 +39,13 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     override protected def notifyDebug(message: String): Unit = {println("debug: "+message); debugCount=debugCount+1}
   }
 
-  "BasicCache" should "succeed" in {
+  "BasicExpiringCache" should "succeed" in {
     val mockLoggingAdapter = new MockLoggingAdapter
     mockLoggingAdapter.debugCount shouldBe 0
     mockLoggingAdapter.warningCount shouldBe 0
     implicit def carper(s: String): Unit = mockLoggingAdapter.warning(s)
     def evaluate(k: String): Option[Int] = {mockLoggingAdapter.debug(s"evaluating $k"); Try(k.toInt).toOption}
-    val cache = BasicCache[String,Int](evaluate)
+    val cache = BasicExpiringCache[String,Int](evaluate)
     mockLoggingAdapter.warningCount shouldBe 0
     cache.get("1") should matchPattern {case Some(1) => }
     mockLoggingAdapter.warningCount shouldBe 0

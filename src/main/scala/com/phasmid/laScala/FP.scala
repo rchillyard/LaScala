@@ -198,4 +198,6 @@ object FP {
 
     override def toString = name
   }
+
+  def toOption[X](b: Boolean, x: X) = if (b) Some(x) else None
 }
