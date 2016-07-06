@@ -133,6 +133,28 @@ object FP {
 
   /**
     * TODO unit test
+    * zip two try values into a Try of a tuple
+    * @param ao an A wrapped inside Try
+    * @param bo a B wrapped inside Try
+    * @tparam A the underlying type of the first parameter
+    * @tparam B the underlying type of the second parameter
+    * @return a tuple containing an A and a B value, all wrapped inside Try
+    */
+  def zip[A, B](ao: Try[A], bo: Try[B]): Try[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
+
+  /**
+    * TODO unit test
+    * zip two Future values into a Future of a tuple
+    * @param ao an A wrapped inside Future
+    * @param bo a B wrapped inside Future
+    * @tparam A the underlying type of the first parameter
+    * @tparam B the underlying type of the second parameter
+    * @return a tuple containing an A and a B value, all wrapped inside Future
+    */
+  def zip[A, B](ao: Future[A], bo: Future[B])(implicit ec: ExecutionContext): Future[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
+
+  /**
+    * TODO unit test
     *
     * @param xo an X value wrapped in Option
     * @param t a throwable which will be returned if xo is None
