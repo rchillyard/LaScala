@@ -28,8 +28,8 @@ object Trial {
   /**
     * The following method creates a null trial which can be used at the start or end
     * of a chain of functions
-    * //@tparam V
-    * //@tparam T
+    * @tparam V the type of the input parameter
+    * @tparam T the underlying type of the resulting Try
     * @return a terminator trial which always fils
     */
   def none[V, T]: Trial[V, T] = Trial.apply(v => Failure(new Exception("null trial")))
@@ -68,8 +68,8 @@ case class LiftMatch[T](f: PartialFunction[Any, T]) extends TrialBase[Any, T](Li
 /**
   * Class which is a V=>Try[T] function and which is lifted from the parameter f, a V=>T function
   * @param f the function which converts a V into a T
-  * //@tparam V
-  * //@tparam T
+  * @tparam V the type of the input parameter
+  * @tparam T the underlying type of the resulting Try
   */
 case class Lift[V, T](f: V => T) extends (V => Try[T]) {
   def apply(v: V): Try[T] = Try(f(v))

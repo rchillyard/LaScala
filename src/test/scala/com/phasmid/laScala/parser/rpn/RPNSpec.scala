@@ -2,6 +2,7 @@ package com.phasmid.laScala.parser.rpn
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.implicitConversions
 import scala.util._
 
 class RPNSpec extends FlatSpec with Matchers {

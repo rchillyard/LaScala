@@ -169,7 +169,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
   "asFuture" should "succeed" in {
     whenReady(asFuture(Success(1))) { x => x should matchPattern { case 1 => }}
-    //    whenReady(toFuture(Failure[Int](new Exception("bad")))) { x => x shouldBe new Exception("bad")}
+//        whenReady(asFuture(Failure[Int](new Exception("bad")))) { x => x should matchPattern { case x: java.lang.Exception => }}
   }
 
   "toOption" should "work" in {
@@ -177,4 +177,15 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     toOption(false,"X") should matchPattern { case None => }
   }
 
+  "sequence[Try]" should "work" in {
+    sequence(Try("10".toInt)) should matchPattern { case Right(10) => }
+    sequence(Try("x".toInt)) should matchPattern { case Left(_) => }
+  }
+
+  "renderLimited" should "work" in {
+    val as = List(1,2,3,4,5)
+    renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
+    implicit val limit = 5
+    renderLimited(as) shouldBe "(1, 2...)"
+  }
 }

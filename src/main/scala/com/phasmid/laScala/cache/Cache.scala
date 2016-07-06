@@ -11,8 +11,8 @@ import scala.util.{Failure, Success, Try}
   * It extends Function1[K,V].
   * If you call the apply method on the cache, it may throw an exception if it is unable to fulfill the value for the given key.
   *
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 trait Cache[K,V] extends (K=>V) {
 
@@ -69,8 +69,8 @@ trait Expiring[K] {
   *
   * @param evaluate the evaluate function of type K=>Option[V] which will get the V value when it is otherwise unknown.
   * @param carper the function to carp about a problem, of type String=>Unit
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 case class BasicExpiringCache[K,V](evaluate: K=>Option[V])(implicit carper: String=>Unit) extends SelfFulfillingExpiringCache[K,V](evaluate)(carper)
 
@@ -79,8 +79,8 @@ case class BasicExpiringCache[K,V](evaluate: K=>Option[V])(implicit carper: Stri
   *
   * @param evaluate the evaluate function of type K=>Try[V] which will get the V value when it is otherwise unknown.
   * @param carper the function to carp about a problem, of type String=>Unit
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 case class NonExpiringCache[K,V](evaluate: K=>Try[V])(implicit carper: String=>Unit) extends TryFulfillingExpiringCache[K,V](evaluate)(carper)
 
@@ -116,7 +116,7 @@ abstract class BaseExpiringCache[K,V,X[_]](val m: CacheMap[K,V,X])(implicit carp
     */
   def apply(k: K): V = unwrap(get(k))
 
-  def clear = m.clear
+  def clear() = m.clear
 
   def asMap = m.toMap
 
@@ -243,14 +243,14 @@ object Cache {
 /**
   * This trait defines a Wrapper of values.
   *
-  * //@tparam M represents a container (which is a monad) that we wish to wrap our values in.
+  * @tparam M represents a container (which is a monad) that we wish to wrap our values in.
   */
 trait Wrapper[M[_]] {
   /**
     * Return an M[V], given v
     *
     * @param v the value
-    * //@tparam V
+    * @tparam V the value type
     * @return an M[V]
     */
   def unit[V](v: => V): M[V]
@@ -260,7 +260,7 @@ trait Wrapper[M[_]] {
     * CONSIDER definining this as flatMap[V,W] etc.
     *
     * @param m the M[V] to be mapped
-    * //@tparam V
+    * @tparam V the value type
     * @return an M[V]
     */
   def flatMap[V](m: M[V], f: V=>M[V]): M[V]
@@ -269,7 +269,7 @@ trait Wrapper[M[_]] {
     * Unwrap a V value from inside the given m
     *
     * @param m an M[V]
-    * //@tparam V
+    * @tparam V the value type
     * @return the unwrapped V value
     */
   def get[V](m: M[V]): V
@@ -279,7 +279,7 @@ trait Wrapper[M[_]] {
     *
     * @param m the M[V] to be mapped
     * @param f the mapping function, which is a V=>V
-    * //@tparam V
+    * @tparam V the value type
     * @return an M[V]
     */
   def map[V](m: M[V], f: V=>V): M[V] = flatMap(m, v => unit(f(v)))
@@ -336,23 +336,23 @@ abstract class CacheMap[K,V, X[_]](val wrapper: Wrapper[X]) extends mutable.Hash
 /**
   * This class is a concrete subclass of CacheMap and uses Option as the container "X".
   *
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 class OptionHashMap[K,V] extends CacheMap[K,V,Option](Wrapper.optionWrapper)
 
 /**
   * This class is a concrete subclass of CacheMap and uses Try as the container "X".
   *
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 class TryHashMap[K,V] extends CacheMap[K,V,Try](Wrapper.tryWrapper)
 
 /**
   * This class is a concrete subclass of CacheMap and uses Future as the container "X".
   *
-  * //@tparam K
-  * //@tparam V
+  * @tparam K they key type
+  * @tparam V the value type
   */
 class FutureHashMap[K,V] extends CacheMap[K,V,Future](Wrapper.futureWrapper)

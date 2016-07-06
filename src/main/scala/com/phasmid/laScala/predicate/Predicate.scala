@@ -3,6 +3,7 @@ package com.phasmid.laScala.predicate
 import com.phasmid.laScala.FP._
 import com.phasmid.laScala.parser._
 
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -25,7 +26,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
     * If you want a more pure functional programming map function, then use tryMap.
     *
     * @param f the map function, a T=>U
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
   def map[U: Ordering](f: T => U): Predicate[U] = tryMap(new ((T) => Try[U]) {
@@ -41,7 +42,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: T => Try[U]): Try[Predicate[U]]
@@ -158,6 +159,11 @@ trait Predicate[T] extends (T => Try[Boolean]) {
   def :^|(f: T => Boolean) = Or(self, Func(f))
 }
 
+/**
+  * abstract class which partially implements Predicate[T]
+  * @param name the name of this predicate
+  * @tparam T the underlying type of the Predicate
+  */
 abstract class BasePredicate[T](name: String) extends Predicate[T] {
   self =>
   override def toString = name
@@ -168,7 +174,7 @@ abstract class BasePredicate[T](name: String) extends Predicate[T] {
   *
   * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
   * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
-  *           //@tparam T
+  * @tparam T the underlying type of the Predicate
   */
 case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
   def apply(t: T) = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
@@ -181,7 +187,7 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield And(q1,q2)
@@ -192,7 +198,7 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
   *
   * @param p1 a function T=>Try[Boolean] which will typically be a Predicate; this function will always be evaluated
   * @param p2 a function T=>Try[Boolean] which will typically be a Predicate; this function may not be evaluated
-  *           //@tparam T
+  * @tparam T the underlying type of the Predicate
   */
 case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
   def apply(t: T) = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
@@ -204,7 +210,7 @@ case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield Or(q1,q2)
@@ -215,7 +221,7 @@ case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"
   * "GT" sub-class of BasePredicate which evaluates to true if x > y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
   self =>
@@ -228,7 +234,7 @@ case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield GT(u)
@@ -238,7 +244,7 @@ case class GT[T: Ordering](y: T) extends BasePredicate[T](s">$y") {
   * "LT" sub-class of BasePredicate which evaluates to true if x < y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].lt(x, y))
@@ -250,7 +256,7 @@ case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield LT(u)
@@ -260,7 +266,7 @@ case class LT[T: Ordering](y: T) extends BasePredicate[T](s"<$y") {
   * "GE" sub-class of BasePredicate which evaluates to true if x >= y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].gteq(x, y))
@@ -272,7 +278,7 @@ case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield GE(u)
@@ -282,7 +288,7 @@ case class GE[T: Ordering](y: T) extends BasePredicate[T](s">=$y") {
   * "LE" sub-class of BasePredicate which evaluates to true if x <= y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].lteq(x, y))
@@ -294,7 +300,7 @@ case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield LE(u)
@@ -304,7 +310,7 @@ case class LE[T: Ordering](y: T) extends BasePredicate[T](s"<=$y") {
   * "EQ" sub-class of BasePredicate which evaluates to true if x = y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
   def apply(x: T) = Try(implicitly[Ordering[T]].equiv(x, y))
@@ -316,7 +322,7 @@ case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield EQ(u)
@@ -326,7 +332,7 @@ case class EQ[T: Ordering](y: T) extends BasePredicate[T](s"=$y") {
   * "NE" sub-class of BasePredicate which evaluates to true if x != y where x is the parameter passed into the apply method.
   *
   * @param y a T expression
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
   def apply(x: T) = Try(!implicitly[Ordering[T]].equiv(x, y))
@@ -338,7 +344,7 @@ case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (u <- f(y)) yield NE(u)
@@ -348,7 +354,7 @@ case class NE[T: Ordering](y: T) extends BasePredicate[T](s"!=$y") {
   * "Func" sub-class of BasePredicate which evaluates to true if p(x) where x is the parameter passed into the apply method.
   *
   * @param p a T=> Boolean function (might be another predicate)
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate, which must implement Ordering
   */
 case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
   def apply(x: T) = Try(p(x))
@@ -360,7 +366,7 @@ case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>Predicate[U]
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = throw new PredicateException("NYI: Func.tryMap")
@@ -370,12 +376,19 @@ case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
   * "Pred" sub-class of BasePredicate which evaluates to true if p(f(x)) where x is the parameter passed into the apply method.
   *
   * @param p a Predicate
-  * @param f a S=>T function
-  *          //@tparam T
+  * @param f a T=>V function
+  * @tparam T the input type of the function f
+  * @tparam V the output type of the function f and the underlying type of the resulting Predicate
   */
 case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p with $f") {
   def apply(x: T) = p(f(x))
 
+  /**
+    *
+    * @param g a function which transforms a T into a Try[U]
+    * @tparam U the underlying type of the resulting Predicate
+    * @return a Try[Predicate[U]]
+    */
   def tryMap[U: Ordering](g: (T) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: Pred.tryMap"))
 }
 
@@ -383,11 +396,17 @@ case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p 
   * "In" sub-class of BasePredicate which evaluates to true if as contains x where x is the parameter passed into the apply method.
   *
   * @param as a sequence of A values
-  *           //@tparam A
+  * @tparam A the underlying type of the sequence
   */
 case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}...") {
   def apply(x: A) = Try(as.contains(x))
 
+  /**
+    *
+    * @param f the map function, an T=>Predicate[U]
+    * @tparam U the underlying type of the resulting Predicate
+    * @return a Try[Predicate[U]]
+    */
   def tryMap[U: Ordering](f: (A) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: In.tryMap"))
 }
 
@@ -395,7 +414,7 @@ case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}.
   * "Matches" sub-class of BasePredicate which evaluates to true if f.isDefinedAt(x) and f(x) where x is the parameter passed into the apply method.
   *
   * @param f a T => Boolean partial function
-  *          //@tparam T
+  * @tparam T the underlying type of the Predicate
   */
 case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s"matches $f") {
   def apply(x: T) = Try(f.isDefinedAt(x) && f(x))
@@ -407,7 +426,7 @@ case class Matches[T](f: PartialFunction[T, Boolean]) extends BasePredicate[T](s
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>U
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: Matches.tryMap"))
@@ -428,7 +447,7 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>U
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
   def tryMap[U: Ordering](f: (Int) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: InRange.tryMap"))
@@ -439,7 +458,7 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
   *
   * @param min a T expression
   * @param max a T expression
-  *            //@tparam T
+  * @tparam T the type of both min and max, and also the underlying type of the resulting Predicate
   */
 case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
   def apply(x: T) = (GE(min) :& LE(max)) (x)
@@ -451,7 +470,7 @@ case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in b
     * This method will fail where the predicate does not rely on Ordering.
     *
     * @param f the map function, an T=>U
-    *          //@tparam U
+    * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
   def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- f(min); q2 <- f(max)) yield InBounds(q1,q2)
@@ -462,8 +481,19 @@ case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in b
   * //@tparam T
   */
 case object Always extends BasePredicate[Any]("true") {
+  /**
+    *
+    * @param t a parameter of type Any
+    * @return Success(true)
+    */
   def apply(t: Any): Try[Boolean] = Success(true)
 
+  /**
+    *
+    * @param f the map function, an T=>Predicate[U]
+    * @tparam U the underlying type of the resulting Predicate
+    * @return a Try[Predicate[U]]
+    */
   def tryMap[U: Ordering](f: (Any) => Try[U]): Try[Predicate[U]] = Success(new BasePredicate[U]("Always mapped") {
     /**
       * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -472,11 +502,16 @@ case object Always extends BasePredicate[Any]("true") {
       * This method will fail where the predicate does not rely on Ordering.
       *
       * @param f the map function, an T=>Predicate[U]
-      *          //@tparam U
+      * @tparam V the underlying type of the resulting Predicate
       * @return a Try[Predicate[U]]
       **/
     def tryMap[V: Ordering](f: (U) => Try[V]): Try[Predicate[V]] = Failure(new PredicateException("NYI: apply.tryMap"))
 
+    /**
+      *
+      * @param v1 a parameter of type U
+      * @return Success(true)
+      */
     def apply(v1: U): Try[Boolean] = Success(true)
   })
 }
@@ -488,6 +523,12 @@ case object Always extends BasePredicate[Any]("true") {
 case object Never extends BasePredicate[Any]("false") {
   def apply(t: Any): Try[Boolean] = Success(false)
 
+  /**
+    *
+    * @param f the map function, an T=>Predicate[U]
+    * @tparam U the underlying type of the resulting Predicate
+    * @return a Try[Predicate[U]]
+    */
   def tryMap[U: Ordering](f: (Any) => Try[U]): Try[Predicate[U]] = Success(new BasePredicate[U]("Always mapped") {
     /**
       * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -496,7 +537,7 @@ case object Never extends BasePredicate[Any]("false") {
       * This method will fail where the predicate does not rely on Ordering.
       *
       * @param f the map function, an T=>Predicate[U]
-      *          //@tparam U
+      * @tparam V the underlying type of the resulting Predicate
       * @return a Try[Predicate[U]]
       **/
     def tryMap[V: Ordering](f: (U) => Try[V]): Try[Predicate[V]] = Failure(new PredicateException("NYI: apply.tryMap"))
@@ -514,6 +555,12 @@ case class InvalidPredicate(x: Throwable) extends BasePredicate[Any](s"invalid: 
 class PredicateException(s: String) extends Exception(s"rule problem: $s")
 
 object Predicate {
+  /**
+    * Given a predicate function p which transforms a T into a Try[Boolean], construct a new Predicate[T]
+    * @param p the predicate function
+    * @tparam T the underlying type of the predicate function and the resulting Predicate
+    * @return a new BasePredicate
+    */
   def apply[T](p: T => Try[Boolean]): Predicate[T] = new BasePredicate[T](s"$p") {
     self =>
     def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI apply.map"))

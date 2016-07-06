@@ -3,6 +3,7 @@ package com.phasmid.laScala.parser.rpn
 import com.phasmid.laScala.FP
 import com.phasmid.laScala.parser.Valuable
 
+import scala.language.implicitConversions
 import scala.util._
 
 sealed trait Token[X]
