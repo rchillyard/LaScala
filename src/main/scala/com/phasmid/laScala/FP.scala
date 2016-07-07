@@ -32,7 +32,7 @@ object FP {
   /**
     *
     * @param xsfs a sequence of futures, each wrapping a sequence of X
-    * @param ec the execution context
+    * @param ec   the execution context
     * @tparam X the uderlying type
     * @return a sequence of X values wrapped in Future
     */
@@ -114,6 +114,7 @@ object FP {
 
   /**
     * TODO unit test
+    *
     * @param xe an Either[Throwable,X] object
     * @tparam X the underlying type
     * @return an X value wrapped inside Option
@@ -123,6 +124,7 @@ object FP {
   /**
     * TODO unit test
     * zip two options into an option of a tuple
+    *
     * @param ao an A wrapped inside Option
     * @param bo a B wrapped inside Option
     * @tparam A the underlying type of the first parameter
@@ -134,6 +136,7 @@ object FP {
   /**
     * TODO unit test
     * zip two try values into a Try of a tuple
+    *
     * @param ao an A wrapped inside Try
     * @param bo a B wrapped inside Try
     * @tparam A the underlying type of the first parameter
@@ -145,6 +148,7 @@ object FP {
   /**
     * TODO unit test
     * zip two Future values into a Future of a tuple
+    *
     * @param ao an A wrapped inside Future
     * @param bo a B wrapped inside Future
     * @tparam A the underlying type of the first parameter
@@ -157,7 +161,7 @@ object FP {
     * TODO unit test
     *
     * @param xo an X value wrapped in Option
-    * @param t a throwable which will be returned if xo is None
+    * @param t  a throwable which will be returned if xo is None
     * @tparam X the underlying type of the input and the output
     * @return an X value wrapped as a Try
     */
@@ -176,9 +180,10 @@ object FP {
     * TODO unit test
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
+    *
     * @param ty1 a Try[T] value
     * @param ty2 a Try[T] value
-    * @param f function which takes two T parameters and yields a U result
+    * @param f   function which takes two T parameters and yields a U result
     * @tparam T the input type
     * @tparam U the result type
     * @return a Try[U]
@@ -189,10 +194,11 @@ object FP {
     * TODO unit test
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
-    * @param ty1 a Try[T] value
-    * @param ty2 a Try[T] value passed as call-by-name
-    * @param f function which takes two T parameters and yields a U result
-    * @param g (implicit) guard function which, given the first parameter's value, must be true for the second parameter (ty2) to be evaluated
+    *
+    * @param ty1     a Try[T] value
+    * @param ty2     a Try[T] value passed as call-by-name
+    * @param f       function which takes two T parameters and yields a U result
+    * @param g       (implicit) guard function which, given the first parameter's value, must be true for the second parameter (ty2) to be evaluated
     * @param default (implicit) a default value
     * @tparam T the input type
     * @tparam U the result type
@@ -209,7 +215,7 @@ object FP {
     * @param ty1 a Try[T] value
     * @param ty2 a Try[T] value
     * @param ty3 a Try[T] value
-    * @param f function which takes three T parameters and yields a U result
+    * @param f   function which takes three T parameters and yields a U result
     * @tparam T the input type
     * @tparam U the result type
     * @return a Try[U]
@@ -220,12 +226,13 @@ object FP {
     * TODO unit test
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
-    * @param ty1 a Try[T] value
-    * @param ty2 a Try[T] value passed as call-by-name
-    * @param ty3 a Try[T] value passed as call-by-name
-    * @param f function which takes two T parameters and yields a U result
-    * @param g (implicit) guard function which, given the first parameter's value, must be true for the second parameter (ty2) to be evaluated;
-    *          and which, given the second parameter's value, must be true for the third parameter (ty3) to be evaluated
+    *
+    * @param ty1     a Try[T] value
+    * @param ty2     a Try[T] value passed as call-by-name
+    * @param ty3     a Try[T] value passed as call-by-name
+    * @param f       function which takes two T parameters and yields a U result
+    * @param g       (implicit) guard function which, given the first parameter's value, must be true for the second parameter (ty2) to be evaluated;
+    *                and which, given the second parameter's value, must be true for the third parameter (ty3) to be evaluated
     * @param default (implicit) a default value
     * @tparam T the input type
     * @tparam U the result type
@@ -237,7 +244,7 @@ object FP {
   /**
     * TODO unit test
     *
-    * @param f a function which transforms an X into a Y
+    * @param f  a function which transforms an X into a Y
     * @param xt an X value wrapped as a Try[X]
     * @tparam X the input type of f
     * @tparam Y the output type of f
@@ -260,6 +267,7 @@ object FP {
     * TODO unit test
     *
     * A true "lift" method which takes a function f (T=>U) and returns a Try[T]=>Try[T]
+    *
     * @param f a function which transforms an T into a U
     * @tparam T the T type
     * @tparam U the U type
@@ -296,7 +304,7 @@ object FP {
     *
     * A pure lift method to lift a function into Future
     *
-    * @param f a function which takes two T parameters and returns a U
+    * @param f        a function which takes two T parameters and returns a U
     * @param executor (implicit) execution context
     * @tparam T the uderlying source type
     * @tparam U the underlying result type
@@ -309,12 +317,12 @@ object FP {
   /**
     * TODO unit test
     *
-    * @param as a sequence of As
+    * @param as    a sequence of As
     * @param limit the limit of how many you want to show
     * @tparam A the underlying type of the sequence
     * @return a String representing the first "limit" elements of as
     */
-  def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length*5): String = {
+  def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
     val iter = as.toStream.toIterator
     val buffer = new StringBuilder("(")
     while (iter.hasNext && buffer.length < limit) {
@@ -335,8 +343,9 @@ object FP {
     * @return a named function which takes a T and returns an R
     */
   def named[T, R](name: String, f: T => R) = new ((T) => R) {
-    override def apply(v1: T): R = {
-      println(s"applying $name to $v1"); f(v1)
+    def apply(v1: T): R = {
+      println(s"applying $name to $v1");
+      f(v1)
     }
 
     override def toString = name
@@ -344,6 +353,7 @@ object FP {
 
   /**
     * Method to convert a b into an Option[X]
+    *
     * @param b a Boolean value
     * @param x an X value
     * @tparam X the uderlying type

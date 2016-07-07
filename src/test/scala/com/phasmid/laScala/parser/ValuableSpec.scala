@@ -6,11 +6,13 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.util._
 
 trait MyValue {
-  def asValuable[X : Valuable]: Try[X]
+  def asValuable[X: Valuable]: Try[X]
 }
+
 case class MyExpression(s: String) extends MyValue {
-  override def asValuable[X: Valuable]: Try[X] = implicitly[Valuable[X]].fromString(s)
+  def asValuable[X: Valuable]: Try[X] = implicitly[Valuable[X]].fromString(s)
 }
+
 /**
   * @author scalaprof
   */

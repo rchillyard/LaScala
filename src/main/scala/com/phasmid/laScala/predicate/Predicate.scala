@@ -161,6 +161,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
 
 /**
   * abstract class which partially implements Predicate[T]
+  *
   * @param name the name of this predicate
   * @tparam T the underlying type of the Predicate
   */
@@ -190,7 +191,7 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
-  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield And(q1,q2)
+  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield And(q1, q2)
 }
 
 /**
@@ -213,7 +214,7 @@ case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
     **/
-  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield Or(q1,q2)
+  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- p1 tryMap f; q2 <- p2 tryMap f) yield Or(q1, q2)
 
 }
 
@@ -388,7 +389,7 @@ case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p 
     * @param g a function which transforms a T into a Try[U]
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
-    */
+    **/
   def tryMap[U: Ordering](g: (T) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: Pred.tryMap"))
 }
 
@@ -406,7 +407,7 @@ case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}.
     * @param f the map function, an T=>Predicate[U]
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
-    */
+    **/
   def tryMap[U: Ordering](f: (A) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI: In.tryMap"))
 }
 
@@ -473,7 +474,7 @@ case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in b
     * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
-  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- f(min); q2 <- f(max)) yield InBounds(q1,q2)
+  def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = for (q1 <- f(min); q2 <- f(max)) yield InBounds(q1, q2)
 }
 
 /**
@@ -493,7 +494,7 @@ case object Always extends BasePredicate[Any]("true") {
     * @param f the map function, an T=>Predicate[U]
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
-    */
+    **/
   def tryMap[U: Ordering](f: (Any) => Try[U]): Try[Predicate[U]] = Success(new BasePredicate[U]("Always mapped") {
     /**
       * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -528,7 +529,7 @@ case object Never extends BasePredicate[Any]("false") {
     * @param f the map function, an T=>Predicate[U]
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]]
-    */
+    **/
   def tryMap[U: Ordering](f: (Any) => Try[U]): Try[Predicate[U]] = Success(new BasePredicate[U]("Always mapped") {
     /**
       * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -557,6 +558,7 @@ class PredicateException(s: String) extends Exception(s"rule problem: $s")
 object Predicate {
   /**
     * Given a predicate function p which transforms a T into a Try[Boolean], construct a new Predicate[T]
+    *
     * @param p the predicate function
     * @tparam T the underlying type of the predicate function and the resulting Predicate
     * @return a new BasePredicate
@@ -565,14 +567,14 @@ object Predicate {
     self =>
     def tryMap[U: Ordering](f: (T) => Try[U]): Try[Predicate[U]] = Failure(new PredicateException("NYI apply.map"))
 
-    override def apply(t: T): Try[Boolean] = p(t)
+    def apply(t: T): Try[Boolean] = p(t)
   }
 
   implicit def convertFromRangePredicateExpr(x: RangePredicateExpr): Predicate[String] = {
     // XXX for now, we will just turn an RPN list into a String
     val p1: String = x.operand1.toRPN.mkString(" ")
     val p2: String = x.operand2.toRPN.mkString(" ")
-    InBounds(p1,p2)
+    InBounds(p1, p2)
   }
 
   implicit def convertFromBooleanPredicateExpr(x: BooleanPredicateExpr): Predicate[String] = {

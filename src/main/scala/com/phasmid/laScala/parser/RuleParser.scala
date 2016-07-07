@@ -70,6 +70,7 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
     case e: RangePredicateExpr => e
     case b: BooleanPredicateExpr => b
   }
+
   def asRule: Rule[String] = new BoundPredicate[String](subject, p)
 }
 
@@ -147,12 +148,15 @@ class RuleParser extends JavaTokenParsers {
   }
 
   def always: Parser[RuleLike] = "(?i)always".r ^^ { case _ => TruthValue(true) }
+
   def never: Parser[RuleLike] = "(?i)never".r ^^ { case _ => TruthValue(false) }
 
   def condition: Parser[RuleLike] = identifier ~ predicate ^^ { case s ~ p => Condition(s, p) }
 
   def predicate: Parser[PredicateExpr] = booleanPredicate | rangePredicate
+
   def booleanPredicate: Parser[BooleanPredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => BooleanPredicateExpr(o, v) }
+
   def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case i ~ l ~ o ~ h => RangePredicateExpr(l, h) }
 
   val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
@@ -226,7 +230,7 @@ class RuleParser extends JavaTokenParsers {
   case class ExprParentheses(e: Expr) extends ExprFactor {
     def toRPN = e.toRPN
 
-    override def asString: String = s"($e)"
+    def asString: String = s"($e)"
   }
 
   /**
@@ -237,7 +241,7 @@ class RuleParser extends JavaTokenParsers {
   case class ExprValue(s: String) extends Expression {
     def toRPN = List("$" + s)
 
-    override def asString: String = s"($s)"
+    def asString: String = s"($s)"
   }
 
   def expr: Parser[Expression] = exprTerm ~ rep("+" ~ exprTerm | "-" ~ exprTerm | failure("expr")) ^^ {

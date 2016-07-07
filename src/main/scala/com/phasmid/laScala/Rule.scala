@@ -53,7 +53,7 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
-    */
+    **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[Rule[U]]
 
   /**
@@ -114,7 +114,7 @@ abstract class BaseRule[T](name: String) extends Rule[T] {
   * @tparam T the underlying type of this Rule
   */
 class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
-  override def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1 transform(f, g), r2 transform(f, g))
+  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1 transform(f, g), r2 transform(f, g))
 
   def apply(): Try[Boolean] = map2(r1(), r2())(_ && _)
 
@@ -132,7 +132,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
     * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
-    for (s1 <- r1 liftTransform(lf,rf); s2 <- r2 liftTransform(lf,rf)) yield new And[U](s1,s2)
+    for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new And[U](s1, s2)
 }
 
 /**
@@ -162,7 +162,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
     * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
-    for (s1 <- r1 liftTransform(lf,rf); s2 <- r2 liftTransform(lf,rf)) yield new Or[U](s1,s2)
+    for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new Or[U](s1, s2)
 }
 
 /**
@@ -192,7 +192,7 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
     * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
-    for (t1 <- lf(t); p1 <- p tryMap rf) yield new BoundPredicate[U](t1,p1)
+    for (t1 <- lf(t); p1 <- p tryMap rf) yield new BoundPredicate[U](t1, p1)
 }
 
 /**
@@ -240,11 +240,11 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
     **/
-  override def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(InvalidRule(x).asInstanceOf[Rule[U]])
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(InvalidRule(x).asInstanceOf[Rule[U]])
 }
 
 object Rule {
-  def convertFromStringRuleToValuableRule[X: Valuable](rt: Try[Rule[String]], lookup: String=>Option[X]): Try[Rule[X]] = {
+  def convertFromStringRuleToValuableRule[X: Valuable](rt: Try[Rule[String]], lookup: String => Option[X]): Try[Rule[X]] = {
     val stringToInt: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
     val evaluateExpression: (String) => Try[X] = { s => RPN.evaluate[X](s) }
