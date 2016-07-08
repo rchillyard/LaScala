@@ -2,6 +2,8 @@ package com.phasmid.laScala.parser
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.util.Success
+
 /**
   * @author scalaprof
   */
@@ -135,12 +137,24 @@ class RuleParserSpec extends FlatSpec with Matchers {
     r should matchPattern { case parser.Success(_, _) => }
     r.get should matchPattern { case parser.Number("1", "1") => }
   }
+  "quotedString" should """parse "Hello World!" correctly""" in {
+    val parser = new RuleParser
+    val r = parser.parseAll(parser.quotedString, """"Hello World!"""")
+    r should matchPattern { case parser.Success(_, _) => }
+    r.get.asQuotedString should matchPattern { case Some("Hello World!") => }
+  }
   "expr" should "parse 1 as 1" in {
     val parser = new RuleParser
     val r = parser.parseAll(parser.expr, "1")
     r should matchPattern { case parser.Success(_, _) => }
     r.get should matchPattern { case parser.Expr(parser.ExprTerm(parser.Number("1", "1"), List()), List()) => }
     r.get.toRPN should matchPattern { case List("1") => }
+  }
+  it should """parse "Hello World!" correctly""" in {
+    val parser = new RuleParser
+    val r = parser.parseAll(parser.expr, """"Hello World!"""")
+    r should matchPattern { case parser.Success(_, _) => }
+    r.get.asQuotedString should matchPattern { case Some("Hello World!") => }
   }
   it should "parse 1.0 as 1.0" in {
     val parser = new RuleParser
@@ -205,5 +219,18 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val r = parser.parseAll(parser.never, "Never")
     r should matchPattern { case parser.Success(_, _) => }
     r.get should matchPattern { case TruthValue(false) => }
+  }
+  "parseExpression" should """parse 1 as List("1")""" in {
+    val parser = new RuleParser()
+    val r = parser.parseExpression("1")
+    r should matchPattern { case Success(e) => }
+    r.get.toRPN shouldBe List("1")
+  }
+  it should "parse 1B as ..." in {
+    val parser = new RuleParser()
+    val et = parser.parseExpression("1B")
+    et map {
+      _.toRPN
+    } should matchPattern { case Success(List("1", "1000", "*", "1000", "*", "1000", "*")) => }
   }
 }

@@ -1,5 +1,6 @@
 package com.phasmid.laScala.parser.rpn
 
+import com.phasmid.laScala.parser.RuleParser
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.implicitConversions
@@ -87,6 +88,26 @@ class RPNSpec extends FlatSpec with Matchers {
     implicit def lookup(s: String): Option[Int] = lookupTable.get(s)
     val rpn: RPN[Int] = RPN[Int]("$x")
     rpn.evaluate should matchPattern { case Success(10) => }
+  }
+  "parseExpression" should """parse 1 as List("1")""" in {
+    val parser = new RuleParser()
+    val r = parser.parseExpression("1")
+    r should matchPattern { case Success(e) => }
+    r.get.toRPN shouldBe List("1")
+  }
+  it should "parse 1B as ..." in {
+    val parser = new RuleParser()
+    val et = parser.parseExpression("1B")
+    et map {
+      _.toRPN
+    } should matchPattern { case Success(List("1", "1000", "*", "1000", "*", "1000", "*")) => }
+  }
+  it should "evaluate 1B as 1000000000" in {
+    val parser = new RuleParser()
+    val et = parser.parseExpression("1B")
+    implicit def lookup(s: String) = None
+    val xt = for (e <- et; r = e.toRPN; x <- RPN(r).evaluate) yield x
+    xt should matchPattern { case Success(1000000000) => }
   }
 
 }

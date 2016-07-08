@@ -9,6 +9,10 @@ import scala.util.Try
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
+  * This module/package does more than just parse Rules. In particular, it has a facility to parse expressions too.
+  */
+
+/**
   * Sealed trait RuleLike which describes the result of parsing a rule.
   * In this context, a rule is defined by several different case classes, each defining
   * a different method of combining rules together into a tree of rules.
@@ -83,15 +87,6 @@ case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
 }
 
-/**
-  * TODO Trait Expression which needs a better description
-  */
-trait Expression {
-  def toRPN: List[String]
-
-  def asString: String
-}
-
 sealed trait PredicateExpr
 
 /**
@@ -112,6 +107,8 @@ case class RangePredicateExpr(operand1: Expression, operand2: Expression) extend
 
 /**
   * RuleParser is a parser-combinator which parses rules. [Wow, that's a surprise!]
+  * Of course, it can also parse any of the constituents of a rule (expression, number, predicate, etc.).
+  *
   * A RuleLike is defined as a sealed trait which is extended by several different case classes, each defining
   * a different method of combining rules together into a tree of rules.
   * In general, a leaf rule is a Condition and is made up of two features: a subject and a predicate.
@@ -128,8 +125,16 @@ class RuleParser extends JavaTokenParsers {
   def parseRule(s: String): Try[RuleLike] = {
     parseAll(rule, s) match {
       case this.Success(p, _) => scala.util.Success(p)
-      case this.Failure(x, _) => scala.util.Failure(new PredicateException(s"parse failure on $s: $x"))
-      case this.Error(x, _) => scala.util.Failure(new PredicateException(s"parse error on $s: $x"))
+      case this.Failure(x, _) => RuleParser.parseFailure(s, "rule", x)
+      case this.Error(x, _) => RuleParser.parseFailure(s, "rule", x)
+    }
+  }
+
+  def parseExpression(s: String): Try[Expression] = {
+    parseAll(expr, s) match {
+      case this.Success(p, _) => scala.util.Success(p)
+      case this.Failure(x, _) => RuleParser.parseFailure(s, "expression", x)
+      case this.Error(x, _) => RuleParser.parseFailure(s, "expression", x)
     }
   }
 
@@ -164,6 +169,7 @@ class RuleParser extends JavaTokenParsers {
   val lesserOp = regex("""<|<=""".r)
   val identifier = regex("""\w+""".r)
   val identifierWithPeriods = regex("""[\w\.]+""".r)
+  val doubleQuote = """"""".r
 
   abstract class ExprFactor extends Expression
 
@@ -178,6 +184,8 @@ class RuleParser extends JavaTokenParsers {
     }
 
     def asString = ts.foldLeft(t.toString)(_ + _.toString)
+
+    def asQuotedString: Option[String] = if (ts.size == 0) t.asQuotedString else None
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
@@ -191,6 +199,8 @@ class RuleParser extends JavaTokenParsers {
     }
 
     def asString = fs.foldLeft(f.toString)(_ + _.toString)
+
+    def asQuotedString: Option[String] = if (fs.size == 0) f.asQuotedString else None
   }
 
   /**
@@ -213,6 +223,7 @@ class RuleParser extends JavaTokenParsers {
 
     def toRPN: List[String] = n +: expand(m)
 
+    def asQuotedString: Option[String] = None
     //    override def toString = asString
   }
 
@@ -220,6 +231,16 @@ class RuleParser extends JavaTokenParsers {
     def asString: String = "$" + s"$x"
 
     def toRPN: List[String] = List(asString)
+
+    def asQuotedString: Option[String] = None
+  }
+
+  case class Literal(s: String) extends ExprFactor {
+    def asString: String = s""""$s""""
+
+    def toRPN: List[String] = List(asString)
+
+    def asQuotedString: Option[String] = Some(s)
   }
 
   /**
@@ -231,18 +252,20 @@ class RuleParser extends JavaTokenParsers {
     def toRPN = e.toRPN
 
     def asString: String = s"($e)"
+
+    def asQuotedString: Option[String] = None
   }
 
-  /**
-    * XXX this appears not to be tested
-    *
-    * @param s the String which defines this expression
-    */
-  case class ExprValue(s: String) extends Expression {
-    def toRPN = List("$" + s)
-
-    def asString: String = s"($s)"
-  }
+  //  /**
+  //    * XXX this appears not to be tested
+  //    *
+  //    * @param s the String which defines this expression
+  //    */
+  //  case class ExprValue(s: String) extends Expression {
+  //    def toRPN = List("$" + s)
+  //
+  //    def asString: String = s"($s)"
+  //  }
 
   def expr: Parser[Expression] = exprTerm ~ rep("+" ~ exprTerm | "-" ~ exprTerm | failure("expr")) ^^ {
     case t ~ r => r match {
@@ -256,14 +279,18 @@ class RuleParser extends JavaTokenParsers {
     }
   }
 
-  def exprFactor: Parser[ExprFactor] = (number ~ opt(suffix) | lookup | "(" ~ expr ~ ")" | failure("exprFactor")) ^^ {
+  def exprFactor: Parser[ExprFactor] = (qualifiedNumber | quotedString | lookup | "(" ~ expr ~ ")" | failure("exprFactor")) ^^ {
     case "(" ~ e ~ ")" => e match {
       case x: Expr => ExprParentheses(x)
     }
-    // XXX why do we not see n and p as Strings?
-    case n ~ Some(p) => Number(n.toString, p.toString)
-    case n ~ None => Number(n.toString, "1")
     case s: String => Variable(s)
+    case n: Number => n
+    case q: Literal => q
+  }
+
+  def qualifiedNumber: Parser[Number] = number ~ opt(suffix) ^^ {
+    case n ~ Some(p) => Number(n, p)
+    case n ~ None => Number(n, "1")
   }
 
   def number: Parser[String] = floatingPointNumber | wholeNumber | failure("problem with number")
@@ -271,6 +298,14 @@ class RuleParser extends JavaTokenParsers {
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
 
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
+
+  def quotedString: Parser[Literal] = doubleQuote ~> """[^"]*""".r <~ doubleQuote ^^ { s => Literal(s) }
+}
+
+object RuleParser {
+  def parseFailure[X](s: String, e: String, x: String): Try[X] = {
+    scala.util.Failure(new PredicateException(s"""unable to parse "$s" as a $e: $x"""))
+  }
 }
 
 
