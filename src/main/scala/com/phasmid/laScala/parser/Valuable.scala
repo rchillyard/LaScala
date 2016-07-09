@@ -12,6 +12,7 @@ import scala.util.{Failure, Success, Try}
   * Created by scalaprof on 6/5/16.
   */
 trait Valuable[X] extends Ordering[X] {
+  // CONSIDER make unit return Try[X]
   def unit(x: X): X
 
   def plus(x: X, y: X): Try[X]
