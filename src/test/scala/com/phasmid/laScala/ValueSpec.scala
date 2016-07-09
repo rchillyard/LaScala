@@ -1,12 +1,14 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
+
+import scala.util.{Success, Try}
 
 
 /**
   * @author scalaprof
   */
-class ValueSpec extends FlatSpec with Matchers {
+class ValueSpec extends FlatSpec with Matchers with Inside {
   "IntValue" should "work" in {
     val x = Value(1)
     x.source shouldBe 1
@@ -69,4 +71,25 @@ class ValueSpec extends FlatSpec with Matchers {
     xs.head shouldBe 1
     xs.tail.head shouldBe 1.0
   }
+  "tryValue" should "work when given Any" in {
+    val w: Any = "k"
+    val vy = Value.tryValue(w)
+    val xoy: Try[Option[Double]] = for (vs <- vy) yield vs.asValuable[Double]
+    xoy should matchPattern { case Success(xos) => }
+    inside (xoy) {
+      case Success(xo) =>
+        xo should matchPattern { case None => }
+    }
+  }
+  "trySequence" should "work when given Anys" in {
+    val ws = List[Any]("k", 1, 1.0)
+    val vsy = Value.trySequence(ws)
+    val xosy: Try[Seq[Option[Double]]] = for (vs <- vsy) yield for (v <- vs) yield v.asValuable[Double]
+    xosy should matchPattern { case Success(xos) => }
+    inside (xosy) {
+      case Success(xos) =>
+        xos should matchPattern { case List(None, Some(1.0), Some(1.0)) => }
+    }
+  }
+
 }

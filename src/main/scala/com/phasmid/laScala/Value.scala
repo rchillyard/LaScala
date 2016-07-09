@@ -2,7 +2,7 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.parser.Valuable
 
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 /**
   * Trait Value.
@@ -54,6 +54,7 @@ case class QuotedStringValue(x: String) extends Value[String] {
   def source: String = x
 }
 
+class ValueException(s: String) extends Exception(s)
 
 object Value {
 
@@ -64,6 +65,13 @@ object Value {
   def apply(x: String) = x match {
     case quoted(z) => QuotedStringValue(z)
     case _ => StringValue(x)
+  }
+
+  def tryValue(x: Any): Try[Value[_]] = x match {
+    case i: Int => Try(apply(i))
+    case d: Double => Try(apply(d))
+    case w: String => Try(apply(w))
+    case _ => Failure(new ValueException(s"cannot form Value from type ${x.getClass}"))
   }
 
   /**
@@ -81,6 +89,24 @@ object Value {
     * @return a map of Values
     */
   def sequence[K](kWm: Map[K,String]): Map[K,Value[_]] = kWm mapValues {Value.apply(_)}
+
+  /**
+    * Transform a sequence of Strings into a Sequence of corresponding Values
+    * @param ws a sequence of Strings
+    * @return a sequence of Values
+    */
+  def trySequence(ws: Seq[Any]): Try[Seq[Value[_]]] = FP.sequence(ws map {Value.tryValue(_)})
+
+  /**
+    * Transform a Map of Strings into a Map of corresponding Values
+    *
+    * @param kWm a map of Strings
+    * @tparam K the key type
+    * @return a map of Values
+    */
+  def trySequence[K](kWm: Map[K,Any]): Try[Map[K,Value[_]]] = for (
+    kVs <- FP.sequence((for ((k,v) <- kWm) yield for (z <- Value.tryValue(v)) yield (k, z)).toSeq)
+  ) yield kVs.toMap
 
   val quoted = """"([^"]*)"""".r
 }
