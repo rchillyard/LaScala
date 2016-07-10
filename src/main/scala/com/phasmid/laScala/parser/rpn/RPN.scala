@@ -34,6 +34,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] {
     case Nil =>
       (Failure(new Exception("token list is empty")), xts)
     case Number(s) :: r0 =>
+      implicit val pattern = ""
       (implicitly[Valuable[X]].fromString(s), r0)
     case Constant(x) :: r0 =>
       (x, r0)

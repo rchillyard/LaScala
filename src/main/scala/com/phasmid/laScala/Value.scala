@@ -1,5 +1,7 @@
 package com.phasmid.laScala
 
+import java.time.LocalDate
+
 import com.phasmid.laScala.parser.Valuable
 
 import scala.util.{Failure, Try}
@@ -19,7 +21,16 @@ import scala.util.{Failure, Try}
 sealed trait Value {
 
   /**
-    * Transform this Value into an (optional) X value
+    * Transform this Value into an (optional) X value which is Orderable
+    *
+    * @tparam X the type of the result we desire
+    * @return either Some(x) if this value can be represented so, without information loss;
+    *         or None otherwise.
+    */
+  def asOrderable[X: Orderable](implicit pattern: String): Option[X]
+
+  /**
+    * Transform this Value into an (optional) X value which is Valuable
     *
     * @tparam X the type of the result we desire
     * @return either Some(x) if this value can be represented so, without information loss;
@@ -33,6 +44,8 @@ sealed trait Value {
 case class IntValue(x: Int, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
 
+  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+
   override def toString = x.toString
 }
 
@@ -40,11 +53,15 @@ case class DoubleValue(x: Double, source: Any) extends Value {
   // XXX this gives us the effect we want -- but is it right?
   def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
 
+  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+
   override def toString = x.toString
 }
 
 case class StringValue(x: String, source: Any) extends Value {
-  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x).toOption
+  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
+
+  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
 
   override def toString = x.toString
 }
@@ -52,7 +69,17 @@ case class StringValue(x: String, source: Any) extends Value {
 case class QuotedStringValue(x: String, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = None
 
+  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+
   override def toString = x.toString
+}
+
+case class DateValue(x: LocalDate, source: Any) extends Value {
+  def asValuable[X: Valuable]: Option[X] = None
+
+  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
+
+  override def toString = source.toString
 }
 
 class ValueException(s: String) extends Exception(s)
@@ -71,6 +98,12 @@ object StringValue {
 
 object QuotedStringValue {
   def apply(x: String): QuotedStringValue = QuotedStringValue(x, x)
+}
+
+object DateValue {
+  def apply(x: LocalDate): DateValue = DateValue(x, x)
+
+  def apply(y: Int, m: Int, d: Int): DateValue = apply(LocalDate.of(y, m, d))
 }
 
 object Value {

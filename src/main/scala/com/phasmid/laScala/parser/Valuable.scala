@@ -1,20 +1,20 @@
 package com.phasmid.laScala.parser
 
 import com.phasmid.laScala.FP.optionToTry
+import com.phasmid.laScala.Orderable
 
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Type class Valuable.
+  * Type class Valuable. Perhaps the name "Arithmetical" would be better as this trait encompasses many arithmetic
+  * operators.
+  *
   * This combination of trait Valuable and implicit objects comprises the "type class" Valuable.
-  * It is based on Numeric but has more method definitions and is therefore much more useful for evaluating expressions.
+  * It is based on Numeric but has more method definitions and is therefore much more useful for parsing and evaluating expressions.
   *
   * Created by scalaprof on 6/5/16.
   */
-trait Valuable[X] extends Ordering[X] {
-  // CONSIDER make unit return Try[X]
-  def unit(x: X): X
-
+trait Valuable[X] extends Orderable[X] {
   def plus(x: X, y: X): Try[X]
 
   def minus(x: X, y: X): Try[X]
@@ -30,12 +30,6 @@ trait Valuable[X] extends Ordering[X] {
   def pow(x: X, y: X): Try[X]
 
   def fromInt(x: Int): Try[X]
-
-  def fromString(s: String): Try[X]
-
-  def viaLookup(s: String, f: String => Option[X]): Try[X]
-
-  def zero: X
 
   def one: X
 
@@ -67,7 +61,7 @@ object Valuable {
 
     def fromInt(x: Int) = Try(x.toDouble)
 
-    def fromString(s: String) = Try(s.toDouble)
+    def fromString(s: String)(implicit pattern: String = "") = Try(s.toDouble)
 
     def viaLookup(s: String, f: String => Option[Double]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
 
@@ -103,7 +97,7 @@ object Valuable {
 
     def fromInt(x: Int) = Success(x)
 
-    def fromString(s: String) = Try(s.toInt)
+    def fromString(s: String)(implicit pattern: String = "") = Try(s.toInt)
 
     def viaLookup(s: String, f: String => Option[Int]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
 

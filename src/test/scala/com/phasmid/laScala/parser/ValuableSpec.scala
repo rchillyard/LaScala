@@ -10,6 +10,7 @@ trait MyValue {
 }
 
 case class MyExpression(s: String) extends MyValue {
+  implicit val pattern = ""
   def asValuable[X: Valuable]: Try[X] = implicitly[Valuable[X]].fromString(s)
 }
 

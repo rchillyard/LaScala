@@ -2,8 +2,8 @@ package com.phasmid.laScala.parser
 
 import java.io.{File, FileInputStream}
 
-import com.github.nscala_time.time.Imports._
 import com.phasmid.laScala.Lift
+import org.joda.time.DateTime
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util._
