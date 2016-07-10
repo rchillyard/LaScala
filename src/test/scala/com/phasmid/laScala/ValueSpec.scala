@@ -35,7 +35,8 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Value(""""1"""")
-    x.source shouldBe "1"
+    x.toString shouldBe "1"
+    x.source shouldBe """"1""""
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
@@ -46,7 +47,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
   "attribute map" should "work" in {
-    val m: Map[String, Value[_]] = Map("k" -> Value("k"), "1" -> Value(1), "1.0" -> Value(1.0))
+    val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "1.0" -> Value(1.0))
     val xos = for ((k, v) <- m) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 2
@@ -91,5 +92,4 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
         xos should matchPattern { case List(None, Some(1.0), Some(1.0)) => }
     }
   }
-
 }
