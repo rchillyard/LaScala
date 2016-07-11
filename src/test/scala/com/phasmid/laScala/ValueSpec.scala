@@ -11,21 +11,31 @@ import scala.util.{Success, Try}
   * @author scalaprof
   */
 class ValueSpec extends FlatSpec with Matchers with Inside {
+  "BooleanValue" should "work" in {
+    val x = Value(true)
+    x.source shouldBe true
+    x.asBoolean should matchPattern { case Some(true) => }
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case None => }
+  }
   "IntValue" should "work" in {
     val x = Value(1)
     x.source shouldBe 1
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
   "StringValue" should "be Some where string is numeric" in {
     val x = Value("1")
     x.source shouldBe "1"
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
   it should "be None where string is not numeric" in {
     val x = Value("X")
     x.source shouldBe "X"
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
@@ -33,24 +43,28 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     implicit val pattern = ""
     val x = Value("2016-07-10")
     x.source shouldBe "2016-07-10"
+    x.asBoolean should matchPattern { case None => }
     x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
   }
   "QuotedStringValue" should "be None" in {
     val x = QuotedStringValue(""""1"""")
     x.source shouldBe """"1""""
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
   it should "be unquoted when created from apply" in {
     val x = Value(""""1"""")
-    x.toString shouldBe "1"
+    x.toString shouldBe """"1""""
     x.source shouldBe """"1""""
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
   "DoubleValue" should "work" in {
     val x = Value(1.0)
     x.source shouldBe 1.0
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
@@ -58,6 +72,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     implicit val pattern = ""
     val x = DateValue("2016-07-10")
     x.source shouldBe "2016-07-10"
+    x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
     x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
@@ -67,10 +82,11 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     implicit val pattern = ""
     val x: SequenceValue = SequenceValue(xs)
     x.source shouldBe xs
+    x.asBoolean should matchPattern { case None => }
     for (vs <- x.asSequence) yield vs.size shouldBe 3
   }
   "attribute map" should "work" in {
-    val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "1.0" -> Value(1.0))
+    val m: Map[String, Value] = Map("k" -> Value("k"), "b" -> Value(true), "1" -> Value(1), "1.0" -> Value(1.0))
     val xos = for ((k, v) <- m) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 2

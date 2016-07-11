@@ -11,7 +11,7 @@ import scala.util._
 /**
   * Trait Value.
   *
-  * This trait defines four methods: source, asValuable, asOrderable, asSequence.
+  * This trait defines five methods: source, asBoolean, asValuable, asOrderable, asSequence.
   *
   * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
   * but has additional methods.
@@ -33,6 +33,14 @@ import scala.util._
   * Created by scalaprof on 7/8/16.
   */
 sealed trait Value {
+
+  /**
+    * If this Value is a Boolean, then return Some(true) or Some(false) as appropriate.
+    * Otherwise, return None.
+    *
+    * @return Some(true), Some(false) or None
+    */
+  def asBoolean: Option[Boolean]
 
   /**
     * Transform this Value into an (optional) X value which is Orderable
@@ -69,7 +77,27 @@ sealed trait Value {
   * @param source the source (which could, conceivably, be a String)
   */
 case class IntValue(x: Int, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
+
+  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+
+  def asSequence: Option[Seq[Value]] = None
+
+  override def toString = x.toString
+}
+
+/**
+  * Value which is natively an Int. Such a value can be converted to Double by invoking asValuable[Double]
+  *
+  * @param x      the Int value
+  * @param source the source (which could, conceivably, be a String)
+  */
+case class BooleanValue(x: Boolean, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = Some(x)
+
+  def asValuable[X: Valuable]: Option[X] = None
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
@@ -86,6 +114,8 @@ case class IntValue(x: Int, source: Any) extends Value {
   * @param source the source (which could, conceivably, be a String)
   */
 case class DoubleValue(x: Double, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   // XXX this gives us the effect we want -- but is it right?
   // We really should try to convert an Double to an Int, for example, and test there is no information loss.
   def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
@@ -105,13 +135,15 @@ case class DoubleValue(x: Double, source: Any) extends Value {
   * @param source the source (normally a String)
   */
 case class StringValue(x: String, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
 
   def asSequence: Option[Seq[Value]] = None
 
-  override def toString = x.toString
+  override def toString = x
 }
 
 /**
@@ -122,13 +154,17 @@ case class StringValue(x: String, source: Any) extends Value {
   * @param source the source (normally a String but might be enclosed in quotation marks)
   */
 case class QuotedStringValue(x: String, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   def asValuable[X: Valuable]: Option[X] = None
 
+  // TODO create a concrete implicit object for OrderableString
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  // CONSIDER creating a sequence of Char?
   def asSequence: Option[Seq[Value]] = None
 
-  override def toString = x.toString
+  override def toString = source.toString
 }
 
 /**
@@ -140,6 +176,8 @@ case class QuotedStringValue(x: String, source: Any) extends Value {
   * @param source the source (normally a String)
   */
 case class DateValue(x: LocalDate, source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   def asValuable[X: Valuable]: Option[X] = None
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
@@ -158,6 +196,8 @@ case class DateValue(x: LocalDate, source: Any) extends Value {
   * @param source the source (typically, a Seq of Any objects)
   */
 case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
+  def asBoolean: Option[Boolean] = None
+
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = None
 
   def asValuable[X: Valuable]: Option[X] = None
@@ -168,6 +208,10 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
 }
 
 class ValueException(s: String, t: scala.Throwable = null) extends Exception(s,t)
+
+object BooleanValue {
+  def apply(x: Boolean): BooleanValue = BooleanValue(x, x)
+}
 
 object IntValue {
   def apply(x: Int): IntValue = IntValue(x, x)
@@ -201,6 +245,8 @@ object SequenceValue {
 
 object Value {
 
+  def apply(x: Boolean) = BooleanValue(x)
+
   def apply(x: Int) = IntValue(x)
 
   def apply(x: Double) = DoubleValue(x, x)
@@ -219,6 +265,7 @@ object Value {
     * @return a Try[Value] where the value is the result of applying one of the several apply methods in this Value object.
     */
   def tryValue(x: Any): Try[Value] = x match {
+    case b: Boolean => Try(apply(b))
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
     case w: String => Try(apply(w))
