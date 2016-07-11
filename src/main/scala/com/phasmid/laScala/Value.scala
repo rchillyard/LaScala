@@ -1,16 +1,30 @@
 package com.phasmid.laScala
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+import com.phasmid.laScala.Orderable.OrderableDate
 import com.phasmid.laScala.parser.Valuable
 
-import scala.util.{Failure, Try}
+import scala.util._
 
 /**
   * Trait Value.
   *
-  * This trait defines two methods: source and asValuable.
+  * This trait defines four methods: source, asValuable, asOrderable, asSequence.
   *
+  * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
+  * but has additional methods.
+  *
+  * For values that you want to consider as orderable, then use asOrderable. Orderable extends Ordering.
+  * It is used for the type of quantities that do not support arithmetic operations, but do support ordering.
+  * A prime example is Date, Datetime, etc.
+  *
+  * You can also represent sequences by Value (in particular, SequenceValue). Such values will yield Some(sequence)
+  * when asSequence is invoked. Other types of Value will yield None in this situation.
+  *
+  * In the vast majority of cases, you can simply provide a String as the input to Value.apply.
+  * This is the normal mechanism when you are reading values from HTML, JSON, Config, whatever.
   * Values that derive from String representations are normally StringValues
   * These typically result in an appropriate value when asValuable is invoked, that's to say --
   * not the String value but the parsed numeric (Valuable) value.
@@ -38,51 +52,122 @@ sealed trait Value {
     */
   def asValuable[X: Valuable]: Option[X]
 
+  /**
+    * View this Value as a Sequence of Value objects.
+    *
+    * @return either Some(sequence) or None, as appropriate.
+    */
+  def asSequence: Option[Seq[Value]]
+
   def source: Any
 }
 
+/**
+  * Value which is natively an Int. Such a value can be converted to Double by invoking asValuable[Double]
+  *
+  * @param x      the Int value
+  * @param source the source (which could, conceivably, be a String)
+  */
 case class IntValue(x: Int, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  def asSequence: Option[Seq[Value]] = None
+
   override def toString = x.toString
 }
 
+/**
+  * Value which is natively an Double. Such a value cannot be converted to Int by invoking asValuable[Int] because of
+  * loss of precision.
+  *
+  * @param x      the Double value
+  * @param source the source (which could, conceivably, be a String)
+  */
 case class DoubleValue(x: Double, source: Any) extends Value {
   // XXX this gives us the effect we want -- but is it right?
+  // We really should try to convert an Double to an Int, for example, and test there is no information loss.
   def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  def asSequence: Option[Seq[Value]] = None
+
   override def toString = x.toString
 }
 
+/**
+  * Value which is natively an String. Such a value, providing it is formatted appropriately, can be converted to Int or
+  * Double by invoking asValuable[Int] or asValuable[Double], respectively.
+  *
+  * @param x      the String value
+  * @param source the source (normally a String)
+  */
 case class StringValue(x: String, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
 
+  def asSequence: Option[Seq[Value]] = None
+
   override def toString = x.toString
 }
 
+/**
+  * Value which is natively an String. Such a value, cannot be converted to Int or
+  * Double by invoking asValuable.
+  *
+  * @param x      the String value
+  * @param source the source (normally a String but might be enclosed in quotation marks)
+  */
 case class QuotedStringValue(x: String, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = None
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  def asSequence: Option[Seq[Value]] = None
+
   override def toString = x.toString
 }
 
+/**
+  * Value which is natively an LocalDate. Such a value, cannot be converted to Int or
+  * Double by invoking asValuable. However, it can be converted to some other form of Date by invoking
+  * asOrderable[X] where X is the other form--provided that there is an implict conversion function in scope.
+  *
+  * @param x      the LocalDate value
+  * @param source the source (normally a String)
+  */
 case class DateValue(x: LocalDate, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = None
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
+  def asSequence: Option[Seq[Value]] = None
+
   override def toString = source.toString
 }
 
-class ValueException(s: String) extends Exception(s)
+/**
+  * Value which is actually a Seq of Values. Such a value, cannot be converted to Int or
+  * Double by invoking asValuable, nor by invoking asOrderable. However, when tested by invoking asSequence, such values
+  * result in Some(sequence).
+  *
+  * @param xs     the Seq of Values
+  * @param source the source (typically, a Seq of Any objects)
+  */
+case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
+  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = None
+
+  def asValuable[X: Valuable]: Option[X] = None
+
+  def asSequence: Option[Seq[Value]] = Some(xs)
+
+  override def toString = xs.toString
+}
+
+class ValueException(s: String, t: scala.Throwable = null) extends Exception(s,t)
 
 object IntValue {
   def apply(x: Int): IntValue = IntValue(x, x)
@@ -103,7 +188,15 @@ object QuotedStringValue {
 object DateValue {
   def apply(x: LocalDate): DateValue = DateValue(x, x)
 
+  def apply(x: String)(implicit pattern: String): DateValue = DateValue(LocalDate.parse(x, if (pattern.isEmpty) DateTimeFormatter.ISO_LOCAL_DATE else OrderableDate.formatter(pattern)),x)
+
   def apply(y: Int, m: Int, d: Int): DateValue = apply(LocalDate.of(y, m, d))
+}
+
+object SequenceValue {
+  def apply(xs: Seq[Any]): SequenceValue = {
+    SequenceValue(Value.sequence(xs),xs)
+  }
 }
 
 object Value {
@@ -117,10 +210,21 @@ object Value {
     case _ => StringValue(x, x)
   }
 
+  def apply(x: LocalDate) = DateValue(x, x)
+
+  /**
+    * Method to convert any of several types of object into a Value
+    *
+    * @param x an Any
+    * @return a Try[Value] where the value is the result of applying one of the several apply methods in this Value object.
+    */
   def tryValue(x: Any): Try[Value] = x match {
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
     case w: String => Try(apply(w))
+    case d: LocalDate => Try(apply(d))
+    // XXX shouldn't really need the following...
+    case v: Value => Success(v)
     case _ => Failure(new ValueException(s"cannot form Value from type ${x.getClass}"))
   }
 
@@ -130,17 +234,31 @@ object Value {
     * @param ws a sequence of Strings
     * @return a sequence of Values
     */
-  def sequence(ws: Seq[String]) = ws map {Value.apply(_)}
+  def sequence(ws: Seq[Any]): Seq[Value] = {
+    FP.sequence(ws map {
+      tryValue(_)
+    }) match {
+      case Success(as) => as
+      case Failure(x) => throw new ValueException(s"cannot form sequence of Values from given sequence $ws", x)
+    }
+  }
 
   /**
-    * Transform a Map of Strings into a Map of corresponding Values
+    * Transform a Map of Strings into a Map of corresponding Values.
+    *
+    * XXX note that there is no native Value which is a Map.
     *
     * @param kWm a map of Strings
     * @tparam K the key type
     * @return a map of Values
     */
-  def sequence[K](kWm: Map[K, String]): Map[K, Value] = kWm mapValues {
-    Value.apply(_)}
+  def sequence[K](kWm: Map[K, Any]): Map[K, Value] = {
+    val vtKs = (for ((k, v) <- kWm) yield (k, tryValue(v))).toSeq
+    FP.sequence(for ((k, vt) <- vtKs) yield for (v <- vt) yield (k, v)) match {
+      case Success(m) => m.toMap
+      case Failure(x) => throw new ValueException(s"cannot form sequence of Values from given sequence", x)
+    }
+  }
 
   /**
     * Transform a sequence of Strings into a Sequence of corresponding Values

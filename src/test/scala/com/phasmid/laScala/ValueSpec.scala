@@ -1,5 +1,7 @@
 package com.phasmid.laScala
 
+import java.time.LocalDate
+
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util.{Success, Try}
@@ -27,6 +29,12 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
+  it should "be Some(date) for asOrderable where string is a date" in {
+    implicit val pattern = ""
+    val x = Value("2016-07-10")
+    x.source shouldBe "2016-07-10"
+    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+  }
   "QuotedStringValue" should "be None" in {
     val x = QuotedStringValue(""""1"""")
     x.source shouldBe """"1""""
@@ -45,6 +53,21 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.source shouldBe 1.0
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
+  }
+  "DateValue" should "work" in {
+    implicit val pattern = ""
+    val x = DateValue("2016-07-10")
+    x.source shouldBe "2016-07-10"
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case None => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+  }
+  "SequenceValue" should "work" in {
+    val xs = Seq("2016-07-10", 1, """Hello""")
+    implicit val pattern = ""
+    val x: SequenceValue = SequenceValue(xs)
+    x.source shouldBe xs
+    for (vs <- x.asSequence) yield vs.size shouldBe 3
   }
   "attribute map" should "work" in {
     val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "1.0" -> Value(1.0))

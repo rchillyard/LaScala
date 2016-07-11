@@ -13,6 +13,8 @@ import scala.util.Try
   * This combination of trait Orderable and implicit objects comprises the "type class" Orderable.
   *
   * This has been split off from Valuable by scalaprof on 7/10/16.
+  *
+  * CONSIDER extending Ordered instead of Ordering
   */
 trait Orderable[X] extends Ordering[X] {
   // CONSIDER make unit return Try[X]
@@ -41,38 +43,9 @@ object Orderable {
     val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     def formatter(s: String) = DateTimeFormatter.ofPattern(s)
-  }
 
-  //  implicit object OrderableProduct extends Orderable[Product] {
-  //    def unit(x: Product) = x
-  //
-  //    val sTuple = """\((\d+),(\d+)\)|(\d+),(\d+)""".r
-  //    def fromString(s: String): Try[Product] = s match {
-  //      case sTuple(x,y,_,_) => Try(x.toInt,y.toInt)
-  //      case sTuple(_,_,x,y) => Try(x.toInt,y.toInt)
-  //    }
-  //
-  //    def viaLookup(s: String, f: String => Option[Product]) = optionToTry(f(s), new OrderableException(s"$s is not defined"))
-  //
-  //    def zero = (0,0)
-  //
-  //    def different(a1: Any, a2: Any): Int = a1 match {
-  //      case a: Ordering =>
-  //        a2 match {
-  //          case b: Ordering =>
-  //        }
-  //      case _ => 0
-  //    }
-  //
-  //    /**
-  //      * Compare tuples x and y where x is most significant
-  //      *
-  //      * @param x the left-hand comparand
-  //      * @param y the right-hand comparand
-  //      * @return 0, -1 or +1 as appropriate
-  //      */
-  //    def compare(x: Product, y: Product): Int = x.productIterator zip y.productIterator find (different(_,_))
-  //  }
+    //    override def compare(that: LocalDate): Int = compareTo(that)
+  }
 
   implicit object OrderableIntInt extends Orderable[(Int, Int)] {
     def unit(x: (Int, Int)) = x
