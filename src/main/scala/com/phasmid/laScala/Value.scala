@@ -17,7 +17,7 @@ import scala.util._
   * This trait defines five methods: source, asBoolean, asValuable, asOrderable, asSequence.
   *
   * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
-  * but has additional methods.
+  * but has additional methods, in particular fromString, and these methods typically result in a Try[X] as opposed to X.
   *
   * For values that you want to consider as orderable, then use asOrderable. Orderable extends Ordering.
   * It is used for the type of quantities that do not support arithmetic operations, but do support ordering.
@@ -72,6 +72,8 @@ sealed trait Value {
 
   def source: Any
 }
+
+trait ValueMaker extends (Any => Try[Value])
 
 /**
   * Value which is natively an Int. Such a value can be converted to Double by invoking asValuable[Double]
@@ -243,9 +245,7 @@ object DateValue {
 }
 
 object SequenceValue {
-  def apply(xs: Seq[Any]): SequenceValue = {
-    SequenceValue(Value.sequence(xs),xs)
-  }
+  def apply(xs: Seq[Any])(implicit conv: ValueMaker): SequenceValue = SequenceValue(Value.sequence(xs)(conv), xs)
 }
 
 object Value {
@@ -263,6 +263,12 @@ object Value {
 
   implicit def apply(x: LocalDate): Value = DateValue(x, x)
 
+  implicit def apply(xs: Seq[Any]): Value = SequenceValue(xs)
+
+  implicit val standardConverter = new ValueMaker {
+    override def apply(x: Any): Try[Value] = tryValue(x)
+  }
+
   /**
     * Method to convert any of several types of object into a Value
     *
@@ -275,21 +281,20 @@ object Value {
     case d: Double => Try(apply(d))
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
+    case xs: Seq[Any] => Try(apply(xs))
     // XXX shouldn't really need the following...
     case v: Value => Success(v)
     case _ => Failure(new ValueException(s"cannot form Value from type ${x.getClass}"))
   }
 
   /**
-    * Transform a sequence of Strings into a Sequence of corresponding Values
+    * Transform a sequence of Anys into a sequence of corresponding Values
     *
-    * @param ws a sequence of Strings
+    * @param ws a sequence of Anys
     * @return a sequence of Values
     */
-  def sequence(ws: Seq[Any]): Seq[Value] = {
-    FP.sequence(ws map {
-      tryValue(_)
-    }) match {
+  def sequence(ws: Seq[Any])(implicit conv: ValueMaker): Seq[Value] = {
+    trySequence(ws)(conv) match {
       case Success(as) => as
       case Failure(x) => throw new ValueException(s"cannot form sequence of Values from given sequence $ws", x)
     }
@@ -304,8 +309,8 @@ object Value {
     * @tparam K the key type
     * @return a map of Values
     */
-  def sequence[K](kWm: Map[K, Any]): Map[K, Value] = {
-    val vtKs = (for ((k, v) <- kWm) yield (k, tryValue(v))).toSeq
+  def sequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Map[K, Value] = {
+    val vtKs = (for ((k, v) <- kWm) yield (k, conv(v))).toSeq
     FP.sequence(for ((k, vt) <- vtKs) yield for (v <- vt) yield (k, v)) match {
       case Success(m) => m.toMap
       case Failure(x) => throw new ValueException(s"cannot form sequence of Values from given sequence", x)
@@ -313,23 +318,22 @@ object Value {
   }
 
   /**
-    * Transform a sequence of Strings into a Sequence of corresponding Values
+    * Transform a sequence of Anys into a Sequence of corresponding Values
     *
-    * @param ws a sequence of Strings
+    * @param ws a sequence of Anys
     * @return a sequence of Values
     */
-  def trySequence(ws: Seq[Any]): Try[Seq[Value]] = FP.sequence(ws map {
-    Value.tryValue(_)})
+  def trySequence(ws: Seq[Any])(implicit conv: ValueMaker): Try[Seq[Value]] = FP.sequence(ws map {conv(_)})
 
   /**
-    * Transform a Map of Strings into a Map of corresponding Values
+    * Transform a Map of K,Any into a Map of corresponding K,Value
     *
-    * @param kWm a map of Strings
+    * @param kWm a map of K,Any
     * @tparam K the key type
     * @return a map of Values
     */
-  def trySequence[K](kWm: Map[K, Any]): Try[Map[K, Value]] = for (
-    kVs <- FP.sequence((for ((k,v) <- kWm) yield for (z <- Value.tryValue(v)) yield (k, z)).toSeq)
+  def trySequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Try[Map[K, Value]] = for (
+    kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 
   val quoted = """"([^"]*)"""".r

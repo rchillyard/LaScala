@@ -54,6 +54,14 @@ trait Cache[K, V, M[_]] extends (K => V) {
   def clear()
 }
 
+/**
+  * This trait defines the mechanism for expiring a value from the cache, that's to say the removal of the value.
+  * It doesn't say anything about scheduling an expiration.
+  *
+  * CONSIDER renaming this trait to MutableCache, or some such name.
+  *
+  * @tparam K
+  */
 trait Expiring[K] {
 
   /**
@@ -371,7 +379,7 @@ object Wrapper {
 
     def get[V](m: Try[V]): V = m.get
   }
-  // XXX The following may look unnecessary -- and will be removed by Organize Imports. But we do need it!
+  // XXX The following import of Implicits.global may look unnecessary -- and will be removed by Organize Imports. But we do need it!
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
 

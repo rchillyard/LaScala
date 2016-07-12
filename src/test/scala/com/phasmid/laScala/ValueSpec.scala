@@ -109,6 +109,14 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     for (vs <- x.asSequence) yield vs.size shouldBe 3
   }
+  it should "work with embedded sequence" in {
+    val xs = Seq("2016-07-10", 1, """Hello""", List(1, 2))
+    implicit val pattern = ""
+    val x: SequenceValue = SequenceValue(xs)
+    x.source shouldBe xs
+    x.asBoolean should matchPattern { case None => }
+    for (vs <- x.asSequence) yield vs.size shouldBe 4
+  }
   "attribute map" should "work" in {
     val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "b" -> Value(true), "1.0" -> Value(1.0))
     val xos = for ((k, v) <- m) yield v.asValuable[Double]
