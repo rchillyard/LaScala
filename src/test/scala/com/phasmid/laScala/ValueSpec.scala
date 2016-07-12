@@ -11,6 +11,13 @@ import scala.util.{Success, Try}
   * @author scalaprof
   */
 class ValueSpec extends FlatSpec with Matchers with Inside {
+
+  case class YMD(y: Int, m: Int, d: Int)
+
+  object YMD {
+    implicit def convertToValue(y: YMD): Value = DateValue(y.y, y.m, y.d)
+  }
+
   "BooleanValue" should "work" in {
     val x = Value(true)
     x.source shouldBe true
@@ -117,6 +124,18 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     for (vs <- x.asSequence) yield vs.size shouldBe 4
   }
+  it should "work with sequence of YMD" in {
+    implicit val valueMaker: ValueMaker = new ValueMaker {
+      def value(x: Any): Try[Value] = x match {
+        case y: YMD => Success(y)
+        case _ => Value.tryValue(x)
+      }
+    }
+    val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
+    implicit val pattern = ""
+    val x = Value.sequence(xs)
+    for (vs <- x.asSequence) yield vs.size shouldBe 14
+  }
   "attribute map" should "work" in {
     val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "b" -> Value(true), "1.0" -> Value(1.0))
     val xos = for ((k, v) <- m) yield v.asValuable[Double]
@@ -133,6 +152,19 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     xs.size shouldBe 2
     xs.head shouldBe 1
     xs.tail.head shouldBe 1.0
+  }
+  it should "work with sequence of YMD" in {
+    implicit val valueMaker: ValueMaker = new ValueMaker {
+      def value(x: Any): Try[Value] = x match {
+        case y: YMD => Success(y)
+        case _ => Value.tryValue(x)
+      }
+    }
+    val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
+    val wWm = Map("expirations" -> xs)
+    implicit val pattern = ""
+    val x = Value.sequence(wWm)
+    for (vs <- x.values; v <- vs.asSequence) yield v.size shouldBe 14
   }
   "sequence" should "work when given raw strings" in {
     val ws = List("k", "1", "1.0")

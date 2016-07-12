@@ -73,7 +73,16 @@ sealed trait Value {
   def source: Any
 }
 
-trait ValueMaker extends (Any => Try[Value])
+trait ValueMaker extends (Any => Try[Value]) {
+  def apply(a: Any) = a match {
+    case as: Seq[Any] => for (vs <- sequence(as)) yield SequenceValue(vs, as)
+    case a => value(a)
+  }
+
+  def value(a: Any): Try[Value]
+
+  def sequence(as: Seq[Any]): Try[Seq[Value]] = FP.sequence(as map { apply(_) })
+}
 
 /**
   * Value which is natively an Int. Such a value can be converted to Double by invoking asValuable[Double]
@@ -266,7 +275,7 @@ object Value {
   implicit def apply(xs: Seq[Any]): Value = SequenceValue(xs)
 
   implicit val standardConverter = new ValueMaker {
-    override def apply(x: Any): Try[Value] = tryValue(x)
+    def value(x: Any): Try[Value] = tryValue(x)
   }
 
   /**
@@ -323,7 +332,7 @@ object Value {
     * @param ws a sequence of Anys
     * @return a sequence of Values
     */
-  def trySequence(ws: Seq[Any])(implicit conv: ValueMaker): Try[Seq[Value]] = FP.sequence(ws map {conv(_)})
+  def trySequence(ws: Seq[Any])(implicit conv: ValueMaker): Try[Seq[Value]] = conv.sequence(ws)
 
   /**
     * Transform a Map of K,Any into a Map of corresponding K,Value
