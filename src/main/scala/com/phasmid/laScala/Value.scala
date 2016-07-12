@@ -11,6 +11,9 @@ import scala.util._
 /**
   * Trait Value.
   *
+  * The purpose of this trait is to be able to represent quantities -- things that have some ordered (and/or numerical)
+  * value -- (or sequences of quantities) in a more meaningful way than simply using "Any".
+  *
   * This trait defines five methods: source, asBoolean, asValuable, asOrderable, asSequence.
   *
   * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
@@ -89,7 +92,8 @@ case class IntValue(x: Int, source: Any) extends Value {
 }
 
 /**
-  * Value which is natively an Int. Such a value can be converted to Double by invoking asValuable[Double]
+  * Value which is natively a Boolean. Such a value can be converted to Int by invoking asValuable[Int] in which case
+  * the result will be 1 for true and 0 for false.
   *
   * @param x      the Int value
   * @param source the source (which could, conceivably, be a String)
@@ -97,7 +101,7 @@ case class IntValue(x: Int, source: Any) extends Value {
 case class BooleanValue(x: Boolean, source: Any) extends Value {
   def asBoolean: Option[Boolean] = Some(x)
 
-  def asValuable[X: Valuable]: Option[X] = None
+  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
@@ -107,7 +111,7 @@ case class BooleanValue(x: Boolean, source: Any) extends Value {
 }
 
 /**
-  * Value which is natively an Double. Such a value cannot be converted to Int by invoking asValuable[Int] because of
+  * Value which is natively a Double. Such a value cannot be converted to Int by invoking asValuable[Int] because of
   * loss of precision.
   *
   * @param x      the Double value
@@ -116,8 +120,9 @@ case class BooleanValue(x: Boolean, source: Any) extends Value {
 case class DoubleValue(x: Double, source: Any) extends Value {
   def asBoolean: Option[Boolean] = None
 
-  // XXX this gives us the effect we want -- but is it right?
-  // We really should try to convert an Double to an Int, for example, and test there is no information loss.
+  // XXX this gives us the effect we want -- conversion to Double but not, e.g. Int.
+  // However, it is not elegant.
+  // We really should try to convert a Double to an Int, for example, and test there is no information loss.
   def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
@@ -128,7 +133,7 @@ case class DoubleValue(x: Double, source: Any) extends Value {
 }
 
 /**
-  * Value which is natively an String. Such a value, providing it is formatted appropriately, can be converted to Int or
+  * Value which is natively a String. Such a value, providing it is formatted appropriately, can be converted to Int or
   * Double by invoking asValuable[Int] or asValuable[Double], respectively.
   *
   * @param x      the String value
@@ -147,7 +152,7 @@ case class StringValue(x: String, source: Any) extends Value {
 }
 
 /**
-  * Value which is natively an String. Such a value, cannot be converted to Int or
+  * Value which is natively a String. Such a value cannot be converted to Int or
   * Double by invoking asValuable.
   *
   * @param x      the String value
@@ -159,7 +164,7 @@ case class QuotedStringValue(x: String, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = None
 
   // TODO create a concrete implicit object for OrderableString
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
   // CONSIDER creating a sequence of Char?
   def asSequence: Option[Seq[Value]] = None

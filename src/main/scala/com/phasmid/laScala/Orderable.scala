@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.FP.optionToTry
 
-import scala.util.Try
+import scala.util.{Success, Try}
 
 /**
   * Type class Orderable.
@@ -29,6 +29,18 @@ trait Orderable[X] extends Ordering[X] {
 
 object Orderable {
 
+  implicit object OrderableString extends Orderable[String] {
+    override def unit(x: String): String = x
+
+    override def viaLookup(s: String, f: (String) => Option[String]): Try[String] = optionToTry(f(s), new OrderableException(s"$s is not defined"))
+
+    override def fromString(s: String)(implicit pattern: String): Try[String] = Success(s)
+
+    override def zero: String = ""
+
+    override def compare(x: String, y: String): Int = x.compareTo(y)
+  }
+
   implicit object OrderableDate extends Orderable[LocalDate] {
     override def unit(x: LocalDate): LocalDate = x
 
@@ -43,8 +55,6 @@ object Orderable {
     val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     def formatter(s: String) = DateTimeFormatter.ofPattern(s)
-
-    //    override def compare(that: LocalDate): Int = compareTo(that)
   }
 
   implicit object OrderableIntInt extends Orderable[(Int, Int)] {

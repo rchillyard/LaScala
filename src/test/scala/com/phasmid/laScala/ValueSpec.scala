@@ -15,8 +15,8 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val x = Value(true)
     x.source shouldBe true
     x.asBoolean should matchPattern { case Some(true) => }
-    x.asValuable[Int] should matchPattern { case None => }
-    x.asValuable[Double] should matchPattern { case None => }
+    x.asValuable[Int] should matchPattern { case Some(1) => }
+    x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
   it should "work implicitly" in {
     val x: Value = true
@@ -110,10 +110,10 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     for (vs <- x.asSequence) yield vs.size shouldBe 3
   }
   "attribute map" should "work" in {
-    val m: Map[String, Value] = Map("k" -> Value("k"), "b" -> Value(true), "1" -> Value(1), "1.0" -> Value(1.0))
+    val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "b" -> Value(true), "1.0" -> Value(1.0))
     val xos = for ((k, v) <- m) yield v.asValuable[Double]
     val xs = xos.flatten
-    xs.size shouldBe 2
+    xs.size shouldBe 3
     xs.head shouldBe 1
     xs.tail.head shouldBe 1.0
   }

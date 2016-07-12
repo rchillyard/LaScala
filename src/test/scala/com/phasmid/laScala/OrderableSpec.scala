@@ -1,6 +1,6 @@
 package com.phasmid.laScala
 
-import com.phasmid.laScala.Orderable.OrderableDate
+import com.phasmid.laScala.Orderable.{OrderableDate, OrderableString}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Success
@@ -9,6 +9,11 @@ import scala.util.Success
   * @author scalaprof
   */
 class OrderableSpec extends FlatSpec with Matchers {
+  "2016-01-01" should "result in OrderableString" in {
+    implicit val pattern = ""
+    val dt = OrderableString.unit("2016-01-01")
+    dt shouldBe "2016-01-01"
+  }
   "2016-01-01" should "result in date" in {
     implicit val pattern = ""
     val dt = OrderableDate.fromString("2016-01-01")
