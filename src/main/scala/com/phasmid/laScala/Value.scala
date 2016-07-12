@@ -245,18 +245,18 @@ object SequenceValue {
 
 object Value {
 
-  def apply(x: Boolean) = BooleanValue(x)
+  implicit def apply(x: Boolean): Value = BooleanValue(x)
 
-  def apply(x: Int) = IntValue(x)
+  implicit def apply(x: Int): Value = IntValue(x)
 
-  def apply(x: Double) = DoubleValue(x, x)
+  implicit def apply(x: Double): Value = DoubleValue(x, x)
 
-  def apply(x: String) = x match {
+  implicit def apply(x: String): Value = x match {
     case quoted(z) => QuotedStringValue(z, x)
     case _ => StringValue(x, x)
   }
 
-  def apply(x: LocalDate) = DateValue(x, x)
+  implicit def apply(x: LocalDate): Value = DateValue(x, x)
 
   /**
     * Method to convert any of several types of object into a Value

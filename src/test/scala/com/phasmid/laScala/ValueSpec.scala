@@ -18,6 +18,10 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
+  it should "work implicitly" in {
+    val x: Value = true
+    x shouldBe BooleanValue(true)
+  }
   "IntValue" should "work" in {
     val x = Value(1)
     x.source shouldBe 1
@@ -25,12 +29,20 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
+  it should "work implicitly" in {
+    val x: Value = 1
+    x shouldBe IntValue(1)
+  }
   "StringValue" should "be Some where string is numeric" in {
     val x = Value("1")
     x.source shouldBe "1"
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
+  }
+  it should "work implicitly" in {
+    val x: Value = "1"
+    x shouldBe StringValue("1")
   }
   it should "be None where string is not numeric" in {
     val x = Value("X")
@@ -53,6 +65,10 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
+  it should "work implicitly" in {
+    val x: Value = """"1""""
+    x shouldBe QuotedStringValue("1",""""1"""")
+  }
   it should "be unquoted when created from apply" in {
     val x = Value(""""1"""")
     x.toString shouldBe """"1""""
@@ -68,6 +84,10 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
+  it should "work implicitly" in {
+    val x: Value = 1.0
+    x shouldBe DoubleValue(1.0)
+  }
   "DateValue" should "work" in {
     implicit val pattern = ""
     val x = DateValue("2016-07-10")
@@ -76,6 +96,10 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
     x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+  }
+  it should "work implicitly" in {
+    val x: Value = LocalDate.of(2016, 7, 10)
+    x shouldBe DateValue(LocalDate.of(2016, 7, 10))
   }
   "SequenceValue" should "work" in {
     val xs = Seq("2016-07-10", 1, """Hello""")

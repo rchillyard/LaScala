@@ -4,6 +4,8 @@ import java.io.{File, InputStream}
 import java.net.URI
 
 import com.phasmid.laScala.{FP, Trial, Tuples}
+
+// For now, until we can convert to Java8 datetimes
 import org.joda.time._
 import org.joda.time.format._
 
@@ -25,7 +27,7 @@ import scala.util.parsing.combinator._
   * Please see inline method documentation for details of other methods.
   *
   * @author scalaprof
-  * @param < X>
+  * @tparam X
   */
 trait ProductStream[X <: Product] {
   /**
