@@ -76,7 +76,7 @@ sealed trait Value {
 trait ValueMaker extends (Any => Try[Value]) {
   def apply(a: Any) = a match {
     case as: Seq[Any] => for (vs <- sequence(as)) yield SequenceValue(vs, as)
-    case a => value(a)
+    case x => value(x)
   }
 
   def value(a: Any): Try[Value]
