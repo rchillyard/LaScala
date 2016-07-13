@@ -1,5 +1,7 @@
 package com.phasmid.laScala
 
+import java.time.LocalDate
+
 import com.phasmid.laScala.parser._
 import com.phasmid.laScala.predicate.Func
 import org.scalatest.{FlatSpec, Matchers}
@@ -179,4 +181,33 @@ class RuleSpec extends FlatSpec with Matchers {
       case Failure(x) => fail(x); Truth(false)
     }
   }
+  "Orderable rule" should "be true" in {
+    implicit val pattern = ""
+    val dates: Map[String, Any] = Map("x" -> "2016-07-13", "z" -> "2015-07-31")
+    val values: Map[String, Value] = Value.sequence(dates)
+    val variables = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
+    val rlt: Try[RuleLike] = new RuleParser().parseRule("x > $z")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    val qt: Try[Rule[LocalDate]] = Rule.convertFromStringRuleToOrderableRule(rt, variables.apply)
+    qt match {
+      case Success(q) =>
+        q() should matchPattern { case Success(true) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
+  }
+  it should "be false" in {
+    implicit val pattern = "MMM dd, yyyy"
+    val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
+    val values: Map[String, Value] = Value.sequence(dates)
+    val variables = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
+    val rlt: Try[RuleLike] = new RuleParser().parseRule("x < $z")
+    val rt: Try[Rule[String]] = for (r <- rlt) yield r.asRule
+    val qt: Try[Rule[LocalDate]] = Rule.convertFromStringRuleToOrderableRule[LocalDate](rt, variables.apply)
+    qt match {
+      case Success(q) =>
+        q() should matchPattern { case Success(false) => }
+      case Failure(x) => fail(x); Truth(false)
+    }
+  }
+
 }

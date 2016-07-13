@@ -166,6 +166,13 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val x = Value.sequence(wWm)
     for (vs <- x.values; v <- vs.asSequence) yield v.size shouldBe 14
   }
+  it should "work with real dates" in {
+    implicit val pattern = "MMM dd, yyyy"
+    val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
+    val values: Map[String, Value] = Value.sequence(dates)
+    val variables: Map[String, Option[LocalDate]] = (for ((k, v) <- values) yield (k, v.asOrderable[LocalDate]))
+    variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
+  }
   "sequence" should "work when given raw strings" in {
     val ws = List("k", "1", "1.0")
     val vs = Value.sequence(ws)

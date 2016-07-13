@@ -1,40 +1,55 @@
 package com.phasmid.laScala.parser.rpn
 
-import com.phasmid.laScala.FP
 import com.phasmid.laScala.parser.Valuable
+import com.phasmid.laScala.{FP, RuleException}
 
 import scala.language.implicitConversions
 import scala.util._
 
+trait Evaluable[X] {
+  def evaluate: Try[X]
+}
+
 sealed trait Token[X]
 
-case class Constant[X: Valuable](xt: Try[X]) extends Token[X]
+case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] {
+  def evaluate: Try[X] = xt
+}
 
-case class Number[X: Valuable](n: String) extends Token[X]
+case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
+  // TODO move this into implicit parameter
+  implicit val pattern = ""
+
+  def evaluate: Try[X] = implicitly[Valuable[X]].fromString(n)
+}
 
 case class Monadic[X: Valuable](f: X => Try[X]) extends Token[X]
 
 case class Dyadic[X: Valuable](f: (X, X) => Try[X]) extends Token[X]
 
-case class Invalid[X](t: Throwable) extends Token[X]
+case class Invalid[X](t: Throwable) extends Token[X] with Evaluable[X] {
+  def evaluate: Try[X] = Failure(t)
+}
 
 /**
   * Created by scalaprof on 6/13/16.
   */
-case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] {
+case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluable[X] {
+
   def push(t: Token[X]) = RPN(t :: stack)
 
   def evaluate: Try[X] = {
+    // TODO move this into implicit parameter
+    implicit val pattern = ""
     val (xt, xts) = inner(stack)
     if (xts.isEmpty) xt
     else Failure[X](new Exception(s"logic error: remaining values: $xts"))
   }
 
-  private def inner(xts: List[Token[X]]): (Try[X], List[Token[X]]) = xts match {
+  private def inner(xts: List[Token[X]])(implicit pattern: String): (Try[X], List[Token[X]]) = xts match {
     case Nil =>
-      (Failure(new Exception("token list is empty")), xts)
+      (Failure(new RuleException("token list is empty")), xts)
     case Number(s) :: r0 =>
-      implicit val pattern = ""
       (implicitly[Valuable[X]].fromString(s), r0)
     case Constant(x) :: r0 =>
       (x, r0)
@@ -48,12 +63,13 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] {
     case Invalid(t) :: r0 =>
       (Failure(t), r0)
     case _ =>
-      (Failure(new Exception(s"token list is invalid: $xts")), xts)
+      (Failure(new RuleException(s"token list is invalid: $xts")), xts)
   }
 }
 
 object Token {
   def apply[X: Valuable](s: String)(implicit lookup: String => Option[X]): Token[X] = {
+    // CONSIDER checking orderableToken first
     val n: Valuable[X] = implicitly[Valuable[X]]
     val floatingR = """(-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?)""".r
     val lookupR = """\$(\w+)""".r
@@ -89,7 +105,7 @@ object Token {
       case "toDegrees" => Monadic[X](n.function1(math.toDegrees)(_))
       case "toRadians" => Monadic[X](n.function1(math.toRadians)(_))
       case "pi" => Constant[X](n.function0(math.Pi))
-      case _ => Invalid(new Exception(s"invalid token: $s"))
+      case _ => Invalid(new RuleException(s"invalid token: $s"))
     }
   }
 }

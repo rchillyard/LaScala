@@ -2,7 +2,7 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.FP._
 import com.phasmid.laScala.parser.Valuable
-import com.phasmid.laScala.parser.rpn.RPN
+import com.phasmid.laScala.parser.rpn.{Comparand, RPN}
 
 import scala.util.{Failure, Success, Try}
 
@@ -245,10 +245,19 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
 
 object Rule {
   def convertFromStringRuleToValuableRule[X: Valuable](rt: Try[Rule[String]], lookup: String => Option[X]): Try[Rule[X]] = {
-    val stringToInt: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
+    val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
     val evaluateExpression: (String) => Try[X] = { s => RPN.evaluate[X](s) }
-    for (r <- rt; z <- r liftTransform(stringToInt, evaluateExpression)) yield z
+    for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
+  }
+
+  def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit pattern: String): Try[Rule[X]] = {
+    val orderable = implicitly[Orderable[X]]
+    val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
+    implicit val f = lookup
+    implicit val pattern = ""
+    val evaluateExpression: (String) => Try[X] = { s => Comparand.evaluate[X](s) }
+    for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
   }
 
   def lift[T, U](f: T => U): T => Try[U] = { t => Try(f(t)) }

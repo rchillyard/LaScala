@@ -14,3 +14,15 @@ of the more basic definitions for things like map2, lift, sequence, etc. then th
 The rules parser, begun by Phasmid, has been further developed by Dataflowage (www.dataflowage.com).
 Please contact us if you are interested in developing the rules -- or any Spark-, or Big Data-related work.
 There is no "engine" aspect to this rules parser: neither forward nor backward chaining.
+
+The name, while obviously embedding the name of its implementation language, is also
+in honor of the world's greatest opera house, [La Scala di Milano](https://en.wikipedia.org/wiki/La_Scala).
+La Scala was the venue for the premieres of many of the greatest operas (in no particular order):
+
+* Madama Butterfly
+* La gazza ladra
+* Nabucco
+* Falstaff
+* Norma
+* Turandot
+
