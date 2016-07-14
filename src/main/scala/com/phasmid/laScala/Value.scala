@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter
 import com.phasmid.laScala.Orderable.OrderableDate
 import com.phasmid.laScala.parser.Valuable
 
+import scala.language.implicitConversions
 import scala.util._
 
 /**
@@ -319,6 +320,7 @@ object Value {
     * @return a map of Values
     */
   def sequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Map[K, Value] = {
+    // CONSIDER using mapValues
     val vtKs = (for ((k, v) <- kWm) yield (k, conv(v))).toSeq
     FP.sequence(for ((k, vt) <- vtKs) yield for (v <- vt) yield (k, v)) match {
       case Success(m) => m.toMap
@@ -342,6 +344,7 @@ object Value {
     * @return a map of Values
     */
   def trySequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Try[Map[K, Value]] = for (
+  // CONSIDER using mapValues
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 

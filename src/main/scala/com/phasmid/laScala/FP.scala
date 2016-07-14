@@ -344,7 +344,7 @@ object FP {
     */
   def named[T, R](name: String, f: T => R) = new ((T) => R) {
     def apply(v1: T): R = {
-      println(s"applying $name to $v1");
+      println(s"applying $name to $v1")
       f(v1)
     }
 

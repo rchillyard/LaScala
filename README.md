@@ -23,6 +23,8 @@ La Scala was the venue for the premieres of many of the greatest operas (in no p
 * La gazza ladra
 * Nabucco
 * Falstaff
+* Andrea Chenier
 * Norma
 * Turandot
+* Otello
 

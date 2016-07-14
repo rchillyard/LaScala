@@ -27,7 +27,7 @@ import scala.util.parsing.combinator._
   * Please see inline method documentation for details of other methods.
   *
   * @author scalaprof
-  * @tparam X
+  * @tparam X the underlying type of this product stream: must be a sub-type of Product, that's to say, a Tuple or something similar
   */
 trait ProductStream[X <: Product] {
   /**
@@ -172,7 +172,7 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String]) extends T
   * Case class which implements ProductStream where the header and tuples are specified indirectly, by providing
   * a parser and Stream[String] such that the element types of the resulting tuples will be Strings.
   *
-  * @param X a Tuple which should correspond with the number of values (all types of the tuple should be String).
+  * @tparam X a Tuple which should correspond with the number of values (all types of the tuple should be String).
   */
 case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String]) extends TupleStreamBase[X](parser, input) {
   def tuples = input.tail map stringToTuple { x => Success(x) }

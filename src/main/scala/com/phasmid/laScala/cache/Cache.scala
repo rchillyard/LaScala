@@ -8,50 +8,23 @@ import scala.util.{Failure, Success, Try}
 
 /**
   * This trait defines a cache (aka memoization) of K,V key-value pairs.
-  * It extends Function1[K,V].
+  * It extends Function1[K,V] so that the apply() method takes a K as parameter and results in a V.
   * If you call the apply method on the cache, it may throw an exception if it is unable to fulfill the value for the given key.
   *
   * @tparam K they key type
   * @tparam V the value type
+  * @tparam M the container type of the result of calling the get method
   */
 trait Cache[K, V, M[_]] extends (K => V) {
 
-  //  /**
-  //    * The type of the value returned by get. This could be Option[V], Try[V] or Future[V].
-  //    */
-  //  type T
-  //
   /**
-    * Method to get the value corresponding to key k as a T
+    * Method to get the value corresponding to key k as a M[V].
+    * This is the "normal" method to be used to lookup values in the cache.
     *
     * @param k the key we are interested in
     * @return the value wrapped as a T
     */
   def get(k: K): M[V]
-
-  /**
-    * Method to return the currently cached values as an immutable Map.
-    * CONSIDER moving this method into the abstract class
-    *
-    * @return
-    */
-  def asMap: Map[K, V]
-
-  /**
-    * Method to determine if this cache contains the key k
-    * CONSIDER moving this method into the abstract class or eliminating altogether since asMap.contains will yield the answer.
-    *
-    * @param k the key
-    * @return true if this cache contains k else false
-    */
-  def contains(k: K): Boolean
-
-  /**
-    * Method to clear the cache such that there are absolutely no stale entries.
-    * Calling clear does NOT refresh the cache as currently programmed.
-    * Thus clear never causes the evaluationFunc method to be invoked.
-    */
-  def clear()
 }
 
 /**
@@ -60,7 +33,7 @@ trait Cache[K, V, M[_]] extends (K => V) {
   *
   * CONSIDER renaming this trait to MutableCache, or some such name.
   *
-  * @tparam K
+  * @tparam K the key for this expiring object
   */
 trait Expiring[K] {
 
@@ -177,7 +150,8 @@ abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluatio
 abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends Cache[K, V, M] with Mappish[K, V, M] with Fulfilling[K, V, M] {
 
   /**
-    * Return a V value for the given K value
+    * Return a V value for the given K value. This method is not normally called by users of a cache
+    * as it could result in an exception being thrown. Use get instead.
     *
     * @param k the K value we are interested in
     * @return the corresponding V value
@@ -187,19 +161,16 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   def mutableMap = m
 
   /**
-    * Method to unwrap a value of type T.
+    * Method to unwrap a value of type M[V].
     *
-    * TODO figure out a way to avoid having to use asInstanceOf
-    *
-    * @param t the T value, which should be the same as an M[V] value
+    * @param vm the M[V] value to be unwrapped
     * @return the unwrapped V value
     */
-  def unwrap(t: M[V]): V = m.wrapper.get(t.asInstanceOf[M[V]])
+  def unwrap(vm: M[V]): V = m.wrapper.get(vm)
 
   def evaluate(k: K): M[V] = evaluationFunc(k)
 
   override def toString = m.toString
-
 }
 
 /**
@@ -298,13 +269,19 @@ abstract class FutureFulfillingExpiringCache[K, V](evaluationFunc: K => Future[V
 }
 
 object Cache {
-  implicit def carper(s: String): Unit = println(s)
+  /**
+    * Default implementation of carper is to do nothing.
+    *
+    * @param s the message to carp about
+    */
+  implicit def carper(s: String): Unit = {}
 }
 
 /**
   * This trait defines a Wrapper of values.
   *
   * @tparam M represents a container (which is a monad) that we wish to wrap our values in.
+  *           M is also considered a "higher-kinded type."
   */
 trait Wrapper[M[_]] {
   /**
@@ -379,7 +356,8 @@ object Wrapper {
 
     def get[V](m: Try[V]): V = m.get
   }
-  // XXX The following import of Implicits.global may look unnecessary -- and will be removed by Organize Imports. But we do need it!
+  // XXX The following import of scala.concurrent.ExecutionContext.Implicits.global may look unnecessary --
+  // and will be removed by Organize Imports. But we do need it!
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
 
@@ -388,8 +366,13 @@ object Wrapper {
 }
 
 /**
+  * Abstract base class CacheMap which is a subclass of mutable.HashMap with the same key, value types
+  * but with an additional parametric type: M (the wrapper/container type).
   *
-  * @param wrapper
+  * The reason for extending HashMap (rather than using it directly) is that we need to define a variant
+  * of getOrElseUpdate.
+  *
+  * @param wrapper (implicit) a wrapper which is used to create an M[V] object
   * @tparam K key type
   * @tparam V value type
   * @tparam M a container which is a monad, such as Option, Future, Try.
@@ -405,7 +388,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.Has
     * @param f the function which is called to fulfill the value if it doesn't already exist
     * @return an M[V]
     */
-  def getOrElseUpdateX(k: K, f: K => M[V]): M[V] = {
+  def getOrElseUpdateM(k: K, f: K => M[V]): M[V] = {
     def doUpdate(v: V): M[V] = {
       self.put(k, v); wrapper.unit(v)
     }
@@ -475,7 +458,7 @@ trait Fulfilling[K, V, M[_]] extends Mappish[K, V, M] {
     * @param k the key of the element which we wish to get
     * @return the value wrapped as a T
     */
-  def get(k: K): M[V] = mutableMap.getOrElseUpdateX(k, fulfill _)
+  def get(k: K): M[V] = mutableMap.getOrElseUpdateM(k, fulfill _)
 
   /**
     * Fulfill the key k as an M[V]
@@ -501,5 +484,3 @@ trait Fulfilling[K, V, M[_]] extends Mappish[K, V, M] {
     */
   def postFulfillment(k: K, v: V): Unit
 }
-
-

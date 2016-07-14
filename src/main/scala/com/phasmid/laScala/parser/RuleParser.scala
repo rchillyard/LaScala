@@ -185,7 +185,7 @@ class RuleParser extends JavaTokenParsers {
 
     def asString = ts.foldLeft(t.toString)(_ + _.toString)
 
-    def asQuotedString: Option[String] = if (ts.size == 0) t.asQuotedString else None
+    def asQuotedString: Option[String] = if (ts.isEmpty) t.asQuotedString else None
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
@@ -200,7 +200,7 @@ class RuleParser extends JavaTokenParsers {
 
     def asString = fs.foldLeft(f.toString)(_ + _.toString)
 
-    def asQuotedString: Option[String] = if (fs.size == 0) f.asQuotedString else None
+    def asQuotedString: Option[String] = if (fs.isEmpty) f.asQuotedString else None
   }
 
   /**
