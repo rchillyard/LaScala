@@ -104,7 +104,7 @@ object Token {
       case "tanh" => Monadic[X](n.function1(math.tanh)(_))
       case "toDegrees" => Monadic[X](n.function1(math.toDegrees)(_))
       case "toRadians" => Monadic[X](n.function1(math.toRadians)(_))
-      case "pi" => Constant[X](n.function0(math.Pi))
+      case "pi" => Constant[X](n.function0({ () => math.Pi }))
       case _ => Invalid(new RuleException(s"invalid token: $s"))
     }
   }
