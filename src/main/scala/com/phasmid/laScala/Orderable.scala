@@ -17,13 +17,37 @@ import scala.util.{Success, Try}
   * CONSIDER extending Ordered instead of Ordering
   */
 trait Orderable[X] extends Ordering[X] {
-  // CONSIDER make unit return Try[X]
+  /**
+    * Method to introduce an X value from an X.
+    * Yes, I know this seems nonsensical but it is necessary.
+    *
+    * @param x the value to be introduced
+    * @return x as an X
+    *         CONSIDER make unit return Try[X]
+    */
   def unit(x: X): X
 
+  /**
+    * Method to introduce an X value from a String.
+    * @param s
+    * @param pattern (implicit) the pattern (template) of the String, for example, when parsing a date string, do we put year, month or day first?
+    * @return a Try[X]
+    */
   def fromString(s: String)(implicit pattern: String): Try[X]
 
-  def viaLookup(s: String, f: String => Option[X]): Try[X]
+  /**
+    * Method to introduce an X value from a String.
+    * @param k the key to be looked up
+    * @param f the lookup function. Typically, this will be the get function of a Map[String,X]
+    * @return a Try[X]
+    */
+  def viaLookup(k: String, f: String => Option[X]): Try[X]
 
+  /**
+    * The identity for addition.
+    *
+    * @return zero as an X
+    */
   def zero: X
 }
 
