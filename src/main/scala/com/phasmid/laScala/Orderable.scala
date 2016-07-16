@@ -36,7 +36,7 @@ trait Orderable[X] extends Ordering[X] {
   def fromString(s: String)(implicit pattern: String): Try[X]
 
   /**
-    * Method to introduce an X value from a String.
+    * Method to introduce an X value from a String key, given a lookup function.
     * @param k the key to be looked up
     * @param f the lookup function. Typically, this will be the get function of a Map[String,X]
     * @return a Try[X]
