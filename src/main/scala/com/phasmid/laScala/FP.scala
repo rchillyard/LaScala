@@ -158,23 +158,27 @@ object FP {
   def zip[A, B](ao: Future[A], bo: Future[B])(implicit ec: ExecutionContext): Future[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
 
   /**
-    * TODO unit test
+    * Convert an Option[X] into a Try[X], given an explicit throwable for the None case
     *
     * @param xo an X value wrapped in Option
-    * @param t  a throwable which will be returned if xo is None
+    * @param t  a throwable which, wrapped in Failure, will be returned if xo is None
     * @tparam X the underlying type of the input and the output
     * @return an X value wrapped as a Try
     */
-  def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = Try(xo.get).recoverWith { case e: java.util.NoSuchElementException => Failure(t) }
+  def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = {
+    val result = Try(xo.get)
+    if (t!=null) result.recoverWith { case e: java.util.NoSuchElementException => Failure(t) }
+    else result
+  }
 
   /**
-    * TODO unit test
+    * Convert an Option[X] into a Try[X], using the default throwable for the None case
     *
     * @param xo an X value wrapped in Option
     * @tparam X the underlying type of the input and the output
-    * @return an X value wrapped as a Try. If xo is None, then the result will be a NoSuchElementException
+    * @return an X value wrapped as a Try. If xo is None, then the result will be a NoSuchElementException wrapped in Failure
     */
-  def optionToTry[X](xo: Option[X]): Try[X] = Try(xo.get)
+  def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo,null)
 
   /**
     * TODO unit test
@@ -311,6 +315,22 @@ object FP {
     * @return the corresponding function which takes to Future[T] parameters and returns a Future[U]
     */
   def liftFuture[T, U](f: T => U)(implicit executor: ExecutionContext): Future[T] => Future[U] = _ map f
+
+  /**
+    * A true "lift" method which takes a function f (T=>U) and returns an Option[T]=>Try[T]
+    * This is a bit of an odd-ball function, not frequently used.
+    *
+    * @param f a function which transforms an T into a U
+    * @tparam T the T type
+    * @tparam U the U type
+    * @return the corresponding function which takes an Option[T] and returns a Try[U]
+    */
+  def liftOptionTry[T, U](f: T => U)(implicit ex: Throwable = null): Option[T] => Try[U] = {
+    xo: Option[T] =>
+      val result = for (x <- xo) yield f(x)
+      if (ex!=null) optionToTry(result, ex)
+      else optionToTry(result)
+  }
 
   implicit val limit = 25
 

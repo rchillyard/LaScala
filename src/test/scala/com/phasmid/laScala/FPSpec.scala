@@ -116,17 +116,32 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     optionToTry(map.get("a")) should matchPattern { case Success("A") => }
     optionToTry(map.get("x")) should matchPattern { case Failure(_) => }
   }
+  it should "succeed for Map with explicit throwable" in {
+    val map = Map("a" -> "A", "b" -> "B")
+    val t = new Exception("test")
+    optionToTry(map.get("a"),t) should matchPattern { case Success("A") => }
+    optionToTry(map.get("x"),t) should matchPattern { case Failure(`t`) => }
+  }
   // TODO what does this have to do with lift?
   "lift" should "succeed" in {
     def double(x: Int) = 2 * x
     Success(1) map double _ should matchPattern { case Success(2) => }
     Failure(new Exception("bad")) map double _ should matchPattern { case Failure(_) => }
   }
+
   "liftTry" should "succeed" in {
     def double(x: Int) = 2 * x
     val liftedDouble = liftTry(double)
     liftedDouble(Success(1)) should matchPattern { case Success(2) => }
     Failure(new Exception("bad")) map double _ should matchPattern { case Failure(_) => }
+  }
+
+  "liftOptionTry" should "succeed" in {
+    val map = Map("a" -> 1)
+    val convertStringToInt = map.apply _
+    val fOptionToTry = liftOptionTry(convertStringToInt)
+    fOptionToTry(Some("a")) should matchPattern { case Success(1) => }
+    fOptionToTry(None) should matchPattern { case Failure(_) => }
   }
 
   "map2" should "succeed" in {
