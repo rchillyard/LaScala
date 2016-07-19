@@ -56,6 +56,15 @@ sealed trait Value {
   def asOrderable[X: Orderable](implicit pattern: String): Option[X]
 
   /**
+    * Transform this Value into an (optional) X value which is Incrementable
+    *
+    * @tparam X the type of the result we desire
+    * @return either Some(x) if this value can be represented so, without information loss;
+    *         or None otherwise.
+    */
+  def asIncrementable[X: Incrementable](implicit pattern: String): Option[X]
+
+  /**
     * Transform this Value into an (optional) X value which is Valuable
     *
     * @tparam X the type of the result we desire
@@ -98,6 +107,8 @@ case class IntValue(x: Int, source: Any) extends Value {
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
+
   def asSequence: Option[Seq[Value]] = None
 
   override def toString = x.toString
@@ -116,6 +127,8 @@ case class BooleanValue(x: Boolean, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
+
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
 
   def asSequence: Option[Seq[Value]] = None
 
@@ -139,6 +152,8 @@ case class DoubleValue(x: Double, source: Any) extends Value {
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
+
   def asSequence: Option[Seq[Value]] = None
 
   override def toString = x.toString
@@ -157,6 +172,8 @@ case class StringValue(x: String, source: Any) extends Value {
   def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
+
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = implicitly[Incrementable[X]].fromString(x)(pattern).toOption
 
   def asSequence: Option[Seq[Value]] = None
 
@@ -178,6 +195,8 @@ case class QuotedStringValue(x: String, source: Any) extends Value {
   // TODO create a concrete implicit object for OrderableString
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
+
   // CONSIDER creating a sequence of Char?
   def asSequence: Option[Seq[Value]] = None
 
@@ -197,7 +216,10 @@ case class DateValue(x: LocalDate, source: Any) extends Value {
 
   def asValuable[X: Valuable]: Option[X] = None
 
+  // CONSIDER returning None here, because a Date value is inherently Incrementable
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
+
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Try(implicitly[Incrementable[X]].unit(x.asInstanceOf[X])).toOption
 
   def asSequence: Option[Seq[Value]] = None
 
@@ -218,6 +240,8 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = None
 
   def asValuable[X: Valuable]: Option[X] = None
+
+  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
 
   def asSequence: Option[Seq[Value]] = Some(xs)
 

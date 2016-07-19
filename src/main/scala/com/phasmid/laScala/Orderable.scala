@@ -65,6 +65,9 @@ object Orderable {
     override def compare(x: String, y: String): Int = x.compareTo(y)
   }
 
+  /**
+    * TODO OrderableDate should be retired and we should use IncrementableDate instead.
+    */
   implicit object OrderableDate extends Orderable[LocalDate] {
     override def unit(x: LocalDate): LocalDate = x
 
