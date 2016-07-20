@@ -2,7 +2,9 @@
 This package, developed by Phasmid Software and Dataflowage Inc. provides two different capabilities:
 
 * A very basic set of functional programming methods to complement what's in the standard Scala library;
-* A simple rules parser.
+* A rules parser;
+* A "Value" type which can be converted to several type classes: Valuable (similar to Numeric), Orderable, and Incrementable;
+* a set of self-fulfilling Cache classes.
 
 The functional programming definitions arose from teaching the class "Big Data Systems Engineering using Scala"
 at Northeastern University College of Engineering Graduate School.
