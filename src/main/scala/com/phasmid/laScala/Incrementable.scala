@@ -13,6 +13,7 @@ import scala.util.Try
   *
   * This combination of trait Incrementable and implicit objects comprises the "type class" Incrementable.
   *
+  * TODO move this into values package
   */
 trait Incrementable[X] extends Orderable[X] {
   /**

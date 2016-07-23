@@ -15,6 +15,8 @@ import scala.util.{Failure, Success, Try}
   * The reason that it does not extend Numeric is that most of the method result in a Try[X] rather than an X.
   *
   * Created by scalaprof on 6/5/16.
+  *
+  * CONSIDER move this into values package
   */
 trait Valuable[X] extends Orderable[X] {
   /**

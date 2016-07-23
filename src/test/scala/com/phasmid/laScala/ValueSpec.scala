@@ -2,6 +2,7 @@ package com.phasmid.laScala
 
 import java.time.LocalDate
 
+import com.phasmid.laScala.values.Rational
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util.{Success, Try}
@@ -90,6 +91,24 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
+  }
+  it should "work implicitly" in {
+    val x: Value = 1.0
+    x shouldBe DoubleValue(1.0)
+  }
+  "RationalValue" should "work" in {
+    import Rational.RationalHelper
+    val x = Value(r"1/2")
+    x.source shouldBe Rational.half
+    x.asFractional[Rational] should matchPattern { case Some(Rational.half) => }
+    x.asBoolean should matchPattern { case None => }
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case Some(0.5) => }
+  }
+  it should "fail as a String" in {
+    val x = Value("1/2")
+    x.source shouldBe "1/2"
+    x.asFractional[Rational] should matchPattern { case None => }
   }
   it should "work implicitly" in {
     val x: Value = 1.0
