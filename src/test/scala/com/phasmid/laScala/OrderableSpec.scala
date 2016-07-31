@@ -18,10 +18,10 @@ class OrderableSpec extends FlatSpec with Matchers {
   }
   "zero string" should "result in OrderableString of length zero" in {
     implicit val pattern = ""
-    val dt = OrderableString zero
+    val dt = OrderableString.zero
   }
   "string1" should  "be the string string1" in {
-    OrderableString compare("string", "string") shouldBe (0)
+    OrderableString compare("string", "string") shouldBe 0
   }
   "string" should "be the string from string" in {
     implicit val pattern = ""
@@ -55,8 +55,8 @@ class OrderableSpec extends FlatSpec with Matchers {
     val dt = LocalDate of (2016, 2, 1)
     val m: Map[String, LocalDate] = Map("k" -> dt)
     implicit val pattern = "MM/dd/uuuu"
-    val dt2 = OrderableDate.viaLookup("k", m get _ )
-    dt2 should matchPattern { case Success(dt) => }
+    val dt2 = OrderableDate.viaLookup("k", m get )
+    dt2 should matchPattern { case Success(_) => }
   }
   "zero" should "result in date now" in {
     implicit val pattern = ""
@@ -67,6 +67,6 @@ class OrderableSpec extends FlatSpec with Matchers {
   "compare LocalDates 2016/02/01 2016/02/01 " should "result zero" in {
     val dt1 = LocalDate of (2016, 2, 1)
     val dt2 = LocalDate of (2016, 2, 1)
-    OrderableDate compare (dt1, dt2) shouldBe (0)
+    OrderableDate compare (dt1, dt2) shouldBe 0
   }
 }

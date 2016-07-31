@@ -31,7 +31,7 @@ trait Orderable[X] extends Ordering[X] {
 
   /**
     * Method to introduce an X value from a String.
-    * @param s
+    * @param s the String from which we wish to parse an X
     * @param pattern (implicit) the pattern (template) of the String, for example, when parsing a date string, do we put year, month or day first?
     * @return a Try[X]
     */
@@ -68,7 +68,7 @@ object Orderable {
   }
 
   /**
-    * TODO OrderableDate should be retired and we should use IncrementableDate instead.
+    * TODO OrderableDate should be retired and we should use IncrementableLocalDate instead.
     */
   implicit object OrderableDate extends Orderable[LocalDate] {
     override def unit(x: LocalDate): LocalDate = x

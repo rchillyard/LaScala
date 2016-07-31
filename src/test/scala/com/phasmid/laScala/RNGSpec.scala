@@ -7,16 +7,11 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class RNGSpec extends FlatSpec with Matchers {
 
-  // XXX not quite sure why I insisted on using reduceLeft here
-  def sum(xs: Seq[Double]): Double = xs.reduceLeft(_ + _)
-
-  // you must use reduceLeft here...
   def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
 
-  // ...and here
-  def mean(xs: Seq[Double]) = sum(xs) / xs.length
+  def mean(xs: Seq[Double]) = xs.sum / xs.length
 
-  // Clearly, this doesn't look good. We will soon learn how to write
+  // XXX Clearly, this doesn't look good. We will soon learn how to write
   // generic methods like sum and mean. But for now, this is what we've got.
   def sumU(xs: Seq[UniformDouble]): Double = xs.foldLeft(0.0)((a, x) => x + a)
 

@@ -48,7 +48,7 @@ case class Rational(n: Long, d: Long) extends Fractional[Rational] {
   def toFloat(x: Rational): Float = toDouble(x).toFloat
 
   def toInt(x: Rational): Int = {
-    val l = toLong(x);
+    val l = toLong(x)
     if (Rational.longAbs(l) < Int.MaxValue) l.toInt else throw new RationalException(s"$x is too big for Int")
   }
 

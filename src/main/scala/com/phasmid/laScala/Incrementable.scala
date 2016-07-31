@@ -24,12 +24,12 @@ trait Incrementable[X] extends Orderable[X] {
     * @param by an indication of the size of one increment
     * @return result as an Try[X]
     */
-  def increment(x: X, y: Int, by: String): Try[X]
+  def increment(x: X, y: Int = 1, by: String = ""): Try[X]
 }
 
 object Incrementable {
 
-  implicit object IncrementableDate extends Incrementable[LocalDate] {
+  implicit object IncrementableLocalDate extends Incrementable[LocalDate] {
     override def unit(x: LocalDate): LocalDate = x
 
     override def viaLookup(s: String, f: (String) => Option[LocalDate]): Try[LocalDate] = optionToTry(f(s), new IncrementableException(s"$s is not defined"))
@@ -44,7 +44,7 @@ object Incrementable {
 
     def formatter(s: String) = DateTimeFormatter.ofPattern(s)
 
-    def increment(x: LocalDate, y: Int, by: String = ""): Try[LocalDate] = Try {
+    def increment(x: LocalDate, y: Int = 1, by: String = ""): Try[LocalDate] = Try {
       val f = by match {
         case "d" | "" => x.plusDays _
         case "w" => x.plusWeeks _

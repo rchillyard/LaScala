@@ -2,7 +2,7 @@ package com.phasmid.laScala
 
 import java.time.LocalDate
 
-import com.phasmid.laScala.Incrementable.IncrementableDate
+import com.phasmid.laScala.Incrementable.IncrementableLocalDate
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util.{Success, Try}
@@ -12,25 +12,54 @@ import scala.util.{Success, Try}
   */
 class IncrementableSpec extends FlatSpec with Matchers with Inside {
 
-  trait MaybeIncrementable {
-    def asIncrementable[X: Incrementable]: Try[X]
-  }
-
-  case class MyIncrementable(s: String) extends MaybeIncrementable {
+  "2016-01-01" should "increment by one day" in {
     implicit val pattern = ""
-
-    def asIncrementable[X: Incrementable]: Try[X] = implicitly[Incrementable[X]].fromString(s)
-
-    def increment[X: Incrementable](x: X, y: Int, by: String): Try[X] = implicitly[Incrementable[X]].increment(x, y, by)
-  }
-
-  "2016-01-01" should "result in date" in {
-    val e = MyIncrementable("2016-01-01")
-    val dt: Try[LocalDate] = for (d <- e.asIncrementable; z <- e.increment(d, 1, "")) yield z
+    val incrementable = implicitly[Incrementable[LocalDate]]
+    val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d)) yield x
     dt should matchPattern { case Success(_) => }
     inside(dt) {
       case Success(d) =>
         d shouldBe LocalDate.of(2016, 1, 2)
+    }
+  }
+  it should "increment by two days" in {
+    implicit val pattern = ""
+    val incrementable = implicitly[Incrementable[LocalDate]]
+    val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d,2)) yield x
+    dt should matchPattern { case Success(_) => }
+    inside(dt) {
+      case Success(d) =>
+        d shouldBe LocalDate.of(2016, 1, 3)
+    }
+  }
+  it should "increment by one week" in {
+    implicit val pattern = ""
+    val incrementable = implicitly[Incrementable[LocalDate]]
+    val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d,by="w")) yield x
+    dt should matchPattern { case Success(_) => }
+    inside(dt) {
+      case Success(d) =>
+        d shouldBe LocalDate.of(2016, 1, 8)
+    }
+  }
+  it should "increment by two months" in {
+    implicit val pattern = ""
+    val incrementable = implicitly[Incrementable[LocalDate]]
+    val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d,2,"m")) yield x
+    dt should matchPattern { case Success(_) => }
+    inside(dt) {
+      case Success(d) =>
+        d shouldBe LocalDate.of(2016, 3, 1)
+    }
+  }
+  it should "decrement by one year" in {
+    implicit val pattern = ""
+    val incrementable = implicitly[Incrementable[LocalDate]]
+    val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d,-1,"y")) yield x
+    dt should matchPattern { case Success(_) => }
+    inside(dt) {
+      case Success(d) =>
+        d shouldBe LocalDate.of(2015, 1, 1)
     }
   }
 }

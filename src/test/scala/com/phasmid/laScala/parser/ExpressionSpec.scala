@@ -2,6 +2,7 @@ package com.phasmid.laScala.parser
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.implicitConversions
 import scala.util._
 
 /**

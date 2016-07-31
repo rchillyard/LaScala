@@ -105,7 +105,7 @@ class RPNSpec extends FlatSpec with Matchers {
   it should "evaluate 1B as 1000000000" in {
     val parser = new RuleParser()
     val et = parser.parseExpression("1B")
-    implicit def lookup(s: String) = None
+    implicit def lookup(s: String): Option[Int] = None
     val xt = for (e <- et; r = e.toRPN; x <- RPN(r).evaluate) yield x
     xt should matchPattern { case Success(1000000000) => }
   }

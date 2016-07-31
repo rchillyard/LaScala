@@ -5,6 +5,7 @@ import java.time.LocalDate
 import com.phasmid.laScala.values.Rational
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
+import scala.language.implicitConversions
 import scala.util.{Success, Try}
 
 
@@ -189,7 +190,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     implicit val pattern = "MMM dd, yyyy"
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Value] = Value.sequence(dates)
-    val variables: Map[String, Option[LocalDate]] = (for ((k, v) <- values) yield (k, v.asOrderable[LocalDate]))
+    val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
     variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
   }
   "sequence" should "work when given raw strings" in {

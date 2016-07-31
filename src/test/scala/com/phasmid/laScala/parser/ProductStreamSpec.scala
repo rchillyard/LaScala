@@ -132,10 +132,10 @@ class ProductStreamSpec extends FlatSpec with Matchers {
     println(x)
     val iWts = CSV[(String, Int)](getClass.getResource("sample.csv").toURI).tuples
     iWts.head match {
-      case (x, y) => assert(x == "Sunday" && y == 1)
+      case (q, y) => assert(q == "Sunday" && y == 1)
     }
     iWts.tail.head match {
-      case (x, y) => assert(x == "Monday" && y == 2)
+      case (q, y) => assert(q == "Monday" && y == 2)
     }
     iWts.size should be(8)
     (iWts take 8).toList(7) should be("TGIF, Bruh", 8)
