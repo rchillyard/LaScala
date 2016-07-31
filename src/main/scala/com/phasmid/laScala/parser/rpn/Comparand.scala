@@ -20,7 +20,7 @@ object Comparand {
   /**
     * Construct a Comparand[X} and return it as an Evaluable[X]
     *
-    * @param s the String from which the Comparand is to be built: usually the RHS of a predicate
+    * @param s      the String from which the Comparand is to be built: usually the RHS of a predicate
     * @param lookup the lookup function to evaluate variables
     * @tparam X the underlying type
     * @return an Evaluable
@@ -37,7 +37,7 @@ object Comparand {
   /**
     * Construct a Comparand from w and evaluate it.
     *
-    * @param w the String to be evaluated: usually the RHS of a predicate
+    * @param w      the String to be evaluated: usually the RHS of a predicate
     * @param lookup the lookup function to evaluate variables
     * @tparam X the underlying type
     * @return a Try[X] corresponding to the value of the comparand

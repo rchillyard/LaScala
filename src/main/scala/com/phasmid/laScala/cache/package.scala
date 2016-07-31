@@ -8,9 +8,9 @@ import scala.util.Try
   */
 package object cache {
 
-  type FutureCache[K,V] = Cache[K,V,Future]
+  type FutureCache[K, V] = Cache[K, V, Future]
 
-  type TryCache[K,V] = Cache[K,V,Try]
+  type TryCache[K, V] = Cache[K, V, Try]
 
-  type OptionCache[K,V] = Cache[K,V,Option]
+  type OptionCache[K, V] = Cache[K, V, Option]
 }

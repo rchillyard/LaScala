@@ -1,11 +1,8 @@
 package com.phasmid.laScala
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.FP.optionToTry
-
-import scala.util.Try
+import scala.util.{Success, Try}
 
 /**
   * Type class Incrementable.
@@ -29,21 +26,16 @@ trait Incrementable[X] extends Orderable[X] {
 
 object Incrementable {
 
-  implicit object IncrementableLocalDate extends Incrementable[LocalDate] {
-    override def unit(x: LocalDate): LocalDate = x
+  trait IncrementableInt extends Orderable.OrderableInt with Incrementable[Int] {
+    def increment(x: Int, y: Int = 1, by: String = ""): Try[Int] = by match {
+      case "" => Success(x + y)
+      case _ => throw new IncrementableException(s"unit: $by is not supported")
+    }
+  }
 
-    override def viaLookup(s: String, f: (String) => Option[LocalDate]): Try[LocalDate] = optionToTry(f(s), new IncrementableException(s"$s is not defined"))
+  implicit object IncrementableInt extends IncrementableInt
 
-    override def fromString(s: String)(implicit pattern: String): Try[LocalDate] = Try(LocalDate.parse(s, if (pattern.isEmpty) isoFormatter else formatter(pattern)))
-
-    override def zero: LocalDate = LocalDate.now
-
-    override def compare(x: LocalDate, y: LocalDate): Int = x.compareTo(y)
-
-    val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-
-    def formatter(s: String) = DateTimeFormatter.ofPattern(s)
-
+  trait IncrementableLocalDate extends Orderable.OrderableLocalDate with Incrementable[LocalDate] {
     def increment(x: LocalDate, y: Int = 1, by: String = ""): Try[LocalDate] = Try {
       val f = by match {
         case "d" | "" => x.plusDays _
@@ -55,6 +47,8 @@ object Incrementable {
       f(y)
     }
   }
+
+  implicit object IncrementableLocalDate extends IncrementableLocalDate
 
   class IncrementableException(s: String) extends Exception(s)
 

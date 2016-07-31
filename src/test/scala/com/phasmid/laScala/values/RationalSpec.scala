@@ -24,9 +24,9 @@ class RationalSpec extends FlatSpec with Matchers {
   it should "be whole" in {
     Rational.zero shouldBe 'whole
   }
-//  it should "be zero" in {
-//    Rational.zero shouldBe 'zero
-//  }
+  //  it should "be zero" in {
+  //    Rational.zero shouldBe 'zero
+  //  }
   it should "equal 0" in {
     Rational.zero.toInt should be(0)
   }

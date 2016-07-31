@@ -3,7 +3,7 @@ package com.phasmid.laScala
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.Orderable.OrderableDate
+import com.phasmid.laScala.Orderable.OrderableLocalDate
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Rational
 
@@ -171,8 +171,8 @@ case class DoubleValue(x: Double, source: Any) extends Value {
   def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
 
   def asFractional[X: Fractional]: Option[X] = {
-//    val fractional = implicitly[Fractional[X]]
-//    Some(fractional.times(x.asInstanceOf[X], fractional.one))
+    //    val fractional = implicitly[Fractional[X]]
+    //    Some(fractional.times(x.asInstanceOf[X], fractional.one))
     Some(x.asInstanceOf[X])
   }
 
@@ -191,7 +191,7 @@ case class DoubleValue(x: Double, source: Any) extends Value {
 case class RationalValue(x: Rational, source: Any) extends Value {
   def asBoolean: Option[Boolean] = None
 
-  def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleValue(x.n).asValuable; x2 <- DoubleValue(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1,x2).toOption) yield y
+  def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleValue(x.n).asValuable; x2 <- DoubleValue(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1, x2).toOption) yield y
 
   def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
 
@@ -301,7 +301,7 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
   override def toString = xs.toString
 }
 
-class ValueException(s: String, t: scala.Throwable = null) extends Exception(s,t)
+class ValueException(s: String, t: scala.Throwable = null) extends Exception(s, t)
 
 object BooleanValue {
   def apply(x: Boolean): BooleanValue = BooleanValue(x, x)
@@ -330,7 +330,7 @@ object QuotedStringValue {
 object DateValue {
   def apply(x: LocalDate): DateValue = DateValue(x, x)
 
-  def apply(x: String)(implicit pattern: String): DateValue = DateValue(LocalDate.parse(x, if (pattern.isEmpty) DateTimeFormatter.ISO_LOCAL_DATE else OrderableDate.formatter(pattern)),x)
+  def apply(x: String)(implicit pattern: String): DateValue = DateValue(LocalDate.parse(x, if (pattern.isEmpty) DateTimeFormatter.ISO_LOCAL_DATE else OrderableLocalDate.formatter(pattern)), x)
 
   def apply(y: Int, m: Int, d: Int): DateValue = apply(LocalDate.of(y, m, d))
 }

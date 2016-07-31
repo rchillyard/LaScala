@@ -21,7 +21,8 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     var errorCount = 0
 
     protected def notifyInfo(message: String): Unit = {
-      println("info: " + message); infoCount = infoCount + 1
+      println("info: " + message);
+      infoCount = infoCount + 1
     }
 
     override def isErrorEnabled: Boolean = false
@@ -31,21 +32,25 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     override def isDebugEnabled: Boolean = true
 
     override protected def notifyError(message: String): Unit = {
-      System.err.println("error: " + message); errorCount = errorCount + 1
+      System.err.println("error: " + message);
+      errorCount = errorCount + 1
     }
 
     override protected def notifyError(cause: Throwable, message: String): Unit = {
-      System.err.println("error: " + message + ": " + cause); errorCount = errorCount + 1
+      System.err.println("error: " + message + ": " + cause);
+      errorCount = errorCount + 1
     }
 
     override def isWarningEnabled: Boolean = true
 
     override protected def notifyWarning(message: String): Unit = {
-      System.err.println("warning: " + message); warningCount = warningCount + 1
+      System.err.println("warning: " + message);
+      warningCount = warningCount + 1
     }
 
     override protected def notifyDebug(message: String): Unit = {
-      println("debug: " + message); debugCount = debugCount + 1
+      println("debug: " + message);
+      debugCount = debugCount + 1
     }
   }
 
@@ -55,7 +60,8 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     mockLoggingAdapter.warningCount shouldBe 0
     implicit def carper(s: String): Unit = mockLoggingAdapter.warning(s)
     def evaluate(k: String): Option[Int] = {
-      mockLoggingAdapter.debug(s"evaluating $k"); Try(k.toInt).toOption
+      mockLoggingAdapter.debug(s"evaluating $k");
+      Try(k.toInt).toOption
     }
     val cache = BasicFulfillingCache[String, Int](evaluate)
     mockLoggingAdapter.warningCount shouldBe 0
@@ -79,7 +85,8 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     mockLoggingAdapter.warningCount shouldBe 0
     implicit def carper(s: String): Unit = mockLoggingAdapter.warning(s)
     def evaluate(k: String): Try[Int] = {
-      mockLoggingAdapter.debug(s"evaluating $k"); Try(k.toInt)
+      mockLoggingAdapter.debug(s"evaluating $k");
+      Try(k.toInt)
     }
     val cache = NonExpiringCache[String, Int](evaluate)
     mockLoggingAdapter.warningCount shouldBe 0

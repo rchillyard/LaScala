@@ -207,7 +207,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val vy = Value.tryValue(w)
     val xoy: Try[Option[Double]] = for (vs <- vy) yield vs.asValuable[Double]
     xoy should matchPattern { case Success(xos) => }
-    inside (xoy) {
+    inside(xoy) {
       case Success(xo) =>
         xo should matchPattern { case None => }
     }
@@ -217,7 +217,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val vsy = Value.trySequence(ws)
     val xosy: Try[Seq[Option[Double]]] = for (vs <- vsy) yield for (v <- vs) yield v.asValuable[Double]
     xosy should matchPattern { case Success(xos) => }
-    inside (xosy) {
+    inside(xosy) {
       case Success(xos) =>
         xos should matchPattern { case List(None, Some(1.0), Some(1.0)) => }
     }

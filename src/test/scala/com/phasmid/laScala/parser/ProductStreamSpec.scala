@@ -64,10 +64,10 @@ class ProductStreamSpec extends FlatSpec with Matchers {
   it should "be (String,String) stream via TupleStream" in {
     val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13")).tuples
     wWts.head match {
-      case (a, b) => assert(a == "3" && b == "5")
+      case (x, y) => assert(x == "3" && y == "5")
     }
     wWts.tail.head match {
-      case (a, b) => assert(a == "8" && b == "13")
+      case (x, y) => assert(x == "8" && y == "13")
     }
   }
   it should "map into (Int,Int) via TupleStream" in {

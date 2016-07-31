@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.FP.optionToTry
 import com.phasmid.laScala.Orderable
+import com.phasmid.laScala.Orderable.{OrderableDouble, OrderableInt}
 
 import scala.util.{Failure, Success, Try}
 
@@ -125,9 +125,7 @@ trait Valuable[X] extends Orderable[X] {
 
 object Valuable {
 
-  implicit object ValuableDouble extends Valuable[Double] {
-    def unit(x: Double) = x
-
+  trait ValuableDouble extends OrderableDouble with Valuable[Double] {
     def plus(x: Double, y: Double) = Try(x + y)
 
     def minus(x: Double, y: Double) = Try(x - y)
@@ -144,26 +142,18 @@ object Valuable {
 
     def fromInt(x: Int) = Try(x.toDouble)
 
-    def fromString(s: String)(implicit pattern: String = "") = Try(s.toDouble)
-
-    def viaLookup(s: String, f: String => Option[Double]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
-
-    def zero = 0.0
-
     def one = 1.0
 
-    def compare(x: Double, y: Double): Int = x.compare(y)
-
-    def function0(f: ()=>Double): Try[Double] = Try(f())
+    def function0(f: () => Double): Try[Double] = Try(f())
 
     def function1(f: (Double) => Double)(x: Double): Try[Double] = Try(f(x))
 
     def function2(f: (Double, Double) => Double)(x: Double, y: Double): Try[Double] = Try(f(x, y))
   }
 
-  implicit object ValuableInt extends Valuable[Int] {
-    def unit(x: Int) = x
+  implicit object ValuableDouble extends ValuableDouble
 
+  trait ValuableInt extends OrderableInt with Valuable[Int] {
     def plus(x: Int, y: Int) = Try(x + y)
 
     def minus(x: Int, y: Int) = Try(x - y)
@@ -180,15 +170,7 @@ object Valuable {
 
     def fromInt(x: Int) = Success(x)
 
-    def fromString(s: String)(implicit pattern: String = "") = Try(s.toInt)
-
-    def viaLookup(s: String, f: String => Option[Int]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
-
-    def zero = 0
-
     def one = 1
-
-    def compare(x: Int, y: Int): Int = x.compare(y)
 
     def function0(f: () => Double): Try[Int] = Failure(new ValuableException("cannot apply an arbitrary function0 for Int"))
 
@@ -196,6 +178,8 @@ object Valuable {
 
     def function2(f: (Double, Double) => Double)(x: Int, y: Int): Try[Int] = Failure(new ValuableException("cannot apply an arbitrary function2 for Int"))
   }
+
+  implicit object ValuableInt extends ValuableInt
 
   class ValuableException(s: String) extends Exception(s)
 

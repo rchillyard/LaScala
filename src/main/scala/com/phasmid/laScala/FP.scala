@@ -167,7 +167,7 @@ object FP {
     */
   def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = {
     val result = Try(xo.get)
-    if (t!=null) result.recoverWith { case e: java.util.NoSuchElementException => Failure(t) }
+    if (t != null) result.recoverWith { case e: java.util.NoSuchElementException => Failure(t) }
     else result
   }
 
@@ -178,7 +178,7 @@ object FP {
     * @tparam X the underlying type of the input and the output
     * @return an X value wrapped as a Try. If xo is None, then the result will be a NoSuchElementException wrapped in Failure
     */
-  def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo,null)
+  def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo, null)
 
   /**
     * TODO unit test
@@ -328,7 +328,7 @@ object FP {
   def liftOptionTry[T, U](f: T => U)(implicit ex: Throwable = null): Option[T] => Try[U] = {
     xo: Option[T] =>
       val result = for (x <- xo) yield f(x)
-      if (ex!=null) optionToTry(result, ex)
+      if (ex != null) optionToTry(result, ex)
       else optionToTry(result)
   }
 

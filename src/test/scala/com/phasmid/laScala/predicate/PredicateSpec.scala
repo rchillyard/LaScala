@@ -201,10 +201,12 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. "); x > 0
+      s.append("func1 evaluated. ");
+      x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. "); x < 10
+      s.append("func2 evaluated. ");
+      x < 10
     }
     val p = Func(func1 _) :& Func(func2 _)
     p(3) should matchPattern { case Success(true) => }
@@ -224,10 +226,12 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. "); x > 0
+      s.append("func1 evaluated. ");
+      x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. "); x < 10
+      s.append("func2 evaluated. ");
+      x < 10
     }
     val p = Func(func1 _) :^| func2 _
     p(3) should matchPattern { case Success(true) => }
@@ -247,10 +251,12 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. "); x > 0
+      s.append("func1 evaluated. ");
+      x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. "); x < 10
+      s.append("func2 evaluated. ");
+      x < 10
     }
     val p = func1 _ &^: Func(func2 _)
     p(3) should matchPattern { case Success(true) => }
@@ -270,10 +276,12 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. "); x > 0
+      s.append("func1 evaluated. ");
+      x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. "); x < 10
+      s.append("func2 evaluated. ");
+      x < 10
     }
     val p = func1 _ |^: Func(func2 _)
     p(3) should matchPattern { case Success(true) => }
