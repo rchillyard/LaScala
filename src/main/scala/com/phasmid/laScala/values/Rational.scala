@@ -77,6 +77,8 @@ case class Rational(n: Long, d: Long) extends Fractional[Rational] {
 
   def toLong: Long = toLong(this)
 
+  def floor: Long = n / d
+
   def toFloat: Float = toFloat(this)
 
   def toDouble: Double = toDouble(this)

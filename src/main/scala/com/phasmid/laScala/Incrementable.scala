@@ -35,6 +35,15 @@ object Incrementable {
 
   implicit object IncrementableInt extends IncrementableInt
 
+  trait IncrementableLong extends Orderable.OrderableLong with Incrementable[Long] {
+    def increment(x: Long, y: Int = 1, by: String = ""): Try[Long] = by match {
+      case "" => Success(x + y)
+      case _ => throw new IncrementableException(s"unit: $by is not supported")
+    }
+  }
+
+  implicit object IncrementableLong extends IncrementableLong
+
   trait IncrementableLocalDate extends Orderable.OrderableLocalDate with Incrementable[LocalDate] {
     def increment(x: LocalDate, y: Int = 1, by: String = ""): Try[LocalDate] = Try {
       val f = by match {

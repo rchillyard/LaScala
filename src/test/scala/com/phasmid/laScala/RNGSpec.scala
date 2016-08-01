@@ -45,4 +45,19 @@ class RNGSpec extends FlatSpec with Matchers {
     val xs = RNG.values2(GaussianRNG(0)) take 11111 toList;
     (math.abs(stdDev(xs)) - 1) shouldBe <=(5E-3)
   }
+  "map" should "work" in {
+    val rLong: RNG[Long] = LongRNG(-4962768465676381896L)
+    val rInt = rLong.map(_.toInt)
+    rInt() shouldBe -723955400
+    val next = rInt.next
+    next() shouldBe 406937919
+    val next2 = next.next
+    next2() shouldBe 1407270755
+  }
+  it should "work with map of map" in {
+    val rLong: RNG[Long] = LongRNG(0L)
+    val rInt = rLong.map(_.toInt)
+    val rBoolean = rInt.map(_ % 2 == 0)
+    rBoolean() shouldBe true
+  }
 }

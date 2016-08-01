@@ -24,9 +24,6 @@ class RationalSpec extends FlatSpec with Matchers {
   it should "be whole" in {
     Rational.zero shouldBe 'whole
   }
-  //  it should "be zero" in {
-  //    Rational.zero shouldBe 'zero
-  //  }
   it should "equal 0" in {
     Rational.zero.toInt should be(0)
   }
@@ -56,6 +53,9 @@ class RationalSpec extends FlatSpec with Matchers {
   it should "be OK using r-interpolator with variable" in {
     val denominator = 2
     r"1/$denominator" * denominator shouldBe Rational.one
+  }
+  it should "yield 0 for floor" in {
+    Rational.half.floor shouldBe 0L
   }
 
   "1" should "be OK" in {
@@ -185,6 +185,10 @@ class RationalSpec extends FlatSpec with Matchers {
     val pi = BigDecimal(math.Pi)
     val r = Rational(pi)
     r.toDouble should be(math.Pi)
+  }
+
+  it should "have a floor of 3" in {
+    Rational(BigDecimal(math.Pi)).floor shouldBe 3
   }
 
   "toString" should "be decimal when exact" in {

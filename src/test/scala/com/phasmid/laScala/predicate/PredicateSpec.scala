@@ -201,11 +201,11 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. ");
+      s.append("func1 evaluated. ")
       x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. ");
+      s.append("func2 evaluated. ")
       x < 10
     }
     val p = Func(func1 _) :& Func(func2 _)
@@ -226,11 +226,11 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. ");
+      s.append("func1 evaluated. ")
       x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. ");
+      s.append("func2 evaluated. ")
       x < 10
     }
     val p = Func(func1 _) :^| func2 _
@@ -251,11 +251,11 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. ");
+      s.append("func1 evaluated. ")
       x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. ");
+      s.append("func2 evaluated. ")
       x < 10
     }
     val p = func1 _ &^: Func(func2 _)
@@ -276,11 +276,11 @@ class PredicateSpec extends FlatSpec with Matchers {
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
     def func1(x: Int): Boolean = {
-      s.append("func1 evaluated. ");
+      s.append("func1 evaluated. ")
       x > 0
     }
     def func2(x: Int): Boolean = {
-      s.append("func2 evaluated. ");
+      s.append("func2 evaluated. ")
       x < 10
     }
     val p = func1 _ |^: Func(func2 _)

@@ -74,7 +74,7 @@ class ProductStreamSpec extends FlatSpec with Matchers {
     val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13"))
     val iIts = wWts map { case (x, y) => (x.toInt, y.toInt) }
     iIts.tuples.head match {
-      case (a, b) => assert(a == 3 && b == 5)
+      case (x, y) => assert(x == 3 && y == 5)
       case _ => fail("no match")
     }
   }

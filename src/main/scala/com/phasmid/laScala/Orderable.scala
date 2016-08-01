@@ -72,6 +72,20 @@ object Orderable {
 
   implicit object OrderableInt extends OrderableInt
 
+  trait OrderableLong extends Orderable[Long] {
+    def unit(x: Long): Long = x
+
+    def viaLookup(k: String, f: (String) => Option[Long]): Try[Long] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
+
+    def fromString(s: String)(implicit pattern: String): Try[Long] = Try(s.toLong)
+
+    def zero: Long = 0
+
+    def compare(x: Long, y: Long): Int = x.compare(y)
+  }
+
+  implicit object OrderableLong extends OrderableLong
+
   trait OrderableDouble extends Orderable[Double] {
     def unit(x: Double) = x
 

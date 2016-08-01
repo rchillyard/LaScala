@@ -2,55 +2,108 @@ package com.phasmid.laScala
 
 import java.util.Random
 
-trait RNG[+A] {
+/**
+  * Very primitive implementation of a state-based random number generator
+  *
+  * CONSIDER reworking this entire package, particularly using map instead of defining things like DoubleRNG.
+  *
+  * CONSIDER having RNG extend FilterMonadic or at least implement flatMap
+  *
+  * @tparam A the underlying type of this Random Number Generator
+  */
+trait RNG[+A] extends (() => A) {
   def next: RNG[A]
 
-  def value: A
+  def map[B](f: A => B): RNG[B]
 }
 
-abstract class RNG_Java[+A](n: Long) extends RNG[A] {
-  // must be overridden by sub-classes
-  def value: A
+/**
+  * An abstract base class which implements some of the basic functionality of RNG
+  *
+  * @param n the Long value which defines this state of the RNG
+  * @tparam A the underlying type of this Random Number Generator
+  */
+abstract class RNG_Java[+A](n: Long, f: Long => A) extends RNG[A] {
+  self =>
 
-  def newRNG(n: Long): RNG_Java[A]
+  /**
+    * The apply method: takes no parameter and yields an A
+    *
+    * @return A
+    */
+  def apply: A = f(n)
 
-  // may be overridden (if you want to define your own pseudo-random sequence)
+  /**
+    * Method to build a new instance of this RNG
+    *
+    * @param n the state
+    * @return a new instance of RNG as a RNG_Java
+    */
+  def buildNew(n: Long): RNG_Java[A]
+
+  /**
+    * Method to yield the next seed value.
+    * This implementation simply calls the nextSeed method in the companion object.
+    *
+    * may be overridden (if you want to define your own pseudo-random sequence)
+    *
+    * @return a Long value
+    */
   def nextSeed: Long = RNG_Java.nextSeed(n)
 
-  // base method -- not normally overridden
-  def next: RNG_Java[A] = newRNG(nextSeed)
+  /**
+    * Method to yield the next RNG in the pseudo-random sequence.
+    * Extenders don't normally need to override this.
+    *
+    * @return
+    */
+  def next: RNG_Java[A] = buildNew(nextSeed)
 
-  def state = n
+  /**
+    * Method to get the state -- private
+    *
+    * @return
+    */
+  private[laScala] def state = n
+
+  /**
+    * Method to map this RNG into another RNG
+    *
+    * @param f the map function which should be applied to the underlying value.
+    * @tparam B the underlying type of the new RNG
+    * @return a new RNG[B]
+    */
+  def map[B](f: (A) => B): RNG[B] = {
+    class RNG_B(n: Long) extends RNG_Java[B](n, self.f andThen (f)) {
+      def buildNew(n: Long): RNG_Java[B] = new RNG_B(n)
+    }
+    new RNG_B(n)
+  }
+
+  override def toString = s"RNG: state=$n; value=${apply()}"
 }
 
 object RNG_Java {
   def nextSeed(n: Long): Long = new Random(n).nextLong
 }
 
-case class LongRNG(n: Long) extends RNG_Java[Long](n) {
-  def newRNG(n: Long) = LongRNG(n)
-
-  def value = n
+case class LongRNG(n: Long) extends RNG_Java[Long](n, identity) {
+  def buildNew(n: Long) = LongRNG(n)
 }
 
-case class DoubleRNG(n: Long) extends RNG_Java[Double](n) {
-  def newRNG(n: Long) = DoubleRNG(n)
+case class DoubleRNG(n: Long) extends RNG_Java[Double](n, { _.toDouble / Long.MaxValue }) {
+  def buildNew(n: Long) = DoubleRNG(n)
 
-  def value = n.toDouble / Long.MaxValue
-
-  override def toString = s"DoubleRNG: $n->$value"
+  override def toString = s"DoubleRNG: $n->$apply"
 }
 
 /**
   * This class is a random-number-generator for values uniformly distributed in the range 0..1
   */
-case class UniformDoubleRNG(n: Long) extends RNG_Java[UniformDouble](n) {
-  def newRNG(n: Long) = UniformDoubleRNG(n)
+case class UniformDoubleRNG(n: Long) extends RNG_Java[UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), Unit) }) {
+  def buildNew(n: Long) = UniformDoubleRNG(n)
 
-  // the following, which calls the apply(Double,Unit) method will check that result is in range 0..1
-  def value = UniformDouble(math.abs(n.toDouble / Long.MaxValue), Unit)
-
-  override def toString = s"UniformDoubleRNG: $n->$value"
+  override def toString = s"UniformDoubleRNG: $n->$apply"
 }
 
 /**
@@ -60,22 +113,12 @@ case class UniformDoubleRNG(n: Long) extends RNG_Java[UniformDouble](n) {
   * Generating values from normal distribution (Box-Muller method)
   * </a>
   */
-case class GaussianRNG(n: Long) extends RNG_Java[(Double, Double)](n) {
-  def newRNG(n: Long) = GaussianRNG(n)
+case class GaussianRNG(n: Long) extends RNG_Java[(Double, Double)](n, GaussianRNG.values) {
+  def buildNew(n: Long) = GaussianRNG(n)
 
-  val r1 = UniformDoubleRNG(n)
-  val r2 = r1.next
+  override def nextSeed: Long = RNG_Java.nextSeed(GaussianRNG.logic(n)._2.state)
 
-  def value: (Double, Double) = {
-    val u = r1.value.x
-    val v = r2.value.x // ???
-    val k = if (u <= 0) 0 else math.sqrt(-2 * math.log(u))
-    (k * math.cos(2 * math.Pi * v), k * math.sin(2 * math.Pi * v))
-  }
-
-  override def nextSeed: Long = RNG_Java.nextSeed(r2.state)
-
-  override def toString = s"GaussianRNG: $n->(${value._1},${value._2})"
+  override def toString = s"GaussianRNG: $n->(${apply._1},${apply._2})"
 }
 
 object RNG {
@@ -83,9 +126,11 @@ object RNG {
 
   def rngs[A](ar: RNG[A]): SRNG[A] = Stream.cons(ar, rngs(ar.next))
 
-  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map { _.value }
+  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map {
+    _.apply()
+  }
 
-  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x.value._1, x.value._2) }
+  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x.apply()._1, x.apply()._2) }
 }
 
 object LongRNG {
@@ -106,6 +151,18 @@ object UniformDoubleRNG {
 
 object GaussianRNG {
   def apply: RNG[(Double, Double)] = GaussianRNG(System.currentTimeMillis())
+
+  def logic(n: Long) = {
+    val r1 = UniformDoubleRNG(n)
+    val r2 = r1.next
+    val u = r1.apply.x
+    val v = r2.apply.x // ???
+    val k = if (u <= 0) 0 else math.sqrt(-2 * math.log(u))
+    val tuple = (k * math.cos(2 * math.Pi * v), k * math.sin(2 * math.Pi * v))
+    (tuple, r2)
+  }
+
+  def values(n: Long) = logic(n)._1
 }
 
 object UniformDouble {

@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
 import com.phasmid.laScala.Orderable
-import com.phasmid.laScala.Orderable.{OrderableDouble, OrderableInt}
+import com.phasmid.laScala.Orderable.{OrderableDouble, OrderableInt, OrderableLong}
 
 import scala.util.{Failure, Success, Try}
 
@@ -180,6 +180,34 @@ object Valuable {
   }
 
   implicit object ValuableInt extends ValuableInt
+
+  trait ValuableLong extends OrderableLong with Valuable[Long] {
+    def plus(x: Long, y: Long) = Try(x + y)
+
+    def minus(x: Long, y: Long) = Try(x - y)
+
+    def negate(x: Long) = minus(zero, x)
+
+    def times(x: Long, y: Long) = Try(x * y)
+
+    def div(x: Long, y: Long) = Try(if (x % y == 0) x / y else throw new ValuableException("integer division leaves remainder"))
+
+    def invert(x: Long) = Failure(new ValuableException("cannot invert an Long"))
+
+    def pow(x: Long, y: Long): Try[Long] = Try(Seq.fill[Int](y.toInt)(x.toInt).product)
+
+    def fromInt(x: Int) = Success(x.toLong)
+
+    def one = 1
+
+    def function0(f: () => Double): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function0 for Long"))
+
+    def function1(f: (Double) => Double)(x: Long): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function1 for Long"))
+
+    def function2(f: (Double, Double) => Double)(x: Long, y: Long): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function2 for Long"))
+  }
+
+  implicit object ValuableLong extends ValuableLong
 
   class ValuableException(s: String) extends Exception(s)
 
