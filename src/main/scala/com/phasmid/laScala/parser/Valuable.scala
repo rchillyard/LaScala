@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.FP.optionToTry
 import com.phasmid.laScala.Orderable
+import com.phasmid.laScala.Orderable.{OrderableDouble, OrderableInt, OrderableLong}
 
 import scala.util.{Failure, Success, Try}
 
@@ -15,6 +15,8 @@ import scala.util.{Failure, Success, Try}
   * The reason that it does not extend Numeric is that most of the method result in a Try[X] rather than an X.
   *
   * Created by scalaprof on 6/5/16.
+  *
+  * CONSIDER move this into values package
   */
 trait Valuable[X] extends Orderable[X] {
   /**
@@ -123,9 +125,7 @@ trait Valuable[X] extends Orderable[X] {
 
 object Valuable {
 
-  implicit object ValuableDouble extends Valuable[Double] {
-    def unit(x: Double) = x
-
+  trait ValuableDouble extends OrderableDouble with Valuable[Double] {
     def plus(x: Double, y: Double) = Try(x + y)
 
     def minus(x: Double, y: Double) = Try(x - y)
@@ -142,26 +142,18 @@ object Valuable {
 
     def fromInt(x: Int) = Try(x.toDouble)
 
-    def fromString(s: String)(implicit pattern: String = "") = Try(s.toDouble)
-
-    def viaLookup(s: String, f: String => Option[Double]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
-
-    def zero = 0.0
-
     def one = 1.0
 
-    def compare(x: Double, y: Double): Int = x.compare(y)
-
-    def function0(f: ()=>Double): Try[Double] = Try(f())
+    def function0(f: () => Double): Try[Double] = Try(f())
 
     def function1(f: (Double) => Double)(x: Double): Try[Double] = Try(f(x))
 
     def function2(f: (Double, Double) => Double)(x: Double, y: Double): Try[Double] = Try(f(x, y))
   }
 
-  implicit object ValuableInt extends Valuable[Int] {
-    def unit(x: Int) = x
+  implicit object ValuableDouble extends ValuableDouble
 
+  trait ValuableInt extends OrderableInt with Valuable[Int] {
     def plus(x: Int, y: Int) = Try(x + y)
 
     def minus(x: Int, y: Int) = Try(x - y)
@@ -178,15 +170,7 @@ object Valuable {
 
     def fromInt(x: Int) = Success(x)
 
-    def fromString(s: String)(implicit pattern: String = "") = Try(s.toInt)
-
-    def viaLookup(s: String, f: String => Option[Int]) = optionToTry(f(s), new ValuableException(s"$s is not defined"))
-
-    def zero = 0
-
     def one = 1
-
-    def compare(x: Int, y: Int): Int = x.compare(y)
 
     def function0(f: () => Double): Try[Int] = Failure(new ValuableException("cannot apply an arbitrary function0 for Int"))
 
@@ -194,6 +178,36 @@ object Valuable {
 
     def function2(f: (Double, Double) => Double)(x: Int, y: Int): Try[Int] = Failure(new ValuableException("cannot apply an arbitrary function2 for Int"))
   }
+
+  implicit object ValuableInt extends ValuableInt
+
+  trait ValuableLong extends OrderableLong with Valuable[Long] {
+    def plus(x: Long, y: Long) = Try(x + y)
+
+    def minus(x: Long, y: Long) = Try(x - y)
+
+    def negate(x: Long) = minus(zero, x)
+
+    def times(x: Long, y: Long) = Try(x * y)
+
+    def div(x: Long, y: Long) = Try(if (x % y == 0) x / y else throw new ValuableException("integer division leaves remainder"))
+
+    def invert(x: Long) = Failure(new ValuableException("cannot invert an Long"))
+
+    def pow(x: Long, y: Long): Try[Long] = Try(Seq.fill[Int](y.toInt)(x.toInt).product)
+
+    def fromInt(x: Int) = Success(x.toLong)
+
+    def one = 1
+
+    def function0(f: () => Double): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function0 for Long"))
+
+    def function1(f: (Double) => Double)(x: Long): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function1 for Long"))
+
+    def function2(f: (Double, Double) => Double)(x: Long, y: Long): Try[Long] = Failure(new ValuableException("cannot apply an arbitrary function2 for Long"))
+  }
+
+  implicit object ValuableLong extends ValuableLong
 
   class ValuableException(s: String) extends Exception(s)
 

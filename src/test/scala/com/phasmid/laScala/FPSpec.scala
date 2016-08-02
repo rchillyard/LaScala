@@ -119,8 +119,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   it should "succeed for Map with explicit throwable" in {
     val map = Map("a" -> "A", "b" -> "B")
     val t = new Exception("test")
-    optionToTry(map.get("a"),t) should matchPattern { case Success("A") => }
-    optionToTry(map.get("x"),t) should matchPattern { case Failure(`t`) => }
+    optionToTry(map.get("a"), t) should matchPattern { case Success("A") => }
+    optionToTry(map.get("x"), t) should matchPattern { case Failure(`t`) => }
   }
   // TODO what does this have to do with lift?
   "lift" should "succeed" in {

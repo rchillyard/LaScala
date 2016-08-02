@@ -2,8 +2,10 @@ package com.phasmid.laScala
 
 import java.time.LocalDate
 
+import com.phasmid.laScala.values.Rational
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
+import scala.language.implicitConversions
 import scala.util.{Success, Try}
 
 
@@ -95,6 +97,24 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val x: Value = 1.0
     x shouldBe DoubleValue(1.0)
   }
+  "RationalValue" should "work" in {
+    import Rational.RationalHelper
+    val x = Value(r"1/2")
+    x.source shouldBe Rational.half
+    x.asFractional[Rational] should matchPattern { case Some(Rational.half) => }
+    x.asBoolean should matchPattern { case None => }
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case Some(0.5) => }
+  }
+  it should "fail as a String" in {
+    val x = Value("1/2")
+    x.source shouldBe "1/2"
+    x.asFractional[Rational] should matchPattern { case None => }
+  }
+  it should "work implicitly" in {
+    val x: Value = 1.0
+    x shouldBe DoubleValue(1.0)
+  }
   "DateValue" should "work" in {
     implicit val pattern = ""
     val x = DateValue("2016-07-10")
@@ -170,7 +190,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     implicit val pattern = "MMM dd, yyyy"
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Value] = Value.sequence(dates)
-    val variables: Map[String, Option[LocalDate]] = (for ((k, v) <- values) yield (k, v.asOrderable[LocalDate]))
+    val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
     variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
   }
   "sequence" should "work when given raw strings" in {
@@ -187,7 +207,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val vy = Value.tryValue(w)
     val xoy: Try[Option[Double]] = for (vs <- vy) yield vs.asValuable[Double]
     xoy should matchPattern { case Success(xos) => }
-    inside (xoy) {
+    inside(xoy) {
       case Success(xo) =>
         xo should matchPattern { case None => }
     }
@@ -197,7 +217,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val vsy = Value.trySequence(ws)
     val xosy: Try[Seq[Option[Double]]] = for (vs <- vsy) yield for (v <- vs) yield v.asValuable[Double]
     xosy should matchPattern { case Success(xos) => }
-    inside (xosy) {
+    inside(xosy) {
       case Success(xos) =>
         xos should matchPattern { case List(None, Some(1.0), Some(1.0)) => }
     }

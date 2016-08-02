@@ -64,17 +64,17 @@ class ProductStreamSpec extends FlatSpec with Matchers {
   it should "be (String,String) stream via TupleStream" in {
     val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13")).tuples
     wWts.head match {
-      case (a, b) => assert(a == "3" && b == "5")
+      case (x, y) => assert(x == "3" && y == "5")
     }
     wWts.tail.head match {
-      case (a, b) => assert(a == "8" && b == "13")
+      case (x, y) => assert(x == "8" && y == "13")
     }
   }
   it should "map into (Int,Int) via TupleStream" in {
     val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13"))
     val iIts = wWts map { case (x, y) => (x.toInt, y.toInt) }
     iIts.tuples.head match {
-      case (a, b) => assert(a == 3 && b == 5)
+      case (x, y) => assert(x == 3 && y == 5)
       case _ => fail("no match")
     }
   }
@@ -132,10 +132,10 @@ class ProductStreamSpec extends FlatSpec with Matchers {
     println(x)
     val iWts = CSV[(String, Int)](getClass.getResource("sample.csv").toURI).tuples
     iWts.head match {
-      case (x, y) => assert(x == "Sunday" && y == 1)
+      case (q, y) => assert(q == "Sunday" && y == 1)
     }
     iWts.tail.head match {
-      case (x, y) => assert(x == "Monday" && y == 2)
+      case (q, y) => assert(q == "Monday" && y == 2)
     }
     iWts.size should be(8)
     (iWts take 8).toList(7) should be("TGIF, Bruh", 8)

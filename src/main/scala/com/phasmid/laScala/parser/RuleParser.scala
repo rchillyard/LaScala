@@ -224,6 +224,7 @@ class RuleParser extends JavaTokenParsers {
     def toRPN: List[String] = n +: expand(m)
 
     def asQuotedString: Option[String] = None
+
     //    override def toString = asString
   }
 

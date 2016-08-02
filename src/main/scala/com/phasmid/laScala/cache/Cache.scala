@@ -80,7 +80,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
   * @tparam K they key type
   * @tparam V the value type
   */
-case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit, initialSize: Int = 16) extends TryFulfillingExpiringCache[K, V](evaluate)(carper,initialSize) {
+case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit, initialSize: Int = 16) extends TryFulfillingExpiringCache[K, V](evaluate)(carper, initialSize) {
   /**
     * method to remove a key from the cache
     *
@@ -372,7 +372,7 @@ object Wrapper {
   * The reason for extending HashMap (rather than using it directly) is that we need to define a variant
   * of getOrElseUpdate.
   *
-  * @param wrapper (implicit) a wrapper which is used to create an M[V] object
+  * @param wrapper     (implicit) a wrapper which is used to create an M[V] object
   * @param initialSize (defaults to 16)
   * @tparam K key type
   * @tparam V value type
