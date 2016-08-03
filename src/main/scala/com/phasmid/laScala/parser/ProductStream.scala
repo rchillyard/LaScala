@@ -220,19 +220,35 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], o
 }
 
 object TupleStream {
+  def apply[X <: Product](input: Stream[String]): TupleStream[X] = apply(input, None)
+
   def apply[X <: Product](input: Stream[String], optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, optionalHeader)
+  //  def apply[X <: Product](parser: CsvParser, input: Stream[String], optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, input, optionalHeader)
+
+  def apply[X <: Product](input: InputStream): TupleStream[X] = apply(input, None)
 
   def apply[X <: Product](input: InputStream, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: File): TupleStream[X] = apply(input, None)
 
   def apply[X <: Product](input: File, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: URL): TupleStream[X] = apply(input, None)
+
+  def apply[X <: Product](input: URL, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
+
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromInputStream(input.openStream).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: URI): TupleStream[X] = apply(input, None)
 
   def apply[X <: Product](input: URI, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
+
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
@@ -243,23 +259,35 @@ object TupleStream {
 }
 
 object CSV {
+  def apply[X <: Product](input: Stream[String]): CSV[X] = apply(input, None)
+
   def apply[X <: Product](input: Stream[String], optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, optionalHeader)
+  //  def apply[X <: Product](parser: CsvParser, input: Stream[String], optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, input, optionalHeader)
+
+  def apply[X <: Product](input: InputStream): CSV[X] = apply(input, None)
 
   def apply[X <: Product](input: InputStream, optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: File): CSV[X] = apply(input, None)
 
   def apply[X <: Product](input: File, optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromInputStream(input.openStream).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: URL): CSV[X] = apply(input, None)
 
   def apply[X <: Product](input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromInputStream(input.openStream).getLines.toStream, optionalHeader)
+
+  def apply[X <: Product](input: URI): CSV[X] = apply(input, None)
 
   def apply[X <: Product](input: URI, optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
+
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
 
   def project[X <: Product, Y](i: Int)(x: X) = x.productElement(i).asInstanceOf[Y]
 }
