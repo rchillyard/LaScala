@@ -106,26 +106,46 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
     * @return the header for this object
     * @throws the exception which is wrapped in a Failure from wsy (below)
     */
-  def header: Seq[String] = wsy.get
+  def header: Seq[String] = {
+//    val seq = wsy.getOrElse(Seq[String]())
+    val seq = wsy match {
+      case Success(x) => println(s"header: $x");x
+      case Failure(t) => println(s"failure: $t"); Seq[String]()
+    }
+    println(s"seq: $seq")
+    seq}
 
   /**
     * @param f the function which will be applied to a String to yield an Any (an element of a Tuple)
     * @param s the (row/line) String to be parsed
-    * @return a Tuple
-    * @throws an exception if any of the underlying code generated a Failure
-    */
-  def stringToTuple(f: String => Try[Any])(s: String): X = stringToTryTuple(f)(s).get
+    * @return a Option[X]
+     */
+  def stringToTuple(f: String => Try[Any])(s: String): Option[X] = {
+    val triedX1 = stringToTryTuple(f)(s)
+    println(s"triedX1: $triedX1")
+    triedX1.toOption
+  }
 
-  protected lazy val wsy: Try[Seq[String]] = parser.parseRow(input.head)
+  protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
-  private def stringToTryTuple(f: String => Try[Any])(s: String): Try[X] =
+  protected def headerRow: String
+
+  private def stringToTryTuple(f: String => Try[Any])(s: String): Try[X] = {
+    val row = parser.parseRow(s)
+    println(s"row: $row, header=$header")
+    def rowIsCompatible(ws: List[String]): Boolean = {
+      println(s"rowIsCompatible: ws=$ws, header=$header")
+      println(s"header.size=${header.size}")
+      header.isEmpty || ws.size == header.size
+    }
     for {
-      ws <- parser.parseRow(s)
-      // Note that the following will result in a Failure[NoSuchElementException] if the filter results in false
-      if ws.size == header.size
+      ws <- row
+       // Note that the following will result in a Failure[NoSuchElementException] if the filter yields false
+      if rowIsCompatible(ws)
       // Note that the specification of [X] in the following is essential
-      t <- TupleStream.seqToTuple[X](ws)(f)
-    } yield t
+      x <- TupleStream.seqToTuple[X](ws)(f)
+    } yield x
+  }
 }
 
 /**
@@ -140,14 +160,20 @@ case class ConcreteProductStream[X <: Product](header: Seq[String], tuples: Stre
   *
   * @tparam X a Tuple which should correspond with the number of (and types inferred from) the values.
   */
-case class CSV[X <: Product](parser: CsvParser, input: Stream[String]) extends TupleStreamBase[X](parser, input) {
+case class CSV[X <: Product](parser: CsvParser, input: Stream[String], hasHeader: Boolean) extends TupleStreamBase[X](parser, input) {
+
+  protected def headerRow: String = if (hasHeader) input.head else ""
+
   /**
     * Method to define the tuples of this TupleStreamBase object.
-    * Note that the [X] following stringToTuple looks optional, but it is not!
     *
     * @return a Stream of [X] objects
     */
-  def tuples = input.tail map stringToTuple(parser.elementParser)
+  def tuples: Stream[X] = {
+    val stream = if (hasHeader) input.tail else input
+    println(s"stream: $stream")
+    (stream map (stringToTuple(parser.elementParser))).flatten
+  }
 
   /**
     * method to project ("slice") a ProductStream into a single column
@@ -174,8 +200,8 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String]) extends T
   *
   * @tparam X a Tuple which should correspond with the number of values (all types of the tuple should be String).
   */
-case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String]) extends TupleStreamBase[X](parser, input) {
-  def tuples = input.tail map stringToTuple { x => Success(x) }
+case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], hasHeader: Boolean) extends TupleStreamBase[X](parser, input) {
+  def tuples = ((if (hasHeader) input.tail else input) map stringToTuple { x => Success(x) }).flatten
 
   /**
     * method to project ("slice") a ProductStream into a single column
@@ -194,45 +220,51 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String]) e
   def column(i: Int): Option[Stream[String]] =
     if (i >= 0) Some(tuples map TupleStream.project[X](i))
     else None
+
+  protected def headerRow: String = if (hasHeader) input.head else ""
 }
 
 object TupleStream {
-  def apply[X <: Product](input: Stream[String]): TupleStream[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: Stream[String], hasHeader: Boolean): TupleStream[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, hasHeader: Boolean): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: InputStream): TupleStream[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: InputStream, hasHeader: Boolean): TupleStream[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: File, hasHeader: Boolean): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: File): TupleStream[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: File, hasHeader: Boolean): TupleStream[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: URI, hasHeader: Boolean): TupleStream[X] = apply(parser, Source.fromFile(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: URI): TupleStream[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: URI, hasHeader: Boolean): TupleStream[X] = apply(CsvParser(), input, hasHeader)
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
-  def toTuple[X <: Product](ats: Seq[Try[Any]]): Try[X] = // TODO Assignment6 8 Hint: use MonadOps.sequence; Tuples.toTuple; and asInstanceOf
+  def toTuple[X <: Product](ats: Seq[Try[Any]]): Try[X] =
     for (as <- FP.sequence(ats)) yield Tuples.toTuple(as).asInstanceOf[X]
 
-  def seqToTuple[X <: Product](ws: Seq[String])(f: String => Try[Any]): Try[X] = toTuple(ws map f)
+  def seqToTuple[X <: Product](ws: Seq[String])(f: String => Try[Any]): Try[X] = {
+    val r = toTuple(ws map f)
+    println(s"seqToTuple: ws: $ws; r: $r")
+    r
+  }
 }
 
 object CSV {
-  def apply[X <: Product](input: Stream[String]): CSV[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: Stream[String], hasHeader: Boolean): CSV[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream): CSV[X] = apply(parser, Source.fromInputStream(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, hasHeader: Boolean): CSV[X] = apply(parser, Source.fromInputStream(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: InputStream): CSV[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: InputStream, hasHeader: Boolean): CSV[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: File, hasHeader: Boolean): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: File): CSV[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: File, hasHeader: Boolean): CSV[X] = apply(CsvParser(), input, hasHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream)
+  def apply[X <: Product](parser: CsvParser, input: URI, hasHeader: Boolean): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, hasHeader)
 
-  def apply[X <: Product](input: URI): CSV[X] = apply(CsvParser(), input)
+  def apply[X <: Product](input: URI, hasHeader: Boolean): CSV[X] = apply(CsvParser(), input, hasHeader)
 
   def project[X <: Product, Y](i: Int)(x: X) = x.productElement(i).asInstanceOf[Y]
 }
@@ -250,13 +282,12 @@ case class CsvParser(
                       quoteChar: String = """"""", // quotation char to allow strings to include literal delimiter characters, decimal points, etc.
                       parseElem: String => Try[Any] = CsvParser.defaultParser
                     ) extends CsvParserBase(parseElem) {
-  def row: Parser[List[String]] = // TODO Assignment6 3: row ::= term { delimiter term }
-    repsep(term, delimiter)
+  def row: Parser[List[String]] = repsep(term, delimiter)
 
-  def term: Parser[String] = // TODO Assignment6 7: term ::= quoteChar text quoteChar | text
-    quoteChar ~> s"[^$quoteChar]*".r <~ quoteChar | s"[^$delimiter]*".r
+  def term: Parser[String] = quoteChar ~> s"[^$quoteChar]*".r <~ quoteChar | s"[^$delimiter]*".r
 
-  def parseRow(s: String): Try[List[String]] = this.parseAll(this.row, s) match {
+  def parseRow(s: String): Try[List[String]] = if (s.isEmpty) scala.util.Success(List[String]())
+  else this.parseAll(this.row, s) match {
     case this.Success(r, _) => scala.util.Success(r)
     case f@(this.Failure(_, _) | this.Error(_, _)) => scala.util.Failure(new Exception(s"cannot parse $s: $f"))
   }
