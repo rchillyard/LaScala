@@ -21,16 +21,16 @@ class RuleSpec extends FlatSpec with Matchers {
     c() should matchPattern { case Success(false) => }
   }
   "And" should "work" in {
-    (Truth[Unit](true) :& Truth[Unit](true)) () should matchPattern { case Success(true) => }
-    (Truth[Unit](true) :& Truth[Unit](false)) () should matchPattern { case Success(false) => }
-    (Truth[Unit](false) :& Truth[Unit](true)) () should matchPattern { case Success(false) => }
-    (Truth[Unit](false) :& Truth[Unit](false)) () should matchPattern { case Success(false) => }
+    (Truth[Unit](b = true) :& Truth[Unit](b = true)) () should matchPattern { case Success(true) => }
+    (Truth[Unit](b = true) :& Truth[Unit](b = false)) () should matchPattern { case Success(false) => }
+    (Truth[Unit](b = false) :& Truth[Unit](b = true)) () should matchPattern { case Success(false) => }
+    (Truth[Unit](b = false) :& Truth[Unit](b = false)) () should matchPattern { case Success(false) => }
   }
   "Or" should "work" in {
-    (Truth[Unit](true) :| Truth[Unit](true)) () should matchPattern { case Success(true) => }
-    (Truth[Unit](true) :| Truth[Unit](false)) () should matchPattern { case Success(true) => }
-    (Truth[Unit](false) :| Truth[Unit](true)) () should matchPattern { case Success(true) => }
-    (Truth[Unit](false) :| Truth[Unit](false)) () should matchPattern { case Success(false) => }
+    (Truth[Unit](b = true) :| Truth[Unit](b = true)) () should matchPattern { case Success(true) => }
+    (Truth[Unit](b = true) :| Truth[Unit](b = false)) () should matchPattern { case Success(true) => }
+    (Truth[Unit](b = false) :| Truth[Unit](b = true)) () should matchPattern { case Success(true) => }
+    (Truth[Unit](b = false) :| Truth[Unit](b = false)) () should matchPattern { case Success(false) => }
   }
   "BoundPredicate" should "work" in {
     val isZero = Func[Int]({

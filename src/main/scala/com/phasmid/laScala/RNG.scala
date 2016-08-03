@@ -74,7 +74,7 @@ abstract class RNG_Java[+A](n: Long, f: Long => A) extends RNG[A] {
     * @return a new RNG[B]
     */
   def map[B](f: (A) => B): RNG[B] = {
-    class RNG_B(n: Long) extends RNG_Java[B](n, self.f andThen (f)) {
+    class RNG_B(n: Long) extends RNG_Java[B](n, self.f andThen f) {
       def buildNew(n: Long): RNG_Java[B] = new RNG_B(n)
     }
     new RNG_B(n)

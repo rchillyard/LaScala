@@ -188,8 +188,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
 
   "toOption" should "work" in {
-    toOption(true, "Hello") should matchPattern { case Some("Hello") => }
-    toOption(false, "X") should matchPattern { case None => }
+    toOption(b = true, "Hello") should matchPattern { case Some("Hello") => }
+    toOption(b = false, "X") should matchPattern { case None => }
   }
 
   "sequence[Try]" should "work" in {
