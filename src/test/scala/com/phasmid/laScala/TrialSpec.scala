@@ -1,13 +1,13 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util._
 
 /**
   * @author scalaprof
   */
-class TrialSpec extends FlatSpec with Matchers {
+class TrialSpec extends FlatSpec with Matchers with Inside {
   "Lift" should "work" in {
     val toint = Lift[Any, Int] { case x: String => x.toInt }
     toint("10") should matchPattern { case Success(10) => }
@@ -139,5 +139,25 @@ class TrialSpec extends FlatSpec with Matchers {
     trialDoubleIntString("10.0") should matchPattern { case Success(10.0) => }
     trialDoubleIntString("10") should matchPattern { case Success(10.0) => }
     trialDoubleIntString("10.0X") should matchPattern { case Success("10.0X") => }
+  }
+  ":|" should "keep the Failures correctly" in {
+    def failure1(x: String): Try[String] = Failure(new Exception("1"))
+    def failure2(x: String): Try[String] = Failure(new Exception("2"))
+    val r = Trial(failure1) :| Trial(failure2)
+    val r1 = r("")
+    r1 should matchPattern { case Failure(_) => }
+    inside(r1) {
+      case Failure(x) => x.getLocalizedMessage shouldBe "2"
+    }
+  }
+  "|:" should "keep the Failures correctly" in {
+    def failure1(x: String): Try[String] = Failure(new Exception("1"))
+    def failure2(x: String): Try[String] = Failure(new Exception("2"))
+    val r = failure1 _ |: failure2 _ |: Trial.none
+    val r1 = r("x")
+    r1 should matchPattern { case Failure(_) => }
+    inside(r1) {
+      case Failure(x: NoMatchingTrialException) => x.getLocalizedMessage shouldBe "no matching trial for x"
+    }
   }
 }

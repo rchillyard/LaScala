@@ -12,6 +12,15 @@ import scala.util.{Failure, Try}
   * The more general class of each form is Trial (LiftTrial) which takes any function which operates on the given parameter.
   * The other class is Match/LiftMatch which takes a PartialFunction of form Any=>Try[T] or Any=>T as appropriate.
   *
+  * The simplest and best way to set up an extended trial is as follows:
+  *
+  *   function1 ^: function2 ... functionN ^: None
+  *
+  * This has the advantage that when no match is made on a given input, the final Failure will make that clear...
+  * and will include the String representation of that failing input.
+  * Furthermore, the functions used in this form are just plain functions such as toInt on a String -- that's to say
+  * the form with the up-arrow doesn't require the function to yield a Try.
+  *
   * @author scalaprof
   */
 
@@ -29,11 +38,23 @@ object Trial {
     * The following method creates a null trial which can be used at the start or end
     * of a chain of functions
     *
+    * @param f the function which will create a Throwable based on the input value.
     * @tparam V the type of the input parameter
     * @tparam T the underlying type of the resulting Try
     * @return a terminator trial which always fils
     */
-  def none[V, T]: Trial[V, T] = Trial.apply(v => Failure(new Exception("null trial")))
+  def none[V, T](f: Any=>Throwable): Trial[V, T] = Trial.apply(v => Failure(f(v)))
+
+  /**
+    * The following method creates a null trial which can be used at the start or end
+    * of a chain of functions.
+    * The exception wrapped in this Trial is an Exception("null trial")
+    *
+    * @tparam V the type of the input parameter
+    * @tparam T the underlying type of the resulting Try
+    * @return a terminator trial which always fils
+    */
+  def none[V, T]: Trial[V, T] = none({v => new NoMatchingTrialException(v.toString)})
 
   def lift[V, T](f: V => T): Trial[V, T] = Trial(Lift(f))
 }
@@ -97,3 +118,5 @@ abstract class TrialBase[V, T](f: V => Try[T]) extends (V => Try[T]) {
 
   def :^(g: V => T): Trial[V, T] = Trial(orElse(f, Lift(g)))
 }
+
+class NoMatchingTrialException(s: String) extends Exception(s"no matching trial for $s")

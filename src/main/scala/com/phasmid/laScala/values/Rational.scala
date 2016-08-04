@@ -4,6 +4,11 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 /**
+  * A simple Rational type for developers not depending on Spire or something like that.
+  * This grew out of a class exercise so is not the last word in sophistication.
+  *
+  * CONSIDER we don't really need to extend Fractional provided that we have our implicit RationalIsFractional defined
+  *
   * @author scalaprof
   */
 case class Rational(n: Long, d: Long) extends Fractional[Rational] {
@@ -151,7 +156,7 @@ object Rational {
       case rRat(n) => Rational(n.toLong)
       case rDec(w, _, f, null) => Rational(BigDecimal.apply(w + f))
       // FIXME implement properly the case where the fourth component is "eN"
-      case rDec(w, _, f, e) => println(s"$w$f$e"); val b = BigDecimal.apply(w + f + e); println(s"$b"); Rational(b)
+      case rDec(w, _, f, e) => val b = BigDecimal.apply(w + f + e); Rational(b)
       case _ => throw new RationalException(s"invalid rational expression: $x")
     }
   }

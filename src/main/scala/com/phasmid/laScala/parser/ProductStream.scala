@@ -35,6 +35,8 @@ trait ProductStream[X <: Product] {
     */
   def header: Seq[String]
 
+  def carper(s: String): Unit
+
   /**
     * @return a Stream of tuples
     */
@@ -84,10 +86,20 @@ trait ProductStream[X <: Product] {
   def asMaps: Stream[Map[String, Any]]
 }
 
+object ProductStream {
+}
+
 /**
   * Base class for implementers of ProductStream
   */
 abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
+  /**
+    * Default carper. Normally, programmers should override this with a call to a logger
+    *
+    * @param s the String to carp about
+    */
+  override def carper(s: String): Unit = System.err.println(s)
+
   /**
     * Method asMaps converts this ProductStream into a Stream of Map[String,Any] objects, one per row.
     * The keys for the map are derived from the header and the values from the tuple elements.
@@ -99,20 +111,21 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
 }
 
 /**
-  * Base class for ProductStream which additionally derive their header and tuples from parsing a Stream of Strings (one per row).
+  * Abstract class for ProductStream which additionally derives their header and tuples from parsing a Stream of Strings (one per row).
   */
 abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[String]) extends ProductStreamBase[X] {
   /**
     * @param f the function which will be applied to a String to yield an Any (an element of a Tuple)
     * @param s the (row/line) String to be parsed
     * @return a Option[X]
-     */
-  def stringToTuple(f: String => Try[Any])(s: String): Option[X] = stringToTryTuple(f)(s).toOption
+    */
+  def stringToTuple(f: String => Try[Any])(s: String): Try[X] = stringToTryTuple(f)(s)
 
   protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
   protected def headerRow: String
 
+  // CONSIDER inlining this method
   private def stringToTryTuple(f: String => Try[Any])(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isEmpty || ws.size == header.size
     for {
@@ -127,6 +140,10 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
 
 /**
   * Case class which implements ProductStream where the header and tuples are specified directly
+  *
+  * @param header the header (names of columns)
+  * @param tuples the tuples, as a Stream
+  * @tparam X the tuple type
   */
 case class ConcreteProductStream[X <: Product](header: Seq[String], tuples: Stream[X]) extends ProductStreamBase[X]
 
@@ -146,7 +163,7 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], optionalH
     */
   def header: Seq[String] = optionalHeader.getOrElse(wsy match {
     case Success(x) => x
-    case Failure(t) => System.err.println(s"failure: $t"); Seq[String]()
+    case Failure(t) => carper(s"failure: $t"); Seq[String]()
   })
 
   protected def headerRow: String = if (optionalHeader.isEmpty) input.head else ""
@@ -156,7 +173,10 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], optionalH
     *
     * @return a Stream of [X] objects
     */
-  def tuples: Stream[X] = ((if (optionalHeader.isEmpty) input.tail else input) map stringToTuple(parser.elementParser)).flatten
+  def tuples: Stream[X] = {
+    val xts = getStream map stringToTuple(parser.elementParser)
+    for (xt <- xts; x <- xt.recoverWith({ case t => carper(t.getLocalizedMessage); Failure(new Exception("logged already")) }).toOption) yield x
+  }
 
   /**
     * method to project ("slice") a ProductStream into a single column
@@ -175,6 +195,8 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], optionalH
   def column[Y](i: Int): Option[Stream[Y]] =
     if (i >= 0) Some(tuples map CSV.project[X, Y](i))
     else None
+
+  def getStream: Stream[String] = if (optionalHeader.isEmpty) input.tail else input
 }
 
 /**
@@ -192,11 +214,12 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], o
     */
   def header: Seq[String] = optionalHeader.getOrElse(wsy match {
     case Success(x) => x
-    case Failure(t) => System.err.println(s"failure: $t"); Seq[String]()
+    case Failure(t) => carper(s"failure: $t"); Seq[String]()
   })
 
-  // TODO simplify
-  def tuples = ((if (optionalHeader.isEmpty) input.tail else input) map stringToTuple { x => Success(x) }).flatten
+  def tuples: Stream[X] = for (t <- getStream map stringToTuple { x => Success(x) }; x <- t.toOption) yield x
+
+  def getStream: Stream[String] = if (optionalHeader.isEmpty) input.tail else input
 
   /**
     * method to project ("slice") a ProductStream into a single column
@@ -252,9 +275,14 @@ object TupleStream {
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
-  def toTuple[X <: Product](ats: Seq[Try[Any]]): Try[X] =
-    for (as <- FP.sequence(ats)) yield Tuples.toTuple(as).asInstanceOf[X]
-
+  // CONSIDER improving this but be careful because it's easy to get a Try satisfying an Any
+  def toTuple[X <: Product](ats: Seq[Try[Any]]): Try[X] = {
+    val ast = FP.sequence(ats)
+    ast match {
+      case Success(as) => Success(Tuples.toTuple(as).asInstanceOf[X])
+      case Failure(t) => ast.asInstanceOf[Try[X]]
+    }
+  }
   def seqToTuple[X <: Product](ws: Seq[String])(f: String => Try[Any]): Try[X] = toTuple(ws map f)
 }
 
@@ -307,30 +335,58 @@ case class CsvParser(
                     ) extends CsvParserBase(parseElem) {
   def row: Parser[List[String]] = repsep(term, delimiter)
 
-  def term: Parser[String] = quoteChar ~> s"[^$quoteChar]*".r <~ quoteChar | s"[^$delimiter]*".r
+  /**
+    * Term, which is a String, quoted or not. We wish to preserve the quotation marks if present
+    *
+    * @return
+    */
+  def term: Parser[String] = (quoteChar ~ s"[^$quoteChar]*".r ~ quoteChar | s"[^$delimiter]*".r) ^^ { case q1 ~ s ~ q2 => q1.toString + s + q2; case s => s.toString }
 
   def parseRow(s: String): Try[List[String]] = if (s.isEmpty) scala.util.Success(List[String]())
-  else this.parseAll(this.row, s) match {
-    case this.Success(r, _) => scala.util.Success(r)
-    case f@(this.Failure(_, _) | this.Error(_, _)) => scala.util.Failure(new Exception(s"cannot parse $s: $f"))
+  else parseAll(row, s) match {
+    case Success(r, _) => scala.util.Success(r)
+    case f@(Failure(_, _) | Error(_, _)) => scala.util.Failure(new Exception(s"cannot parse $s: $f"))
   }
 }
 
 object CsvParser {
-  val dateFormatStrings = Seq("yyyy-MM-dd", "yyyy-MM-dd-hh:mm:ss.s")
+  val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s")
   // etc.
   val dateParser = Trial[String, Any]((parseDate _) (dateFormatStrings))
-  val defaultParser = Trial.none[String, Any] :| { case s@(date0(_) | date4(_) | date1(_)) => dateParser(s) } :^ { case quoted(w) => w } :^ { case whole(s) => s.toInt } :^ { case truth(w) => true } :^ { case untruth(w) => false } :^ { case s => s match {
-    case floating(_) | floating(_, _) | floating(_, _, _) => s.toDouble
-  }
-  } :^ { case s => s }
-  val date0 = """(\d\d\d\d-\d\d-\d\d)""".r
+
+  /**
+    * The default parser will parse most dates, will parse quoted strings, integers, booleans and floating point values (as Double).
+    * If it cannot match on of those patterns, it will fail.
+    * NOTE: it is important that the final operator is :|
+    */
+  val defaultParser: Trial[String, Any] = Trial.none[String, Any] :|
+    // here we allow for the possibility of date being enclosed in quotes -- need to generalize
+    { case date2(s) => dateParser(s) } :|
+    { case s@(date0(_) | date1(_) | date6(_) | dateISO(_)) => dateParser(s) } :^
+    { case quoted(w) => w } :^
+    { case whole(s) => s.toInt } :^
+    { case truth(w) => true } :^
+    { case untruth(w) => false } :^
+    { case s => s match {
+        case floating(_) | floating(_, _) | floating(_, _, _) => s.toDouble
+      }
+    } :|
+    Trial.none[String, Any]
+  /**
+    * The lax parser is essentially the same as the defaultParser.
+    * However, if it cannot match on of those patterns, it will succeed, returning the string as is.
+    */
+  val laxParser = defaultParser :^ { case s => s }
+  val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
+  val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
+  // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats
+  val date2 = """^\"(\d{1,2}\/\d{1,2}\/\d{2,4})\"$""".r
   // ISO 8601
-  val date1 =
+  val dateISO =
     """(?m)^(0[1-9]|1\d|2[0-8]|29(?=-\d\d-(?!1[01345789]00|2[1235679]00)\d\d(?:[02468][048]|[13579][26]))|30(?!-02)|31(?=-0[13578]|-1[02]))-(0[1-9]|1[0-2])-([12]\d{3}) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$""".r
-  val date2 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
-  val date3 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
-  val date4 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
+  val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
+  val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
+  val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
 
   def parseDate(dfs: Seq[String])(s: String): Try[DateTime] = {
     @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[DateTime]): Try[DateTime] = formats match {
@@ -342,7 +398,7 @@ object CsvParser {
     }, Failure(new Exception(s""""$s" cannot be parsed as date""")))
   }
 
-  val quoted = """"([^"]*)"""".r
+  val quoted = """\"([^"]*)\"""".r
   val whole = """(\d+)""".r
   val floating = """-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
   val truth = """(?i)^([ty]|true|yes)$""".r

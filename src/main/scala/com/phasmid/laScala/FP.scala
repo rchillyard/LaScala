@@ -363,10 +363,7 @@ object FP {
     * @return a named function which takes a T and returns an R
     */
   def named[T, R](name: String, f: T => R) = new ((T) => R) {
-    def apply(v1: T): R = {
-      println(s"applying $name to $v1")
-      f(v1)
-    }
+    def apply(v1: T): R = f(v1)
 
     override def toString = name
   }
