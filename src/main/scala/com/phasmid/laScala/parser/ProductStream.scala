@@ -66,6 +66,14 @@ trait ProductStream[X <: Product] {
     ConcreteProductStream[Y](header, tuples flatMap f)
 
   /**
+    * filter method
+    *
+    * @param p predicate to be applied to each tuple
+    * @return a product stream which contains all of the elements from this that satisfy the predicate
+    */
+  def filter(p: X => Boolean): ProductStream[X] = ConcreteProductStream[X](header, tuples filter p)
+
+  /**
     * toMap method
     *
     * @param pk function to yield a primary key value from a tuple
