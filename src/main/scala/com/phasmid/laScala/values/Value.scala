@@ -4,7 +4,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.FP
-import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
 
 import scala.language.implicitConversions
@@ -41,60 +40,14 @@ import scala.util._
   *
   * TODO move this into values package
   */
-sealed trait Value {
-
-  /**
-    * If this Value is a Boolean, then return Some(true) or Some(false) as appropriate.
-    * Otherwise, return None.
-    *
-    * @return Some(true), Some(false) or None
-    */
-  def asBoolean: Option[Boolean]
-
-  /**
-    * Transform this Value into an (optional) X value which is Orderable
-    *
-    * @tparam X the type of the result we desire
-    * @return either Some(x) if this value can be represented so, without information loss;
-    *         or None otherwise.
-    */
-  def asOrderable[X: Orderable](implicit pattern: String): Option[X]
-
-  /**
-    * Transform this Value into an (optional) X value which is Incrementable
-    *
-    * @tparam X the type of the result we desire
-    * @return either Some(x) if this value can be represented so, without information loss;
-    *         or None otherwise.
-    */
-  def asIncrementable[X: Incrementable](implicit pattern: String): Option[X]
-
-  /**
-    * Transform this Value into an (optional) X value which is Valuable
-    *
-    * @tparam X the type of the result we desire
-    * @return either Some(x) if this value can be represented so, without information loss;
-    *         or None otherwise.
-    */
-  def asValuable[X: Valuable]: Option[X]
-
-  /**
-    * Transform this Value into an (optional) X value which is Fractional
-    *
-    * @tparam X the type of the result we desire
-    * @return either Some(x) if this value can be represented so, without information loss;
-    *         or None otherwise.
-    */
-  def asFractional[X: Fractional]: Option[X]
+sealed trait Value extends Scalar {
 
   /**
     * View this Value as a Sequence of Value objects.
     *
     * @return either Some(sequence) or None, as appropriate.
     */
-  def asSequence: Option[Seq[Value]]
-
-  def source: Any
+  def asSequence: Option[Seq[Value]] = None
 }
 
 trait ValueMaker extends (Any => Try[Value]) {
@@ -114,21 +67,7 @@ trait ValueMaker extends (Any => Try[Value]) {
   * @param x      the Int value
   * @param source the source (which could, conceivably, be a String)
   */
-case class IntValue(x: Int, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
-
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = Some(implicitly[Fractional[X]].fromInt(x))
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = x.toString
-}
+case class IntValue(x: Int, source: Any) extends BaseIntScalar(x, source) with Value
 
 /**
   * Value which is natively a Boolean. Such a value can be converted to Int by invoking asValuable[Int] in which case
@@ -137,21 +76,7 @@ case class IntValue(x: Int, source: Any) extends Value {
   * @param x      the Int value
   * @param source the source (which could, conceivably, be a String)
   */
-case class BooleanValue(x: Boolean, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = Some(x)
-
-  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
-
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = None
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = x.toString
-}
+case class BooleanValue(x: Boolean, source: Any) extends BaseBooleanScalar(x, source) with Value
 
 /**
   * Value which is natively a Double. Such a value cannot be converted to Int by invoking asValuable[Int] because of
@@ -160,28 +85,7 @@ case class BooleanValue(x: Boolean, source: Any) extends Value {
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class DoubleValue(x: Double, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  // XXX this gives us the effect we want -- conversion to Double but not, e.g. Int.
-  // However, it is not elegant.
-  // We really should try to convert a Double to an Int, for example, and test there is no information loss.
-  def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
-
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = {
-    //    val fractional = implicitly[Fractional[X]]
-    //    Some(fractional.times(x.asInstanceOf[X], fractional.one))
-    Some(x.asInstanceOf[X])
-  }
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = x.toString
-}
+case class DoubleValue(x: Double, source: Any) extends BaseDoubleScalar(x, source) with Value
 
 /**
   * Value which is natively a Double. Such a value cannot be converted to Int by invoking asValuable[Int] because of
@@ -190,22 +94,7 @@ case class DoubleValue(x: Double, source: Any) extends Value {
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class RationalValue(x: Rational, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleValue(x.n).asValuable; x2 <- DoubleValue(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1, x2).toOption) yield y
-
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = None
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = x.toString
-}
-
+case class RationalValue(x: Rational, source: Any) extends BaseRationalScalar(x, source) with Value
 /**
   * Value which is natively a String. Such a value, providing it is formatted appropriately, can be converted to Int or
   * Double by invoking asValuable[Int] or asValuable[Double], respectively.
@@ -213,21 +102,7 @@ case class RationalValue(x: Rational, source: Any) extends Value {
   * @param x      the String value
   * @param source the source (normally a String)
   */
-case class StringValue(x: String, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
-
-  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = implicitly[Incrementable[X]].fromString(x)(pattern).toOption
-
-  def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = x
-}
+case class StringValue(x: String, source: Any) extends BaseStringScalar(x, source) with Value
 
 /**
   * Value which is natively a String. Such a value cannot be converted to Int or
@@ -236,22 +111,9 @@ case class StringValue(x: String, source: Any) extends Value {
   * @param x      the String value
   * @param source the source (normally a String but might be enclosed in quotation marks)
   */
-case class QuotedStringValue(x: String, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asValuable[X: Valuable]: Option[X] = None
-
-  // TODO create a concrete implicit object for OrderableString
-  def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = None
-
+case class QuotedStringValue(x: String, source: Any) extends BaseQuotedStringScalar(x, source) with Value {
   // CONSIDER creating a sequence of Char?
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = source.toString
+  override def asSequence: Option[Seq[Value]] = None
 }
 
 /**
@@ -262,22 +124,7 @@ case class QuotedStringValue(x: String, source: Any) extends Value {
   * @param x      the LocalDate value
   * @param source the source (normally a String)
   */
-case class DateValue(x: LocalDate, source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asValuable[X: Valuable]: Option[X] = None
-
-  // CONSIDER returning None here, because a Date value is inherently Incrementable
-  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Try(implicitly[Incrementable[X]].unit(x.asInstanceOf[X])).toOption
-
-  def asFractional[X: Fractional]: Option[X] = None
-
-  def asSequence: Option[Seq[Value]] = None
-
-  override def toString = source.toString
-}
+case class DateValue(x: LocalDate, source: Any) extends BaseDateScalar(x, source) with Value
 
 /**
   * Value which is actually a Seq of Values. Such a value, cannot be converted to Int or
@@ -287,24 +134,15 @@ case class DateValue(x: LocalDate, source: Any) extends Value {
   * @param xs     the Seq of Values
   * @param source the source (typically, a Seq of Any objects)
   */
-case class SequenceValue(xs: Seq[Value], source: Any) extends Value {
-  def asBoolean: Option[Boolean] = None
-
-  def asOrderable[X: Orderable](implicit pattern: String): Option[X] = None
-
-  def asValuable[X: Valuable]: Option[X] = None
-
-  def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = None
-
-  def asFractional[X: Fractional]: Option[X] = None
-
-  def asSequence: Option[Seq[Value]] = Some(xs)
+case class SequenceValue(xs: Seq[Value], source: Any) extends BaseScalar(xs, source) with Value {
+  override def asSequence: Option[Seq[Value]] = Some(xs)
 
   override def toString = xs.toString
 }
 
 class ValueException(s: String, t: scala.Throwable = null) extends Exception(s, t)
 
+// TODO how do we re-use the code from Scalar in the following methods?
 object BooleanValue {
   def apply(x: Boolean): BooleanValue = BooleanValue(x, x)
 }

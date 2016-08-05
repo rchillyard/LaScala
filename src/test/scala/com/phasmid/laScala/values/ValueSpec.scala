@@ -79,7 +79,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Value(""""1"""")
-    x.toString shouldBe """"1""""
+    x.render shouldBe """"1""""
     x.source shouldBe """"1""""
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }

@@ -35,7 +35,8 @@ import scala.util._
   * Created by scalaprof on 8/4/16.
   *
   */
-sealed trait Scalar {
+trait Scalar {
+  // TODO seal this again once Value is in this module
 
   /**
     * Method to get the wrapped value as an Any
@@ -120,7 +121,9 @@ trait ScalarMaker extends (Any => Try[Scalar]) {
   * @param x      the Int value
   * @param source the source (which could, conceivably, be a String)
   */
-case class IntScalar(x: Int, source: Any) extends BaseScalar(x, source) {
+case class IntScalar(x: Int, source: Any) extends BaseIntScalar(x, source)
+
+abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
 
   override def asFractional[X: Fractional]: Option[X] = Some(implicitly[Fractional[X]].fromInt(x))
@@ -135,7 +138,9 @@ case class IntScalar(x: Int, source: Any) extends BaseScalar(x, source) {
   * @param x      the Int value
   * @param source the source (which could, conceivably, be a String)
   */
-case class BooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, source) {
+case class BooleanScalar(x: Boolean, source: Any) extends BaseBooleanScalar(x, source)
+
+abstract class BaseBooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, source) {
   override def asBoolean: Option[Boolean] = Some(x)
 
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
@@ -150,7 +155,9 @@ case class BooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, source) 
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class DoubleScalar(x: Double, source: Any) extends BaseScalar(x, source) {
+case class DoubleScalar(x: Double, source: Any) extends BaseDoubleScalar(x, source)
+
+abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, source) {
   // XXX this gives us the effect we want -- conversion to Double but not, e.g. Int.
   // However, it is not elegant.
   // We really should try to convert a Double to an Int, for example, and test there is no information loss.
@@ -173,7 +180,9 @@ case class DoubleScalar(x: Double, source: Any) extends BaseScalar(x, source) {
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class RationalScalar(x: Rational, source: Any) extends BaseScalar(x, source) {
+case class RationalScalar(x: Rational, source: Any) extends BaseRationalScalar(x, source)
+
+abstract class BaseRationalScalar(x: Rational, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1, x2).toOption) yield y
 
   // TODO this also needs fixing like DoubleScalar
@@ -189,7 +198,9 @@ case class RationalScalar(x: Rational, source: Any) extends BaseScalar(x, source
   * @param x      the String value
   * @param source the source (normally a String)
   */
-case class StringScalar(x: String, source: Any) extends BaseScalar(x, source) {
+case class StringScalar(x: String, source: Any) extends BaseStringScalar(x, source)
+
+abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
 
   override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
@@ -201,7 +212,6 @@ case class StringScalar(x: String, source: Any) extends BaseScalar(x, source) {
 
   override def toString = s"StringScalar: $render"
 }
-
 /**
   * Scalar which is natively a String. Such a value cannot be converted to Int or
   * Double by invoking asValuable.
@@ -209,7 +219,12 @@ case class StringScalar(x: String, source: Any) extends BaseScalar(x, source) {
   * @param x      the String value
   * @param source the source (normally a String but might be enclosed in quotation marks)
   */
-case class QuotedStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
+case class QuotedStringScalar(x: String, source: Any) extends BaseQuotedStringScalar(x, source)
+
+/**
+  * TODO merge this and BaseStringScalar appropriately
+  */
+abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
   // TODO create a concrete implicit object for OrderableString
   override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
@@ -224,7 +239,9 @@ case class QuotedStringScalar(x: String, source: Any) extends BaseScalar(x, sour
   * @param x      the LocalDate value
   * @param source the source (normally a String)
   */
-case class DateScalar(x: LocalDate, source: Any) extends BaseScalar(x, source) {
+case class DateScalar(x: LocalDate, source: Any) extends BaseDateScalar(x, source)
+
+abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, source) {
   // CONSIDER returning None here, because a Date value is inherently Incrementable
   override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
