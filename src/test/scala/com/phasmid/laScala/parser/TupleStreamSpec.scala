@@ -1,23 +1,20 @@
 package com.phasmid.laScala.parser
 
-import java.io.{File, FileInputStream}
-
-import org.joda.time.DateTime
 import org.scalatest.{FlatSpec, Matchers}
-
-import scala.collection.Map
 
 /**
   * @author scalaprof
   */
 class TupleStreamSpec extends FlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via TupleStream" in {
-    val wts = TupleStream[Tuple1[String]](Stream("x",""""Hello"""", """"World!"""")).tuples
+    val tupleStream = TupleStream[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    println(tupleStream)
+    val wts = tupleStream.tuples
     wts.head match {
-      case Tuple1(s) => assert(s == """"Hello"""")
+      case Tuple1(s) => assert(s == "Hello")
     }
     wts.tail.head match {
-      case Tuple1(s) => assert(s == """"World!"""")
+      case Tuple1(s) => assert(s == "World!")
     }
   }
   """"3,5", "8,13"""" should "be (String,String) stream via TupleStream" in {

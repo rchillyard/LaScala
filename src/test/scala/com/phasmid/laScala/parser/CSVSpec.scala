@@ -2,12 +2,14 @@ package com.phasmid.laScala.parser
 
 import java.io.{File, FileInputStream}
 import java.net.URL
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import com.phasmid.laScala.values.{IntScalar, Scalar, StringScalar}
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.collection.Map
+import scala.util.Success
 
 /**
   * @author scalaprof
@@ -77,9 +79,13 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     }
   }
   it should "convert into maps properly" in {
-    val zWms = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).asMaps
-    zWms.head should be(Map("x" -> 3, "y" -> 5))
-    zWms(1) should be(Map("x" -> 8, "y" -> 13))
+    val zWmsy = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).asMaps
+    zWmsy should matchPattern { case Success(_) => }
+    inside(zWmsy) {
+      case Success(zWms) =>
+        zWms.head should be(Map("x" -> IntScalar(3), "y" -> IntScalar(5)))
+        zWms(1) should be(Map("x" -> IntScalar(8), "y" -> IntScalar(13)))
+    }
   }
   """"3,5.0", "8,13.5"""" should "be (Int,Double) stream" in {
     val dIts = CSV[(Int, Double)](Stream("x,y", "3,5.0", "8,13.5")).tuples
@@ -91,12 +97,12 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     }
   }
   """"milestone 1, 2016-3-8", "milestone 2, 2016-3-15"""" should "be (String,Datetime) stream" in {
-    val dIts = CSV[(String, DateTime)](Stream("event,date", """"milestone 1",2016-3-8""", """"milestone 2",2016-3-15""")).tuples
+    val dIts = CSV[(String, LocalDate)](Stream("event,date", """"milestone 1",2016-3-8""", """"milestone 2",2016-3-15""")).tuples
     dIts.head match {
-      case (x, y) => assert(x == "milestone 1" && y == new DateTime("2016-03-08"))
+      case (x, y) => assert(x == "milestone 1" && y == LocalDate.parse("2016-03-08"))
     }
     dIts.tail.head match {
-      case (x, y) => assert(x == "milestone 2" && y == new DateTime("2016-03-15"))
+      case (x, y) => assert(x == "milestone 2" && y == LocalDate.parse("2016-03-15"))
     }
   }
   "sample.csv" should "be (String,Int) stream using URI" in {
@@ -135,33 +141,36 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")
-    val csv = CSV.apply[(String, Double, DateTime, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", 104.48, _, 12.18) => }
   }
   it should "work from URL stream" in {
     val url = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=AAPL&f=nl1d1r&e=.csv")
-    val csv = CSV.apply[(String, Double, DateTime, Double)](url, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](url, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", _, _, _) => }
     inside (x.head) {
       case (_,ltp, ltd, per) =>
         assert (per > 8 && per < 20)
-        val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
-        assert (ltd.isAfter(DateTime.parse("2016-08-02",formatter)))
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        assert(ltd.isAfter(LocalDate.parse("2016-08-02", formatter)))
     }
   }
   it should "yield maps from local URL" in {
     val url = getClass.getResource("quotes.csv")
-    val csv = CSV.apply[(String, Double, DateTime, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
-    val x = csv.asMaps
-    x.size shouldBe 1
-    inside(x.head) {
-      case m =>
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val xWmsy = csv.asMaps
+    inside(xWmsy) {
+      case Success(xWms) =>
+        xWms.size shouldBe 1
+        inside(xWms.head) {
+          case m: Map[String, Scalar] =>
         m.size shouldBe 4
-        m("name") shouldBe "Apple Inc."
+            m("name") should matchPattern { case StringScalar("Apple Inc.", _) => }
+        }
     }
   }
 

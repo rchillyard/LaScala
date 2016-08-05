@@ -2,12 +2,15 @@ package com.phasmid.laScala.parser
 
 import java.io.{File, InputStream}
 import java.net.{URI, URL}
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+import com.phasmid.laScala.values.{DateScalar, Scalar}
 import com.phasmid.laScala.{FP, Trial, Tuples}
 
 // For now, until we can convert to Java8 datetimes
-import org.joda.time._
-import org.joda.time.format._
+//import org.joda.time._
+//import org.joda.time.format._
 
 import scala.annotation.tailrec
 import scala.collection.GenTraversableOnce
@@ -88,10 +91,10 @@ trait ProductStream[X <: Product] {
   def get(i: Int): Option[X] = if (i >= 0 && i < asList.size) Some(asList.apply(i)) else None
 
   /**
-    * @return a Stream of Maps, each map corresponding to a row, such that the keys are the column names (from the header)
+    * @return a Try of a Stream of Maps, each map corresponding to a row, such that the keys are the column names (from the header)
     *         and the values are the tuple values
     */
-  def asMaps: Stream[Map[String, Any]]
+  def asMaps: Try[Stream[Map[String, Scalar]]]
 }
 
 object ProductStream {
@@ -109,13 +112,20 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
   override def carper(s: String): Unit = System.err.println(s)
 
   /**
-    * Method asMaps converts this ProductStream into a Stream of Map[String,Any] objects, one per row.
+    * Method asMaps converts this ProductStream into a Stream of Map[String,Scalar] objects, one per row.
     * The keys for the map are derived from the header and the values from the tuple elements.
     *
-    * @return a Stream of Map[String,Any] objects
+    * @return a Stream of Map[String,Scalar] objects
     */
-  def asMaps: Stream[Map[String, Any]] =
-    tuples map { t => (t.productIterator zip header.toIterator map { case (v, k) => k -> v }).toMap }
+  def asMaps = {
+    def m(t: X): Try[Map[String, Scalar]] = {
+      val xWys = t.productIterator zip header.toIterator map {
+        case (v, k) => Scalar.tryScalarTuple(k, v)
+      }
+      for (xWs <- FP.sequence(xWys.toSeq)) yield xWs.toMap
+    }
+    FP.sequence(tuples map { t => m(t) })
+  }
 }
 
 /**
@@ -127,14 +137,14 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
     * @param s the (row/line) String to be parsed
     * @return a Option[X]
     */
-  def stringToTuple(f: String => Try[Any])(s: String): Try[X] = stringToTryTuple(f)(s)
+  def stringToTuple(f: String => Try[Scalar])(s: String): Try[X] = stringToTryTuple(f)(s)
 
   protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
   protected def headerRow: String
 
   // CONSIDER inlining this method
-  private def stringToTryTuple(f: String => Try[Any])(s: String): Try[X] = {
+  private def stringToTryTuple(f: String => Try[Scalar])(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isEmpty || ws.size == header.size
     for {
       ws <- parser.parseRow(s)
@@ -283,15 +293,18 @@ object TupleStream {
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
-  // CONSIDER improving this but be careful because it's easy to get a Try satisfying an Any
-  def toTuple[X <: Product](ats: Seq[Try[Any]]): Try[X] = {
+  // CONSIDER improving this but be careful because it's easy to get a Try satisfying an Any (Done?)
+  def toTuple[X <: Product](ats: Seq[Try[Scalar]]): Try[X] = {
     val ast = FP.sequence(ats)
     ast match {
-      case Success(as) => Success(Tuples.toTuple(as).asInstanceOf[X])
+      case Success(as) =>
+        val x: Seq[Any] = for (a <- as) yield a.get
+        Success(Tuples.toTuple(x).asInstanceOf[X])
       case Failure(t) => ast.asInstanceOf[Try[X]]
     }
   }
-  def seqToTuple[X <: Product](ws: Seq[String])(f: String => Try[Any]): Try[X] = toTuple(ws map f)
+
+  def seqToTuple[X <: Product](ws: Seq[String])(f: String => Try[Scalar]): Try[X] = toTuple(ws map f)
 }
 
 object CSV {
@@ -328,7 +341,7 @@ object CSV {
   def project[X <: Product, Y](i: Int)(x: X) = x.productElement(i).asInstanceOf[Y]
 }
 
-abstract class CsvParserBase(f: String => Try[Any]) extends JavaTokenParsers {
+abstract class CsvParserBase(f: String => Try[Scalar]) extends JavaTokenParsers {
   /**
     * @return the trial function that will convert a String into Try[Any]
     *         This method is referenced only by CSV class (not by TupleStream, which does no element conversion).
@@ -339,7 +352,7 @@ abstract class CsvParserBase(f: String => Try[Any]) extends JavaTokenParsers {
 case class CsvParser(
                       delimiter: String = ",", // delimiter separating elements within rows
                       quoteChar: String = """"""", // quotation char to allow strings to include literal delimiter characters, decimal points, etc.
-                      parseElem: String => Try[Any] = CsvParser.defaultParser
+                      parseElem: String => Try[Scalar] = CsvParser.defaultParser
                     ) extends CsvParserBase(parseElem) {
   def row: Parser[List[String]] = repsep(term, delimiter)
 
@@ -360,14 +373,14 @@ case class CsvParser(
 object CsvParser {
   val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s")
   // etc.
-  val dateParser = Trial[String, Any]((parseDate _) (dateFormatStrings))
+  val dateParser = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
 
   /**
     * The default parser will parse most dates, will parse quoted strings, integers, booleans and floating point values (as Double).
     * If it cannot match on of those patterns, it will fail.
     * NOTE: it is important that the final operator is :|
     */
-  val defaultParser: Trial[String, Any] = Trial.none[String, Any] :|
+  val defaultParser: Trial[String, Scalar] = Trial.none[String, Scalar] :|
     // here we allow for the possibility of date being enclosed in quotes -- need to generalize
     { case date2(s) => dateParser(s) } :|
     { case s@(date0(_) | date1(_) | date6(_) | dateISO(_)) => dateParser(s) } :^
@@ -379,7 +392,7 @@ object CsvParser {
         case floating(_) | floating(_, _) | floating(_, _, _) => s.toDouble
       }
     } :|
-    Trial.none[String, Any]
+    Trial.none[String, Scalar]
   /**
     * The lax parser is essentially the same as the defaultParser.
     * However, if it cannot match on of those patterns, it will succeed, returning the string as is.
@@ -396,13 +409,16 @@ object CsvParser {
   val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
   val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
 
-  def parseDate(dfs: Seq[String])(s: String): Try[DateTime] = {
-    @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[DateTime]): Try[DateTime] = formats match {
-      case Nil => result
-      case h :: t => loop(t, result orElse Try(h.parseDateTime(s)))
+  def parseDate(dfs: Seq[String])(s: String): Try[Scalar] = {
+    @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[Scalar]): Try[Scalar] = result match {
+      case Success(d) => result
+      case Failure(t) => formats match {
+        case Nil => result
+        case h :: t => loop(t, Try(new DateScalar(LocalDate.parse(s, h), s)))
+      }
     }
     loop(dfs map {
-      DateTimeFormat.forPattern
+      DateTimeFormatter.ofPattern
     }, Failure(new Exception(s""""$s" cannot be parsed as date""")))
   }
 

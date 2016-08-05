@@ -10,6 +10,8 @@ import scala.util._
   *
   * TODO flesh out the unit tests (coverage is low).
   *
+  * CONSIDER replace Seq with Iterator in signatures
+  *
   * @author scalaprof
   */
 object FP {

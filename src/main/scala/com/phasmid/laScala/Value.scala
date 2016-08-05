@@ -37,6 +37,8 @@ import scala.util._
   *
   * Created by scalaprof on 7/8/16.
   *
+  * TODO implement Value in terms of Scalar
+  *
   * TODO move this into values package
   */
 sealed trait Value {

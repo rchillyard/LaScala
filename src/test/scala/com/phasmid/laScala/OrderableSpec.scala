@@ -6,6 +6,7 @@ import com.phasmid.laScala.Orderable.{OrderableLocalDate, OrderableString}
 import com.phasmid.laScala.values.Rational
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.postfixOps
 import scala.util.Success
 
 /**

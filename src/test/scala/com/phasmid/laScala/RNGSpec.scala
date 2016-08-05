@@ -2,6 +2,8 @@ package com.phasmid.laScala
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.postfixOps
+
 /**
   * @author scalaprof
   */
