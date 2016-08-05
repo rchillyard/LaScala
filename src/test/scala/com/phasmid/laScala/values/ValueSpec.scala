@@ -1,8 +1,7 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 
-import com.phasmid.laScala.values.Rational
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.language.implicitConversions

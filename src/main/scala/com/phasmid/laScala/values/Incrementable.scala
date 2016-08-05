@@ -1,4 +1,4 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 

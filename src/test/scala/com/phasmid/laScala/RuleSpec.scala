@@ -4,6 +4,7 @@ import java.time.LocalDate
 
 import com.phasmid.laScala.parser._
 import com.phasmid.laScala.predicate.Func
+import com.phasmid.laScala.values.Value
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util._

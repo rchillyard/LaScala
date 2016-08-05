@@ -1,9 +1,8 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 
-import com.phasmid.laScala.Orderable.{OrderableLocalDate, OrderableString}
-import com.phasmid.laScala.values.Rational
+import com.phasmid.laScala.values.Orderable.{OrderableLocalDate, OrderableString}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.postfixOps

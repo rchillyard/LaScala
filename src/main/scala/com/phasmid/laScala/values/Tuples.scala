@@ -1,4 +1,4 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 /**
   * Created by Bowen Cai on 1/24/2015.

@@ -3,6 +3,7 @@ package com.phasmid.laScala
 import com.phasmid.laScala.FP._
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.parser.rpn.{Comparand, RPN}
+import com.phasmid.laScala.values.Orderable
 
 import scala.util.{Failure, Success, Try}
 

@@ -1,7 +1,7 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.Orderable
-import com.phasmid.laScala.Orderable.{OrderableDouble, OrderableInt, OrderableLong}
+import com.phasmid.laScala.values.Orderable
+import com.phasmid.laScala.values.Orderable._
 
 import scala.util.{Failure, Success, Try}
 

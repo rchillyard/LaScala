@@ -1,10 +1,9 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.FP.optionToTry
-import com.phasmid.laScala.values.Rational
 
 import scala.util.{Success, Try}
 

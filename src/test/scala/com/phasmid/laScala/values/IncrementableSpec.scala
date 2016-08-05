@@ -1,8 +1,8 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 
-import com.phasmid.laScala.Incrementable.IncrementableLocalDate
+import com.phasmid.laScala.values.Incrementable.IncrementableLocalDate
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util.Success
@@ -13,7 +13,7 @@ import scala.util.Success
 class IncrementableSpec extends FlatSpec with Matchers with Inside {
 
   "1" should "increment by one" in {
-    import com.phasmid.laScala.Incrementable.IncrementableInt
+    import Incrementable.IncrementableInt
     implicit val pattern = ""
     val xt = for (x <- IncrementableInt.fromString("1"); y <- IncrementableInt.increment(x)) yield y
     xt should matchPattern { case Success(_) => }

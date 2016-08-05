@@ -1,6 +1,7 @@
 package com.phasmid.laScala.parser.rpn
 
-import com.phasmid.laScala.{FP, Orderable, RuleException}
+import com.phasmid.laScala.values.Orderable
+import com.phasmid.laScala.{FP, RuleException}
 
 import scala.language.implicitConversions
 import scala.util._

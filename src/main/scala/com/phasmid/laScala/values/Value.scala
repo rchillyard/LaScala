@@ -1,11 +1,11 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.values
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.Orderable.OrderableLocalDate
+import com.phasmid.laScala.FP
 import com.phasmid.laScala.parser.Valuable
-import com.phasmid.laScala.values.Rational
+import com.phasmid.laScala.values.Orderable.OrderableLocalDate
 
 import scala.language.implicitConversions
 import scala.util._

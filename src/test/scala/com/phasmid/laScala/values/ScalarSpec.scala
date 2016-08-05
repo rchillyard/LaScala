@@ -79,7 +79,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Scalar(""""1"""")
-    x.render shouldBe "1"
+    x.render shouldBe """"1""""
     x.source shouldBe """"1""""
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }

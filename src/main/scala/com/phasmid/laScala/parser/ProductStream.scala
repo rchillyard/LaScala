@@ -5,8 +5,8 @@ import java.net.{URI, URL}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.values.{DateScalar, Scalar}
-import com.phasmid.laScala.{FP, Trial, Tuples}
+import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
+import com.phasmid.laScala.{FP, Trial}
 
 // For now, until we can convert to Java8 datetimes
 //import org.joda.time._
