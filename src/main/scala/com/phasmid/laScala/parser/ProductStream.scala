@@ -283,7 +283,7 @@ object TupleStream {
 
   def apply[X <: Product](input: URL, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromInputStream(input.openStream).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): TupleStream[X] = apply(parser, Source.fromURL(input).getLines.toStream, optionalHeader)
 
   def apply[X <: Product](input: URI): TupleStream[X] = apply(input, None)
 
@@ -293,7 +293,6 @@ object TupleStream {
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
-  // CONSIDER improving this but be careful because it's easy to get a Try satisfying an Any (Done?)
   def toTuple[X <: Product](ats: Seq[Try[Scalar]]): Try[X] = {
     val ast = FP.sequence(ats)
     ast match {
@@ -330,7 +329,7 @@ object CSV {
 
   def apply[X <: Product](input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromInputStream(input.openStream).getLines.toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromURL(input).getLines.toStream, optionalHeader)
 
   def apply[X <: Product](input: URI): CSV[X] = apply(input, None)
 

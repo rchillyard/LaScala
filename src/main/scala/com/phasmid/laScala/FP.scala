@@ -12,6 +12,8 @@ import scala.util._
   *
   * CONSIDER replace Seq with Iterator in signatures
   *
+  * TODO move this object into the fp package
+  *
   * @author scalaprof
   */
 object FP {
