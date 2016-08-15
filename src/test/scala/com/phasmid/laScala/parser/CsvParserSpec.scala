@@ -1,6 +1,7 @@
 package com.phasmid.laScala.parser
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.Lift
 import com.phasmid.laScala.values._
@@ -67,6 +68,17 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
     dt should matchPattern { case Success(d: DateScalar) => }
     dt.get shouldBe DateScalar(2016, 3, 8)
   }
+  it should """parse 12-Aug-16 as datetime""" in {
+    val pattern = "dd-MMM-yy"
+        val formatter = DateTimeFormatter.ofPattern(pattern)
+        val gloriousTwelfth = formatter.parse("12-Aug-16")
+
+    val dt = CsvParser.defaultParser("12-Aug-16")
+    dt should matchPattern { case Success(d: DateScalar) => }
+    println(dt.get.render)
+    println(DateScalar(2016, 8, 12))
+    dt.get shouldBe DateScalar(2016, 8, 12)
+  }
 
   def putInQuotes(w: String): Scalar = s"""'$w'"""
 
@@ -95,9 +107,13 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
     } yield x
     xy should matchPattern { case Success(("Apple Inc.",104.48,_,12.18)) => }
   }
-  """dateParser""" should "work" in {
+  """dateParser""" should "recognize 2016-03-15" in {
     val dp = CsvParser.dateParser
     dp("2016-03-15") should matchPattern { case Success(_) => }
+  }
+  it should "recognize 12-Aug-16" in {
+    val dp = CsvParser.dateParser
+    dp("12-Aug-16") should matchPattern { case Success(_) => }
   }
 
 }

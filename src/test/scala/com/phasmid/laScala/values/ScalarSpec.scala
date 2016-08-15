@@ -1,6 +1,7 @@
 package com.phasmid.laScala.values
 
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -64,6 +65,14 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val x = Scalar("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+  }
+  it should "work with month names" in {
+    implicit val pattern = "dd-MMM-yy"
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    val gloriousTwelfth = formatter.parse("12-Aug-16")
+    println(gloriousTwelfth)
+    val x = DateScalar("12-Aug-16")
     x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
   }
   "QuotedStringScalar" should "be None" in {
