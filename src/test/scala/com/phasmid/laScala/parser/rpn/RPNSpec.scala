@@ -109,5 +109,13 @@ class RPNSpec extends FlatSpec with Matchers {
     val xt = for (e <- et; r = e.toRPN; x <- RPN(r).evaluate) yield x
     xt should matchPattern { case Success(1000000000) => }
   }
+  it should """evaluate "sharpeRatio"""" in {
+    val parser = new RuleParser()
+    val et = parser.parseExpression("$sharpeRatio")
+    val properties = Map[String,Double]("sharpeRatio"->1.0)
+    implicit val lookup: String=>Option[Double] = properties.get
+    val xt: Try[Double] = for (e <- et; r = e.toRPN; x <- RPN[Double](r).evaluate) yield x
+    xt should matchPattern { case Success(1.0) => }
+  }
 
 }

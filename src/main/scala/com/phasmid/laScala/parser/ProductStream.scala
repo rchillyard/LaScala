@@ -412,7 +412,7 @@ object CsvParser {
   def parseDate(dfs: Seq[String])(s: String): Try[Scalar] = {
     @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[Scalar]): Try[Scalar] = result match {
       case Success(d) => result
-      case Failure(t) => formats match {
+      case Failure(_) => formats match {
         case Nil => result
         case h :: t => loop(t, Try(new DateScalar(LocalDate.parse(s, h), s)))
       }
