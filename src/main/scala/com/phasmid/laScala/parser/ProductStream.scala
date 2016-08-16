@@ -4,7 +4,6 @@ import java.io.{File, InputStream}
 import java.net.{URI, URL}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAccessor
 
 import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
 import com.phasmid.laScala.{FP, Trial}
@@ -371,7 +370,7 @@ case class CsvParser(
 }
 
 object CsvParser {
-  val dateFormatStrings = Seq("y-M-d", "d-MMM-y", "M/d/y", "y-M-d-h:m:s.s")
+  val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s", "d-MMM-yy")
   // etc.
   val dateParser = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
 
@@ -383,7 +382,7 @@ object CsvParser {
   val defaultParser: Trial[String, Scalar] = Trial.none[String, Scalar] :|
     // here we allow for the possibility of date being enclosed in quotes -- need to generalize
     { case date2(s) => dateParser(s) } :|
-    { case s@(date0(_) | date1(_) | date6(_) | date7(_) | dateISO(_)) => dateParser(s) } :^
+    { case s@(date0(_) | date1(_) | date6(_) | dateISO(_) | date7(_)) => dateParser(s) } :^
     { case quoted(w) => w } :^
     { case whole(s) => s.toInt } :^
     { case truth(w) => true } :^
@@ -408,21 +407,14 @@ object CsvParser {
   val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
   val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
   val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
-  val date7 = """^(\d{1,2}-\w{3}-\d{2,4})$""".r
-
+  val date7 = """^(\d{1,2}-\w{3}-\d{2})$""".r
 
   def parseDate(dfs: Seq[String])(s: String): Try[Scalar] = {
-    // TODO figure out why we have to do this and work around it
-    def parseDateFromFormat(h: DateTimeFormatter): LocalDate = {
-      val d = LocalDate.parse(s, h)
-      if (d.getYear<100) d.plusYears(2000)
-      else d
-    }
     @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[Scalar]): Try[Scalar] = result match {
       case Success(d) => result
       case Failure(t) => formats match {
         case Nil => result
-        case h :: t => loop(t, Try(new DateScalar(parseDateFromFormat(h), s)))
+        case h :: t => loop(t, Try(new DateScalar(LocalDate.parse(s, h), s)))
       }
     }
     loop(dfs map {

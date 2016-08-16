@@ -116,4 +116,9 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
     dp("12-Aug-16") should matchPattern { case Success(_) => }
   }
 
+  it should "work for format d-MMM-yy" in {
+    val dp = CsvParser.dateParser
+    dp("18-Oct-15") should matchPattern { case Success(_) => }
+  }
+
 }
