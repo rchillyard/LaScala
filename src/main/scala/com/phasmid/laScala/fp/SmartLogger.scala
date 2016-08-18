@@ -2,6 +2,8 @@ package com.phasmid.laScala.fp
 
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.language.implicitConversions
+
 /**
   * Created by scalaprof on 8/17/16.
   */
@@ -12,9 +14,9 @@ trait SmartLogger {
 
   def endFormatter(name: String, x: => String): String = s"Finished $name with result: $x"
 
-  def exceptionCreator(name: String, ex: Throwable): Throwable = SmartLoggerException(s"Exception thrown in $name", ex)
+  def exceptionCreator(name: String, ex: Throwable): Throwable = new SmartLoggerException(s"Exception thrown in $name", ex)
 
-  def errorFunc: (String, Throwable) => Unit = { (s, x) => logFunc(s"$s: ${x.getLocalizedMessage}") }
+  def errorFunc: (String, Throwable) => Unit
 
   def apply[V](name: String)(f: => V): V = {
     logFunc(startFormatter(name))
@@ -29,14 +31,20 @@ trait SmartLogger {
   }
 }
 
-case class SmartLoggerBasic(logFunc: String => Unit) extends SmartLogger
+case class SmartLoggerBasic(logFunc: String => Unit, override val errorFunc: (String,Throwable) => Unit) extends SmartLogger
+
+object SmartLoggerBasic {
+  def apply(): SmartLogger = apply(println, {(s,x) => System.err.println(s"Exception $s: ${x.getLocalizedMessage}")})
+}
 
 case class SmartLoggerSlf4JInfo(logger: Logger) extends SmartLogger {
-  def logFunc = logger.info _
+  def logFunc = logger.info
+  def errorFunc = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
 }
 
 case class SmartLoggerSlf4JDebug(logger: Logger) extends SmartLogger {
-  def logFunc = logger.debug _
+  def logFunc = logger.debug
+  def errorFunc = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
 }
 
 object SmartLoggerSlf4JInfo {
@@ -51,4 +59,4 @@ object SmartLoggerSlf4JDebug {
   implicit def logAround(logger: Logger): SmartLogger = SmartLoggerSlf4JDebug(logger)
 }
 
-case class SmartLoggerException(s: String, ex: Throwable) extends Exception(s, ex)
+class SmartLoggerException(s: String, ex: Throwable) extends Exception(s, ex)
