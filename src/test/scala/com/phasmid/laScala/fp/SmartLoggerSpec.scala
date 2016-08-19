@@ -83,23 +83,23 @@ class SmartLoggerSpec extends FlatSpec with Matchers {
       val y = x.toDouble
       logger.milestone(s"have y")(y)
       val z = x.toFloat
-      logger.milestone(s"have z")(y, z)
+      logger.milestone()(y, z)
       z
     })
     regularLogger.get shouldBe """Starting string conversion
 Milestone x=1
 Milestone have y: 1.0
-Milestone have z: 1.0, 1.0
+Milestone 1: 1.0, 1.0
 Finished string conversion with result: 1.0
 Starting string conversion
 Milestone x=2
 Milestone have y: 2.0
-Milestone have z: 2.0, 2.0
+Milestone 2: 2.0, 2.0
 Finished string conversion with result: 2.0
 Starting string conversion
 Milestone x=3
 Milestone have y: 3.0
-Milestone have z: 3.0, 3.0
+Milestone 3: 3.0, 3.0
 Finished string conversion with result: 3.0
 """
   }
