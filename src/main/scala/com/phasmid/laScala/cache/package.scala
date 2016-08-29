@@ -13,4 +13,7 @@ package object cache {
   type TryCache[K, V] = Cache[K, V, Try]
 
   type OptionCache[K, V] = Cache[K, V, Option]
+
+  type SelfFulfillingExpiringCache[K, V] = OptionFulfillingExpiringCache[K, V]
+
 }

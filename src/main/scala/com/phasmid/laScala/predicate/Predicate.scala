@@ -1,6 +1,6 @@
 package com.phasmid.laScala.predicate
 
-import com.phasmid.laScala.FP._
+import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.parser._
 
 import scala.language.implicitConversions

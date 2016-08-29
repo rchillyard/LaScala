@@ -3,7 +3,7 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.FP.optionToTry
+import com.phasmid.laScala.fp.FP._
 
 import scala.util.{Success, Try}
 
@@ -144,6 +144,23 @@ object Orderable {
   }
 
   implicit object OrderableLocalDate extends OrderableLocalDate
+
+  /**
+    * The following trait is somewhat experimental... no unit tests as of now
+    */
+  trait OrderableBoolean extends Orderable[Boolean] {
+    def unit(x: Boolean): Boolean = x
+
+    def viaLookup(k: String, f: (String) => Option[Boolean]): Try[Boolean] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
+
+    def fromString(s: String)(implicit pattern: String): Try[Boolean] = Try(s.toBoolean)
+
+    def zero: Boolean = false
+
+    def compare(x: Boolean, y: Boolean): Int = x.compareTo(y)
+  }
+
+  implicit object OrderableBoolean extends OrderableBoolean
 
   class OrderableException(s: String) extends Exception(s)
 

@@ -1,4 +1,4 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.fp
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, postfixOps}

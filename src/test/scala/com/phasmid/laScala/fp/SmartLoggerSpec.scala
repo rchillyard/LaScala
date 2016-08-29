@@ -1,12 +1,7 @@
 package com.phasmid.laScala.fp
 
-import java.io.Closeable
-
-import com.phasmid.laScala.parser.rpn.RPN
-import org.scalatest.{FlatSpec, Matchers, WordSpec}
-import org.slf4j.{Logger, LoggerFactory}
-
-import scala.util.{Failure, Success}
+import org.scalatest.{FlatSpec, Matchers}
+import org.slf4j.LoggerFactory
 
 /**
   * TryWithSpec based on: http://codereview.stackexchange.com/questions/79267/scala-trywith-that-closes-resources-automatically

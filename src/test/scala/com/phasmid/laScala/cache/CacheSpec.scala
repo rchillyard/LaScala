@@ -1,7 +1,7 @@
 package com.phasmid.laScala.cache
 
 import akka.event.LoggingAdapter
-import com.phasmid.laScala.FP
+import com.phasmid.laScala.fp.FP
 import org.scalatest._
 import org.scalatest.concurrent._
 

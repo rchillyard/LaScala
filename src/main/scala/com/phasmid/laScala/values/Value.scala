@@ -3,7 +3,7 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.FP
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
 
 import scala.language.implicitConversions

@@ -6,7 +6,8 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
-import com.phasmid.laScala.{FP, Trial}
+import com.phasmid.laScala.Trial
+import com.phasmid.laScala.fp.FP
 
 // For now, until we can convert to Java8 datetimes
 //import org.joda.time._

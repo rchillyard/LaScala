@@ -298,6 +298,7 @@ class RuleParser extends JavaTokenParsers {
 
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
 
+  // CONSIDER: this works for variables on RHS, but we can't have something like {x.y} on the LHS of the condition. We could allow for that
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
 
   def quotedString: Parser[Literal] = doubleQuote ~> """[^"]*""".r <~ doubleQuote ^^ { s => Literal(s) }

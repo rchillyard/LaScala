@@ -1,5 +1,7 @@
 package com.phasmid.laScala.cache
 
+import org.slf4j.LoggerFactory
+
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -168,7 +170,10 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
     */
   def unwrap(vm: M[V]): V = m.wrapper.get(vm)
 
-  def evaluate(k: K): M[V] = evaluationFunc(k)
+  def evaluate(k: K): M[V] = {
+    Cache.logger.debug(s"Cache: evaluating key {}", k)
+    evaluationFunc(k)
+  }
 
   override def toString = m.toString
 }
@@ -186,7 +191,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   * an exception to be thrown when calling apply(k).
   * The advantage is that we will only ever try to evaluationFunc a key at most once per expiration period.
   *
-  * SelfFulfillingExpiringCache defines two methods which must be implemented by subclasses:
+  * OptionFulfillingExpiringCache defines two methods which must be implemented by subclasses:
   * expire (to remove an element from the cache) and postFulfillment (designed to allow a callback method
   * to be invoked when a value is added to the cache, i.e. it is fulfilled).
   *
@@ -197,7 +202,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class SelfFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit, initialSize: Int = 16) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](initialSize), evaluationFunc)(carper) {
+abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit, initialSize: Int = 16) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](initialSize), evaluationFunc)(carper) {
 
   /**
     * Define T as Option[V]
@@ -213,7 +218,7 @@ abstract class SelfFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])
     */
   def fulfill(k: K): T = evaluate(k) match {
     case Some(v) => postFulfillment(k, v); Some(v)
-    case _ => carper(s"Cache: unable to evaluate value for key $k"); None
+    case _ => carper(s"OptionFulfillingExpiringCache: unable to evaluate value for key $k. Cache contains: ${mutableMap.size} entries"); None
   }
 }
 
@@ -270,11 +275,16 @@ abstract class FutureFulfillingExpiringCache[K, V](evaluationFunc: K => Future[V
 
 object Cache {
   /**
-    * Default implementation of carper is to do nothing.
+    * Default implementation of carper is to write to the logger as an info message.
     *
     * @param s the message to carp about
     */
-  implicit def carper(s: String): Unit = {}
+  implicit def carper(s: String): Unit = logger.info(s)
+
+  /**
+    * This logger is used only for debug -- there is a carper
+    */
+  val logger = LoggerFactory.getLogger(getClass)
 }
 
 /**

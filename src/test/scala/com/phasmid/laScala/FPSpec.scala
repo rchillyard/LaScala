@@ -2,7 +2,7 @@ package com.phasmid.laScala
 
 import java.net.URL
 
-import com.phasmid.laScala.FP._
+import com.phasmid.laScala.fp.FP._
 import org.scalatest._
 import org.scalatest.concurrent._
 
@@ -11,19 +11,21 @@ import scala.concurrent._
 import scala.util._
 
 /**
+  * TODO move this into fp package
+  * 
   * @author scalaprof
   */
 class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
   "lift(Future[Try[T]])" should "succeed for http://www.google.com" in {
     val uyf = Future(Try(new URL("http://www.google.com")))
-    val uf = FP.flatten(uyf)
+    val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case x: URL => } }
   }
 
   "lift(Try[Future[T]])" should "succeed for http://www.google.com" in {
     val ufy = Try(Future(new URL("http://www.google.com")))
-    val uf = FP.flatten(ufy)
+    val uf = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case x: URL => } }
   }
 
@@ -36,7 +38,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; url = Try(new URL(w))} yield url
-    FP.sequence(uys) match {
+    sequence(uys) match {
       case Success(us) => Assertions.assert(us.length == 2)
       case _ => Failed
     }
@@ -45,7 +47,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   it should "fail for www.google.com, etc." in {
     val ws = List("www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
-    FP.sequence(uys) match {
+    sequence(uys) match {
       case Failure(e) => Succeeded
       case _ => Failed
     }
@@ -68,7 +70,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     val usfs = List(Future.sequence(ufs))
-    whenReady(FP.flatten(usfs)) { us => Assertions.assert(us.length == 2) }
+    whenReady(flatten(usfs)) { us => Assertions.assert(us.length == 2) }
   }
 
   it should "succeed for empty list" in {
@@ -85,7 +87,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "sequence" should "succeed for http://www.google.com, www.microsoft.com" in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
-    val uefs = for {uf <- ufs} yield FP.sequence(uf)
+    val uefs = for {uf <- ufs} yield sequence(uf)
     val uesf = Future.sequence(uefs)
     whenReady(uesf) { ues => Assertions.assert(ues.length == 3) }
     whenReady(uesf) { ues => (ues.head, ues(1)) should matchPattern { case (Right(x), Right(y)) => } }
@@ -94,15 +96,15 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
   "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
-    val uefs = for {w <- ws; uf = Future(new URL(w))} yield FP.sequence(uf)
+    val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
     for {uef <- uefs} whenReady(uef) { case Right(u) => true; case Left(e) => true; case _ => Assertions.fail() }
   }
 
   "Sequence[Either]" should "succeed" in {
     val l: Either[Throwable, Int] = Left(new RuntimeException("bad"))
     val r: Either[Throwable, Int] = Right(99)
-    FP.sequence(l) should matchPattern { case None => }
-    FP.sequence(r) should matchPattern { case Some(99) => }
+    sequence(l) should matchPattern { case None => }
+    sequence(r) should matchPattern { case Some(99) => }
   }
 
   "zip(Option,Option)" should "succeed" in {

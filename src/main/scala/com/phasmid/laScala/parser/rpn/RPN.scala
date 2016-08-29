@@ -1,7 +1,8 @@
 package com.phasmid.laScala.parser.rpn
 
 import com.phasmid.laScala.parser.Valuable
-import com.phasmid.laScala.{FP, RuleException}
+import com.phasmid.laScala.RuleException
+import com.phasmid.laScala.fp.FP
 
 import scala.language.implicitConversions
 import scala.util._
