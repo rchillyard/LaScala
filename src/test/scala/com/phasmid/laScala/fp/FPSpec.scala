@@ -1,4 +1,4 @@
-package com.phasmid.laScala
+package com.phasmid.laScala.fp
 
 import java.net.URL
 
@@ -12,7 +12,7 @@ import scala.util._
 
 /**
   * TODO move this into fp package
-  * 
+  *
   * @author scalaprof
   */
 class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {

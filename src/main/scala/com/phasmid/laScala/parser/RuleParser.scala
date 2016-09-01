@@ -9,7 +9,11 @@ import scala.util.Try
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
+  * RuleParser
+  *
   * This module/package does more than just parse Rules. In particular, it has a facility to parse expressions too.
+  *
+  * TODO the parsing and toString of this package are not compatible so that Json cannot currently be used.
   */
 
 /**
@@ -85,6 +89,8 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
   */
 case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
+  // XXX: this is somewhat experimental
+  override def toString = if (b) "always" else "never"
 }
 
 sealed trait PredicateExpr
@@ -152,9 +158,9 @@ class RuleParser extends JavaTokenParsers {
     case r: RuleLike => Parentheses(r)
   }
 
-  def always: Parser[RuleLike] = "(?i)always".r ^^ { case _ => TruthValue(true) }
+  def always: Parser[RuleLike] = """(?i)always|true""".r ^^ { case _ => TruthValue(true) }
 
-  def never: Parser[RuleLike] = "(?i)never".r ^^ { case _ => TruthValue(false) }
+  def never: Parser[RuleLike] = """(?i)never|false""".r ^^ { case _ => TruthValue(false) }
 
   def condition: Parser[RuleLike] = identifier ~ predicate ^^ { case s ~ p => Condition(s, p) }
 
