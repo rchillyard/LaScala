@@ -98,13 +98,27 @@ trait Scalar {
   def source: Any
 
   /**
-    * Method to show this Scalar simply, obviously and elegantly.
-    * Typically, this tries to appear like the source.
+    * Method to show this Scalar simply, obviously and elegantly, using render(String) with the value of defaultFormat.
     * If you're interested in the Scalar wrapper type, use toString.
     *
     * @return a String representing the value which, typically, does not include the wrapper type.
     */
-  def render: String
+  def render: String = renderFormatted(defaultFormat)
+
+  /**
+    * Method to show this Scalar simply, obviously and elegantly.
+    * Typically, this tries to appear like the source.
+    * If you're interested in the Scalar wrapper type, use toString.
+    *
+    * @param format Used to format the underlying value. If it is null, then we use the source.
+    * @return a String representing the value which, typically, does not include the wrapper type.
+    */
+  def renderFormatted(format: String): String
+
+  /**
+    * The default format for rendering Scalar object.
+    */
+  val defaultFormat: String = null
 }
 
 trait ScalarMaker extends (Any => Try[Scalar]) {
@@ -129,6 +143,8 @@ abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) 
   override def asFractional[X: Fractional]: Option[X] = Some(implicitly[Fractional[X]].fromInt(x))
 
   override def toString = s"IntScalar: $render"
+
+  override val defaultFormat = "%d"
 }
 
 /**
@@ -145,7 +161,7 @@ abstract class BaseBooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, 
 
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
 
-  override def toString = s"BooleanScalar: $render"
+  override def toString = s"BooleanScalar: $source"
 }
 
 /**
@@ -171,6 +187,8 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
   }
 
   override def toString = s"DoubleScalar: $render"
+
+  override val defaultFormat = "%f"
 }
 
 /**
@@ -189,6 +207,11 @@ abstract class BaseRationalScalar(x: Rational, source: Any) extends BaseScalar(x
   override def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
 
   override def toString = s"RationalScalar: $render"
+
+  override val defaultFormat = "%f"
+
+  // TODO we need to create a renderFormatted for Rational
+  override def renderFormatted(format: String) = x.toString
 }
 
 /**
@@ -255,6 +278,8 @@ abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, s
   }
 
   override def hashCode(): Int = x.hashCode
+
+  // CONSIDER implementing defaultFormat
 }
 
 abstract class BaseScalar(value: Any, source: Any) extends Scalar {
@@ -272,7 +297,7 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
 
   override def toString = getClass.getSimpleName + get.toString
 
-  def render = source.toString
+  def renderFormatted(format: String) = if (format == null) source.toString else format.format(value)
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case o: BaseScalar => get.equals(o.get)

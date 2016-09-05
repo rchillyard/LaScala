@@ -52,7 +52,7 @@ object Trial {
     *
     * @tparam V the type of the input parameter
     * @tparam T the underlying type of the resulting Try
-    * @return a terminator trial which always fils
+    * @return a terminator trial which always fails
     */
   def none[V, T]: Trial[V, T] = none({v => new NoMatchingTrialException(v.toString)})
 

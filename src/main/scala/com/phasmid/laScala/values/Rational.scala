@@ -7,11 +7,9 @@ import scala.language.implicitConversions
   * A simple Rational type for developers not depending on Spire or something like that.
   * This grew out of a class exercise so is not the last word in sophistication.
   *
-  * CONSIDER we don't really need to extend Fractional provided that we have our implicit RationalIsFractional defined
-  *
   * @author scalaprof
   */
-case class Rational(n: Long, d: Long) extends Fractional[Rational] {
+case class Rational(n: Long, d: Long) {
 
   // Pre-conditions
   require(Rational.gcd(math.abs(n), math.abs(d)) == 1, s"Rational($n,$d): arguments have common factor: ${Rational.gcd(n, d)}")

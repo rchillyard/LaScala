@@ -31,6 +31,10 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val x: Scalar = true
     x shouldBe BooleanScalar(true)
   }
+  it should "render correctly" in {
+    val x: Scalar = true
+    x.render shouldBe "true"
+  }
   "IntScalar" should "work" in {
     val x = Scalar(1)
     x.source shouldBe 1
@@ -41,6 +45,10 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "work implicitly" in {
     val x: Scalar = 1
     x shouldBe IntScalar(1)
+  }
+  it should "render correctly" in {
+    val x: Scalar = 1
+    x.render shouldBe "1"
   }
   "StringScalar" should "be Some where string is numeric" in {
     val x = Scalar("1")
@@ -105,6 +113,11 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val x: Scalar = 1.0
     x shouldBe DoubleScalar(1.0)
   }
+  it should "render correctly" in {
+    val x: Scalar = 1.0
+    x.render shouldBe "1.000000"
+    x.renderFormatted("%5.2f") shouldBe " 1.00"
+  }
   "RationalScalar" should "work" in {
     import Rational.RationalHelper
     val x = Scalar(r"1/2")
@@ -119,9 +132,11 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.source shouldBe "1/2"
     x.asFractional[Rational] should matchPattern { case None => }
   }
-  it should "work implicitly" in {
-    val x: Scalar = 1.0
-    x shouldBe DoubleScalar(1.0)
+  it should "render correctly" in {
+    import Rational.RationalHelper
+    val x: Scalar = r"1/2"
+    x.render shouldBe "0.5"
+    x.renderFormatted("%3.1f") shouldBe "0.5"
   }
   "DateScalar" should "work" in {
     implicit val pattern = ""
@@ -143,6 +158,11 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "work implicitly" in {
     val x: Scalar = LocalDate.of(2016, 7, 10)
     x shouldBe DateScalar(LocalDate.of(2016, 7, 10))
+  }
+  it should "render correctly" in {
+    implicit val pattern = ""
+    val x = DateScalar("2016-07-10")
+    x.render shouldBe "2016-07-10"
   }
   "attribute map" should "work" in {
     val m: Map[String, Scalar] = Map("k" -> Scalar("k"), "1" -> Scalar(1), "b" -> Scalar(true), "1.0" -> Scalar(1.0))

@@ -72,7 +72,7 @@ class SmartLoggerSpec extends FlatSpec with Matchers {
     val regularLogger = new ElephantLogger
     val errorLogger = new ElephantLogger
     val logger = SmartLoggerBasic(regularLogger.log,{(s,x) => errorLogger.log(s"Error in $s: ${x.getLocalizedMessage}")})
-    (for (i <- List("1", "2", "3")) yield logger("string conversion"){
+    for (i <- List("1", "2", "3")) yield logger("string conversion") {
       val x = i.toInt
       logger.milestone(s"x=$x")()
       val y = x.toDouble
@@ -80,7 +80,7 @@ class SmartLoggerSpec extends FlatSpec with Matchers {
       val z = x.toFloat
       logger.milestone()(y, z)
       z
-    })
+    }
     regularLogger.get shouldBe """Starting string conversion
 Milestone x=1
 Milestone have y: 1.0
