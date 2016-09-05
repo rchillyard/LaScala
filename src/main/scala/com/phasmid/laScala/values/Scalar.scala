@@ -144,7 +144,7 @@ abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) 
 
   override def toString = s"IntScalar: $render"
 
-  override val defaultFormat = "%d"
+  override val defaultFormat = IntScalar.defaultFormat
 }
 
 /**
@@ -188,7 +188,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
 
   override def toString = s"DoubleScalar: $render"
 
-  override val defaultFormat = "%f"
+  override val defaultFormat = DoubleScalar.defaultFormat
 }
 
 /**
@@ -297,7 +297,10 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
 
   override def toString = getClass.getSimpleName + get.toString
 
-  def renderFormatted(format: String) = if (format == null) source.toString else format.format(value)
+  def renderFormatted(format: String) = if (format == null) source.toString else Try{ format.format(value)  } match {
+    case Success(s) => s
+    case Failure(_) => source.toString
+  }
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case o: BaseScalar => get.equals(o.get)
@@ -315,10 +318,14 @@ object BooleanScalar {
 
 object IntScalar {
   def apply(x: Int): IntScalar = IntScalar(x, x)
+  def setDefaultFormat(format: String) = { defaultFormat = format}
+  var defaultFormat: String = "%d"
 }
 
 object DoubleScalar {
   def apply(x: Double): DoubleScalar = DoubleScalar(x, x)
+  def setDefaultFormat(format: String) = { defaultFormat = format}
+  var defaultFormat: String = "%f"
 }
 
 object RationalScalar {
