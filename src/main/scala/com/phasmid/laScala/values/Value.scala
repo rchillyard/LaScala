@@ -138,6 +138,8 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends BaseScalar(xs, sou
   override def asSequence: Option[Seq[Value]] = Some(xs)
 
   override def toString = xs.toString
+
+  def defaultFormat: String = null
 }
 
 class ValueException(s: String, t: scala.Throwable = null) extends Exception(s, t)

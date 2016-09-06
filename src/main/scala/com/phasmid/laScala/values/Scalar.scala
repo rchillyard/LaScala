@@ -111,14 +111,16 @@ trait Scalar {
     * If you're interested in the Scalar wrapper type, use toString.
     *
     * @param format Used to format the underlying value. If it is null, then we use the source.
+    *               We are using call-by-name because we don't want this evaluated eagerly since the result of
+    *               the defaultFormat might change.
     * @return a String representing the value which, typically, does not include the wrapper type.
     */
-  def renderFormatted(format: String): String
+  def renderFormatted(format: => String): String
 
   /**
-    * The default format for rendering Scalar object.
+    * The default format for rendering this Scalar object via renderFormatted
     */
-  val defaultFormat: String = null
+  def defaultFormat: String
 }
 
 trait ScalarMaker extends (Any => Try[Scalar]) {
@@ -144,7 +146,7 @@ abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) 
 
   override def toString = s"IntScalar: $render"
 
-  override val defaultFormat = IntScalar.defaultFormat
+  override def defaultFormat = IntScalar.getDefaultFormat
 }
 
 /**
@@ -162,6 +164,8 @@ abstract class BaseBooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, 
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
 
   override def toString = s"BooleanScalar: $source"
+
+  override def defaultFormat = BooleanScalar.getDefaultFormat
 }
 
 /**
@@ -188,7 +192,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
 
   override def toString = s"DoubleScalar: $render"
 
-  override val defaultFormat = DoubleScalar.defaultFormat
+  override def defaultFormat = DoubleScalar.getDefaultFormat
 }
 
 /**
@@ -211,7 +215,7 @@ abstract class BaseRationalScalar(x: Rational, source: Any) extends BaseScalar(x
   override val defaultFormat = "%f"
 
   // TODO we need to create a renderFormatted for Rational
-  override def renderFormatted(format: String) = x.toString
+  override def renderFormatted(format: => String) = x.toString
 }
 
 /**
@@ -234,6 +238,8 @@ abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, so
   override def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
 
   override def toString = s"StringScalar: $render"
+
+  def defaultFormat: String = null
 }
 /**
   * Scalar which is natively a String. Such a value cannot be converted to Int or
@@ -252,6 +258,8 @@ abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar
   override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
   override def toString = s"QuoteStringScalar: $render"
+
+  def defaultFormat: String = null
 }
 
 /**
@@ -280,6 +288,7 @@ abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, s
   override def hashCode(): Int = x.hashCode
 
   // CONSIDER implementing defaultFormat
+  def defaultFormat: String = null
 }
 
 abstract class BaseScalar(value: Any, source: Any) extends Scalar {
@@ -297,7 +306,7 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
 
   override def toString = getClass.getSimpleName + get.toString
 
-  def renderFormatted(format: String) = if (format == null) source.toString else Try{ format.format(value)  } match {
+  def renderFormatted(format: => String) = if (format == null) source.toString else Try{ format.format(value)  } match {
     case Success(s) => s
     case Failure(_) => source.toString
   }
@@ -314,17 +323,22 @@ class ScalarException(s: String, t: scala.Throwable = null) extends Exception(s,
 
 object BooleanScalar {
   def apply(x: Boolean): BooleanScalar = BooleanScalar(x, x)
+  def setDefaultFormat(format: String) { defaultFormat = format; println(s"BooleanScalar defaultFormat is now $defaultFormat")}
+  def getDefaultFormat: String = defaultFormat
+  var defaultFormat: String = "%b"
 }
 
 object IntScalar {
   def apply(x: Int): IntScalar = IntScalar(x, x)
   def setDefaultFormat(format: String) = { defaultFormat = format}
+  def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%d"
 }
 
 object DoubleScalar {
   def apply(x: Double): DoubleScalar = DoubleScalar(x, x)
   def setDefaultFormat(format: String) = { defaultFormat = format}
+  def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%f"
 }
 
