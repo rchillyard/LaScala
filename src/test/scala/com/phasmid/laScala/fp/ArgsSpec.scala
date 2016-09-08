@@ -8,7 +8,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class ArgsSpec extends FlatSpec with Matchers {
     behavior of "Args"
 
-    it should "get arguments from a variable argument list" in {
+    it should "get arguments from a list" in {
       def mainMethod(args: List[Any]): Unit = {
         val a1 = Args(args)
         val (x: String, a2) = a1.get(classOf[String]).get
@@ -19,4 +19,12 @@ class ArgsSpec extends FlatSpec with Matchers {
       }
       mainMethod(List("hello", true))
   }
+  it should "get arguments from a varargs" in {
+      val a1 = Args("hello",true)
+      val (x: String, a2) = a1.get(classOf[String]).get
+      val (y, a3) = a2.get(classOf[java.lang.Boolean]).get
+      a3.isEmpty shouldBe true
+      x shouldBe "hello"
+      y shouldBe true
+    }
 }

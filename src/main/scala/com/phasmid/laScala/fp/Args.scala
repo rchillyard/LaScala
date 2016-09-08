@@ -21,3 +21,7 @@ case class Args(args: List[Any]) extends (() => Try[(Any,Args)]) {
   }
   def isEmpty: Boolean = args.isEmpty
 }
+
+object Args {
+  def apply(seq: Any*): Args = apply(seq.toList)
+}
