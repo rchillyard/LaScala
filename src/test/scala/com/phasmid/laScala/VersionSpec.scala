@@ -6,14 +6,33 @@ package com.phasmid.laScala
 
 import org.scalatest._
 
-import scala.collection.immutable.IndexedSeq
-import scala.language.postfixOps
-import scala.util.Success
+import scala.util._
 
 class VersionSpec extends FlatSpec with Matchers with Inside {
+  "apply" should "decode 1.1" in {
+    val vo = LongVersion.parse("1.1")
+    vo should matchPattern { case Some(v) => }
+    val v = vo.get
+    v.toString shouldBe "1.1"
+    v.get shouldBe 1L
+    v.subversion.get.get shouldBe 1L
+    v.subversion.get.subversion shouldBe None
+  }
   "next" should "work for LongVersion" in {
+    val version = LongVersion(1)
+    version.get shouldBe 1L
+    version.next shouldBe Success(LongVersion(2))
+    version.subversion shouldBe None
+    version.toString shouldBe "1"
+  }
+  "with" should "work for LongVersion" in {
     val v1 = LongVersion(1)
-    v1.tag shouldBe 1L
-    v1.next("") shouldBe Success(LongVersion(2))
+    val v2 = v1.withSubversion(1)
+    v2 match {
+      case Success(s) =>
+        s.get shouldBe 1L
+        s.toString shouldBe "1.1"
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
   }
 }
