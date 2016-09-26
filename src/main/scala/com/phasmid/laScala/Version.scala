@@ -6,15 +6,12 @@ import scala.util.{Failure, Success, Try}
 
 /**
   * Trait Version provides a means of labeling something such that different versions can be compared.
+  * As in the real world, a Version can consist of just one V tag: or a Version can (optionally) be extended by another Version.
+  * This allows for versions of the form 1.1.2 or A.B.B. You cannot currently mix these V types.
   *
   * Created by scalaprof on 8/2/16.
   */
 trait Version[V] extends Ordering[V] {
-
-  /**
-    * @return the sub-version of this Version, if available
-    */
-  def subversion: Option[Version[V]]
 
   /**
     * @return the value (tag) of this Version
@@ -29,16 +26,49 @@ trait Version[V] extends Ordering[V] {
   def next: Try[Version[V]]
 
   /**
+    * @return the sub-version of this Version, if available
+    */
+  def subversion: Option[Version[V]]
+
+  /**
+    * @return a Seq of V objects representing the version/subversions of this instance.
+    */
+  def toSeq: Seq[V] = {
+    def inner(v: Version[V], vs: Seq[V]): Seq[V] = v.subversion match {
+      case None => vs
+      case Some(z) => inner(z, get +: vs)
+    }
+    inner(this, Seq(get))
+  }
+
+  /**
     * Create a new Version based on this Version with a new subversion
     *
     * @param tag the tag of the new subversion (call by name which allows for the possibility of an exception being thrown
     *            while evaluating the tag -- this will result in a Failure rather than an exception.
     */
   def withSubversion(tag: => V): Try[Version[V]]
+
+  def render: String = toSeq.mkString(".")
+
+  /**
+    * This method is required to build a Version object from the given V tag and an optional subversion.
+    * @param v the tag for this version
+    * @param subversion optional subversion
+    * @return a new Version object
+    */
+  def build(v: V, subversion: Option[Version[V]]): Version[V]
 }
 
 abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V] {
   private val incrementable = implicitly[Incrementable[V]]
+
+  def next: Try[Version[V]] = for (l <- nextVersion) yield build(l,subversion)
+
+  def withSubversion(v: => V): Try[Version[V]] = subversion match {
+    case None => Try(build(tag,Some(build(v,None))))
+    case _ => Failure(new VersionException(s"version $this already has subversion"))
+  }
 
   def compare(x: V, y: V): Int = {
     val cf = incrementable.compare(x, y)
@@ -53,27 +83,20 @@ abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V
 
   def nextVersion: Try[V] = incrementable.increment(tag)
 
-  def render: String = {
-    def inner(v: Version[V], s: String): String = v.subversion match {
-      case None => s
-      case Some(z) => inner(z,s"$s.$get")
-    }
-    inner(this,s"$get")
-  }
+  override def toString = render
 }
 
 case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends IncrementableVersion[Long](tag) {
-  def next: Try[Version[Long]] = for (l <- nextVersion) yield LongVersion(l,subversion)
-  def withSubversion(tag: => Long): Try[Version[Long]] = this match {
-    case LongVersion(t,None) => Try(LongVersion(t,Some(LongVersion(tag))))
-    case _ => Failure(new VersionException(s"version $this already has subversion"))
-  }
-  override def toString = render
+//  def withSubversion(tag: => Long): Try[Version[Long]] = this match {
+//    case LongVersion(t,None) => Try(build(t,Some(LongVersion(tag))))
+//    case _ => Failure(new VersionException(s"version $this already has subversion"))
+//  }
+  def build(v: Long, subversion: Option[Version[Long]]): Version[Long] = new LongVersion(v,subversion)
 }
 
 object LongVersion {
   def apply(tag: Long): Version[Long] = apply(tag,None)
-  def parse(s: String): Option[Version[Long]] = Version.parse(s,{_.toInt},LongVersion.apply)
+  def parse(s: String): Option[Version[Long]] = Version.parse(s,{_.toLong},LongVersion.apply)
 }
 
 object Version {
@@ -89,18 +112,13 @@ object Version {
     inner(s.split("""\.""").toList,None)
   }
 }
+
 /**
-  * Trait Versioned models something which has both a value and a version
+  * Trait Versioned models something which has a version
   *
-  * @tparam T the underlying type of this Versioned object
   * @tparam V the underlying type of this object's version
   */
-trait Versioned[T, V] {
-
-  /**
-    * @return the value of this Versioned object
-    */
-  def get: T
+trait Versioned[V] {
 
   /**
     * @return the version of this Versioned object

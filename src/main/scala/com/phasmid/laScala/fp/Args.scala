@@ -15,13 +15,39 @@ case class Args(args: List[Any]) extends (() => Try[(Any,Args)]) {
       case Success((r,a)) =>
         if (clazz.isInstance(r) || clazz.isAssignableFrom(r.getClass))
           Success(r.asInstanceOf[T], a)
+//        else if (r.isInstanceOf[String])
+//          Try (r.t)
         else throw new Exception(s"args head is not of type: $clazz but is of type ${r.getClass}")
       case f @ Failure(t) => f.asInstanceOf[Try[(T, Args)]]
     }
   }
   def isEmpty: Boolean = args.isEmpty
+
+  override def toString: String = args mkString(", ")
 }
 
-object Args {
+object Args extends App {
+
+  override def main(args: Array[String]): Unit = {
+    val x = Args(args.toList)
+    def inner(as: Args, cs: List[Class[_]], result: List[Any]): List[Any] = {
+      if (as.isEmpty) result
+      else cs match {
+        case Nil => throw new Exception(s"insufficient class parameters specified")
+        case h :: t =>
+          as.get(h) match {
+            case Success((y,bs)) => inner(bs, t, result :+ y)
+            case Failure(t) => throw t
+          }
+      }
+    }
+    val result = inner(x,List(classOf[String],classOf[String],classOf[Int]),List())
+//    val (a: String) :: (b: String) :: (c: Int) :: Nil = result
+    val a :: b :: c :: Nil = result
+    println(s"$a @ ${a.getClass}")
+    println(s"$b @ ${b.getClass}")
+    println(s"$c @ ${c.getClass}")
+  }
+
   def apply(seq: Any*): Args = apply(seq.toList)
 }
