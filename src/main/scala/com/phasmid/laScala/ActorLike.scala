@@ -9,7 +9,7 @@ import scala.concurrent.Future
   *
   * Created by scalaprof on 9/23/16.
   */
-trait ActorLike extends Agent with Queryable
+trait ActorLike extends Agent with Queryable with AutoCloseable
 
 /**
   * This trait behaves as a partial function that takes any input and returns Unit (i.e nothing).
