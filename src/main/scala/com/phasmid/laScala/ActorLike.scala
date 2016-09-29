@@ -8,23 +8,29 @@ import scala.concurrent.Future
   * to preserve the option of depending on the technology directly (via a façade).
   *
   * Created by scalaprof on 9/23/16.
+  *
+  * @tparam T the underlying type
   */
-trait ActorLike extends Agent with Queryable with AutoCloseable
+trait ActorLike[T] extends Agent[T] with Queryable[T] with AutoCloseable
 
 /**
-  * This trait behaves as a partial function that takes any input and returns Unit (i.e nothing).
-  * Thus it is the exact equivalent of Akka's Actor.Receive type.
+  * This trait behaves as a partial function that takes a T as input and returns Unit (i.e nothing).
+  * Thus it is (almost) the exact equivalent of Akka's Actor.Receive type.
+  *
+  * @tparam T the underlying type
   */
-trait Agent extends PartialFunction[Any,Unit]
+trait Agent[T] extends PartialFunction[T,Unit]
 
 /**
-  * This trait behaves exactly as the query method does in an actor.
+  * This trait behaves exactly as the query method does in an actor but takes a query which is a T
+  *
+  * @tparam T the underlying type
   */
-trait Queryable {
+trait Queryable[T] {
   /**
-    * Method to accept a query and return a response wrapped in Future
+    * Method to accept a query in the form of a T and return an Any response wrapped in Future
     *
     * @param query
     */
-  def query(query: Any): Future[Any]
+  def query(query: T): Future[Any]
 }
