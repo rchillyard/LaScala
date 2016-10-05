@@ -2,6 +2,7 @@ package com.phasmid.laScala.values
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
+import scala.math.BigDecimal
 
 /**
   * A simple Rational type for developers not depending on Spire or something like that.
@@ -12,7 +13,19 @@ import scala.language.implicitConversions
 case class Rational(n: Long, d: Long) {
 
   // Pre-conditions
-  require(Rational.gcd(math.abs(n), math.abs(d)) == 1, s"Rational($n,$d): arguments have common factor: ${Rational.gcd(n, d)}")
+  require(n==0 && d==0 || Rational.gcd(math.abs(n), math.abs(d)) == 1, s"Rational($n,$d): arguments have common factor: ${Rational.gcd(n, d)}")
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case Rational(p,q) => q==0 && d==0 || n==p && q==d
+    case _ => super.equals(obj)
+  }
+
+  /**
+    * This should correspond to logic in equals
+    *
+    * @return
+    */
+  override def hashCode(): Int = super.hashCode()
 
   // Operators
   def +(that: Rational): Rational = plus(this, that)
@@ -61,7 +74,7 @@ case class Rational(n: Long, d: Long) {
   def div(x: Rational, y: Rational): Rational = x / y
 
   // Members declared in scala.math.Ordering
-  def compare(x: Rational, y: Rational): Int = minus(x, y).signum
+  def compare(x: Rational, y: Rational): Int = if (x.isInfinity && y.isInfinity) 0 else minus(x, y).signum
 
   // Other methods appropriate to Rational
   def signum: Int = math.signum(n).toInt
@@ -91,13 +104,16 @@ case class Rational(n: Long, d: Long) {
     inner(Rational.one, x)
   }
 
-  def toBigDecimal = BigDecimal(n) / d
+  def toBigDecimal = d match {
+    case 0 => throw new RationalException("value is infinite")
+    case _ => BigDecimal(n) / d
+  }
 
   def compare(other: Rational): Int = compare(this, other)
 
   def toRationalString = s"$n/$d"
 
-  override def toString = if (isWhole) toLong.toString else if (d > 100000L || toBigDecimal.isExactDouble) toDouble.toString else toRationalString
+  override def toString = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (d > 100000L || toBigDecimal.isExactDouble) toDouble.toString else toRationalString
 }
 
 class RationalException(s: String) extends Exception(s)
@@ -132,6 +148,7 @@ object Rational {
   val one = Rational(1)
   val ten = Rational(10)
   val half: Rational = Rational("1/2")
+  val NaN = new Rational(0,0)
 
   def apply(x: Int): Rational = apply(x.toLong)
 
@@ -145,7 +162,7 @@ object Rational {
     Rational(x.toLongExact)
 
   def apply(x: String): Rational = {
-    val rRat = """^\s*(\d+)\s*(\/\s*(\d+)\s*)?$""".r
+    val rRat = """^\s*(-?\d+)\s*(\/\s*(-?\d+)\s*)?$""".r
     val rDec = """^-?(\d|(\d+,?\d+))*(\.\d+)?(e\d+)?$""".r
     x match {
       // XXX I don't understand why we need this first line -- but it IS necessary
@@ -161,7 +178,14 @@ object Rational {
 
   def normalize(n: Long, d: Long) = {
     val g = gcd(math.abs(n), math.abs(d))
-    apply(n / g, d / g)
+    g match {
+      case 0 =>
+        Rational.NaN
+      case _ =>
+        val f = d.signum
+        apply(f * n / g, f * d / g)
+    }
+
   }
 
   @tailrec private def gcd(a: Long, b: Long): Long = if (b == 0) a else gcd(b, a % b)

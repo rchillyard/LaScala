@@ -37,6 +37,9 @@ class RationalSpec extends FlatSpec with Matchers {
     val r = Rational(22, 7) // we could choose anything here
     (Rational.zero + r) should be(r)
   }
+  it should "equal infinity when r-interpolator has 0 denominator" in {
+    r"1/0" shouldBe 'infinity
+  }
 
   "1/2" should "be OK" in {
     Rational.half * 2 shouldBe Rational.one
@@ -87,7 +90,7 @@ class RationalSpec extends FlatSpec with Matchers {
   }
   it should "equal r when multiplied by r" in {
     val r = Rational(22, 7) // we could choose anything here
-    (Rational.one * r) should be(r)
+    (Rational.one * r) should be (r)
   }
   it should "be -1 when negated" in {
     val r = Rational.one
@@ -218,6 +221,11 @@ class RationalSpec extends FlatSpec with Matchers {
     x.head shouldBe Rational(1, 3)
     x.tail.head shouldBe Rational(1, 2)
     x.tail.tail.head shouldBe Rational(2, 3)
+  }
 
+  "r-interpolator" should "work for 1/-2147483648 and -1/-2147483648" in {
+    r"1/-2147483648".signum shouldBe -1
+    r"-1/-2147483648".signum shouldBe 1
+    r"2147483647/0" shouldBe Rational.infinity
   }
 }
