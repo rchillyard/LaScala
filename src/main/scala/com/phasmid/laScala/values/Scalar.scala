@@ -16,9 +16,9 @@ import scala.util._
   * The purpose of this trait is to be able to represent quantities -- things that have some ordered (and/or numerical)
   * value -- in a more meaningful way than simply using "Any".
   *
-  * This trait defines five methods: source, asBoolean, asValuable, asOrderable, asIncrementable.
+  * This trait defines six methods: source, asBoolean, asValuable, asOrderable, asIncrementable, asFractional.
   *
-  * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
+  * For values that you want to consider as numeric, then use asFractional. Valuable is very similar to Numeric/Fractional
   * but has additional methods, in particular fromString, and these methods typically result in a Try[X] as opposed to X.
   *
   * For values that you want to consider as orderable, then use asOrderable. Orderable extends Ordering.

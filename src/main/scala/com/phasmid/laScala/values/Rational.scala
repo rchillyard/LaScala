@@ -192,11 +192,19 @@ object Rational {
 
   private def longAbs(a: Long): Long = if (a < 0) -a else a
 
-  implicit object RationalNumeric extends RationalIsFractional
-
+  /**
+    * Implicit conversion method from Int=>Rational.
+    * This is used for example when comparing a Rational value with an Int
+    * @param x an Int
+    * @return a Rational with the same value as x
+    */
   implicit def intToRational(x: Int): Rational = Rational(x)
 
+  /**
+    * Trait which enables Rational to be used in type classes where the context type is a Fractional (or Numeric or Ordering).
+    */
   trait RationalIsFractional extends Fractional[Rational] {
+    //Members declared in scala.math.Numeric
     def plus(x: Rational, y: Rational): Rational = x + y
 
     def minus(x: Rational, y: Rational): Rational = x - y
@@ -225,5 +233,11 @@ object Rational {
     // Members declared in scala.math.Ordering
     def compare(x: Rational, y: Rational): Int = x.compare(y)
   }
+
+  /**
+    * Implicit object which extends RationalIsFractional.
+    * BTW, it's OK for them to share the same name.
+    */
+  implicit object RationalIsFractional extends RationalIsFractional
 
 }

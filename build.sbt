@@ -26,5 +26,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
   // NOTE: only used for testing
   akkaGroup %% "akka-actor" % akkaVersion % "test",
-	"org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+  "org.scalacheck" %% "scalacheck" % "1.13.2" % "test",
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 )

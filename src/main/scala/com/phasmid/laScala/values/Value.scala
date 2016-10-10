@@ -15,14 +15,12 @@ import scala.util._
   * The purpose of this trait is to be able to represent quantities -- things that have some ordered (and/or numerical)
   * value -- (or sequences of quantities) in a more meaningful way than simply using "Any".
   *
-  * This trait defines five methods: source, asBoolean, asValuable, asOrderable, asSequence.
+  * This trait defines seven methods: source, asBoolean, asValuable, asOrderable, asIncrementable, asFractional, asSequence.
   *
-  * For values that you want to consider as numeric, then use asValuable. Valuable is very similar to Numeric
+  * For values that you want to consider as numeric, then use asFractional. Valuable is very similar to Numeric/Fractional
   * but has additional methods, in particular fromString, and these methods typically result in a Try[X] as opposed to X.
   *
-  * For values that you want to consider as orderable, then use asOrderable. Orderable extends Ordering.
-  * It is used for the type of quantities that do not support arithmetic operations, but do support ordering.
-  * A prime example is Date, Datetime, etc.
+  * For more detail, see Scalar
   *
   * You can also represent sequences by Value (in particular, SequenceValue). Such values will yield Some(sequence)
   * when asSequence is invoked. Other types of Value will yield None in this situation.
@@ -36,9 +34,7 @@ import scala.util._
   *
   * Created by scalaprof on 7/8/16.
   *
-  * TODO implement Value in terms of Scalar
-  *
-  * TODO move this into values package
+  * TODO move this into Scalar module?
   */
 sealed trait Value extends Scalar {
 
@@ -205,7 +201,8 @@ object Value {
   }
 
   /**
-    * Method to convert any of several types of object into a Value
+    * Method to convert any of several types of object into a Value.
+    * XXX Surely the implicits mechanism should be doing this for us!
     *
     * @param x an Any
     * @return a Try[Value] where the value is the result of applying one of the several apply methods in this Value object.

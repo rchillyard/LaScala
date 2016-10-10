@@ -100,7 +100,7 @@ case class DoubleRNG(n: Long) extends RNG_Java[Double](n, { _.toDouble / Long.Ma
 /**
   * This class is a random-number-generator for values uniformly distributed in the range 0..1
   */
-case class UniformDoubleRNG(n: Long) extends RNG_Java[UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), Unit) }) {
+case class UniformDoubleRNG(n: Long) extends RNG_Java[random.UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), Unit) }) {
   def buildNew(n: Long) = UniformDoubleRNG(n)
 
   override def toString = s"UniformDoubleRNG: $n->$apply"
@@ -146,7 +146,7 @@ case class UniformDouble(x: Double) {
 }
 
 object UniformDoubleRNG {
-  def apply: RNG[UniformDouble] = UniformDoubleRNG(System.currentTimeMillis())
+  def apply: RNG[random.UniformDouble] = UniformDoubleRNG(System.currentTimeMillis())
 }
 
 object GaussianRNG {
@@ -166,7 +166,7 @@ object GaussianRNG {
 }
 
 object UniformDouble {
-  def apply(x: Double, y: Unit): UniformDouble = if (x >= 0 && x <= 1) new UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
+  def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) new random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
 
-  def +(x: Double, y: UniformDouble) = y + x
+  def +(x: Double, y: random.UniformDouble) = y + x
 }

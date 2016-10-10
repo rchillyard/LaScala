@@ -11,19 +11,12 @@ import scala.util.{Failure, Success, Try}
   *
   * Created by scalaprof on 8/2/16.
   */
-trait Version[V] extends Ordering[V] {
+trait Version[V] extends Ordering[V] with Versionable[V] {
 
   /**
     * @return the value (tag) of this Version
     */
   def get: V
-
-  /**
-    * Method to create a new version such that the new Version will compare as greater than this Version
-    *
-    * @return the new value, wrapped in a Try
-    */
-  def next: Try[Version[V]]
 
   /**
     * @return the sub-version of this Version, if available
@@ -53,11 +46,26 @@ trait Version[V] extends Ordering[V] {
 
   /**
     * This method is required to build a Version object from the given V tag and an optional subversion.
+    *
     * @param v the tag for this version
     * @param subversion optional subversion
     * @return a new Version object
     */
   def build(v: V, subversion: Option[Version[V]]): Version[V]
+}
+
+/**
+  * This trait models something that is versionable, that is to say has a method next which returns a Try[Versionable[V]...
+  * @tparam V
+  */
+trait Versionable[V] {
+
+  /**
+    * Method to create a new version such that the new Version will compare as greater than this Version
+    *
+    * @return the new value, wrapped in a Try
+    */
+  def next: Try[Versionable[V]]
 }
 
 abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V] {
@@ -87,10 +95,6 @@ abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V
 }
 
 case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends IncrementableVersion[Long](tag) {
-//  def withSubversion(tag: => Long): Try[Version[Long]] = this match {
-//    case LongVersion(t,None) => Try(build(t,Some(LongVersion(tag))))
-//    case _ => Failure(new VersionException(s"version $this already has subversion"))
-//  }
   def build(v: Long, subversion: Option[Version[Long]]): Version[Long] = new LongVersion(v,subversion)
 }
 

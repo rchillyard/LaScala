@@ -15,9 +15,9 @@ class RNGSpec extends FlatSpec with Matchers {
 
   // XXX Clearly, this doesn't look good. We will soon learn how to write
   // generic methods like sum and mean. But for now, this is what we've got.
-  def sumU(xs: Seq[UniformDouble]): Double = xs.foldLeft(0.0)((a, x) => x + a)
+  def sumU(xs: Seq[random.UniformDouble]): Double = xs.foldLeft(0.0)((a, x) => x + a)
 
-  def meanU(xs: Seq[UniformDouble]) = sumU(xs) / xs.length
+  def meanU(xs: Seq[random.UniformDouble]) = sumU(xs) / xs.length
 
   "RNG(0L)" should "match case RNG(-4962768465676381896L)" in {
     val r: RNG[Long] = LongRNG(0L)
