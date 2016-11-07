@@ -3,6 +3,8 @@ package com.phasmid.laScala.tree
 /**
   * This trait expresses the notion of a Node from a tree.
   *
+  * NOTE: this is all experimental
+  *
   * Created by scalaprof on 10/19/16.
   */
 sealed trait Node[+A] {
@@ -142,7 +144,7 @@ sealed trait TreeLike[+A] extends Node[A]{
   *
   * Created by scalaprof on 10/19/16.
   */
-sealed abstract class Tree[+A] extends TreeLike[A]{
+sealed abstract class Tree[+A] extends TreeLike[A] {
   /**
     * NOTE: that this is NOT tail-recursive
     *
@@ -314,15 +316,16 @@ object UnsortedTree {
 }
 
 object BinaryTree {
-  def apply[A : Ordering](as: A*): Node[A] = as.toList match {
-    case Nil => Empty.asInstanceOf[Node[A]]
+  def apply[A : Ordering](as: A*): TreeLike[A] = as.toList match {
+    case Nil => Empty.asInstanceOf[TreeLike[A]]
     case h::Nil => BinaryTree(h,Empty,Empty)
-    case h::t => (apply(h).asInstanceOf[BinaryTree[A]] :+ apply(t:_*)).asInstanceOf[BinaryTree[A]]
+    case h::t => (apply(h) :+ apply(t:_*)).asInstanceOf[BinaryTree[A]]
   }
   implicit val treeMaker = new TreeMaker {
     def tree[T](node: Node[T]): TreeLike[T] = node match {
       case t: BinaryTree[T] => t
-      case _ => tree(node) // FIXME this looks recursive
+      case Leaf(x) => BinaryTree(x,Empty,Empty)
+      case _ => throw new TreeException(s"cannot build BinaryTree from $node")
     }
   }
 }

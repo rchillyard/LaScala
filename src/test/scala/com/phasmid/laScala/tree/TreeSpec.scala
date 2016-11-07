@@ -2,6 +2,8 @@ package com.phasmid.laScala.tree
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.io.Source
+
 /**
   * Created by scalaprof on 10/19/16.
   */
@@ -79,10 +81,10 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.size shouldBe 3
   }
   it should "work for BinaryTree" in {
-    val tree: Node[Int] = BinaryTree(1,2,3)
+    val tree: BinaryTree[Int] = BinaryTree(1,2,3).asInstanceOf[BinaryTree[Int]]
     tree.size shouldBe 3
-    val tree2 = tree.asInstanceOf[BinaryTree[Int]] :+ BinaryTree(1)
-    tree2.asInstanceOf[BinaryTree[Int]].size shouldBe 4
+    val tree2 = tree :+ BinaryTree(1)
+    tree2.size shouldBe 4
   }
 
   behavior of "includes"
@@ -104,31 +106,32 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.includes(4) shouldBe false
   }
 
-//  behavior of "IndexedTree"
-//  it should "work for one element" in {
-//    val tree: Node[String] = BinaryTree("A")
-//    val (size,x) = IndexedTree.indexSubtree(0,tree)
-//    println(s"x: $x")
-//    size shouldBe 1
-//    x.asInstanceOf[IndexedTree[String]].leftIndex shouldBe 0
-//    x.asInstanceOf[IndexedTree[String]].rightIndex shouldBe 2
-//  }
-//  it should "work for three elementa" in {
-//    val tree: Node[String] = BinaryTree("A","B","C")
-//    val (size,x) = IndexedTree.indexSubtree(0,tree)
-//    println(s"x: $x")
-//    size shouldBe 3
-//    x.asInstanceOf[IndexedTree[String]].leftIndex shouldBe 0
-//    x.asInstanceOf[IndexedTree[String]].rightIndex shouldBe 3
-//  }
-//  it should "work for IndexedTree with extra node" in {
-//    import BinaryTree._
-//    val tree: AbstractBinaryTree[String] = BinaryTree("A","B","C").asInstanceOf[AbstractBinaryTree[String]]
-//    val tree2 = tree :+ Leaf("Aardvark")
-//    val (size,x) = IndexedTree.indexSubtree(0,tree2)
-//    size shouldBe 4
-//    println(s"x: ${x.render}")
-//    x.asInstanceOf[IndexedTree[String]].leftIndex shouldBe 0
-//    x.asInstanceOf[IndexedTree[String]].rightIndex shouldBe 8
-//  }
+  behavior of "real-life BinaryTree"
+  it should "build correctly" in {
+    def populateTree(values: Seq[String]): TreeLike[String] = {
+      import BinaryTree._
+      var result = BinaryTree[String]()
+      for (w <- values) {
+        result = (result :+ Leaf(w)).asInstanceOf[TreeLike[String]]
+      }
+      result
+    }
+    val url = getClass.getResource("flatland.txt")
+    println(url)
+    val uo = Option(url)
+    uo should matchPattern { case Some(_) => }
+    val so = uo map {_.openStream}
+    val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
+    val z: Seq[String] = wso match {
+      case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
+      case _ => Seq[String]()
+    }
+//    println(z.take(40))
+    val tree = populateTree(z)
+    tree.includes("flatland") shouldBe true
+    tree.depth shouldBe 14
+    tree.size shouldBe 177
+//    println(tree.render)
+  }
+
 }
