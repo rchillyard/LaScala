@@ -33,15 +33,24 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree2 = UnsortedTree(1,2,3)
     tree1 shouldBe tree2
   }
+//  it should "support indexTree correctly" in {
+//    val tree = BinaryTree(1,2,3)
+//    val mptt = tree.asInstanceOf[BinaryTree[Int]].createIndex
+//    println(mptt)
+//  }
 
   behavior of ":+"
   it should "work" in {
     import BinaryTree._
     val x: BinaryTree[String] = BinaryTree("A","C","D").asInstanceOf[BinaryTree[String]]
-    val y = x :+ Leaf("B")
+    println(x)
+    val y: BinaryTree[String] = (x :+ Leaf("B")).asInstanceOf[BinaryTree[String]]
+    println(y)
     y.size shouldBe 4
     y.depth shouldBe 3
     y.render shouldBe "A{{B}C{D}}"
+    val z = (y :+ Leaf("Alpha")).asInstanceOf[BinaryTree[String]] :+ Leaf("Bravo")
+    println(z)
   }
 
   behavior of "get"
@@ -110,11 +119,14 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "build correctly" in {
     def populateTree(values: Seq[String]): TreeLike[String] = {
       import BinaryTree._
-      var result = BinaryTree[String]()
-      for (w <- values) {
-        result = (result :+ Leaf(w)).asInstanceOf[TreeLike[String]]
+      values match {
+        case h :: t =>
+          var result = BinaryTree[String](h)
+          for (w <- t) {
+            result = (result :+ Leaf(w)).asInstanceOf[TreeLike[String]]
+          }
+          result
       }
-      result
     }
     val url = getClass.getResource("flatland.txt")
     println(url)
@@ -122,16 +134,18 @@ class TreeSpec extends FlatSpec with Matchers {
     uo should matchPattern { case Some(_) => }
     val so = uo map {_.openStream}
     val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
+    import scala.language.postfixOps
     val z: Seq[String] = wso match {
       case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
       case _ => Seq[String]()
     }
-//    println(z.take(40))
+    println(z)
     val tree = populateTree(z)
     tree.includes("flatland") shouldBe true
-    tree.depth shouldBe 14
+    tree.depth shouldBe 15
     tree.size shouldBe 177
-//    println(tree.render)
+    println(tree)
+    println(tree.render)
   }
 
 }

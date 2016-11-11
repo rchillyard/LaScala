@@ -1,5 +1,7 @@
 package com.phasmid.laScala.tree
 
+import com.phasmid.laScala.Recursion
+
 /**
   * This trait expresses the notion of a Node from a tree.
   *
@@ -59,22 +61,12 @@ sealed trait Node[+A] {
   def includes[B >: A](b: B): Boolean
 }
 
-
-object Node {
-  /**
-    * Implicit definition of a Parent for the (type-parameterized, i.e. generic) type Node[A]
-    *
-    * @tparam A the underlying node type
-    * @return a Parent of type Node[A]
-    */
-  implicit def nodeParent[A]: Parent[Node[A]] = new Parent[Node[A]] {
-    /**
-      * Get the children of this Node, if any.
-      *
-      * @return the children as a Seq of Nodes
-      */
-    def children(t: Node[A]): Seq[Node[A]] = t.children
-  }
+/**
+  * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
+  * Note that we only add one index here -- for MPTT, we need to pass through the tree in both directions to get the left and right indices.
+  */
+trait TreeIndex {
+  def index: Long
 }
 
 /**
@@ -117,26 +109,38 @@ sealed trait TreeLike[+A] extends Node[A]{
     */
   def +:[B >: A : Ordering](b: Node[B])(implicit treeMaker: TreeMaker): Node[B] = asTree(b) :+ this
 
-  def size: Int = Parent.traverse[Node[A], Int]({
+  def size: Int = Parent.traverse[Node[A], Int, Int]({
     case Empty => 0
     case _ => 1
-  }, _+_, { x => false}, _ ++ _.children)(List(this), 0)
+  }, _+_, { x => false})(List(this), 0)
 
-  def includes[B >: A](b: B): Boolean = Parent.traverse[Node[B], Boolean]({ n => n.get match {
+  def includes[B >: A](b: B): Boolean = Parent.traverse[Node[B], Boolean, Boolean]({ n => n.get match {
     case Some(`b`) => true
     case _ => false
-  }}, _|_, {x => x}, _ ++ _.children)(List(this), false)
+  }}, _|_, {x => x})(List(this), false)
 
   def renderRecursive[B >: A](z: (List[Node[B]], Node[B]) => List[Node[B]]): String =
-    Parent.traverse[Node[B], String]({
+    Recursion.recurse[Node[B], String, String]({
       case Empty => ""
       case Leaf(x) => x.toString
       case c@Open => c.render
       case c@Close => c.render
       case n => ""
-    }, _ + _, { x => false }, z)(List(this), "")
+    }, _ + _, z)(List(this), "")
 
   override def render: String = renderRecursive[A]((ns,n) => n.children.toList ++ ns)
+
+//    def createIndex[B >: A : Ordering]: MPTT[B] = this match
+//  {
+//      case IndexedNode(node,i) =>
+//  }
+//      def f(index: Int, node: Node[B]): IndexedNode[B] = IndexedNode[B](node,index)
+//      def g(x: IndexedNode[B],y: IndexedNode[B]): IndexedNode[B] = (x.asInstanceOf[AbstractBinaryTree[B]] :+ y).asInstanceOf[IndexedNode[B]]
+//      def h(ns: List[Node[B]], n: Node[B]): List[Node[B]] = n.children.toList ++ ns
+//      val r = Recursion.countRecurse(f,g,h)(Nil,0,IndexedBinaryTree[B](this,0))
+//      println(s"result of countRecurse: $r")
+//      MPTT[B](r.asInstanceOf[BinaryTree[B]])
+//    }
 }
 
 /**
@@ -159,13 +163,54 @@ trait TreeMaker {
   def tree[T](node: Node[T]): TreeLike[T]
 }
 
+/**
+  * This implements a non-indexed binary tree
+  *
+  * @param value the value at the root of this abstract binary tree
+  * @param left the tree to the "left" (the tree which contains values which are less than value)
+  * @param right the tree to the "right"  (the tree which contains values which are greater than value)
+  * @tparam A the underlying type
+  */
+case class BinaryTree[+A](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](value, left, right) {
+  def make[T](x: T, l: Node[T], r: Node[T]): AbstractBinaryTree[T] = BinaryTree(x,l,r)
+}
+
+/**
+  * This implements a indexed binary tree
+  *
+  * @param value the value at the root of this abstract binary tree
+  * @param left the tree to the "left" (the tree which contains values which are less than value)
+  * @param right the tree to the "right"  (the tree which contains values which are greater than value)
+  * @tparam A the underlying type
+  */
+case class IndexedBinaryTree[+A](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](value, left, right) {
+  def make[T](x: T, l: Node[T], r: Node[T]): AbstractBinaryTree[T] = IndexedBinaryTree(x,l,r)
+}
+
 case class Leaf[+A](value: A)(implicit treeMaker: TreeMaker) extends TreeLike[A] {
   def children = Nil
   def get = Some(value)
   def :+[B >: A : Ordering](b: Node[B]): Node[B] = treeMaker.tree(b) :+ this
   override def depth: Int = 1
-//  override def render = value.toString
+  override def render = s"""$value"""
+  override def toString = s"""L("$value")"""
   def isEmpty: Boolean = false
+}
+
+case class IndexedNode[+A](node: Node[A], index: Long)(implicit treeMaker: TreeMaker) extends Node[A] with TreeIndex {
+  def get: Option[A] = node.get
+
+  def children: Seq[Node[A]] = node.children
+
+  def size: Int = node.size
+
+  def depth: Int = node.depth
+
+  def isEmpty: Boolean = node.isEmpty
+
+  def render: String = node.render
+
+  def includes[B >: A](b: B): Boolean = node.includes(b)
 }
 
 case object Empty extends TreeLike[Nothing] {
@@ -173,7 +218,8 @@ case object Empty extends TreeLike[Nothing] {
   def get = None
   def :+[B >: Nothing : Ordering](bn: Node[B]): Node[B] = bn
   override def depth: Int = 0
-//  override def render = ""
+  override def render = "ø"
+  override def toString = render
   def isEmpty: Boolean = true
 }
 
@@ -204,6 +250,13 @@ sealed abstract class AbstractBinaryTree[+A](value: A, left: Node[A], right: Nod
   def isEmpty: Boolean = false
 
   override def render: String = renderRecursive[A](AbstractBinaryTree.buildNodeList)
+
+  override def toString: String = s"""BT{$showValue:$left:$right}"""
+
+  def showValue = get match {
+    case Some(x) => s""""$x""""
+    case None => s"ø"
+  }
 }
 
 object AbstractBinaryTree {
@@ -217,87 +270,56 @@ object AbstractBinaryTree {
   }
 }
 
-/**
-  * This implements a non-indexed binary tree
-  *
-  * @param value the value at the root of this abstract binary tree
-  * @param left the tree to the "left" (the tree which contains values which are less than value)
-  * @param right the tree to the "right"  (the tree which contains values which are greater than value)
-  * @tparam A the underlying type
-  */
-case class BinaryTree[+A](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](value, left, right) {
-  def make[T](x: T, l: Node[T], r: Node[T]): AbstractBinaryTree[T] = BinaryTree(x,l,r)
-}
-
-/**
-  * This implementation of Node supports MPTT (Modified pre-order tree traverse).
-  * Thus it is very expensive to modify the tree. But very fast to make sub-tree queries.
-  *
-  * @param leftIndex the value of the index to the left of the tree
-  * @param rightIndex the value of the index to the right of the tree
-  * @param value the value at the root of this abstract binary tree
-  * @param left the tree to the "left" (the tree which contains values which are less than value)
-  * @param right the tree to the "right"  (the tree which contains values which are greater than value)
-  * @tparam A the underlying type
-  */
-case class IndexedTree[+A](leftIndex: Int, rightIndex: Int, value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](value, left, right) with BinaryTreeIndex {
-  def make[T](x: T, l: Node[T], r: Node[T]): AbstractBinaryTree[T] = {
-    val (y,t) = IndexedTree.makeIndexedTree(0,x,l,r)
-    t.asInstanceOf[AbstractBinaryTree[T]]
+object Node {
+  /**
+    * Implicit definition of a Parent for the (type-parameterized, i.e. generic) type Node[A]
+    *
+    * @tparam A the underlying node type
+    * @return a Parent of type Node[A]
+    */
+  implicit def nodeParent[A]: Parent[Node[A]] = new Parent[Node[A]] {
+    /**
+      * Get the children of this Node, if any.
+      *
+      * @return the children as a Seq of Nodes
+      */
+    def children(t: Node[A]): Seq[Node[A]] = t.children
   }
-}
-
-/**
-  * Indexed version of Leaf.
-  * CONSIDER: Could extend Leaf
-  *
-  * @param leftIndex  the left index of this leaf node
-  * @param rightIndex the right index of this leaf node
-  * @param value      the value of this leaf node
-  * @param treeMaker  an implementer of TreeMaker
-  * @tparam A the underlying node type
-  */
-case class IndexedLeaf[+A](leftIndex: Int, rightIndex: Int, value: A)(implicit treeMaker: TreeMaker) extends TreeLike[A] with BinaryTreeIndex {
-  def children = Nil
-  def get = Some(value)
-  def :+[B >: A : Ordering](b: Node[B]): Node[B] = treeMaker.tree(b) :+ this
-  override def depth: Int = 1
-  def isEmpty: Boolean = false
 }
 
 object IndexedTree {
-  /**
-    * Method to create an indexed subtree from the given details.
-    *
-    * Note: this is recursive but NOT tail-recursive
-    *
-    * @param index the left-index that will be appropriate for this subtree
-    * @param x the value at the root of the subtree
-    * @param l the left tree
-    * @param r the right tree
-    * @tparam T the underlying type of the tree
-    * @return a tuple consisting of the new index value and the indexed subtree
-    */
-  def makeIndexedTree[T](index: Int, x: T, l: Node[T], r: Node[T]): (Int,Node[T]) = {
-    println(s"makeIndexedTree (1): $index, $x, $l, $r")
-    val (i,li) = indexSubtree(index,l)
-    println(s"makeIndexedTree (2): $i, $li")
-    val (j,ri) = indexSubtree(i+2,r)
-    println(s"makeIndexedTree (3): $j, $ri")
-    (j,IndexedTree(index,j,x,li,ri))
-  }
+//  /**
+//    * Method to create an indexed subtree from the given details.
+//    *
+//    * Note: this is recursive but NOT tail-recursive
+//    *
+//    * @param index the left-index that will be appropriate for this subtree
+//    * @param x the value at the root of the subtree
+//    * @param l the left tree
+//    * @param r the right tree
+//    * @tparam T the underlying type of the tree
+//    * @return a tuple consisting of the new index value and the indexed subtree
+//    */
+//  def makeIndexedTree[T](index: Int, x: T, l: Node[T], r: Node[T]): (Int,Node[T]) = {
+//    println(s"makeIndexedTree (1): $index, $x, $l, $r")
+//    val (i,li) = indexSubtree(index,l)
+//    println(s"makeIndexedTree (2): $i, $li")
+//    val (j,ri) = indexSubtree(i+2,r)
+//    println(s"makeIndexedTree (3): $j, $ri")
+//    (j,IndexedTree(index,j,x,li,ri))
+//  }
+//
+//  private [tree] def indexSubtree[T](index: Int, node: Node[T]): (Int, Node[T]) = node match {
+//    case BinaryTree(v,l,r) => makeIndexedTree(index,v,l,r)
+//    case IndexedTree(_, _, v, l, r) => makeIndexedTree(index,v,l,r)
+//    case Leaf(v) => (index+2,IndexedLeaf(index,index+1,v))
+//    case Empty => (index,node)
+//    case _ => throw TreeException(s"illegal node in IndexedTree: $node")
+//  }
 
-  private [tree] def indexSubtree[T](index: Int, node: Node[T]): (Int, Node[T]) = node match {
-    case BinaryTree(v,l,r) => makeIndexedTree(index,v,l,r)
-    case IndexedTree(_, _, v, l, r) => makeIndexedTree(index,v,l,r)
-    case Leaf(v) => (index+2,IndexedLeaf(index,index+1,v))
-    case Empty => (index,node)
-    case _ => throw TreeException(s"illegal node in IndexedTree: $node")
-  }
-
-  implicit val treeMaker = new TreeMaker {
-    def tree[T](node: Node[T]): TreeLike[T] = indexSubtree(0,node)._2.asInstanceOf[TreeLike[T]]
-  }
+//  implicit val treeMaker = new TreeMaker {
+//    def tree[T](node: Node[T]): TreeLike[T] = indexSubtree(0,node)._2.asInstanceOf[TreeLike[T]]
+//  }
 }
 
 case class UnsortedTree[+A](value: A, children: Seq[Node[A]]) extends Tree[A] {
@@ -325,7 +347,22 @@ object BinaryTree {
     def tree[T](node: Node[T]): TreeLike[T] = node match {
       case t: BinaryTree[T] => t
       case Leaf(x) => BinaryTree(x,Empty,Empty)
-      case _ => throw new TreeException(s"cannot build BinaryTree from $node")
+      case _ => throw TreeException(s"cannot build BinaryTree from $node")
+    }
+  }
+}
+
+object IndexedBinaryTree {
+  def apply[A : Ordering](as: A*): TreeLike[A] = as.toList match {
+    case Nil => Empty.asInstanceOf[TreeLike[A]]
+    case h::Nil => IndexedBinaryTree(h,Empty,Empty)
+    case h::t => (apply(h) :+ apply(t:_*)).asInstanceOf[IndexedBinaryTree[A]]
+  }
+  implicit val treeMaker = new TreeMaker {
+    def tree[T](node: Node[T]): TreeLike[T] = node match {
+      case t: IndexedBinaryTree[T] => t
+      case Leaf(x) => IndexedBinaryTree(x,Empty,Empty)
+      case _ => throw TreeException(s"cannot build BinaryTree from $node")
     }
   }
 }
@@ -337,11 +374,6 @@ object Tree {
     val mt = Some("")
     for (x <- xo.orElse(mt); y <- yo.orElse(mt)) yield x+y
   }
-}
-
-trait BinaryTreeIndex {
-  def leftIndex: Int
-  def rightIndex: Int
 }
 
 abstract class Punctuation(x: String) extends Node[Nothing] {

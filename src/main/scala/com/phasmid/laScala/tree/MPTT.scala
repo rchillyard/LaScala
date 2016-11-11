@@ -1,5 +1,7 @@
 package com.phasmid.laScala.tree
 
+//import com.phasmid.laScala.tree.Parent
+
 import scala.collection.mutable
 
 /**
@@ -14,8 +16,17 @@ case class MPTTEntry[T](t: T)(val pre: Long, val post: Long) {
 }
 
 object MPTT {
-  def apply[T](x: BinaryTree[T]): MPTT[T] = {
+
+
+
+  def apply[T](x: IndexedNode[T]): MPTT[T] = {
     val hashMap = new mutable.HashMap[T,MPTTEntry[T]]()
-    MPTT(hashMap.toMap)
+    def f(n: Node[T]): MPTTEntry[T] = n match {
+      case IndexedNode(n,i) => MPTTEntry.apply(n.get.get)(i, 0)
+      case _ => throw new TreeException("cannot build MPTT from non-indexed node")
+    }
+    def g(mptt: MPTT[T], e: MPTTEntry[T]): MPTT[T] = MPTT(mptt.index + (e.t->e))
+    val mptt = Parent.traverse[Node[T],MPTTEntry[T],MPTT[T]](f,g)(List(x), MPTT(Map[T,MPTTEntry[T]]()))
+    mptt
   }
 }
