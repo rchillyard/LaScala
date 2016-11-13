@@ -9,15 +9,15 @@ import scala.io.Source
   */
 class TreeSpec extends FlatSpec with Matchers {
 
-  behavior of "UnsortedTree"
+  behavior of "GenericTree"
   it should "apply correctly with varargs" in {
-    val tree1 = UnsortedTree(1,Seq(UnsortedTree(2,Seq(UnsortedTree(3,Seq(Empty))))))
-    val tree2 = UnsortedTree(1,2,3)
+    val tree1 = GenericTree(1,Seq(GenericTree(2,Seq(GenericTree(3,Seq(Empty))))))
+    val tree2 = GenericTree(1,2,3)
     tree1 shouldBe tree2
   }
   it should "apply correctly with List" in {
-    val tree1 = UnsortedTree(1,Seq(UnsortedTree(2,Seq(UnsortedTree(3,Seq(Empty))))))
-    val tree2 = UnsortedTree(1,2,3)
+    val tree1 = GenericTree(1,Seq(GenericTree(2,Seq(GenericTree(3,Seq(Empty))))))
+    val tree2 = GenericTree(1,2,3)
     tree1 shouldBe tree2
   }
 
@@ -29,15 +29,21 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.render shouldBe "1{2{3}}"
   }
   it should "apply correctly with List" in {
-    val tree1 = UnsortedTree(1,Seq(UnsortedTree(2,Seq(UnsortedTree(3,Seq(Empty))))))
-    val tree2 = UnsortedTree(1,2,3)
+    val tree1 = GenericTree(1,Seq(GenericTree(2,Seq(GenericTree(3,Seq(Empty))))))
+    val tree2 = GenericTree(1,2,3)
     tree1 shouldBe tree2
   }
-//  it should "support indexTree correctly" in {
-//    val tree = BinaryTree(1,2,3)
-//    val mptt = tree.asInstanceOf[BinaryTree[Int]].createIndex
-//    println(mptt)
-//  }
+  it should "support createIndexedTree correctly" in {
+    val tree = BinaryTree(1,2,3)
+    val indexedTree = Tree.createIndexedTree(tree.asInstanceOf[BinaryTree[Int]], 0)
+    println(s"indexedTree: $indexedTree")
+  }
+  it should "support MPTT correctly" in {
+    val tree = BinaryTree(1,2,3)
+    val indexedTree = Tree.createIndexedTree(tree.asInstanceOf[BinaryTree[Int]], 0)
+    val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
+    println(mptt)
+  }
 
   behavior of ":+"
   it should "work" in {
@@ -56,9 +62,9 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "get"
   it should "work" in {
     implicit val builder = new TreeMaker {
-      def tree[A](node: Node[A]): TreeLike[A] = UnsortedTree(node.get.get).asInstanceOf[TreeLike[A]]
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
     }
-    val tree = UnsortedTree(1,Seq(Leaf(2),Leaf(3)))
+    val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
     tree.includes(1) shouldBe true
     tree.includes(2) shouldBe true
     tree.includes(3) shouldBe true
@@ -67,11 +73,11 @@ class TreeSpec extends FlatSpec with Matchers {
   }
 
   behavior of "depth"
-  it should "work for UnsortedTree" in {
+  it should "work for GenericTree" in {
     implicit val builder = new TreeMaker {
-      def tree[A](node: Node[A]): TreeLike[A] = UnsortedTree(node.get.get).asInstanceOf[TreeLike[A]]
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
     }
-    val tree = UnsortedTree(1,Seq(Leaf(2),Leaf(3)))
+    val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
     tree.depth shouldBe 2
   }
   it should "work for BinaryTree" in {
@@ -82,11 +88,11 @@ class TreeSpec extends FlatSpec with Matchers {
   }
 
   behavior of "size"
-  it should "work for UnsortedTree" in {
+  it should "work for GenericTree" in {
     implicit val builder = new TreeMaker {
-      def tree[A](node: Node[A]): TreeLike[A] = UnsortedTree(node.get.get).asInstanceOf[TreeLike[A]]
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
     }
-    val tree = UnsortedTree(1,Seq(Leaf(2),Leaf(3)))
+    val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
     tree.size shouldBe 3
   }
   it should "work for BinaryTree" in {
@@ -97,15 +103,31 @@ class TreeSpec extends FlatSpec with Matchers {
   }
 
   behavior of "includes"
-  it should "work for UnsortedTree" in {
+  it should "work for GenericTree" in {
     implicit val builder = new TreeMaker {
-      def tree[A](node: Node[A]): TreeLike[A] = UnsortedTree(node.get.get).asInstanceOf[TreeLike[A]]
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
     }
-    val tree = UnsortedTree(1,Seq(Leaf(2),Leaf(3)))
+    val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
     tree.includes(1) shouldBe true
     tree.includes(2) shouldBe true
     tree.includes(3) shouldBe true
     tree.includes(4) shouldBe false
+  }
+  it should "work for BinaryTree" in {
+    val tree: Node[Int] = BinaryTree(1,2,3)
+    tree.includes(1) shouldBe true
+    tree.includes(2) shouldBe true
+    tree.includes(3) shouldBe true
+    tree.includes(4) shouldBe false
+  }
+
+  behavior of "find"
+  it should "work for GenericTree" in {
+    implicit val builder = new TreeMaker {
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
+    }
+    val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
+    tree.find({i=>i==2}) should matchPattern { case Some(Leaf(2)) => }
   }
   it should "work for BinaryTree" in {
     val tree: Node[Int] = BinaryTree(1,2,3)
@@ -117,20 +139,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "real-life BinaryTree"
   it should "build correctly" in {
-    def populateTree(values: Seq[String]): TreeLike[String] = {
-      import BinaryTree._
-      values match {
-        case h :: t =>
-          var result = BinaryTree[String](h)
-          for (w <- t) {
-            result = (result :+ Leaf(w)).asInstanceOf[TreeLike[String]]
-          }
-          result
-      }
-    }
-    val url = getClass.getResource("flatland.txt")
-    println(url)
-    val uo = Option(url)
+    val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map {_.openStream}
     val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
@@ -139,13 +148,18 @@ class TreeSpec extends FlatSpec with Matchers {
       case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
       case _ => Seq[String]()
     }
-    println(z)
-    val tree = populateTree(z)
+    val tree = TreeLike.populateTree(z)
     tree.includes("flatland") shouldBe true
     tree.depth shouldBe 15
     tree.size shouldBe 177
-    println(tree)
-    println(tree.render)
+  }
+
+  behavior of "createIndexedTree"
+  it should "work for BinaryTree" in {
+    val tree = BinaryTree("A", "B", "C").asInstanceOf[BinaryTree[String]] :+ BinaryTree("Catfish")
+    tree.includes("Catfish") shouldBe true
+    val indexedTree = Tree.createIndexedTree(tree,0)
+
   }
 
 }

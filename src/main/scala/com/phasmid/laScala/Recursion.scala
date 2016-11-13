@@ -52,7 +52,7 @@ object Recursion {
     * @param ts a list of Ts to be worked on.
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T the underlying type of the work list.
-    * @tparam S the return type of f.
+    * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @return   a value of R.
     */
@@ -71,7 +71,7 @@ object Recursion {
     * @param p  a counter which will be incremented on each recursive call to countRecurse
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T the underlying type of the work list.
-    * @tparam S the return type of f.
+    * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @tparam P The type of the counter -- context-bound to Counter
     * @return   a value of R.
@@ -94,7 +94,7 @@ object Recursion {
     * @param p  a counter which will be incremented on each recursive call to countRecurse
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T the underlying type of the work list.
-    * @tparam S the return type of f.
+    * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @tparam P The type of the counter -- context-bound to Counter
     * @return   a value of R.

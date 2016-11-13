@@ -29,6 +29,7 @@ object Parent {
     * @param ts a list of Ts to be worked on.
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T a type which extends Parent, and thus has children of type T -- this "context bound" is implemented via a compiler-generated implicit parameter of type Parent[T].
+    * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @return   a value of R.
     */
