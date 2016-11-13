@@ -40,6 +40,6 @@ object Tuples {
     case size if size <= 22 =>
       val refs = for (e <- elems) yield e.asInstanceOf[AnyRef]
       ctors(size - 1).newInstance(refs: _*).asInstanceOf[Product]
-    case size if size > 22 => new SeqProduct(elems: _*)
+    case size if size > 22 => SeqProduct(elems: _*)
   }
 }

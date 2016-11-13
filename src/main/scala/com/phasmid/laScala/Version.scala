@@ -24,7 +24,7 @@ trait Version[V] extends Ordering[V] with Versionable[V] {
   def subversion: Option[Version[V]]
 
   /**
-    * @return a Seq of V objects representing the version/subversions of this instance.
+    * @return a Seq of V objects representing the version/subversion of this instance.
     */
   def toSeq: Seq[V] = {
     def inner(v: Version[V], vs: Seq[V]): Seq[V] = v.subversion match {
@@ -56,10 +56,9 @@ trait Version[V] extends Ordering[V] with Versionable[V] {
 
 /**
   * This trait models something that is versionable, that is to say has a method next which returns a Try[Versionable[V]...
-  * @tparam V
+  * @tparam V the underlying type of this Versionable
   */
 trait Versionable[V] {
-
   /**
     * Method to create a new version such that the new Version will compare as greater than this Version
     *
@@ -75,7 +74,7 @@ abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V
 
   def withSubversion(v: => V): Try[Version[V]] = subversion match {
     case None => Try(build(tag,Some(build(v,None))))
-    case _ => Failure(new VersionException(s"version $this already has subversion"))
+    case _ => Failure(VersionException(s"version $this already has subversion"))
   }
 
   def compare(x: V, y: V): Int = {

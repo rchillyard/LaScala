@@ -11,7 +11,7 @@ case class Args(args: List[Any]) extends (() => Try[(Any,Args)]) {
     case h :: t => Success(h, Args(t))
   }
   def get[T](clazz: Class[T]): Try[(T, Args)] = {
-    apply match {
+    apply() match {
       case Success((r,a)) =>
         if (clazz.isInstance(r) || clazz.isAssignableFrom(r.getClass))
           Success(r.asInstanceOf[T], a)
@@ -23,7 +23,7 @@ case class Args(args: List[Any]) extends (() => Try[(Any,Args)]) {
   }
   def isEmpty: Boolean = args.isEmpty
 
-  override def toString: String = args mkString(", ")
+  override def toString: String = args mkString ", "
 }
 
 object Args extends App {
@@ -37,7 +37,7 @@ object Args extends App {
         case h :: t =>
           as.get(h) match {
             case Success((y,bs)) => inner(bs, t, result :+ y)
-            case Failure(t) => throw t
+            case Failure(z) => throw z
           }
       }
     }

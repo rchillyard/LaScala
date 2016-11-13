@@ -1,5 +1,6 @@
 package com.phasmid.laScala.tree
 
+import com.phasmid.laScala.Kleenean
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
@@ -87,6 +88,29 @@ class TreeSpec extends FlatSpec with Matchers {
     tree2.asInstanceOf[BinaryTree[Int]].depth shouldBe 3
   }
 
+  behavior of "compareValues"
+  it should "work for Leaf" in {
+    implicit val builder = new TreeMaker {
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
+    }
+    val tree1: Node[Int] = Leaf(1)
+    val tree2: Node[Int] = Leaf(1)
+    tree2.compareValues(tree1) should matchPattern {case Kleenean(Some(true)) => }
+  }
+  behavior of "like"
+  it should "work for Leaf" in {
+    implicit val builder = new TreeMaker {
+      def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
+    }
+    val tree1: Node[Int] = Leaf(1)
+    val tree2: Node[Int] = Leaf(1)
+    tree2.like(tree1) should matchPattern {case Kleenean(Some(true)) => }
+  }
+  it should "work for BinaryTree" in {
+    val tree1: Node[Int] = BinaryTree(1,2,3)
+    val tree2: Node[Int] = BinaryTree(1,2,3)
+    tree2.like(tree1) should matchPattern {case Kleenean(Some(true)) => }
+  }
   behavior of "size"
   it should "work for GenericTree" in {
     implicit val builder = new TreeMaker {
@@ -162,20 +186,14 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = BinaryTree("A", "B", "C").asInstanceOf[BinaryTree[String]] :+ BinaryTree("Catfish")
     tree.includes("Catfish") shouldBe true
     val indexedTree = Tree.createIndexedTree(tree,0)
-    val nodeC = indexedTree.find(_.get.contains("C"))
-    nodeC should matchPattern { case Some(MutableGenericIndexedTree(_,_,_,_)) => }
-    val nodeCatfish = indexedTree.find(_.get.contains("Catfish"))
-    nodeCatfish should matchPattern { case Some(MutableGenericIndexedTree(_,_,"Catfish",_)) => }
-    val nodeD = indexedTree.find(_.get.contains("D"))
-    nodeD should matchPattern { case None => }
-    println(s"indexedTree: $indexedTree")
-    println(s"nodeC: $nodeC")
-    // FIXME
-    indexedTree.includes(nodeC) shouldBe true
-    println(s"nodeCatfish: $nodeCatfish")
-    indexedTree.includes(nodeCatfish) shouldBe true
-    println(s"nodeD: $nodeD")
-    indexedTree.includes(nodeD) shouldBe false
+    val nco = indexedTree.find(_.get.contains("C"))
+    nco should matchPattern { case Some(MutableGenericIndexedTree(_,_,_,_)) => }
+    val nxo = indexedTree.find(_.get.contains("Catfish"))
+    nxo should matchPattern { case Some(MutableGenericIndexedTree(_,_,"Catfish",_)) => }
+    val ndo = indexedTree.find(_.get.contains("D"))
+    ndo should matchPattern { case None => }
+    indexedTree.includes(nco.get) shouldBe true
+    indexedTree.includes(nxo.get) shouldBe true
   }
 
 

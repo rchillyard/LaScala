@@ -388,16 +388,13 @@ object CsvParser {
     { case whole(s) => s.toInt } :^
     { case truth(w) => true } :^
     { case untruth(w) => false } :^
-    { case s => s match {
-        case floating(_) | floating(_, _) | floating(_, _, _) => s.toDouble
-      }
-    } :|
+    { case s@(floating(_) | floating(_, _) | floating(_, _, _)) => s.toDouble} :|
     Trial.none[String, Scalar]
   /**
     * The lax parser is essentially the same as the defaultParser.
     * However, if it cannot match on of those patterns, it will succeed, returning the string as is.
     */
-  val laxParser = defaultParser :^ { case s => s }
+  val laxParser = defaultParser :^ (s => s)
   val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
   val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
   // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats

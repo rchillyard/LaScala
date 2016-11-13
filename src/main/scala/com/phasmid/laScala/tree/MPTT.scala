@@ -10,11 +10,11 @@ case class MPTT[T](index: Map[T,MPTTEntry[T]]) {
 }
 
 /**
-  * CONSIDER why does this have to parameter sets?
-  * @param t
-  * @param pre
-  * @param post
-  * @tparam T
+  * CONSIDER why does this have two parameter sets?
+  * @param t the value
+  * @param pre the pre-index
+  * @param post the post-index
+  * @tparam T the type of the value
   */
 case class MPTTEntry[T](t: T)(val pre: Long, val post: Long) {
   def contains(x: MPTTEntry[T]): Boolean = this.pre <= x.pre && this.post >= x.post
@@ -24,14 +24,13 @@ case class MPTTEntry[T](t: T)(val pre: Long, val post: Long) {
 object MPTT {
   def apply[T](x: IndexedNode[T]): MPTT[T] = {
     val hashMap = new mutable.HashMap[T,MPTTEntry[T]]()
-    def f(n: Node[T]): Option[MPTTEntry[T]] = n match {
+    def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
       case IndexedLeaf(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(v)(l,r)
       case EmptyWithIndex => None
       case IndexedNode(n,l,r) => Some(MPTTEntry.apply(n.get.get)(l,r))
-      case _ => throw new TreeException(s"cannot build MPTT from non-indexed node: $n")
+      case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
     }
-    def g(mptt: MPTT[T], e: Option[MPTTEntry[T]]): MPTT[T] = e match { case Some(x) => MPTT[T](mptt.index + (x.t->x)); case None => mptt }
-    val mptt = Parent.traverse[Node[T],Option[MPTTEntry[T]],MPTT[T]](f,g)(List(x), MPTT[T](Map[T,MPTTEntry[T]]()))
-    mptt
+    def g(mptt: MPTT[T], e: Option[MPTTEntry[T]]): MPTT[T] = e match { case Some(me) => MPTT[T](mptt.index + (me.t->me)); case None => mptt }
+    Parent.traverse[Node[T], Option[MPTTEntry[T]], MPTT[T]](f, g)(List(x), MPTT[T](Map[T, MPTTEntry[T]]()))
   }
 }

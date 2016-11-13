@@ -11,7 +11,7 @@ import scala.util._
 class VersionSpec extends FlatSpec with Matchers with Inside {
   "apply" should "decode 1.1" in {
     val vo = LongVersion.parse("1.1")
-    vo should matchPattern { case Some(v) => }
+    vo should matchPattern { case Some(_) => }
     val v = vo.get
     v.toSeq shouldBe Seq(1L,1L)
     v.toString shouldBe "1.1"

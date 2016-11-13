@@ -166,7 +166,7 @@ object GaussianRNG {
 }
 
 object UniformDouble {
-  def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) new random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
+  def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
 
   def +(x: Double, y: random.UniformDouble) = y + x
 }

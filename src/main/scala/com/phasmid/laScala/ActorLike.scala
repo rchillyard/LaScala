@@ -30,7 +30,7 @@ trait Queryable[T] {
   /**
     * Method to accept a query in the form of a T and return an Any response wrapped in Future
     *
-    * @param query
+    * @param query the query
     */
   def query(query: T): Future[Any]
 }

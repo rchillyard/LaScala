@@ -28,11 +28,11 @@ class RandomStateSpec extends FlatSpec with Matchers {
     r.next.next should matchPattern { case JavaRandomState(-1034601897293430941L,identity) => }
   }
   "7th element of RandomState(0)" should "match case RandomState(5082315122564986995L)" in {
-    val lrs = RandomState(0).toStream.drop(6).take(1)
+    val lrs = RandomState(0).toStream.slice(6, 7)
     (lrs head) should matchPattern { case 5082315122564986995L => }
   }
   "Double stream" should "have zero mean" in {
-    val xs = RandomState(0).map(RandomState.longToDouble).toStream take 10001 toList;
+    val xs = RandomState(0).map(RandomState.longToDouble).toStream take 10001 toList
     val mu = mean(xs) //xs.sum/xs.length
     math.abs(mu) shouldBe <= (2E-2)
   }

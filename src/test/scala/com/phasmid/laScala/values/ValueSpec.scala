@@ -220,7 +220,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
         xo should matchPattern { case None => }
     }
   }
-  "trySequence" should "work when given Anys" in {
+  "trySequence" should "work when given a list of Any" in {
     val ws = List[Any]("k", 1, 1.0)
     val vsy = Value.trySequence(ws)
     val xosy: Try[Seq[Option[Double]]] = for (vs <- vsy) yield for (v <- vs) yield v.asValuable[Double]

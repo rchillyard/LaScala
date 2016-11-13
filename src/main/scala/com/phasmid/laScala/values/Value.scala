@@ -54,7 +54,7 @@ trait ValueMaker extends (Any => Try[Value]) {
 
   def value(a: Any): Try[Value]
 
-  def sequence(as: Seq[Any]): Try[Seq[Value]] = FP.sequence(as map { apply(_) })
+  def sequence(as: Seq[Any]): Try[Seq[Value]] = FP.sequence(as map { apply })
 }
 
 /**
@@ -115,7 +115,7 @@ case class QuotedStringValue(x: String, source: Any) extends BaseQuotedStringSca
 /**
   * Value which is natively an LocalDate. Such a value, cannot be converted to Int or
   * Double by invoking asValuable. However, it can be converted to some other form of Date by invoking
-  * asOrderable[X] where X is the other form--provided that there is an implict conversion function in scope.
+  * asOrderable[X] where X is the other form--provided that there is an implicit conversion function in scope.
   *
   * @param x      the LocalDate value
   * @param source the source (normally a String)

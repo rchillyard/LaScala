@@ -265,7 +265,7 @@ abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar
 /**
   * Scalar which is natively an LocalDate. Such a value, cannot be converted to Int or
   * Double by invoking asValuable. However, it can be converted to some other form of Date by invoking
-  * asOrderable[X] where X is the other form--provided that there is an implict conversion function in scope.
+  * asOrderable[X] where X is the other form--provided that there is an implicit conversion function in scope.
   *
   * @param x      the LocalDate value
   * @param source the source (normally a String)

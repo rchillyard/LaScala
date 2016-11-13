@@ -24,7 +24,7 @@ object FP {
     * this isn't a particularly useful method: basically, it just strips away the Try part, returning an un-fulfilled Future.
     *
     * @param xfy a Future[X] value wrapped in Try
-    * @tparam X the uderlying type
+    * @tparam X the underlying type
     * @return an X value wrapped in Future
     */
   def flatten[X](xfy: Try[Future[X]]): Future[X] =
@@ -37,7 +37,7 @@ object FP {
     *
     * @param xsfs a sequence of futures, each wrapping a sequence of X
     * @param ec   the execution context
-    * @tparam X the uderlying type
+    * @tparam X the underlying type
     * @return a sequence of X values wrapped in Future
     */
   def flatten[X](xsfs: Seq[Future[Seq[X]]])(implicit ec: ExecutionContext): Future[Seq[X]] = Future.sequence(xsfs) map {
@@ -50,7 +50,7 @@ object FP {
     * @param esf      the collection to process
     * @param f        the function to process left-hand-sides
     * @param executor the executor to use
-    * @tparam X the uderlying type
+    * @tparam X the underlying type
     * @return a Future\[Seq\[X\]\]
     */
   def flattenRecover[X](esf: Future[Seq[Either[Throwable, Seq[X]]]], f: => Throwable => Unit)(implicit executor: ExecutionContext): Future[Seq[X]] = {
@@ -76,7 +76,7 @@ object FP {
     * TODO unit test
     *
     * @param xy a Try[X] value
-    * @tparam X the uderlying type
+    * @tparam X the underlying type
     * @return Right[X] if successful, else a Left[X]
     */
   def sequence[X](xy: => Try[X]): Either[Throwable, X] =
@@ -289,7 +289,7 @@ object FP {
     * A pure lift method to lift a function into Try
     *
     * @param f a function which takes two T parameters and returns a U
-    * @tparam T the uderlying source type
+    * @tparam T the underlying source type
     * @tparam U the underlying result type
     * @return the corresponding function which takes to Try[T] parameters and returns a Try[U]
     */
@@ -301,7 +301,7 @@ object FP {
     * A pure lift method to lift a function into Option
     *
     * @param f a function which takes two T parameters and returns a U
-    * @tparam T the uderlying source type
+    * @tparam T the underlying source type
     * @tparam U the underlying result type
     * @return the corresponding function which takes to Option[T] parameters and returns an Option[U]
     */
@@ -314,7 +314,7 @@ object FP {
     *
     * @param f        a function which takes two T parameters and returns a U
     * @param executor (implicit) execution context
-    * @tparam T the uderlying source type
+    * @tparam T the underlying source type
     * @tparam U the underlying result type
     * @return the corresponding function which takes to Future[T] parameters and returns a Future[U]
     */
@@ -347,13 +347,13 @@ object FP {
     * @return a String representing the first "limit" elements of as
     */
   def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
-    val iter = as.toStream.toIterator
+    val iterator = as.toStream.toIterator
     val buffer = new StringBuilder("(")
-    while (iter.hasNext && buffer.length < limit) {
+    while (iterator.hasNext && buffer.length < limit) {
       if (buffer.length > 1) buffer append ", "
-      buffer append s"${iter.next}"
+      buffer append s"${iterator.next}"
     }
-    if (iter.hasNext) buffer append "..."
+    if (iterator.hasNext) buffer append "..."
     buffer append ")"
     buffer toString
   }
@@ -362,7 +362,7 @@ object FP {
     * TODO unit test
     *
     * @param f a function which transforms a T into an R
-    * @tparam T the uderlying source type
+    * @tparam T the underlying source type
     * @tparam R the underlying result type
     * @return a named function which takes a T and returns an R
     */
@@ -377,7 +377,7 @@ object FP {
     *
     * @param b a Boolean value
     * @param x an X value
-    * @tparam X the uderlying type
+    * @tparam X the underlying type
     * @return if b is true then Some(x) else None
     */
   def toOption[X](b: Boolean, x: X): Option[X] = if (b) Some(x) else None
@@ -404,7 +404,4 @@ object FP {
     * @return a Option[U]
     */
   def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
-
-//  def liftPredicate2[X](f: (X,X)=>Boolean)(xo1: Option[X], xo2: Option[X]): Option[Boolean] = for (x1 <- xo1; x2 <- xo2) yield f(x1, x2)
-
 }

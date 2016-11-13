@@ -82,7 +82,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   def putInQuotes(w: String): Scalar = s"""'$w'"""
 
-  val customElemParser = CsvParser(parseElem = Lift(putInQuotes _))
+  val customElemParser = CsvParser(parseElem = Lift(putInQuotes))
   "custom element parser" should "parse 1 as '1'" in (customElemParser.elementParser("1") should matchPattern { case Success(StringScalar("'1'", _)) => })
   it should "parse 1.0 as '1.0'" in (customElemParser.elementParser("1.0") should matchPattern { case Success(StringScalar("'1.0'", _)) => })
   it should "parse true as 'true'" in (customElemParser.elementParser("true") should matchPattern { case Success(StringScalar("'true'", _)) => })
@@ -103,7 +103,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
     val row = """"Apple Inc.",104.48,"8/2/2016",12.18"""
     val xy: Try[(String, Double, LocalDate, Double)] = for {
       ws <- defaultParser.parseRow(row)
-      x <- TupleStream.seqToTuple[(String, Double, LocalDate, Double)](ws)(parser _)
+      x <- TupleStream.seqToTuple[(String, Double, LocalDate, Double)](ws)(parser)
     } yield x
     xy should matchPattern { case Success(("Apple Inc.",104.48,_,12.18)) => }
   }

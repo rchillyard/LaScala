@@ -124,13 +124,13 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   "Func" should "work" in {
     def even(x: Int) = x % 2 == 0
-    val p = Func(even _)
+    val p = Func(even)
     p(6) should matchPattern { case Success(true) => }
     p(11) should matchPattern { case Success(false) => }
   }
   it should "be named ok" in {
     def even(x: Int) = x % 2 == 0
-    val p = Func(even _)
+    val p = Func(even)
     p.toString shouldBe "function <function1>"
   }
   "Pred" should "work" in {
@@ -208,7 +208,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = Func(func1 _) :& Func(func2 _)
+    val p = Func(func1) :& Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
@@ -233,7 +233,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = Func(func1 _) :^| func2 _
+    val p = Func(func1) :^| func2
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. "
     s.clear()
@@ -258,7 +258,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = func1 _ &^: Func(func2 _)
+    val p = func1 _ &^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
@@ -283,7 +283,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = func1 _ |^: Func(func2 _)
+    val p = func1 _ |^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. "
     s.clear()

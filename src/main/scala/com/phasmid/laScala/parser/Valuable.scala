@@ -11,7 +11,7 @@ import scala.util.{Failure, Success, Try}
   *
   * This combination of trait Valuable and implicit objects comprises the "type class" Valuable.
   * It is loosely based on Numeric but has more method definitions and is therefore much more useful for parsing and evaluating expressions.
-  * In paticular, it provides a fromString method which, to me, seems sorely lacking in Numeric.
+  * In particular, it provides a fromString method which, to me, seems sorely lacking in Numeric.
   * The reason that it does not extend Numeric is that most of the method result in a Try[X] rather than an X.
   *
   * Created by scalaprof on 6/5/16.

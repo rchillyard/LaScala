@@ -144,11 +144,11 @@ class RuleParser extends JavaTokenParsers {
     }
   }
 
-  def rule: Parser[RuleLike] = repsep(term, alternation) ^^ { case ts => Disjunction(ts) }
+  def rule: Parser[RuleLike] = repsep(term, alternation) ^^ (ts => Disjunction(ts))
 
   def alternation: Parser[String] = "|" | "(?i)or".r
 
-  def term: Parser[RuleLike] = repsep(factor, ampersand) ^^ { case fs => Conjunction(fs) }
+  def term: Parser[RuleLike] = repsep(factor, ampersand) ^^ (fs => Conjunction(fs))
 
   def ampersand: Parser[String] = "&" | "(?i)and".r
 
@@ -158,9 +158,9 @@ class RuleParser extends JavaTokenParsers {
     case r: RuleLike => Parentheses(r)
   }
 
-  def always: Parser[RuleLike] = """(?i)always|true""".r ^^ { case _ => TruthValue(true) }
+  def always: Parser[RuleLike] = """(?i)always|true""".r ^^ (_ => TruthValue(true))
 
-  def never: Parser[RuleLike] = """(?i)never|false""".r ^^ { case _ => TruthValue(false) }
+  def never: Parser[RuleLike] = """(?i)never|false""".r ^^ (_ => TruthValue(false))
 
   def condition: Parser[RuleLike] = identifier ~ predicate ^^ { case s ~ p => Condition(s, p) }
 
@@ -185,7 +185,7 @@ class RuleParser extends JavaTokenParsers {
       def shunt(xs: List[String], et: String ~ ExprTerm): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
-      val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt(_, _))
+      val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }
 
@@ -200,7 +200,7 @@ class RuleParser extends JavaTokenParsers {
       def shunt(xs: List[String], et: String ~ ExprFactor): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
-      val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt(_, _))
+      val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }
 

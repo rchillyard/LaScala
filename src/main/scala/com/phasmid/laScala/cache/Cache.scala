@@ -246,7 +246,7 @@ abstract class TryFulfillingExpiringCache[K, V](evaluationFunc: K => Try[V])(imp
     * @return a V wrapped in an M
     */
   def fulfill(k: K): T = evaluate(k).transform(
-    { v => postFulfillment(k, v); Success(v) }, { case x => carper(s"Cache: evaluation exception for key $k: $x"); Failure(x) }
+    { v => postFulfillment(k, v); Success(v) }, { x => carper(s"Cache: evaluation exception for key $k: $x"); Failure(x) }
   )
 }
 
@@ -269,7 +269,7 @@ abstract class FutureFulfillingExpiringCache[K, V](evaluationFunc: K => Future[V
   type T = Future[V]
 
   def fulfill(k: K): T = evaluate(k).transform(
-    { v => postFulfillment(k, v); v }, { case x => carper(s"Cache: evaluation exception for key $k: $x"); x }
+    { v => postFulfillment(k, v); v }, { x => carper(s"Cache: evaluation exception for key $k: $x"); x }
   )
 }
 
@@ -306,7 +306,7 @@ trait Wrapper[M[_]] {
   /**
     * Return an M[V], given an M[V] and a V=>M[V] function
     *
-    * CONSIDER definining this as flatMap[V,W] etc.
+    * CONSIDER defining this as flatMap[V,W] etc.
     *
     * @param m the M[V] to be mapped
     * @tparam V the value type
@@ -392,7 +392,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M], override val initia
   self =>
 
   /**
-    * This method, analagous to getOrElseUpdate returns the value (wrapped in an "M" container) corresponding to key k if it exists.
+    * This method, analogous to getOrElseUpdate returns the value (wrapped in an "M" container) corresponding to key k if it exists.
     * If it doesn't exist, it invokes the function f to get the value.
     *
     * @param k the key which references the value we need
@@ -405,7 +405,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M], override val initia
     }
     get(k) match {
       case Some(v) => wrapper.unit(v)
-      case None => wrapper.flatMap[V](f(k), doUpdate _)
+      case None => wrapper.flatMap[V](f(k), doUpdate)
     }
   }
 }
@@ -469,7 +469,7 @@ trait Fulfilling[K, V, M[_]] extends Mappish[K, V, M] {
     * @param k the key of the element which we wish to get
     * @return the value wrapped as a T
     */
-  def get(k: K): M[V] = mutableMap.getOrElseUpdateM(k, fulfill _)
+  def get(k: K): M[V] = mutableMap.getOrElseUpdateM(k, fulfill)
 
   /**
     * Fulfill the key k as an M[V]

@@ -54,7 +54,7 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[Rule[U]]
 
@@ -131,7 +131,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
     for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new And[U](s1, s2)
@@ -161,7 +161,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
     for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new Or[U](s1, s2)
@@ -191,7 +191,7 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
     for (t1 <- lf(t); p1 <- p tryMap rf) yield new BoundPredicate[U](t1, p1)
@@ -219,7 +219,7 @@ case class Truth[T](b: Boolean) extends BaseRule[T](s"$b") {
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(Truth(b).asInstanceOf[Rule[U]])
 }
@@ -240,7 +240,7 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
     * @tparam U the type of the resulting Rule
-    * @return a Try[Rule[T]] which is equivalent (truth-wise) to this Rule.
+    * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(InvalidRule(x).asInstanceOf[Rule[U]])
 }

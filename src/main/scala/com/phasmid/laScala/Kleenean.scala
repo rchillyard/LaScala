@@ -2,37 +2,142 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.fp.FP
 
-trait OptBool {
-  def value: Option[Boolean]
-  def :&(x: Option[Boolean]): OptBool = Kleenean(FP.map2(x,value)(_ && _) orElse Kleenean.&&&(x) orElse Kleenean.&&&(value))
-  def :|(x: Option[Boolean]): OptBool = Kleenean(FP.map2(x,value)(_ || _) orElse Kleenean.|||(x) orElse Kleenean.|||(value))
-  def &:(x: Option[Boolean]): OptBool = Kleenean(FP.map2(value,x)(_ && _) orElse Kleenean.&&&(x) orElse Kleenean.&&&(value))
-  def |:(x: Option[Boolean]): OptBool = Kleenean(FP.map2(value,x)(_ || _) orElse Kleenean.|||(x) orElse Kleenean.|||(value))
-  def :&(y: OptBool): OptBool = Kleenean(FP.map2(value,y.value)(_ && _) orElse Kleenean.&&&(y.value) orElse Kleenean.&&&(value))
-  def :|(y: OptBool): OptBool = Kleenean(FP.map2(value,y.value)(_ || _) orElse Kleenean.|||(y.value) orElse Kleenean.|||(value))
-  def :&(b: Boolean): OptBool = Kleenean(FP.map2(Some(b),value)(_ && _) orElse Kleenean.&&&(Some(b)))
-  def :|(b: Boolean): OptBool = Kleenean(FP.map2(Some(b),value)(_ || _) orElse Kleenean.|||(Some(b)))
-  def &:(b: Boolean): OptBool = Kleenean(FP.map2(value,Some(b))(_ && _) orElse Kleenean.&&&(Some(b)))
-  def |:(b: Boolean): OptBool = Kleenean(FP.map2(value,Some(b))(_ || _) orElse Kleenean.|||(Some(b)))
+/**
+  * This trait is to support Kleenean algebra, potentially in a disjunctive or conjunctive expression.
+  * The truth-tables for Kleenean logic can be found here: See https://en.wikipedia.org/wiki/Three-valued_logic#Logics
+  * Or you can look at KleeneanSpec to see what the rules are.
+  */
+trait Maybe extends (() => Option[Boolean]) {
+  /**
+    * Left-associative conjunctive operator with another Maybe
+    *
+    * @param m other Maybe value
+    * @return a Maybe value with is the Kleenean logical AND of this and m
+    */
+  def :&(m: Maybe) = Kleenean.and(apply, m())
+
+  /**
+    * Left-associative disjunctive operator with another Maybe
+    *
+    * @param m other Maybe value
+    * @return a Maybe value with is the Kleenean logical OR of this and m
+    */
+  def :|(m: Maybe) = Kleenean.or(apply, m())
+
+  /**
+    * Left-associative conjunctive operator with an Option[Boolean]
+    *
+    * @param x other Maybe value
+    * @return a Maybe value with is the Kleenean logical AND of this and x
+    */
+  def :&(x: Option[Boolean]) = Kleenean.and(x, apply)
+
+  /**
+    * Left-associative disjunctive operator with an Option[Boolean]
+    *
+    * @param x other Maybe value
+    * @return a Maybe value with is the Kleenean logical OR of this and x
+    */
+  def :|(x: Option[Boolean]) = Kleenean.or(x, apply)
+
+  /**
+    * Right-associative conjunctive operator with an Option[Boolean]
+    *
+    * @param x other Maybe value
+    * @return a Maybe value with is the Kleenean logical AND of this and x
+    */
+  def &:(x: Option[Boolean]) = Kleenean.and(apply, x)
+
+  /**
+    * Right-associative disjunctive operator with an Option[Boolean]
+    *
+    * @param x other Maybe value
+    * @return a Maybe value with is the Kleenean logical OR of this and x
+    */
+  def |:(x: Option[Boolean]) = Kleenean.or(apply, x)
+
+  /**
+    * Left-associative conjunctive operator with a Boolean
+    *
+    * @param b other Boolean value
+    * @return a Maybe value with is the Kleenean logical AND of this and b
+    */
+  def :&(b: Boolean) = Kleenean.and(Some(b), apply)
+
+  /**
+    * Left-associative disjunctive operator with a Boolean
+    *
+    * @param b other Maybe value
+    * @return a Maybe value with is the Kleenean logical OR of this and b
+    */
+  def :|(b: Boolean) = Kleenean.or(Some(b), apply)
+
+  /**
+    * Right-associative conjunctive operator with a Boolean
+    *
+    * @param b other Maybe value
+    * @return a Maybe value with is the Kleenean logical AND of this and b
+    */
+  def &:(b: Boolean) = Kleenean.and(apply, Some(b))
+
+  /**
+    * Right-associative disjunctive operator with a Boolean
+    *
+    * @param b other Maybe value
+    * @return a Maybe value with is the Kleenean logical OR of this and b
+    */
+  def |:(b: Boolean) = Kleenean.or(apply, Some(b))
+
+  override def toString = apply().toString
 }
 
-case class Kleenean(value: Option[Boolean]) extends OptBool
-
-case object ^^ extends OptBool {
-  def value = None
+/**
+  * This is the Kleenean case class which extends Maybe
+  *
+  * @param value the Option[Boolean] value
+  */
+case class Kleenean(value: Option[Boolean]) extends Maybe {
+  def apply(): Option[Boolean] = value
 }
 
-object Kleenean {
-  def apply(x: Boolean): OptBool = Kleenean(Some(x))
-  def apply(): OptBool = Kleenean(None)
-  def &&&(to: Option[Boolean]): Option[Boolean] = to match {
+/**
+  * This case object is the None version of Maybe. It is used for the bookends of a dis/conjunctive expression of Maybes.
+  * But be careful, you need to understand the rules of Kleenean logic with regard to None combining with true or false.
+  */
+case object ^^ extends Maybe {
+  def apply(): Option[Boolean] = None
+}
+
+/**
+  * Companion object to Maybe
+  */
+object Maybe {
+  def and(x: Option[Boolean], y: => Option[Boolean]): Option[Boolean] = FP.map2(x, y)(_ && _) orElse Maybe.&&&(x) orElse Maybe.&&&(y)
+
+  def or(x: Option[Boolean], y: => Option[Boolean]): Option[Boolean] = FP.map2(x, y)(_ || _) orElse Maybe.|||(x) orElse Maybe.|||(y)
+
+  private def &&&(to: Option[Boolean]): Option[Boolean] = to match {
     case Some(true) => None
     case Some(false) => Some(false)
     case None => None
   }
-  def |||(to: Option[Boolean]): Option[Boolean] = to match {
+
+  private def |||(to: Option[Boolean]): Option[Boolean] = to match {
     case Some(false) => None
     case Some(true) => Some(true)
     case None => None
   }
+}
+
+/**
+  * Companion object to Kleenean
+  */
+object Kleenean {
+  def apply(x: Boolean): Maybe = Kleenean(Some(x))
+
+  def apply(): Maybe = Kleenean(None)
+
+  def and(x: Option[Boolean], y: => Option[Boolean]): Kleenean = Kleenean(Maybe.and(x, y))
+
+  def or(x: Option[Boolean], y: => Option[Boolean]): Kleenean = Kleenean(Maybe.or(x,y))
 }
