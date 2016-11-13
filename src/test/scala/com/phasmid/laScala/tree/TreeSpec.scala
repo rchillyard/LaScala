@@ -127,14 +127,12 @@ class TreeSpec extends FlatSpec with Matchers {
       def tree[A](node: Node[A]): TreeLike[A] = GenericTree(node.get.get).asInstanceOf[TreeLike[A]]
     }
     val tree = GenericTree(1,Seq(Leaf(2),Leaf(3)))
-    tree.find({i=>i==2}) should matchPattern { case Some(Leaf(2)) => }
+    tree.find(_.get.contains(2)) should matchPattern { case Some(Leaf(2)) => }
   }
   it should "work for BinaryTree" in {
     val tree: Node[Int] = BinaryTree(1,2,3)
-    tree.includes(1) shouldBe true
-    tree.includes(2) shouldBe true
-    tree.includes(3) shouldBe true
-    tree.includes(4) shouldBe false
+    tree.find(_.get.contains(1)) should matchPattern { case Some(BinaryTree(_,_,_)) => }
+    tree.find(_.get.contains(4)) should matchPattern { case None => }
   }
 
   behavior of "real-life BinaryTree"
@@ -159,7 +157,26 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = BinaryTree("A", "B", "C").asInstanceOf[BinaryTree[String]] :+ BinaryTree("Catfish")
     tree.includes("Catfish") shouldBe true
     val indexedTree = Tree.createIndexedTree(tree,0)
-
   }
+  it should "work with find" in {
+    val tree = BinaryTree("A", "B", "C").asInstanceOf[BinaryTree[String]] :+ BinaryTree("Catfish")
+    tree.includes("Catfish") shouldBe true
+    val indexedTree = Tree.createIndexedTree(tree,0)
+    val nodeC = indexedTree.find(_.get.contains("C"))
+    nodeC should matchPattern { case Some(MutableGenericIndexedTree(_,_,_,_)) => }
+    val nodeCatfish = indexedTree.find(_.get.contains("Catfish"))
+    nodeCatfish should matchPattern { case Some(MutableGenericIndexedTree(_,_,"Catfish",_)) => }
+    val nodeD = indexedTree.find(_.get.contains("D"))
+    nodeD should matchPattern { case None => }
+    println(s"indexedTree: $indexedTree")
+    println(s"nodeC: $nodeC")
+    // FIXME
+    indexedTree.includes(nodeC) shouldBe true
+    println(s"nodeCatfish: $nodeCatfish")
+    indexedTree.includes(nodeCatfish) shouldBe true
+    println(s"nodeD: $nodeD")
+    indexedTree.includes(nodeD) shouldBe false
+  }
+
 
 }

@@ -1,11 +1,12 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.Recursion
+import com.phasmid.laScala.fp.FP._
 
 /**
   * This trait expresses the notion of a Node from a tree.
   *
-  * NOTE: this is all experimental
+  * NOTE: this is all experimental and I apologize for the very poor quality of code in this module.
   *
   * Created by scalaprof on 10/19/16.
   */
@@ -52,6 +53,23 @@ sealed trait Node[+A] {
   def render: String
 
   /**
+    *
+    * @param n the node to be compared
+    * @tparam B the underlying type of n
+    * @return true if this is "like" n
+    */
+  def like[B >: A](n: Node[B]): Boolean
+
+  /**
+    * CONSIDER moving this into TreeLike
+    *
+    * @param n the node to be searched
+    * @tparam B the type of n
+    * @return true if node n is found in the sub-tree defined by this
+    */
+  def includes[B >: A](n: Node[B]): Boolean
+
+  /**
     * CONSIDER moving this into TreeLike
     *
     * @param b the value to be searched
@@ -67,7 +85,7 @@ sealed trait Node[+A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found that satisfies the predicate p
     */
-  def find[B >: A](p: B=>Boolean): Option[Node[B]]
+  def find[B >: A](p: Node[B]=>Boolean): Option[Node[B]]
 }
 
 /**
@@ -127,15 +145,17 @@ sealed trait TreeLike[+A] extends Node[A]{
     case _ => 1
   }, _+_, { x => false})(List(this), 0)
 
+  def includes[B >: A](node: Node[B]): Boolean = Parent.traverse[Node[B], Boolean, Boolean]({ n => n like node}, _|_, {x => x})(List(this), false)
+
   def includes[B >: A](b: B): Boolean = Parent.traverse[Node[B], Boolean, Boolean]({ n => n.get match {
     case Some(`b`) => true
     case _ => false
   }}, _|_, {x => x})(List(this), false)
 
-  def find[B >: A](p: B=>Boolean): Option[Node[B]] = {
-    def f(n: Node[B]): Option[Node[B]] = for (v <- n.get; if p(v)) yield n
-    def g(bno: Option[Node[B]], t: Option[Node[B]]): Option[Node[B]] = bno orElse(t)
-    def q(bno: Option[Node[B]]): Boolean = !bno.isEmpty
+  def find[B >: A](p: Node[B]=>Boolean): Option[Node[B]] = {
+    def f(n: Node[B]): Option[Node[B]] = toOption(p)(n)
+    def g(bno: Option[Node[B]], t: Option[Node[B]]): Option[Node[B]] = bno orElse t
+    def q(bno: Option[Node[B]]): Boolean = bno.isDefined
     Parent.traverse[Node[B], Option[Node[B]], Option[Node[B]]](f, g, q)(List(this), None)
   }
 
@@ -210,6 +230,7 @@ case class Leaf[+A](value: A)(implicit treeMaker: TreeMaker) extends TreeLike[A]
   override def render = s"""$value"""
   override def toString = s"""L("$value")"""
   def isEmpty: Boolean = false
+  def like[B >: A](n: Node[B]): Boolean = n.get match { case Some(`value`) => true; case _ => false }
 }
 
 
@@ -272,6 +293,7 @@ case object Empty extends TreeLike[Nothing] {
   override def render = "ø"
   override def toString = "Empty"
   def isEmpty: Boolean = true
+  def like[B >: Nothing](n: Node[B]): Boolean = ???
 }
 case object EmptyWithIndex extends TreeLike[Nothing] with TreeIndex {
   def children = Nil
@@ -283,6 +305,7 @@ case object EmptyWithIndex extends TreeLike[Nothing] with TreeIndex {
   def isEmpty: Boolean = true
   def lIndex: Option[Long] = None
   def rIndex: Option[Long] = None
+  def like[B >: Nothing](n: Node[B]): Boolean = ???
 }
 
 /**
@@ -297,6 +320,8 @@ sealed abstract class AbstractBinaryTree[+A](value: A, left: Node[A], right: Nod
   def get: Option[A] = Some(value)
 
   def children: Seq[Node[A]] = Seq(left,right)
+
+  def like[B >: A](n: Node[B]): Boolean = ??? // liftPredicate2(_==_)(get, n.get) getOrElse(false)
 
   implicit val builder = new TreeMaker {
     def tree[T](node: Node[T]): TreeLike[T] = make(node.get.get,Empty,Empty)
@@ -389,12 +414,14 @@ case class GenericTree[+A](value: A, children: Seq[Node[A]]) extends Tree[A] {
   def get = Some(value)
   def :+[B >: A : Ordering](bn: Node[B]): Node[B] = GenericTree(value,children:+bn)
   def isEmpty: Boolean = false
+  def like[B >: A](n: Node[B]): Boolean = ???
 }
 
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: A, var children: Seq[Node[A]]) extends Tree[A] with IndexedNode[A] {
   def get = Some(value)
   def :+[B >: A : Ordering](bn: Node[B]): Node[B] = MutableGenericIndexedTree(None,None,value,children:+bn).asInstanceOf[Node[B]]
   def isEmpty: Boolean = false
+  def like[B >: A](n: Node[B]): Boolean = ???
 }
 
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends TreeLike[A] with TreeIndex {
@@ -405,6 +432,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   override def render = s"""$value"""
   override def toString = s"""L("$value")"""
   def isEmpty: Boolean = false
+  def like[B >: A](n: Node[B]): Boolean = ???
 }
 
 object GenericTree {
@@ -449,6 +477,7 @@ object BinaryTree {
 case class TreeException(msg: String) extends Exception(msg)
 
 object Tree {
+
   def join(xo: Option[String], yo: Option[String]): Option[String] = {
     val mt = Some("")
     for (x <- xo.orElse(mt); y <- yo.orElse(mt)) yield x+y
@@ -456,18 +485,20 @@ object Tree {
 
   /**
     * XXX: this method is NOT tail-recursive
-    * @param node
-    * @param index
-    * @tparam A
-    * @return
+    * @param node the node representing the tree to be indexed
+    * @param index the starting value of index
+    * @tparam A the underlying type
+    * @return an IndexedNode[A]
+    *
+    *         TODO figure out why we can't actually use IndexedNode as return type
     */
   def createIndexedTree[A](node: Node[A], index: Int): Node[A] with TreeIndex = node match {
     case Leaf(x) => IndexedLeaf[A](Some(index),Some(index+1),x)
     case BinaryTree(v,l,r) =>
-      val rIndex = index+1+l.size+r.size;
+      val rIndex = index+1+l.size+r.size
       MutableGenericIndexedTree(Some(index),Some(rIndex),v,Seq(createIndexedTree(l,index),createIndexedTree(r,index+1+l.size)))
     case Empty => EmptyWithIndex
-    case _ => throw new TreeException(s"can't created IndexedTree from $node")
+    case _ => throw TreeException(s"can't created IndexedTree from $node")
   }
 
 }
@@ -490,11 +521,13 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   def get: Option[Nothing] = None
   def children: Seq[Node[Nothing]] = Nil
   def includes[B >: Nothing](b: B): Boolean = false
+  def includes[B >: Nothing](n: Node[B]): Boolean = false
   def size: Int = 0
   def render: String = x
   def isEmpty: Boolean = true
   def depth: Int = 0
-  def find[B >: Nothing](p: B=>Boolean): Option[Node[B]] = None
+  def find[B >: Nothing](p: Node[B]=>Boolean): Option[Node[B]] = None
+  def like[B >: Nothing](n: Node[B]): Boolean = ???
 }
 
 case object Open extends Punctuation("{")

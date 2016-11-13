@@ -380,5 +380,31 @@ object FP {
     * @tparam X the uderlying type
     * @return if b is true then Some(x) else None
     */
-  def toOption[X](b: Boolean, x: X) = if (b) Some(x) else None
+  def toOption[X](b: Boolean, x: X): Option[X] = if (b) Some(x) else None
+
+  /**
+    * Method to yield an Option[X] value based on a X-predicate and an X value.
+    * @param p the predicate
+    * @param t the value to wrap in Some if the predicate is satisfied
+    * @tparam X the underlying type of the value and the resulting Option
+    * @return Option[X]
+    */
+  def toOption[X](p: X=>Boolean)(t: X): Option[X] = toOption(p(t),t)
+
+  /**
+    * TODO unit test
+    *
+    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+    *
+    * @param to1 a Option[T] value
+    * @param to2 a Option[T] value
+    * @param f   function which takes two T parameters and yields a U result
+    * @tparam T the input type
+    * @tparam U the result type
+    * @return a Option[U]
+    */
+  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+
+//  def liftPredicate2[X](f: (X,X)=>Boolean)(xo1: Option[X], xo2: Option[X]): Option[Boolean] = for (x1 <- xo1; x2 <- xo2) yield f(x1, x2)
+
 }
