@@ -3,10 +3,14 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.{Kleenean, Maybe, Recursion, ^^}
 
+import scala.collection.IterableLike
+
 /**
   * This trait expresses the notion of a Node from a tree.
   *
   * NOTE: this is all experimental and I apologize for the very poor quality of code in this module.
+  *
+  * TODO: implement the various data structures with CanBuildFrom so that we can stop having to use asInstanceOf all the time.
   *
   * Created by scalaprof on 10/19/16.
   */
@@ -54,6 +58,13 @@ sealed trait Node[+A] {
   def render: String
 
   /**
+    * Create a String which represents the value of this Node and the values of its immediate descendants
+    *
+    * @return an appropriate String
+    */
+  def summary: String
+
+  /**
     * Compare the value of this node with the value of node n
     *
     * @param n the node to be compared
@@ -92,6 +103,15 @@ sealed trait Node[+A] {
   /**
     * CONSIDER moving this into TreeLike
     *
+    * @param b value to be found, looking at the value of each node in turn (depth first)
+    * @tparam B the type of b
+    * @return Some(node) where node is the first node to be found with value b
+    */
+  def find[B >: A](b: B): Option[Node[B]]
+
+  /**
+    * CONSIDER moving this into TreeLike
+    *
     * @param p the predicate to be applied to the value of each node in turn (depth first)
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found that satisfies the predicate p
@@ -116,7 +136,33 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   *
   * Created by scalaprof on 10/19/16.
   */
-sealed trait TreeLike[+A] extends Node[A] {
+sealed trait TreeLike[+A] extends Node[A] { //with IterableLike[Node[A],Seq[Node[A]]] {
+
+  /**
+    * Get an iterator over the nodes: in the order that the tree was built
+    *
+    * CONSIDER using Stream instead of Seq for representation
+    *
+    * @return an Iterator[Node[A]
+    */
+  def iterator: Iterator[Node[A]] = {
+    def g(ns: Seq[Node[A]], n: Node[A]): Seq[Node[A]] = ns :+ n
+    Parent.traverse[Node[A], Node[A], Seq[Node[A]]](identity, g)(List(this), Seq()).toIterator
+  }
+
+  /**
+    * Get an iterator over the nodes: in depth-first or breadth-first order
+    *
+    * CONSIDER using Stream instead of Seq for representation
+    *
+    * @param depthFirst if true then the order of the returned iterator will be depth-first, otherwise breadth-first
+    * @return an Iterator[Node[A]
+    */
+  def visit(depthFirst: Boolean): Iterator[Node[A]] = {
+    def g(ns: Seq[Node[A]], n: Node[A]): Seq[Node[A]] = ns :+ n
+    Parent.traverse[Node[A], Node[A], Seq[Node[A]]](identity, g)(List(this), Seq()).toIterator
+  }
+
   /**
     * Method to safely cast Node n to a TreeLike object.
     * Note: This is not an instance method in that it does not reference this
@@ -183,14 +229,16 @@ sealed trait TreeLike[+A] extends Node[A] {
     Parent.traverse[Node[B], Option[Node[B]], Option[Node[B]]](f, g, q)(List(this), None)
   }
 
-  def renderRecursive[B >: A](z: (List[Node[B]], Node[B]) => List[Node[B]]): String =
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => n.get.contains(b)})
+
+  def renderRecursive[B >: A](z: (Seq[Node[B]], Node[B]) => Seq[Node[B]]): String =
     Recursion.recurse[Node[B], String, String]({
       case Empty => ""
       case Leaf(x) => x.toString
       case c@Open => c.render
       case c@Close => c.render
       case n => ""
-    }, _ + _, z)(List(this), "")
+    }, _ + _, z)(Seq(this), "")
 
   override def render: String = renderRecursive[A]((ns, n) => n.children.toList ++ ns)
 }
@@ -248,6 +296,8 @@ case class Leaf[+A](value: A)(implicit treeMaker: TreeMaker) extends TreeLike[A]
   override def toString = s"""L("$value")"""
 
   def isEmpty: Boolean = false
+
+  def summary: String = s""""$render""""
 }
 
 object IndexedNode {
@@ -266,7 +316,7 @@ case object Empty extends TreeLike[Nothing] {
 
   override def render = "ø"
 
-  override def toString = "Empty"
+  override def toString = render
 
   def isEmpty: Boolean = true
 
@@ -279,6 +329,8 @@ case object Empty extends TreeLike[Nothing] {
     case Empty => Kleenean(true)
     case _ => ^^
   }
+
+  def summary: String = s""""$render""""
 }
 
 case object EmptyWithIndex extends TreeLike[Nothing] with TreeIndex {
@@ -309,6 +361,8 @@ case object EmptyWithIndex extends TreeLike[Nothing] with TreeIndex {
     case Empty => Kleenean(true)
     case _ => ^^
   }
+
+  def summary: String = s""""$render""""
 }
 
 /**
@@ -345,6 +399,13 @@ sealed abstract class AbstractBinaryTree[+A](value: A, left: Node[A], right: Nod
 
   override def render: String = renderRecursive[A](AbstractBinaryTree.buildNodeList)
 
+  def summary: String = {
+    val r = new StringBuilder(s"$showValue: ")
+    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
+    r.append(l mkString ", ")
+    r.toString
+  }
+
   override def toString: String = s"""BT{$showValue:$left:$right}"""
 
   def showValue = get match {
@@ -357,7 +418,7 @@ object AbstractBinaryTree {
   def unapply[A](e: AbstractBinaryTree[A]): Option[(A, Node[A], Node[A])] =
     for (x <- e.get) yield (x, e.children.head, e.children.last)
 
-  def buildNodeList[T](nodes: List[Node[T]], node: Node[T]): List[Node[T]] = node match {
+  def buildNodeList[T](nodes: Seq[Node[T]], node: Node[T]): Seq[Node[T]] = node match {
     case BinaryTree(x, l, r) => (expand(l) :+ Leaf(x)(node.asInstanceOf[BinaryTree[T]].builder)) ++ expand(r) ++ nodes
     case _ => node.children.toList ++ nodes
   }
@@ -391,6 +452,15 @@ case class GenericTree[+A](value: A, children: Seq[Node[A]]) extends Tree[A] {
   def :+[B >: A : Ordering](bn: Node[B]): Node[B] = GenericTree(value, children :+ bn)
 
   def isEmpty: Boolean = false
+
+  // TODO combine with other implementation
+  def summary: String = {
+    val r = new StringBuilder(s""""$value: """")
+    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
+    r.append(l mkString ", ")
+    r.toString
+  }
+
 }
 
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: A, var children: Seq[Node[A]]) extends Tree[A] with IndexedNode[A] {
@@ -399,6 +469,14 @@ case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Op
   def :+[B >: A : Ordering](bn: Node[B]): Node[B] = MutableGenericIndexedTree(None, None, value, children :+ bn).asInstanceOf[Node[B]]
 
   def isEmpty: Boolean = false
+
+  // TODO combine with other implementation
+  def summary: String = {
+    val r = new StringBuilder(s""""$value: """")
+    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
+    r.append(l mkString ", ")
+    r.toString
+  }
 }
 
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends TreeLike[A] with TreeIndex {
@@ -416,6 +494,10 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   override def toString = s"""L("$value")"""
 
   def isEmpty: Boolean = false
+
+  // TODO add index?
+  def summary: String = s""""$render""""
+
 }
 
 object GenericTree {
@@ -463,7 +545,7 @@ object Tree {
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */
-  def createIndexedTree[A](node: Node[A], index: Int): Node[A] with TreeIndex = node match {
+  def createIndexedTree[A](node: Node[A], index: Int = 0): Node[A] with TreeIndex = node match {
     case Leaf(x) => IndexedLeaf[A](Some(index), Some(index + 1), x)
     case BinaryTree(v, l, r) =>
       val rIndex = index + 1 + l.size + r.size
@@ -501,11 +583,15 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 
   def render: String = x
 
+  def summary: String = s""""$render""""
+
   def isEmpty: Boolean = true
 
   def depth: Int = 0
 
   def find[B >: Nothing](p: Node[B] => Boolean): Option[Node[B]] = None
+
+  def find[B >: Nothing](b: B): Option[Node[B]] = None
 
   def like[B >: Nothing](n: Node[B]): Maybe = ^^
 }

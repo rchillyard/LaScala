@@ -28,14 +28,14 @@ object Parent {
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
     * @param ts a list of Ts to be worked on.
     * @param r  the current value of the result, i.e. the "accumulator".
-    * @tparam T a type which extends Parent, and thus has children of type T -- this "context bound" is implemented via a compiler-generated implicit parameter of type Parent[T].
+    * @tparam P a type which extends Parent, and thus has children of type T -- this "context bound" is implemented via a compiler-generated implicit parameter of type Parent[T].
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @return   a value of R.
     */
-  final def traverse[T : Parent, S, R](f: T => S, g: (R, S) => R, q: R => Boolean = {x: R => false})(ts: List[T], r: R): R = {
-    val z = {(ts: List[T], s: T) => ts++ implicitly[Parent[T]].children(s) }
-    Recursion.recurse(f, g, z, q)(ts, r)
+  final def traverse[P : Parent, S, R](f: P => S, g: (R, S) => R, q: R => Boolean = {x: R => false})(ts: Seq[P], r: R): R = {
+    val h = {(ts: Seq[P], s: P) => implicitly[Parent[P]].children(s).toList ++ ts }
+    Recursion.recurse(f, g, h, q)(ts, r)
   }
 }
 

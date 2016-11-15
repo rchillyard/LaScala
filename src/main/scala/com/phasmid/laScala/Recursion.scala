@@ -56,7 +56,7 @@ object Recursion {
     * @tparam R the result type.
     * @return   a value of R.
     */
-  final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (List[T], T) => List[T], q: R => Boolean = { x: R => false })(ts: List[T], r: R) =
+  final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { x: R => false })(ts: Seq[T], r: R) =
     countRecurse[T, S, R, Int]((p, t) => f(t), g, h, q)(ts, 0, r)
 
   /**
@@ -68,16 +68,16 @@ object Recursion {
     * @param h  the function which builds the T list from the existing T list and the given T.
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
     * @param ts a list of Ts to be worked on.
-    * @param p  a counter which will be incremented on each recursive call to countRecurse
+    * @param c  a counter which will be incremented on each recursive call to countRecurse
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T the underlying type of the work list.
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
-    * @tparam P The type of the counter -- context-bound to Counter
+    * @tparam C The type of the counter -- context-bound to Counter
     * @return   a value of R.
     */
-  final def countRecurse[T, S, R, P: Counter](f: (P, T) => S, g: (R, S) => R, h: (List[T], T) => List[T], q: R => Boolean = { x: R => false })(ts: List[T], p: P, r: R) =
-    genericCountRecurse(f, g, h, { pp: P => implicitly[Counter[P]].increment(pp) }, q)(ts, p, r)
+  final def countRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { x: R => false })(ts: Seq[T], c: C, r: R) =
+    genericCountRecurse(f, g, h, { _c: C => implicitly[Counter[C]].increment(_c) }, q)(ts, c, r)
 
   /**
     * Generic tail-recursive method with counting.
@@ -90,22 +90,22 @@ object Recursion {
     * @param h  the function which builds the T list from the existing T list and the given T.
     * @param y  the function which yields the next P from a P
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
-    * @param ts a list of Ts to be worked on.
-    * @param p  a counter which will be incremented on each recursive call to countRecurse
+    * @param ts a sequence of Ts to be worked on.
+    * @param c  a counter which will be incremented on each recursive call to countRecurse
     * @param r  the current value of the result, i.e. the "accumulator".
     * @tparam T the underlying type of the work list.
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
-    * @tparam P The type of the counter -- context-bound to Counter
+    * @tparam C The type of the counter -- context-bound to Counter
     * @return   a value of R.
     */
   @tailrec
-  final def genericCountRecurse[T, S, R, P: Counter](f: (P, T) => S, g: (R, S) => R, h: (List[T], T) => List[T], y: P => P, q: R => Boolean = { x: R => false })(ts: List[T], p: P, r: R): R =
+  final def genericCountRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], y: C => C, q: R => Boolean = { x: R => false })(ts: Seq[T], c: C, r: R): R =
     if (q(r))
       r
     else
       ts match {
         case Nil => r
-        case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(p), g(r, f(p, t)))
+        case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(c), g(r, f(c, t)))
       }
 }

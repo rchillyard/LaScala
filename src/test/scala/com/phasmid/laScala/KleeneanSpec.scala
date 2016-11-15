@@ -78,4 +78,18 @@ class KleeneanSpec extends FlatSpec with Matchers with Inside {
   it should "be None" in {
     ^^() should matchPattern { case None => }
   }
+
+  behavior of "apply(Int)"
+  it should "work as expected" in {
+    Kleenean(-1) should matchPattern { case Kleenean(Some(false)) => }
+    Kleenean(1) should matchPattern { case Kleenean(Some(true)) => }
+    Kleenean(0) should matchPattern { case Kleenean(None) => }
+  }
+
+  behavior of "deny"
+  it should "work as expected" in {
+    Kleenean(true).deny should matchPattern { case Kleenean(Some(false)) => }
+    Kleenean(false).deny should matchPattern { case Kleenean(Some(true)) => }
+    Kleenean(0).deny should matchPattern { case Kleenean(None) => }
+  }
 }

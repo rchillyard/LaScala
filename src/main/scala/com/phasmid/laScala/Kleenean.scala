@@ -88,6 +88,19 @@ trait Maybe extends (() => Option[Boolean]) {
     */
   def |:(b: Boolean) = Kleenean.or(apply, Some(b))
 
+  /**
+    * Method to convert this Maybe into a Boolean
+    * @param default the value to use if this is None
+    * @return a Boolean corresponding to either the existing Boolean or else the given default.
+    */
+  def asBoolean(default: Boolean) = apply().getOrElse(default)
+
+  /**
+    * Method to deny (invert, negate, ...) this Maybe
+    * @return Some(!x) if exists, else return None
+    */
+  def deny = Kleenean(apply() map (!_))
+
   override def toString = apply().toString
 }
 
@@ -104,9 +117,7 @@ case class Kleenean(value: Option[Boolean]) extends Maybe {
   * This case object is the None version of Maybe. It is used for the bookends of a dis/conjunctive expression of Maybes.
   * But be careful, you need to understand the rules of Kleenean logic with regard to None combining with true or false.
   */
-case object ^^ extends Maybe {
-  def apply(): Option[Boolean] = None
-}
+object ^^ extends Kleenean(None)
 
 /**
   * Companion object to Maybe
@@ -134,6 +145,11 @@ object Maybe {
   */
 object Kleenean {
   def apply(x: Boolean): Maybe = Kleenean(Some(x))
+
+  def apply(x: Int): Maybe = x match {
+    case 0 => Kleenean(None)
+    case _ => Kleenean(x>0)
+  }
 
   def apply(): Maybe = Kleenean(None)
 

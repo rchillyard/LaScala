@@ -5,8 +5,24 @@ import scala.collection.mutable
 /**
   * Created by scalaprof on 11/7/16.
   */
-case class MPTT[T](index: Map[T,MPTTEntry[T]]) {
-  def contains(subtree: T, node: T): Option[Boolean] = for (e1 <- index.get(subtree); e2 <- index.get(node)) yield e1.contains(e2)
+case class MPTT[T](index: Map[T,MPTTEntry[T]]) extends (T=>MPTTEntry[T]){
+
+  /**
+    * Method to determine if given node is within given subtree
+    * @param subtree the subtree
+    * @param node the node
+    * @return true if subtree contains node
+    */
+  def contains(subtree: T, node: T): Option[Boolean] = for (e1 <- get(subtree); e2 <- get(node)) yield e1.contains(e2)
+
+  override def toString = {
+    val r = new mutable.StringBuilder()
+    for ((k,v) <- index) r.append(s"$k -> $v\n")
+    r.toString
+  }
+
+  override def apply(t: T): MPTTEntry[T] = index(t)
+  def get(t: T): Option[MPTTEntry[T]] = index.get(t)
 }
 
 /**
