@@ -77,93 +77,6 @@ sealed trait Node[+A] {
 }
 
 /**
-  * Abstract base class for a leaf whose value is a
-  *
-  * @param a the value of this leaf
-  * @tparam A the underlying type of this Leaf
-  */
-abstract class AbstractLeaf[+A](a: A) extends Node[A] {
-  def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
-
-  def get = Some(a)
-
-  def size: Int = 1
-
-  def depth: Int = 1
-
-  def includes[B >: A](node: Node[B]): Boolean = this==node
-
-  def includes[B >: A](b: B): Boolean = a==b
-}
-
-/**
-  * A leaf whose value is a
-  *
-  * @param a the value of this leaf
-  * @tparam A the underlying type of this Leaf
-  */
-case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
-  /**
-    * Create a String which represents this Node and its subtree (if any)
-    *
-    * @return an appropriate String
-    */
-  def render: String = s"$a"
-}
-
-object Leaf {}
-
-abstract class AbstractEmpty extends TreeLike[Nothing]{
-  def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
-
-  def get = None
-
-  /**
-    * @return the immediate descendants (children) of this branch
-    */
-  def children: Seq[TreeLike[Nothing]] = Seq.empty
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  def render = "ø"
-
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary = render
-}
-
-/**
-  * Empty object which is necessary for (non-ideal) BinaryTrees.
-  * There should be no need for a GeneralBranch to reference an Empty but it might happen.
-  */
-case object Empty extends AbstractEmpty
-
-/**
-  * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
-  */
-trait TreeIndex {
-  /**
-    * the left index (the number of other nodes to the "left" of this one
-    * @return
-    */
-  def lIndex: Option[Long]
-
-  /**
-    * the right index (the number of other nodes to the "right" of this one
-    * @return
-    */
-  def rIndex: Option[Long]
-}
-
-trait IndexedNode[A] extends Node[A] with TreeIndex
-
-/**
   * Trait which models the tree-like aspects of a tree
   *
   * CONSIDER renaming as Tree
@@ -304,31 +217,242 @@ sealed trait TreeLike[+A] extends Node[A] {
     Parent.traverse[Node[B], Option[Node[B]], Option[Node[B]]](f, g, q)(List(this), None)
   }
 
-//  /**
-//    * Method to safely cast Node n to a TreeLike object.
-//    * Note: This is not an instance method in that it does not reference this
-//    *
-//    * @param n         the node to cast
-//    * @param treeBuilder implicit implementation of TreeMaker trait
-//    * @tparam B the underlying type of node n
-//    * @return if n is already a TreeLike object then return it, otherwise return a sub-tree based on n
-//    */
-//  def asTree[B >: A : Ordering](n: Node[B])(implicit treeBuilder: TreeBuilder[B]): TreeLike[B] = n match {
-//    case t: TreeLike[B] => t
-//    case _ => treeBuilder(n,Empty)
-//  }
+  //  /**
+  //    * Method to safely cast Node n to a TreeLike object.
+  //    * Note: This is not an instance method in that it does not reference this
+  //    *
+  //    * @param n         the node to cast
+  //    * @param treeBuilder implicit implementation of TreeMaker trait
+  //    * @tparam B the underlying type of node n
+  //    * @return if n is already a TreeLike object then return it, otherwise return a sub-tree based on n
+  //    */
+  //  def asTree[B >: A : Ordering](n: Node[B])(implicit treeBuilder: TreeBuilder[B]): TreeLike[B] = n match {
+  //    case t: TreeLike[B] => t
+  //    case _ => treeBuilder(n,Empty)
+  //  }
 
   // XXX: what's this?
   def renderRecursive[B >: A](z: (Seq[Node[B]], Node[B]) => Seq[Node[B]]): String =
-    Recursion.recurse[Node[B], String, String]({
-      case Empty => ""
-      case Leaf(x) => x.toString
-      case c@Open => c.render
-      case c@Close => c.render
-      case n => ""
-    }, _ + _, z)(Seq(this), "")
+  Recursion.recurse[Node[B], String, String]({
+    case Empty => ""
+    case Leaf(x) => x.toString
+    case c@Open => c.render
+    case c@Close => c.render
+    case n => ""
+  }, _ + _, z)(Seq(this), "")
 
 }
+
+/**
+  * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
+  */
+sealed trait TreeIndex {
+  /**
+    * the left index (the number of other nodes to the "left" of this one
+    * @return
+    */
+  def lIndex: Option[Long]
+
+  /**
+    * the right index (the number of other nodes to the "right" of this one
+    * @return
+    */
+  def rIndex: Option[Long]
+}
+
+/**
+  * A branch of a tree
+  *
+  * @tparam A the underlying type of this Branch
+  */
+sealed trait Branch[+A] extends TreeLike[A] {
+
+  /**
+    * Iterate on the nodes of this branch
+    *
+    * TODO: this method is not currently implemented in a tail-recursive manner.
+    *
+    * @param depthFirst if true then we iterate depth-first, else breadth-first
+    * @return an iterator of nodes
+    */
+  def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = {
+    val z = for (n1 <- children; n2 <- n1.nodeIterator(depthFirst)) yield n2
+    val r = if (depthFirst) z :+ this
+    else this +: z
+    r.toIterator
+  }
+}
+
+trait IndexedNode[A] extends Node[A] with TreeIndex
+
+/**
+  * A general branch of a tree, where there is a value at the node itself and the number of children is unbounded
+  *
+  * @tparam A the underlying type of this Branch
+  */
+case class GeneralBranch[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
+  /**
+    * @return Some(value)
+    */
+  def get = Some(value)
+
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @return an appropriate String
+    */
+  def render: String = ???
+
+  /**
+    * Create a String which represents the value of this Node and the values of its immediate descendants
+    *
+    * @return an appropriate String
+    */
+  def summary: String = ???
+}
+
+/**
+  * A leaf whose value is a
+  *
+  * @param a the value of this leaf
+  * @tparam A the underlying type of this Leaf
+  */
+case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
+  /**
+    * Create a String which represents this Node and its subtree (if any)
+    *
+    * @return an appropriate String
+    */
+  def render: String = s"$a"
+}
+
+case class BinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
+  assume(BinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+
+  /**
+    * Return a sequence made up of left and right
+    *
+    * @return the immediate descendants (children) of this branch
+    */
+  def children: Seq[Node[A]] = Seq(left, right)
+
+  /**
+    * @return None
+    */
+  def get = None
+
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @return an appropriate String
+    */
+  def render: String = ???
+
+  /**
+    * Create a String which represents the value of this Node and the values of its immediate descendants
+    *
+    * @return an appropriate String
+    */
+  def summary: String = ???
+}
+
+/**
+  * Empty object which is necessary for (non-ideal) BinaryTrees.
+  * There should be no need for a GeneralBranch to reference an Empty but it might happen.
+  */
+case object Empty extends AbstractEmpty
+
+case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
+  override def depth: Int = 1
+
+  def render = s"""$value [$lIndex:$rIndex]"""
+
+  override def toString = s"""L("$value")"""
+}
+case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
+  def get = value
+
+  // TODO combine with other implementation
+  def summary: String = {
+    val r = new StringBuilder(s""""$value: """")
+    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
+    r.append(l mkString ", ")
+    r.toString
+  }
+
+  /**
+    * Create a String which represents this Node and its subtree (if any)
+    *
+    * @return an appropriate String
+    */
+  def render: String = s"mutable generic indexed tree: needs to implement render: $this"
+}
+case class TreeException(msg: String) extends Exception(msg)
+/**
+  * Abstract base class for a leaf whose value is a
+  *
+  * @param a the value of this leaf
+  * @tparam A the underlying type of this Leaf
+  */
+abstract class AbstractLeaf[+A](a: A) extends Node[A] {
+  def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
+
+  def get = Some(a)
+
+  def size: Int = 1
+
+  def depth: Int = 1
+
+  def includes[B >: A](node: Node[B]): Boolean = this==node
+
+  def includes[B >: A](b: B): Boolean = a==b
+}
+
+abstract class AbstractEmpty extends TreeLike[Nothing]{
+  def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
+
+  def get = None
+
+  /**
+    * @return the immediate descendants (children) of this branch
+    */
+  def children: Seq[TreeLike[Nothing]] = Seq.empty
+
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @return an appropriate String
+    */
+  def render = "ø"
+
+  /**
+    * Create a String which represents the value of this Node and the values of its immediate descendants
+    *
+    * @return an appropriate String
+    */
+  def summary = render
+}
+
+/**
+  * CONSIDER extending AbstractEmpty
+  * @param x
+  */
+abstract class Punctuation(x: String) extends Node[Nothing] {
+  def includes[B >: Nothing](node: Node[B]): Boolean = false
+  def includes[B >: Nothing](b: B): Boolean = false
+
+  def size: Int = 0
+
+  def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
+
+  def get: Option[Nothing] = None
+
+  def render: String = x
+
+  def depth: Int = 0
+}
+
+object Leaf {}
 
 object Node {
   /**
@@ -349,6 +473,7 @@ object Node {
     }
   }
 }
+
 object TreeLike {
   def populateTree[A : Ordering](values: Seq[A]): TreeLike[A] = {
     import BinaryTree._
@@ -387,54 +512,6 @@ object TreeLike {
 
 
 }
-/**
-  * A branch of a tree
-  *
-  * @tparam A the underlying type of this Branch
-  */
-sealed trait Branch[+A] extends TreeLike[A] {
-
-  /**
-    * Iterate on the nodes of this branch
-    *
-    * TODO: this method is not currently implemented in a tail-recursive manner.
-    *
-    * @param depthFirst if true then we iterate depth-first, else breadth-first
-    * @return an iterator of nodes
-    */
-  def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = {
-    val z = for (n1 <- children; n2 <- n1.nodeIterator(depthFirst)) yield n2
-    val r = if (depthFirst) z :+ this
-    else this +: z
-    r.toIterator
-  }
-}
-
-/**
-  * A general branch of a tree, where there is a value at the node itself and the number of children is unbounded
-  *
-  * @tparam A the underlying type of this Branch
-  */
-case class GeneralBranch[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
-  /**
-    * @return Some(value)
-    */
-  def get = Some(value)
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  def render: String = ???
-
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary: String = ???
-}
 
 object GeneralBranch {
   implicit def treeBuilder[A](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
@@ -444,36 +521,6 @@ object GeneralBranch {
   }
 
   implicit def leafBuilder[A](a: A): Node[A] = Leaf(a)
-}
-
-case class BinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
-  assume(BinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
-
-  /**
-    * Return a sequence made up of left and right
-    *
-    * @return the immediate descendants (children) of this branch
-    */
-  def children: Seq[Node[A]] = Seq(left, right)
-
-  /**
-    * @return None
-    */
-  def get = None
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  def render: String = ???
-
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary: String = ???
 }
 
 object BinaryTree {
@@ -625,33 +672,6 @@ object BinaryTree {
   def compare[A: Ordering](a: A, b: A): Int = math.signum(implicitly[Ordering[A]].compare(a, b))
 }
 
-case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
-  def get = value
-
-  // TODO combine with other implementation
-  def summary: String = {
-    val r = new StringBuilder(s""""$value: """")
-    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
-    r.append(l mkString ", ")
-    r.toString
-  }
-
-  /**
-    * Create a String which represents this Node and its subtree (if any)
-    *
-    * @return an appropriate String
-    */
-  def render: String = s"mutable generic indexed tree: needs to implement render: $this"
-}
-
-case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
-  override def depth: Int = 1
-
-  def render = s"""$value [$lIndex:$rIndex]"""
-
-  override def toString = s"""L("$value")"""
-}
-
 object Branch {
   def unapply[A](e: Branch[A]): Option[(NodeSeq[A])] = Some(e.children)
 }
@@ -669,27 +689,6 @@ case object EmptyWithIndex extends AbstractEmpty with TreeIndex {
   def rIndex: Option[Long] = None
 }
 
-/**
-  * CONSIDER extending AbstractEmpty
-  * @param x
-  */
-abstract class Punctuation(x: String) extends Node[Nothing] {
-  def includes[B >: Nothing](node: Node[B]): Boolean = false
-  def includes[B >: Nothing](b: B): Boolean = false
-
-  def size: Int = 0
-
-  def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
-
-  def get: Option[Nothing] = None
-
-  def render: String = x
-
-  def depth: Int = 0
-}
-
 case object Open extends Punctuation("{")
 
 case object Close extends Punctuation("}")
-
-case class TreeException(msg: String) extends Exception(msg)
