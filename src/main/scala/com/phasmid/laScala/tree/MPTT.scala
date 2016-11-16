@@ -43,7 +43,10 @@ object MPTT {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
       case IndexedLeaf(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(v)(l,r)
       case EmptyWithIndex => None
-      case IndexedNode(n,l,r) => Some(MPTTEntry.apply(n.get.get)(l,r))
+      case IndexedNode(n,l,r) => n.get match {
+        case Some(z) => Some(MPTTEntry.apply(z)(l,r))
+        case _ => None
+      }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
     }
     def g(mptt: MPTT[T], e: Option[MPTTEntry[T]]): MPTT[T] = e match { case Some(me) => MPTT[T](mptt.index + (me.t->me)); case None => mptt }
