@@ -12,7 +12,7 @@ import scala.language.implicitConversions
 trait SmartLogger {
   /**
     * The apply function of the SmartLogger. This method can be applied to any expression such that the start of the
-    * expression will be logged, as well as the end of the epxression.
+    * expression will be logged, as well as the end of the expression.
     *
     * Note that the type V is defined only for this method, not for the SmartLogger
     * trait. That way we can use the same SmartLogger for any expression.

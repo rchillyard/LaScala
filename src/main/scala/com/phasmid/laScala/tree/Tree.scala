@@ -164,14 +164,29 @@ sealed trait TreeLike[+A] extends Node[A] {
     *
     * @return an appropriate String
     */
-  def summary: String
+  def summary: String = {
+    val r = new StringBuilder(s""""$get: """") // TODO need to unpack the option
+    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
+    r.append(l mkString ", ")
+    r.toString
+  }
 
-  def like[B >: A](n: Node[B]): Maybe = n match {
+
+
+  /**
+    * Method to determine if this subtree is "like" the given node (without recursion)
+    *
+    * @param node the node to be searched for
+    * @tparam B the underlying type of n
+    * @return true if node n is found in the sub-tree defined by this
+    */
+  def like[B >: A](node: Node[B]): Maybe = node match {
     case Branch(ns) =>
-      def cf(t: (Node[B], Node[B])): Maybe = BinaryTree.log(s"cf $t", t._1.compareValues(t._2))
+      def cf(t: (Node[B], Node[B])): Maybe = t._1.compareValues(t._2)
       (children zip ns).foldLeft(Kleenean(None))(_ :& cf(_))
     case _ => Kleenean(false)
   }
+
   /**
     * Method to determine if this TreeLike includes the given node
     *
@@ -184,6 +199,7 @@ sealed trait TreeLike[+A] extends Node[A] {
     val g: (Boolean, Maybe) => Boolean = { (b, m) => (b |: m) ().getOrElse(false) }
     Parent.traverse[Node[B], Maybe, Boolean](f, g, { x => x })(List(this), false)
   }
+
   /**
     *
     * @param b the value to be searched
@@ -231,16 +247,22 @@ sealed trait TreeLike[+A] extends Node[A] {
   //    case _ => treeBuilder(n,Empty)
   //  }
 
-  // XXX: what's this?
-  def renderRecursive[B >: A](z: (Seq[Node[B]], Node[B]) => Seq[Node[B]]): String =
-  Recursion.recurse[Node[B], String, String]({
-    case Empty => ""
-    case Leaf(x) => x.toString
-    case c@Open => c.render
-    case c@Close => c.render
-    case n => ""
-  }, _ + _, z)(Seq(this), "")
-
+//  /**
+//    * This was designed for BinaryTree or GeneralTree. Needs testing in general.
+//    * It doesn't work properly at present.
+//    * Alternatively, can invoke nodeIterator and render each node.
+//    * @param z a function to combine a Node with a sequence of Nodes
+//    * @tparam B the underlying type of the Nodes
+//    * @return a String
+//    */
+//  def renderRecursive[B >: A](z: (Seq[Node[B]], Node[B]) => Seq[Node[B]]): String =
+//    Recursion.recurse[Node[B], String, String]({
+//      case Empty => ""
+//      case Leaf(x) => x.toString
+//      case c@Open => c.render
+//      case c@Close => c.render
+//      case n => ""
+//    }, _ + _, z)(Seq(this), "")
 }
 
 /**
@@ -249,12 +271,14 @@ sealed trait TreeLike[+A] extends Node[A] {
 sealed trait TreeIndex {
   /**
     * the left index (the number of other nodes to the "left" of this one
+    *
     * @return
     */
   def lIndex: Option[Long]
 
   /**
     * the right index (the number of other nodes to the "right" of this one
+    *
     * @return
     */
   def rIndex: Option[Long]
@@ -281,6 +305,19 @@ sealed trait Branch[+A] extends TreeLike[A] {
     else this +: z
     r.toIterator
   }
+
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @return an appropriate String
+    */
+  def render: String = iterator(true).mkString(", ")
+//  renderRecursive[A]((ns, n) => n
+//  match {
+//    case Branch(x) => x ++ ns
+//    case _ => ns
+//  })
+
 }
 
 trait IndexedNode[A] extends Node[A] with TreeIndex
@@ -290,25 +327,15 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   *
   * @tparam A the underlying type of this Branch
   */
-case class GeneralBranch[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
+case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   /**
     * @return Some(value)
     */
   def get = Some(value)
 
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  def render: String = ???
 
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary: String = ???
+
+
 }
 
 /**
@@ -326,8 +353,27 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
   def render: String = s"$a"
 }
 
-case class BinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
-  assume(BinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
+  assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+
+  /**
+    * @return None
+    */
+  def get = None
+
+}
+
+case class BinaryTree[+A: Ordering](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
+  assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+
+  /**
+    * @return None
+    */
+  def get = None
+
+}
+
+abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
 
   /**
     * Return a sequence made up of left and right
@@ -336,29 +382,11 @@ case class BinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branc
     */
   def children: Seq[Node[A]] = Seq(left, right)
 
-  /**
-    * @return None
-    */
-  def get = None
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  def render: String = ???
-
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary: String = ???
 }
 
 /**
   * Empty object which is necessary for (non-ideal) BinaryTrees.
-  * There should be no need for a GeneralBranch to reference an Empty but it might happen.
+  * There should be no need for a GeneralTree to reference an Empty but it might happen.
   */
 case object Empty extends AbstractEmpty
 
@@ -369,25 +397,13 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
 
   override def toString = s"""L("$value")"""
 }
+
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
   def get = value
-
-  // TODO combine with other implementation
-  def summary: String = {
-    val r = new StringBuilder(s""""$value: """")
-    val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
-    r.append(l mkString ", ")
-    r.toString
-  }
-
-  /**
-    * Create a String which represents this Node and its subtree (if any)
-    *
-    * @return an appropriate String
-    */
-  def render: String = s"mutable generic indexed tree: needs to implement render: $this"
 }
+
 case class TreeException(msg: String) extends Exception(msg)
+
 /**
   * Abstract base class for a leaf whose value is a
   *
@@ -403,12 +419,12 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 
   def depth: Int = 1
 
-  def includes[B >: A](node: Node[B]): Boolean = this==node
+  def includes[B >: A](node: Node[B]): Boolean = this == node
 
-  def includes[B >: A](b: B): Boolean = a==b
+  def includes[B >: A](b: B): Boolean = a == b
 }
 
-abstract class AbstractEmpty extends TreeLike[Nothing]{
+abstract class AbstractEmpty extends TreeLike[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
   def get = None
@@ -425,20 +441,16 @@ abstract class AbstractEmpty extends TreeLike[Nothing]{
     */
   def render = "ø"
 
-  /**
-    * Create a String which represents the value of this Node and the values of its immediate descendants
-    *
-    * @return an appropriate String
-    */
-  def summary = render
 }
 
 /**
   * CONSIDER extending AbstractEmpty
-  * @param x
+  *
+  * @param x the String that this punctuation will render as
   */
 abstract class Punctuation(x: String) extends Node[Nothing] {
   def includes[B >: Nothing](node: Node[B]): Boolean = false
+
   def includes[B >: Nothing](b: B): Boolean = false
 
   def size: Int = 0
@@ -475,17 +487,18 @@ object Node {
 }
 
 object TreeLike {
-  def populateTree[A : Ordering](values: Seq[A]): TreeLike[A] = {
-    import BinaryTree._
+  def populateTree[A: Ordering](values: Seq[A]): TreeLike[A] = {
+    import UnvaluedBinaryTree._
     values match {
       case h :: t =>
-        var result: TreeLike[A] = BinaryTree(h,Empty)
+        var result: TreeLike[A] = UnvaluedBinaryTree(h, Empty)
         for (w <- t) {
           result = result :+ Leaf(w)
         }
         result
     }
   }
+
   def join(xo: Option[String], yo: Option[String]): Option[String] = {
     val mt = Some("")
     for (x <- xo.orElse(mt); y <- yo.orElse(mt)) yield x + y
@@ -503,55 +516,80 @@ object TreeLike {
     */
   def createIndexedTree[A](node: Node[A], index: Int = 0): Node[A] with TreeIndex = node match {
     case Leaf(x) => IndexedLeaf[A](Some(index), Some(index + 1), x)
-    case BinaryTree(l, r) =>
+    case UnvaluedBinaryTree(l, r) =>
       val rIndex = index + 1 + l.size + r.size
       MutableGenericIndexedTree(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size)))
     case Empty => EmptyWithIndex
     case _ => throw TreeException(s"can't created IndexedTree from $node")
   }
-
-
 }
 
-object GeneralBranch {
+object GeneralTree {
   implicit def treeBuilder[A](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
-    case GeneralBranch(a, ns) => GeneralBranch[A](a, ns :+ n2)
-    case Leaf(a) => GeneralBranch[A](a, Seq(n2))
+    case GeneralTree(a, ns) => GeneralTree[A](a, ns :+ n2)
+    case Leaf(a) => GeneralTree[A](a, Seq(n2))
     case _ => throw TreeException("not implemented")
   }
 
   implicit def leafBuilder[A](a: A): Node[A] = Leaf(a)
 }
 
-object BinaryTree {
-  def log[X](w: String, x: X): X = {println(s"$w: $x"); x}
-
+object UnvaluedBinaryTree {
   // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
   implicit def treeBuilder[A: Ordering](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
-    case BinaryTree(l, r) =>
+    case UnvaluedBinaryTree(l, r) =>
       val pair =
-        if (isOverlap(n2, l))
+        if (AbstractBinaryTree.isOverlap(n2, l))
           (treeBuilder(l, n2), r) // type 1
-        else if (isOverlap(n2, r))
-        // TODO eliminate danger of recursion here
+        else if (AbstractBinaryTree.isOverlap(n2, r))
           (l, treeBuilder(r, n2)) // type 2
         else {
-          if (isOrdered(l, n2))
-            if (isOrdered(n2, r))
-              (BinaryTree(l, n2), r) // type 3
+          if (AbstractBinaryTree.isOrdered(l, n2))
+            if (AbstractBinaryTree.isOrdered(n2, r))
+              (UnvaluedBinaryTree(l, n2), r) // type 3
             else
               (n1, n2) // type 4
           else
             (n2, n1) // type 5
         }
       apply(pair._1, pair._2)
-    case Leaf(a) => treeBuilder(BinaryTree(a, Empty), n2)
+    case Leaf(a) => treeBuilder(UnvaluedBinaryTree(a, Empty), n2)
     case Empty => treeBuilder(n2, Empty) // TODO check this is OK
     case _ => throw TreeException(s"treeBuilder not implemented for $n1")
   }
 
   implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
+}
 
+object BinaryTree {
+  // TODO implement this properly, given that there are values in BinaryTree
+  // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
+  implicit def treeBuilder[A: Ordering](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
+    case BinaryTree(v, l, r) =>
+      val pair =
+        if (AbstractBinaryTree.isOverlap(n2, l))
+          (treeBuilder(l, n2), r) // type 1
+        else if (AbstractBinaryTree.isOverlap(n2, r))
+          (l, treeBuilder(r, n2)) // type 2
+        else {
+          if (AbstractBinaryTree.isOrdered(l, n2))
+            if (AbstractBinaryTree.isOrdered(n2, r))
+              (BinaryTree(v, l, n2), r) // type 3
+            else
+              (n1, n2) // type 4
+          else
+            (n2, n1) // type 5
+        }
+      apply(v, pair._1, pair._2)
+    case Leaf(a) => treeBuilder(BinaryTree(a, Empty, Empty), n2)
+    case Empty => treeBuilder(n2, Empty) // TODO check this is OK
+    case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+  }
+
+  implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
+}
+
+object AbstractBinaryTree {
   /**
     * Method to determine if node a compares as less than node b
     *

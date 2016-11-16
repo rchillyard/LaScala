@@ -26,7 +26,7 @@ class MPTTSpec extends FlatSpec with Matchers {
     m2.contains(m1) shouldBe false
   }
 
-  behavior of "real-life BinaryTree"
+  behavior of "real-life UnvaluedBinaryTree"
   it should "build correctly" in {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
@@ -38,7 +38,7 @@ class MPTTSpec extends FlatSpec with Matchers {
       case _ => Seq[String]()
     }
     val tree = TreeLike.populateTree(z)
-    val mptt = MPTT(TreeLike.createIndexedTree(tree.asInstanceOf[BinaryTree[String]]).asInstanceOf[IndexedNode[String]])
+    val mptt = MPTT(TreeLike.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]).asInstanceOf[IndexedNode[String]])
     mptt.index.size shouldBe 177
 
     println(mptt)

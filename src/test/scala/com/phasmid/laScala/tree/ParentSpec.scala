@@ -20,9 +20,9 @@
 //    println(tree)
 //    Parent.traverse(f,g)(List[Node[Int]](tree),List[Int]()) shouldBe List(1,2,3)
 //  }
-//  it should "work correctly for BinaryTree" in {
-//    import BinaryTree._
-//    val tree = BinaryTree(1,2,4) :+ Leaf(3)
+//  it should "work correctly for UnvaluedBinaryTree" in {
+//    import UnvaluedBinaryTree._
+//    val tree = UnvaluedBinaryTree(1,2,4) :+ Leaf(3)
 //    println(tree)
 //    Parent.traverse(f,g)(List[Node[Int]](tree),List[Int]()) shouldBe List(1,2,4,3)
 //  }
