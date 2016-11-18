@@ -36,7 +36,7 @@
 //      case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
 //      case _ => Seq[String]()
 //    }
-//    val tree = TreeLike.populateTree(z)
+//    val tree = TreeLike.populateOrderedTree(z)
 //    println(tree)
 //    def f(t: Node[String]): Option[String] = t.get
 //    def g(ns: Seq[String], wo: Option[String]): Seq[String] = wo match { case Some(i) => ns :+ i; case _ => ns}

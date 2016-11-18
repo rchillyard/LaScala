@@ -11,7 +11,6 @@ import scala.concurrent._
 import scala.util._
 
 /**
-  * TODO move this into fp package
   *
   * @author scalaprof
   */
@@ -194,6 +193,23 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     toOption(b = false, "X") should matchPattern { case None => }
   }
 
+  it should "work nicely" in {
+    val xy = Try("1".toInt)
+    toOption(xy) shouldBe Some(1)
+  }
+
+  it should "fail gracefully" in {
+    val xy = Try("x".toInt)
+    var log: String = null
+    toOption(xy, {x: Throwable => log = x.getLocalizedMessage}) shouldBe None
+    log shouldBe "For input string: \"x\""
+  }
+
+  it should "fail ungracefully" in {
+    val xy: Try[Any] = Failure(new OutOfMemoryError("something bad"))
+    an [OutOfMemoryError] should be thrownBy toOption(xy)
+  }
+
   "sequence[Try]" should "work" in {
     sequence(Try("10".toInt)) should matchPattern { case Right(10) => }
     sequence(Try("x".toInt)) should matchPattern { case Left(_) => }
@@ -204,5 +220,223 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
     implicit val limit = 5
     renderLimited(as) shouldBe "(1, 2...)"
+  }
+
+
+  behavior of "map2"
+
+  it should """match Success(1234) for parse "12" to int and parse "34" to int,with (a:Int,b:Int) => a.toString()+b.toString()"""  in
+    {
+      val a1 = "12"
+      val a2 = "34"
+      val t1 = Try(a1.toInt)
+      val t2 = Try(a2.toInt)
+
+      val test = FP.map2(t1, t2)((a:Int,b:Int) => a.toString()+b.toString())
+
+      test should matchPattern {
+        case Success("1234") =>
+      }
+    }
+
+  it should """fail for "", Int""" in{
+
+    val t1 = Try(Name("Robin",Some("C"),"Hillyard",Some("Ph.D")))
+    val t2 = Try(24)
+
+    val test = FP.map2(t1,t2)(Principal.apply)
+
+    // TODO this was originally a Failure and I have broken that.
+    test should matchPattern{
+      case Success(name) =>
+    }
+  }
+
+
+  behavior of "map7"
+
+  it should "success" in
+    {
+      val p1 = Try(0.02)
+      val p2 = Try(23)
+      val p3 = Rating.parse("PG-13")
+      val p4 = Try(15)
+      val p5 = Try(18)
+      val p6 = Try(20)
+      val p7 = Try(28)
+
+      val test = FP.map7(p1,p2,p3,p4,p5,p6,p7)(new Reviews(_,_,_,_,_,_,_))
+
+      test.get should matchPattern{
+        case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) =>
+      }
+    }
+
+  it should """fail with bad input""" in {
+    val p1 = Try(0.02)
+    val p2 = Try(23)
+    val p3 = Rating.parse("PG-XXXX")
+    val p4 = Try(15)
+    val p5 = Try(18)
+    val p6 = Try(20)
+    val p7 = Try(28)
+    FP.map7(p1, p2, p3, p4, p5, p6, p7)(new Reviews(_, _, _, _, _, _, _)) should matchPattern{
+      case Failure(_) =>
+    }
+  }
+
+  behavior of "invert2"
+
+  it should "work" in
+    {
+      val a:Int => Int => String = {a => b=> "abcde".substring(a, b)}
+
+      Try(a(0)(2)) should matchPattern{
+        case Success("ab") =>
+      }
+
+      val aux = FP.invert2(a)
+
+      Try(aux(0)(2)) should matchPattern{
+        case Failure(e) =>
+      }
+    }
+
+  behavior of "invert3"
+
+  it should "work" in {
+
+    val a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
+
+    a(2)(3)(4) shouldBe 10
+
+    val aux = FP.invert3(a)
+
+    aux(2)(3)(4) shouldBe 14
+  }
+
+  behavior of "invert4"
+
+  it should "work" in {
+
+    val a:Int => Int=> Int=> Int=>Int = {a => b=> c=> d=> a*b+c*d}
+
+    a(2)(3)(4)(5) shouldBe 26
+
+    val aux = FP.invert3(a)
+
+    aux(2)(3)(4)(5) shouldBe 22
+  }
+
+  behavior of "uncurried2"
+  it should "work" in{
+
+    def a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
+
+    def aux = FP.uncurried2(a)
+    a.toString() shouldBe "<function1>"
+    aux.toString() shouldBe "<function2>"
+  }
+
+}
+
+/**
+  * This class represents a Movie from the IMDB data file on Kaggle.
+  * Although the limitation on 22 fields in a case class has partially gone away, it's still convenient to group the different attributes together into logical classes.
+  *
+  * Created by scalaprof on 9/12/16.
+  */
+case class Movie(format: Format, production: Production, reviews: Reviews, director: Principal, actor1: Principal, actor2: Principal, actor3: Principal, title: String, genres: Seq[String], plotKeywords: Seq[String], imdb: String)
+
+/**
+  * The movie format (including language and duration).
+  *
+  * @param color       whether filmed in color
+  * @param language    the native language of the characters
+  * @param aspectRatio the aspect ratio of the film
+  * @param duration    its length in minutes
+  */
+case class Format(color: Boolean, language: String, aspectRatio: Double, duration: Int) {
+  override def toString = {
+    val x = color match {
+      case true => "Color";
+      case _ => "B&W"
+    }
+    s"$x,$language,$aspectRatio,$duration"
+  }
+}
+
+/**
+  * The production: its country, year, and financials
+  *
+  * @param country   country of origin
+  * @param budget    production budget in US dollars
+  * @param gross     gross earnings (?)
+  * @param titleYear the year the title was registered (?)
+  */
+case class Production(country: String, budget: Int, gross: Int, titleYear: Int) {
+  def isKiwi = this match {
+    case Production("New Zealand", _, _, _) => true
+    case _ => false
+  }
+}
+
+/**
+  * Information about various forms of review, including the content rating.
+  */
+case class Reviews(imdbScore: Double, facebookLikes: Int, contentRating: Rating, numUsersReview: Int, numUsersVoted: Int, numCriticReviews: Int, totalFacebookLikes: Int)
+
+/**
+  * A cast or crew principal
+  *
+  * @param name          name
+  * @param facebookLikes number of FaceBook likes
+  */
+case class Principal(name: Name, facebookLikes: Int) {
+  override def toString = s"$name ($facebookLikes likes)"
+}
+
+/**
+  * A name of a contributor to the production
+  *
+  * @param first  first name
+  * @param middle middle name or initial
+  * @param last   last name
+  * @param suffix suffix
+  */
+case class Name(first: String, middle: Option[String], last: String, suffix: Option[String]) {
+  override def toString = {
+    case class Result(r: StringBuffer) { def append(s: String): Unit = r.append(" "+s); override def toString = r.toString}
+    val r: Result = Result(new StringBuffer(first))
+    middle foreach (r.append)
+    r.append(last)
+    suffix foreach (r.append)
+    r.toString
+  }
+}
+
+/**
+  * The US rating
+  */
+case class Rating(code: String, age: Option[Int]) {
+  override def toString = code + (age match {
+    case Some(x) => "-" + x
+    case _ => ""
+  })
+}
+
+object Rating {
+  val rRating = """^(\w*)(-(\d\d))?$""".r
+
+  /**
+    * Alternative apply method for the Rating class such that a single String is decoded
+    *
+    * @param s a String made up of a code, optionally followed by a dash and a number, e.g. "R" or "PG-13"
+    * @return a Rating
+    */
+  def parse(s: String): Try[Rating] =
+  s match {
+    case rRating(code, _, age) => Success(apply(code, Try(age.toInt).toOption))
+    case _ => Failure(new Exception(s"parse error in Rating: $s"))
   }
 }

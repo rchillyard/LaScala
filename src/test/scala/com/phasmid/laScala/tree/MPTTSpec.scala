@@ -1,5 +1,6 @@
 package com.phasmid.laScala.tree
 
+import com.phasmid.laScala.fp.HasStringKey
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.SortedSet
@@ -9,6 +10,12 @@ import scala.io.Source
   * Created by scalaprof on 10/19/16.
   */
 class MPTTSpec extends FlatSpec with Matchers {
+
+  abstract class HasStringKeyString$ extends HasStringKey[String] {
+    def getKey(x: String): String = x
+  }
+
+  implicit object HasStringKeyString$ extends HasStringKeyString$
 
   behavior of "MPTTEntry.contains"
   it should "be true for (0,3).contains((1,2)" in {
@@ -37,7 +44,8 @@ class MPTTSpec extends FlatSpec with Matchers {
       case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
       case _ => Seq[String]()
     }
-    val tree = TreeLike.populateTree(z)
+    import UnvaluedBinaryTree._
+    val tree = TreeLike.populateOrderedTree(z map(Value(_)))
     val mptt = MPTT(TreeLike.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]).asInstanceOf[IndexedNode[String]])
     mptt.index.size shouldBe 177
 

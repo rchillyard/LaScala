@@ -3,6 +3,7 @@ package com.phasmid.laScala.fp
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, postfixOps}
 import scala.util._
+import scala.util.control.NonFatal
 
 /**
   * This is a collection of general functional-programming-style methods.
@@ -12,7 +13,7 @@ import scala.util._
   *
   * CONSIDER replace Seq with Iterator in signatures
   *
-  * TODO move this object into the fp package
+  * CONSIDER use higher-kinded monad types in order to implement methods for Try and Option at the same time
   *
   * @author scalaprof
   */
@@ -126,6 +127,15 @@ object FP {
   def sequence[X](xe: Either[Throwable, X]): Option[X] = xe.right.toOption
 
   /**
+    * Perform recover on a sequence of Try objects.
+    * @param xys the sequence of tries
+    * @param t the Throwable to replace the nonfatal throwable already reported.
+    * @tparam X the underlying type of the tries
+    * @return xys essentially unchanged though with the side-effect of having written any non-fatal exceptions to the console and all non-fatal failures replaced by Failure(t)
+    */
+  def recoverWith[X](xys: Seq[Try[X]], t: Throwable = new java.util.NoSuchElementException): Seq[Try[X]] = xys map (xy => xy.recoverWith({ case NonFatal(x) => System.err.println(x.getLocalizedMessage); Failure(t) }))
+
+  /**
     * TODO unit test
     * zip two options into an option of a tuple
     *
@@ -162,6 +172,53 @@ object FP {
   def zip[A, B](af: Future[A], bf: Future[B])(implicit ec: ExecutionContext): Future[(A, B)] = for (a <- af; b <- bf) yield (a, b)
 
   /**
+    * TODO unit test
+    *
+    * @param f a function which transforms an X into a Y
+    * @param x an X value
+    * @tparam X the input type of f
+    * @tparam Y the output type of f
+    * @return a Try[Y]
+    */
+  def trial[X, Y](f: X => Y)(x: => X): Try[Y] = lift(f)(Try(x))
+
+  implicit val limit = 25
+
+  /**
+    * TODO unit test
+    *
+    * @param as    a sequence of As
+    * @param limit the limit of how many you want to show
+    * @tparam A the underlying type of the sequence
+    * @return a String representing the first "limit" elements of as
+    */
+  def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
+    val iterator = as.toStream.toIterator
+    val buffer = new StringBuilder("(")
+    while (iterator.hasNext && buffer.length < limit) {
+      if (buffer.length > 1) buffer append ", "
+      buffer append s"${iterator.next}"
+    }
+    if (iterator.hasNext) buffer append "..."
+    buffer append ")"
+    buffer toString
+  }
+
+  /**
+    * TODO unit test
+    *
+    * @param f a function which transforms a T into an R
+    * @tparam T the underlying source type
+    * @tparam R the underlying result type
+    * @return a named function which takes a T and returns an R
+    */
+  def named[T, R](name: String, f: T => R) = new ((T) => R) {
+    def apply(v1: T): R = f(v1)
+
+    override def toString = name
+  }
+
+  /**
     * Convert an Option[X] into a Try[X], given an explicit throwable for the None case
     *
     * @param xo an X value wrapped in Option
@@ -185,18 +242,117 @@ object FP {
   def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo, null)
 
   /**
+    * Alternative to the toOption method in Option.
+    * This method will throw any fatal failures, log any non-fatal failures and then convert the Try to an Option
+    * @param xy the Try object
+    * @tparam X the underlying type of Try
+    * @return an Option which is Some(x) for Success(x) and None for Failure(t) where t has been handled as a side-effect
+    */
+  def toOption[X](xy: Try[X], fLog: (Throwable) => Unit = { x => System.err.println(x.getLocalizedMessage)}): Option[X] = xy.recoverWith({
+    case NonFatal(x) => fLog(x); Failure(new NoSuchElementException)
+    case x @ _ => throw x
+  }).toOption
+
+  /**
+    * Method to convert a b into an Option[X]
+    *
+    * @param b a Boolean value
+    * @param x an X value
+    * @tparam X the underlying type
+    * @return if b is true then Some(x) else None
+    */
+  def toOption[X](b: Boolean, x: X): Option[X] = if (b) Some(x) else None
+
+  /**
+    * Method to yield an Option[X] value based on a X-predicate and an X value.
+    * @param p the predicate
+    * @param t the value to wrap in Some if the predicate is satisfied
+    * @tparam X the underlying type of the value and the resulting Option
+    * @return Option[X]
+    */
+  def toOption[X](p: X=>Boolean)(t: X): Option[X] = toOption(p(t),t)
+
+  /**
     * TODO unit test
     *
-    * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
+    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
     *
-    * @param ty1 a Try[T] value
-    * @param ty2 a Try[T] value
+    * @param to1 a Option[T] value
+    * @param to2 a Option[T] value
     * @param f   function which takes two T parameters and yields a U result
     * @tparam T the input type
     * @tparam U the result type
-    * @return a Try[U]
+    * @return a Option[U]
     */
-  def map2[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2} yield f(t1, t2)
+  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+
+  /**
+    * The map2 function. You already know this one!
+    *
+    * @param t1y parameter 1 wrapped in Try
+    * @param t2y parameter 2 wrapped in Try
+    * @param f   function that takes two parameters of types T1 and T2 and returns a value of R
+    * @tparam T1 the type of parameter 1
+    * @tparam T2 the type of parameter 2
+    * @tparam R  the type of the result of function f
+    * @return a value of R, wrapped in Try
+    */
+  def map2[T1, T2, R](t1y: Try[T1], t2y: Try[T2])(f: (T1, T2) => R): Try[R] =
+  for {
+    t1 <- t1y
+    t2 <- t2y
+  } yield f(t1, t2)
+
+  /**
+    * The map3 function. Much like map2
+    *
+    * @param t1y parameter 1 wrapped in Option
+    * @param t2y parameter 2 wrapped in Option
+    * @param t3y parameter 3 wrapped in Option
+    * @param f   function that takes three parameters of types T1, T2 and T3 and returns a value of R
+    * @tparam T1 the type of parameter 1
+    * @tparam T2 the type of parameter 2
+    * @tparam T3 the type of parameter 3
+    * @tparam R  the type of the result of function f
+    * @return a value of R, wrapped in Try
+    */
+  def map3[T1, T2, T3, R](t1y: Option[T1], t2y: Option[T2], t3y: Option[T3])(f: (T1, T2, T3) => R): Option[R] =
+  for {t1 <- t1y
+       t2 <- t2y
+       t3 <- t3y
+  } yield f(t1, t2, t3)
+
+  /**
+    * The map3 function. Much like map2
+    *
+    * @param t1y parameter 1 wrapped in Try
+    * @param t2y parameter 2 wrapped in Try
+    * @param t3y parameter 3 wrapped in Try
+    * @param f   function that takes three parameters of types T1, T2 and T3 and returns a value of R
+    * @tparam T1 the type of parameter 1
+    * @tparam T2 the type of parameter 2
+    * @tparam T3 the type of parameter 3
+    * @tparam R  the type of the result of function f
+    * @return a value of R, wrapped in Try
+    */
+  def map3[T1, T2, T3, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3])(f: (T1, T2, T3) => R): Try[R] =
+  for {t1 <- t1y
+       t2 <- t2y
+       t3 <- t3y
+  } yield f(t1, t2, t3)
+
+  /**
+    * You get the idea...
+    */
+  def map7[T1, T2, T3, T4, T5, T6, T7, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3], t4y: Try[T4], t5y: Try[T5], t6y: Try[T6], t7y: Try[T7])(f: (T1, T2, T3, T4, T5, T6, T7) => R): Try[R] =
+  for {t1 <- t1y
+       t2 <- t2y
+       t3 <- t3y
+       t4 <- t4y
+       t5 <- t5y
+       t6 <- t6y
+       t7 <- t7y
+  } yield f(t1, t2, t3, t4, t5, t6, t7)
 
   /**
     * TODO unit test
@@ -213,22 +369,7 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { x: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case z: java.util.NoSuchElementException => default }
-
-  /**
-    * TODO unit test
-    *
-    * Similar to map2
-    *
-    * @param ty1 a Try[T] value
-    * @param ty2 a Try[T] value
-    * @param ty3 a Try[T] value
-    * @param f   function which takes three T parameters and yields a U result
-    * @tparam T the input type
-    * @tparam U the result type
-    * @return a Try[U]
-    */
-  def map3[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U): Try[U] = for {t1 <- ty1; t2 <- ty2; t3 <- ty3} yield f(t1, t2, t3)
+  (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case z: java.util.NoSuchElementException => default }
 
   /**
     * TODO unit test
@@ -247,29 +388,67 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { x: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case z: java.util.NoSuchElementException => default }
+  (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case z: java.util.NoSuchElementException => default }
 
   /**
-    * TODO unit test
+    * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
     *
-    * @param f  a function which transforms an X into a Y
-    * @param xt an X value wrapped as a Try[X]
-    * @tparam X the input type of f
-    * @tparam Y the output type of f
-    * @return a Try[Y]
+    * @param f the function we start with, of type T=>R
+    * @tparam T the type of the parameter to f
+    * @tparam R the type of the result of f
+    * @return a function of type Try[T]=>Try[R]
     */
-  def lift[X, Y](f: X => Y)(xt: Try[X]): Try[Y] = xt map f
+  def lift[T, R](f: T => R): Try[T] => Try[R] = _ map f
 
   /**
-    * TODO unit test
+    * Lift function to transform a function f of type (T1,T2)=>R into a function of type (Try[T1],Try[T2])=>Try[R]
     *
-    * @param f a function which transforms an X into a Y
-    * @param x an X value
-    * @tparam X the input type of f
-    * @tparam Y the output type of f
-    * @return a Try[Y]
+    * @param f the function we start with, of type (T1,T2)=>R
+    * @tparam T1 the type of the first parameter to f
+    * @tparam T2 the type of the second parameter to f
+    * @tparam R  the type of the result of f
+    * @return a function of type (Try[T1],Try[T2])=>Try[R]
     */
-  def trial[X, Y](f: X => Y)(x: => X): Try[Y] = lift(f)(Try(x))
+  def lift2[T1, T2, R](f: (T1, T2) => R): (Try[T1], Try[T2]) => Try[R] = map2(_, _)(f)
+
+  /**
+    * Lift function to transform a function f of type (T1,T2,T3)=>R into a function of type (Try[T1],Try[T2],Try[T3])=>Try[R]
+    *
+    * @param f the function we start with, of type (T1,T2,T3)=>R
+    * @tparam T1 the type of the first parameter to f
+    * @tparam T2 the type of the second parameter to f
+    * @tparam T3 the type of the third parameter to f
+    * @tparam R  the type of the result of f
+    * @return a function of type (Try[T1],Try[T2],Try[T3])=>Try[R]
+    */
+  def lift3[T1, T2, T3, R](f: (T1, T2, T3) => R): (Try[T1], Try[T2], Try[T3]) => Try[R] = map3(_, _, _)(f)
+
+  /**
+    * Lift function to transform a function f of type (T1,T2,T3,T4,T5,T6,T7)=>R into a function of type (Try[T1],Try[T2],Try[T3],Try[T4],Try[T5],Try[T6],Try[T7])=>Try[R]
+    *
+    * @param f the function we start with, of type (T1,T2,T3,T4,T5,T6,T7)=>R
+    * @tparam T1 the type of the first parameter to f
+    * @tparam T2 the type of the second parameter to f
+    * @tparam T3 the type of the third parameter to f
+    * @tparam T4 the type of the fourth parameter to f
+    * @tparam T5 the type of the fifth parameter to f
+    * @tparam T6 the type of the sixth parameter to f
+    * @tparam T7 the type of the seventh parameter to f
+    * @tparam R  the type of the result of f
+    * @return a function of type (Try[T1],Try[T2],Try[T3],Try[T4],Try[T5],Try[T6],Try[T7])=>Try[R]
+    */
+  def lift7[T1, T2, T3, T4, T5, T6, T7, R](f: (T1, T2, T3, T4, T5, T6, T7) => R): (Try[T1], Try[T2], Try[T3], Try[T4], Try[T5], Try[T6], Try[T7]) => Try[R] = map7(_, _, _, _, _, _, _)(f)
+
+  /**
+    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the second parameter first
+    */
+  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = { t2 => { t1 => f(t1)(t2) } }
 
   /**
     * TODO unit test
@@ -336,72 +515,78 @@ object FP {
       else optionToTry(result)
   }
 
-  implicit val limit = 25
 
   /**
-    * TODO unit test
+    * This method inverts the order of the first three parameters of a three-(or more-)parameter curried function.
     *
-    * @param as    a sequence of As
-    * @param limit the limit of how many you want to show
-    * @tparam A the underlying type of the sequence
-    * @return a String representing the first "limit" elements of as
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the third parameter first, then the second, etc.
     */
-  def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
-    val iterator = as.toStream.toIterator
-    val buffer = new StringBuilder("(")
-    while (iterator.hasNext && buffer.length < limit) {
-      if (buffer.length > 1) buffer append ", "
-      buffer append s"${iterator.next}"
-    }
-    if (iterator.hasNext) buffer append "..."
-    buffer append ")"
-    buffer toString
-  }
+  def invert3[T1, T2, T3, R](f: T1 => T2 => T3 => R): T3 => T2 => T1 => R = { t3 => { t2 => { t1 => f(t1)(t2)(t3) } } }
 
   /**
-    * TODO unit test
+    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
     *
-    * @param f a function which transforms a T into an R
-    * @tparam T the underlying source type
-    * @tparam R the underlying result type
-    * @return a named function which takes a T and returns an R
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the fourth parameter first, then the third, etc.
     */
-  def named[T, R](name: String, f: T => R) = new ((T) => R) {
-    def apply(v1: T): R = f(v1)
-
-    override def toString = name
-  }
-
-  /**
-    * Method to convert a b into an Option[X]
-    *
-    * @param b a Boolean value
-    * @param x an X value
-    * @tparam X the underlying type
-    * @return if b is true then Some(x) else None
-    */
-  def toOption[X](b: Boolean, x: X): Option[X] = if (b) Some(x) else None
+  def invert4[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): T4 => T3 => T2 => T1 => R = { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4) } } } }
 
   /**
-    * Method to yield an Option[X] value based on a X-predicate and an X value.
-    * @param p the predicate
-    * @param t the value to wrap in Some if the predicate is satisfied
-    * @tparam X the underlying type of the value and the resulting Option
-    * @return Option[X]
+    * This method uncurries the first two parameters of a three- (or more-)
+    * parameter curried function.
+    * The result is a (curried) function whose first parameter is a tuple of the first two parameters of f;
+    * whose second parameter is the third parameter, etc.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam R  the result type of function f
+    * @return a (curried) function of type (T1,T2)=>T4=>R
     */
-  def toOption[X](p: X=>Boolean)(t: X): Option[X] = toOption(p(t),t)
+  def uncurried2[T1, T2, T3, R](f: T1 => T2 => T3 => R): (T1, T2) => T3 => R = { (t1, t2) => { t3 => f(t1)(t2)(t3) } }
 
   /**
-    * TODO unit test
+    * This method uncurries the first three parameters of a four- (or more-)
+    * parameter curried function.
+    * The result is a (curried) function whose first parameter is a tuple of the first three parameters of f;
+    * whose second parameter is the third parameter, etc.
     *
-    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
-    *
-    * @param to1 a Option[T] value
-    * @param to2 a Option[T] value
-    * @param f   function which takes two T parameters and yields a U result
-    * @tparam T the input type
-    * @tparam U the result type
-    * @return a Option[U]
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam R  the result type of function f
+    * @return a (curried) function of type (T1,T2,T3)=>T4=>R
     */
-  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+  def uncurried3[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): (T1, T2, T3) => T4 => R = { (t1, t2, t3) => { t4 => f(t1)(t2)(t3)(t4) } }
+
+  /**
+    * This method uncurries the first three parameters of a four- (or more-)
+    * parameter curried function.
+    * The result is a (curried) function whose first parameter is a tuple of the first seven parameters of f;
+    * whose second parameter is the third parameter, etc.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam R  the result type of function f
+    * @return a (curried) function of type (T1,T2,T3)=>T4=>R
+    */
+  def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
+  { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
+
 }
