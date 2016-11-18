@@ -7,6 +7,7 @@ package com.phasmid.laScala.fp
   *
   * Created by scalaprof on 11/17/16.
   */
-trait HasStringKey[V] {
-    def getKey(v: V): String
+trait HasKey[V] {
+  type K
+  def getKey(v: V): K
 }

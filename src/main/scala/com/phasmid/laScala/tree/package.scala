@@ -8,5 +8,5 @@ package object tree {
 
   type TreeBuilder[A] = (Node[A], Node[A]) => TreeLike[A]
 
-  type LeafBuilder[A] = (Value[A]) => Node[A]
+  type LeafBuilder[A] = (A) => Node[A]
 }

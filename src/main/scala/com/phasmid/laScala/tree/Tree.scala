@@ -1,8 +1,8 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.HasStringKey
-import com.phasmid.laScala.{Kleenean, _}
+import com.phasmid.laScala.fp.HasKey
+import com.phasmid.laScala._
 
 import scala.language.implicitConversions
 
@@ -27,7 +27,7 @@ sealed trait Node[+A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]]
 
   /**
-    * Method to determine if this Node is like node n WITHOUT any recursion.
+    * Method to determine if this Node's value is equal to node n's value WITHOUT any recursion.
     *
     * @param n the node to be compared
     * @tparam B the underlying type of n
@@ -67,14 +67,6 @@ sealed trait Node[+A] {
     */
   def includes[B >: A](node: Node[B]): Boolean
 
-  /**
-    * Method to determine if this Node includes the given value in its subtree (if any)
-    *
-    * @param b the value to be searched
-    * @tparam B the type of b
-    * @return true if value b is found in the sub-tree defined by this
-    */
-  def includes[B >: A](b: B): Boolean
 }
 
 /**
@@ -84,7 +76,7 @@ sealed trait Node[+A] {
   *
   * @tparam A the underlying type of the tree/node
   */
-sealed trait TreeLike[+A] extends Node[A] {
+trait TreeLike[+A] extends Node[A] {
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -119,7 +111,7 @@ sealed trait TreeLike[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A : HasStringKey](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = +:(Value(value))
+  def +:[B >: A](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(value)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
@@ -130,29 +122,7 @@ sealed trait TreeLike[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A : HasStringKey](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(Value(value))
-
-  /**
-    * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
-    *
-    * @param value       the value to add
-    * @param treeBuilder the tree builder (implicit)
-    * @param leafBuilder the leaf builder (implicit)
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def +:[B >: A](value: Value[B])(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = this :+ value
-
-  /**
-    * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
-    *
-    * @param value       the value to add
-    * @param treeBuilder the tree builder (implicit)
-    * @param leafBuilder the leaf builder (implicit)
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def :+[B >: A](value: Value[B])(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(leafBuilder(value))
+  def :+[B >: A](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(leafBuilder(value))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
@@ -173,7 +143,6 @@ sealed trait TreeLike[+A] extends Node[A] {
     * @return the resulting tree
     */
   def :+[B >: A](node: Node[B])(implicit treeBuilder: (Node[B], Node[B]) => TreeLike[B]): TreeLike[B] = treeBuilder(this, node)
-
   /**
     * Iterate on the values of this tree
     *
@@ -193,8 +162,6 @@ sealed trait TreeLike[+A] extends Node[A] {
     r.append(l mkString ", ")
     r.toString
   }
-
-
 
   /**
     * Method to determine if this subtree is "like" the given node (without recursion)
@@ -224,6 +191,7 @@ sealed trait TreeLike[+A] extends Node[A] {
   }
 
   /**
+    * Determine if this subtree includes a value equal to b
     *
     * @param b the value to be searched
     * @tparam B the type of b
@@ -236,7 +204,6 @@ sealed trait TreeLike[+A] extends Node[A] {
   }, _ | _, { x => x })(List(this), false)
 
   /**
-    *
     * @param b value to be found, looking at the value of each node in turn (depth first)
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
@@ -255,6 +222,8 @@ sealed trait TreeLike[+A] extends Node[A] {
     def q(bno: Option[Node[B]]): Boolean = bno.isDefined
     Parent.traverse[Node[B], Option[Node[B]], Option[Node[B]]](f, g, q)(List(this), None)
   }
+
+  def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator(true).filter(p)
 
   //  /**
   //    * Method to safely cast Node n to a TreeLike object.
@@ -286,6 +255,8 @@ sealed trait TreeLike[+A] extends Node[A] {
 //      case c@Close => c.render
 //      case n => ""
 //    }, _ + _, z)(Seq(this), "")
+//}
+
 }
 
 /**
@@ -352,11 +323,11 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   * @param children the children of this Node
   * @tparam A the underlying type of this Branch
   */
-case class GeneralTree[+A](value: Value[A], children: Seq[Node[A]]) extends Branch[A] {
+case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   /**
     * @return Some(value)
     */
-  def get = Some(value.value)
+  def get = Some(value)
 }
 
 /**
@@ -365,13 +336,13 @@ case class GeneralTree[+A](value: Value[A], children: Seq[Node[A]]) extends Bran
   * @param value the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-case class Leaf[+A](value: Value[A]) extends AbstractLeaf[A](value) {
+case class Leaf[+A](value: A) extends AbstractLeaf[A](value) {
   /**
     * Create a String which represents this Node and its subtree (if any)
     *
     * @return an appropriate String
     */
-  def render: String = s"${value.value}"
+  def render: String = s"${value}"
 }
 
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
@@ -384,7 +355,7 @@ case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) exten
 
 }
 
-case class BinaryTree[+A: Ordering](value: Value[A], left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
+case class BinaryTree[+A: Ordering](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
   assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
 
   /**
@@ -392,10 +363,6 @@ case class BinaryTree[+A: Ordering](value: Value[A], left: Node[A], right: Node[
     */
   def get = None
 
-}
-
-case class Value[+V : HasStringKey](value: V) {
-  def getKey: String = implicitly[HasStringKey[V]].getKey(value)
 }
 
 abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
@@ -415,7 +382,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
   */
 case object Empty extends AbstractEmpty
 
-case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: Value[A]) extends AbstractLeaf[A](value) with TreeIndex {
+case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
   override def depth: Int = 1
 
   def render = s"""$value [$lIndex:$rIndex]"""
@@ -435,10 +402,10 @@ case class TreeException(msg: String) extends Exception(msg)
   * @param a the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-abstract class AbstractLeaf[+A](a: Value[A]) extends Node[A] {
+abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
 
-  def get = Some(a.value)
+  def get = Some(a)
 
   def size: Int = 1
 
@@ -489,9 +456,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   def depth: Int = 0
 }
 
-object Leaf {
-  def apply[A : HasStringKey](a: A): Leaf[A] = apply(Value(a))
-}
+object Leaf
 
 object Node {
   /**
@@ -515,7 +480,7 @@ object Node {
 
 object TreeLike {
   // TODO we want the key value to implement ordering, not the value itself
-  def populateOrderedTree[A: Ordering](values: Seq[Value[A]])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
+  def populateOrderedTree[A: Ordering](values: Seq[A])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
     values match {
       case h :: t =>
         var result: TreeLike[A] = treeBuilder(leafBuilder(h), Empty)
@@ -526,7 +491,7 @@ object TreeLike {
     }
   }
 
-  def populateGeneralTree[A : HasStringKey](values: Seq[Value[A]])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
+  def populateGeneralTree[A](values: Seq[A])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
     values match {
       case h :: t =>
         var result: TreeLike[A] = treeBuilder(leafBuilder(h), Empty)
@@ -569,7 +534,7 @@ object GeneralTree {
     case _ => throw TreeException(s"not implemented: $n1")
   }
 
-  implicit def leafBuilder[A](a: Value[A]): Node[A] = Leaf(a)
+  implicit def leafBuilder[A](a: A): Node[A] = Leaf(a)
 }
 
 object UnvaluedBinaryTree {
@@ -596,7 +561,7 @@ object UnvaluedBinaryTree {
     case _ => throw TreeException(s"treeBuilder not implemented for $n1")
   }
 
-  implicit def leafBuilder[A](a: Value[A]): Node[A] = Leaf[A](a)
+  implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
 }
 
 object BinaryTree {
@@ -624,7 +589,7 @@ object BinaryTree {
     case _ => throw TreeException(s"treeBuilder not implemented for $n1")
   }
 
-  implicit def leafBuilder[A](a: Value[A]): Node[A] = Leaf[A](a)
+  implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
 }
 
 object AbstractBinaryTree {
@@ -721,17 +686,6 @@ object AbstractBinaryTree {
     * @tparam A the underlying type of the nodes and comparisons
     * @return true if the proposition is proven
     */
-  def compare[A: Ordering](a: Value[A], an: Node[A]): Seq[Int] = compare(a.value,an)
-  /**
-    * Determine whether the value on the left is ordered before all the nodes on the right
-    *
-    * TODO: this is recursive
-    *
-    * @param a  the left-value
-    * @param an the right-node
-    * @tparam A the underlying type of the nodes and comparisons
-    * @return true if the proposition is proven
-    */
   def compare[A: Ordering](a: A, an: Node[A]): Seq[Int] = an match {
     case Leaf(b) => Seq(compare(a, b))
     case Branch(as) => compare(a, as)
@@ -747,37 +701,7 @@ object AbstractBinaryTree {
     * @tparam A the underlying type of the nodes and comparisons
     * @return true if the proposition is proven
     */
-  def compare[A: Ordering](a: Value[A], as: NodeSeq[A]): Seq[Int] = compare(a.value,as)
-
-  /**
-    * Determine whether the value on the left is ordered before all the nodes on the right
-    *
-    * @param a  the left-value
-    * @param as the right-iterator
-    * @tparam A the underlying type of the nodes and comparisons
-    * @return true if the proposition is proven
-    */
   def compare[A: Ordering](a: A, as: NodeSeq[A]): Seq[Int] = for (a1 <- as; r <- compare(a, a1)) yield r
-
-  /**
-    * Determine whether the value on the left is ordered before the value on the right
-    *
-    * @param a the left-value
-    * @param b the right-value
-    * @tparam A the underlying type of the nodes and comparisons
-    * @return -1 if proposition is true; 0 if they are equal; 1 if the proposition if false
-    */
-  def compare[A: Ordering](a: Value[A], b: Value[A]): Int = compare(a.value, b)
-
-  /**
-    * Determine whether the value on the left is ordered before the value on the right
-    *
-    * @param a the left-value
-    * @param b the right-value
-    * @tparam A the underlying type of the nodes and comparisons
-    * @return -1 if proposition is true; 0 if they are equal; 1 if the proposition if false
-    */
-  def compare[A: Ordering](a: A, b: Value[A]): Int = compare(a, b.value)
 
   /**
     * Determine whether the value on the left is ordered before the value on the right

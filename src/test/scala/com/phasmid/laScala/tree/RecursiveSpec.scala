@@ -1,6 +1,6 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{FP, HasStringKey}
+import com.phasmid.laScala.fp.{FP, HasKey}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
@@ -29,11 +29,11 @@ object AccountRecord {
     FP.toOption(FP.map3(d,p,a)(apply))
   }
 
-  abstract class HasStringKeyAccountRecord extends HasStringKey[AccountRecord] {
-    def getKey(x: AccountRecord): String = x.account
+  abstract class HasKeyAccountRecord extends HasKey[AccountRecord] {
+    type K = String
+    def getKey(x: AccountRecord): K = x.account
   }
-
-  implicit object HasStringKeyAccountRecord extends HasStringKeyAccountRecord
+  implicit object HasKeyAccountRecord extends HasKeyAccountRecord
 
 }
 
@@ -46,33 +46,41 @@ object AccountDate {
 class RecursiveSpec extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
-  ignore should "be true for (0,3).contains((1,2)" in {
+  it should "work" in {
 
     val uo = Option(getClass.getResource("sampleTree.txt"))
     uo should matchPattern { case Some(_) => }
-    val so = uo map {
-      _.openStream
-    }
-
+    val so = uo map ( _.openStream )
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
-
-    val aoso: Option[Iterator[Option[AccountRecord]]] = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(5), ws(6), ws(7))
+    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(5), ws(6), ws(7))
 
     // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
-    val aso: Option[Seq[AccountRecord]] = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
+    val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
 
     aso match {
       case Some(as) =>
         println(as.take(20))
         import AccountRecord._
-    import GeneralTree._
-    val tree = TreeLike.populateGeneralTree (as map (Value(_)))
+        import GeneralTree._
+        val tree = KVTree.populateGeneralTree (as map (Value[String,AccountRecord](_)))
+        tree.size shouldBe 100
+        val ns = tree.nodeIterator(true)
+        println(ns.toList)
+//        tree.find(_.get match {
+//          case Some(x) => x.date == AccountDate(2014,09,30)
+//          case _ => false
+//        })
+//        tree.filter(_.get match {
+//          case Some(a) => a.date <= AccountDate(2014,09,30)
+//          case _ => false
+//        })
 
-      // TODO recreate this test
-      //    val mptt = MPTT (TreeLike.createIndexedTree (tree.asInstanceOf[GeneralTree[AccountRecord]] ).asInstanceOf[IndexedNode[AccountRecord]] )
-      //    mptt.index.size shouldBe 177
-      //
-      //    println (mptt)
+        // TODO recreate this test
+//        val indexedTree = KVTree.createIndexedTree(tree)
+//        indexedTree.nodeIterator(true).size shouldBe 100
+//        val mptt = MPTT (indexedTree).asInstanceOf[IndexedNode[String,AccountRecord]] )
+//        mptt.index.size shouldBe 177
+//        println (mptt)
 
       case None => System.err.println("unable to yield a complete hierarchy")
     }
