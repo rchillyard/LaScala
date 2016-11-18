@@ -1,7 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.{HasStringKey}
+import com.phasmid.laScala.fp.HasStringKey
 import com.phasmid.laScala.{Kleenean, _}
 
 import scala.language.implicitConversions
@@ -348,8 +348,8 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
 /**
   * A general branch of a tree, where there is a value at the node itself and the number of children is unbounded
   *
-  * @param value the value of the branch
-  * @param children
+  * @param value    the value of the branch
+  * @param children the children of this Node
   * @tparam A the underlying type of this Branch
   */
 case class GeneralTree[+A](value: Value[A], children: Seq[Node[A]]) extends Branch[A] {
