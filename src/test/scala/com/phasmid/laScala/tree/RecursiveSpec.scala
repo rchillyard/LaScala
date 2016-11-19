@@ -1,5 +1,6 @@
 package com.phasmid.laScala.tree
 
+import com.phasmid.laScala.Kleenean
 import com.phasmid.laScala.fp.{FP, HasKey}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -8,7 +9,11 @@ import scala.util._
 
 case class AccountRecord(date: AccountDate, parent: String, account: String)
 
-case class AccountDate(year: Int, month: Int, day: Int)
+case class AccountDate(year: Int, month: Int, day: Int) extends Ordering[AccountDate] {
+  def compare(other: AccountDate): Int = compare(this,other)
+  def compare(x: AccountDate, y: AccountDate): Int =
+    Kleenean(Kleenean(x.year.compareTo(y.year))() orElse Kleenean(x.month.compareTo(y.month))() orElse Kleenean(x.day.compareTo(y.day))()).toInt
+}
 
 object AccountRecord {
   def parse(date: String, parent: String, account: String): Option[AccountRecord] = {
@@ -62,18 +67,24 @@ class RecursiveSpec extends FlatSpec with Matchers {
         println(as.take(20))
         import AccountRecord._
         import GeneralTree._
-        val tree = KVTree.populateGeneralTree (as map (Value[String,AccountRecord](_)))
+        implicit object GeneralTreeBuilderValue extends GeneralTreeBuilder[Value[String,AccountRecord]]
+        implicit object GeneralLeafBuilderValue extends GeneralLeafBuilder[Value[String,AccountRecord]]
+
+        val tree = KVTree.populateGeneralTree (as map Value[String, AccountRecord])
         tree.size shouldBe 100
         val ns = tree.nodeIterator(true)
         println(ns.toList)
-//        tree.find(_.get match {
-//          case Some(x) => x.date == AccountDate(2014,09,30)
-//          case _ => false
-//        })
-//        tree.filter(_.get match {
-//          case Some(a) => a.date <= AccountDate(2014,09,30)
-//          case _ => false
-//        })
+        val lt: Int=>Boolean = {_<0}
+        val eq: Int=>Boolean = {_==0}
+        def compareWithDate(n: Node[Value[String,AccountRecord]])(d: AccountDate)(f: Int=>Boolean): Boolean = n.get match {
+          case Some(Value(v)) => f(v.date.compare(d))
+          case _ => false
+        }
+        val on20140930: Node[Value[String,AccountRecord]]=>Boolean = compareWithDate(_)(AccountDate(2014, 9, 30))(eq)
+        val before20140930: Node[Value[String,AccountRecord]]=>Boolean = compareWithDate(_)(AccountDate(2014, 9, 30))(lt)
+        tree.find(on20140930) should matchPattern { case Some(n) => }
+        val before = tree.filter(before20140930)
+        before.size shouldBe 52
 
         // TODO recreate this test
 //        val indexedTree = KVTree.createIndexedTree(tree)

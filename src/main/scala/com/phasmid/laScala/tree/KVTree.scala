@@ -57,7 +57,7 @@ sealed trait KVTree[K,+V] extends TreeLike[Value[K,V]] {
   * The latter interface is used to create a type class which
   * is then used (as a Context Bound) in Value
   *
-  * @tparam K
+  * @tparam K the type of the key
   */
 trait WithKey[K] {
   def key: K
@@ -83,7 +83,7 @@ object KVTree {
   def populateGeneralTree[K,V](values: Seq[Value[K,V]])(implicit treeBuilder: TreeBuilder[Value[K,V]], leafBuilder: LeafBuilder[Value[K,V]]): TreeLike[Value[K,V]] = {
     values match {
       case h :: t =>
-        var result: TreeLike[Value[K,V]] = treeBuilder(leafBuilder(h), Empty)
+        var result: TreeLike[Value[K,V]] = implicitly[TreeBuilder[Value[K,V]]].buildTree(implicitly[LeafBuilder[Value[K,V]]].buildLeaf(h), Empty)
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -100,7 +100,7 @@ object KVTree {
     * @param index the starting value of index
     * @tparam K the underlying key type
     * @tparam V the underlying value type
-    * @return an IndexedNode[Value[K,V]]
+    * @return an IndexedNode[Value[K,V]
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */

@@ -93,7 +93,18 @@ trait Maybe extends (() => Option[Boolean]) {
     * @param default the value to use if this is None
     * @return a Boolean corresponding to either the existing Boolean or else the given default.
     */
-  def asBoolean(default: Boolean) = apply().getOrElse(default)
+  def toBoolean(default: Boolean) = apply().getOrElse(default)
+
+  /**
+    * Method to convert this Maybe into an integer corresponding
+    * to the return value of compareTo
+    * @return either 1 (true), 0 (maybe), or -1 (false)
+    */
+  def toInt = apply() match {
+    case Some(true) => 1
+    case Some(false) => -1
+    case None => 0
+  }
 
   /**
     * Method to deny (invert, negate, ...) this Maybe

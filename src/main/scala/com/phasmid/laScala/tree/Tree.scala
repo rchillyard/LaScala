@@ -1,7 +1,6 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.HasKey
 import com.phasmid.laScala._
 
 import scala.language.implicitConversions
@@ -105,44 +104,42 @@ trait TreeLike[+A] extends Node[A] {
   /**
     * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
     *
+    * NOTE the implementation of this method assumes that the order of the operands is not important.
+    *
     * @param value       the value to add
-    * @param treeBuilder the tree builder (implicit)
-    * @param leafBuilder the leaf builder (implicit)
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(value)
+  def +:[B >: A : TreeBuilder : LeafBuilder](value: B): TreeLike[B] = :+(value)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
     *
     * @param value       the value to add
-    * @param treeBuilder the tree builder (implicit)
-    * @param leafBuilder the leaf builder (implicit)
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A](value: B)(implicit treeBuilder: TreeBuilder[B], leafBuilder: LeafBuilder[B]): TreeLike[B] = :+(leafBuilder(value))
+  def :+[B >: A : TreeBuilder : LeafBuilder](value: B): TreeLike[B] = :+(implicitly[LeafBuilder[B]].buildLeaf(value))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
     *
+    * NOTE the implementation of this method assumes that the order of the operands is not important.
+    *
     * @param node        the node to add
-    * @param treeBuilder the tree builder (implicit)
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A](node: Node[B])(implicit treeBuilder: (Node[B], Node[B]) => TreeLike[B]): TreeLike[B] = this :+ node
+  def +:[B >: A : TreeBuilder : LeafBuilder](node: Node[B]): TreeLike[B] = this :+ node
 
   /**
     * Method to add a node to this tree
     *
     * @param node        the node to add
-    * @param treeBuilder the tree builder (implicit)
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A](node: Node[B])(implicit treeBuilder: (Node[B], Node[B]) => TreeLike[B]): TreeLike[B] = treeBuilder(this, node)
+  def :+[B >: A : TreeBuilder : LeafBuilder](node: Node[B]): TreeLike[B] = implicitly[TreeBuilder[B]].buildTree(this, node)
   /**
     * Iterate on the values of this tree
     *
@@ -259,6 +256,15 @@ trait TreeLike[+A] extends Node[A] {
 
 }
 
+trait TreeBuilder[A] {
+  def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A]
+}
+
+trait LeafBuilder[A] {
+  def buildLeaf(a: A): Node[A]
+}
+
+
 /**
   * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
   */
@@ -342,7 +348,7 @@ case class Leaf[+A](value: A) extends AbstractLeaf[A](value) {
     *
     * @return an appropriate String
     */
-  def render: String = s"${value}"
+  def render: String = s"$value"
 }
 
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
@@ -480,10 +486,10 @@ object Node {
 
 object TreeLike {
   // TODO we want the key value to implement ordering, not the value itself
-  def populateOrderedTree[A: Ordering](values: Seq[A])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
+  def populateOrderedTree[A: Ordering : TreeBuilder : LeafBuilder](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
-        var result: TreeLike[A] = treeBuilder(leafBuilder(h), Empty)
+        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(implicitly[LeafBuilder[A]].buildLeaf(h), Empty)
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -491,10 +497,10 @@ object TreeLike {
     }
   }
 
-  def populateGeneralTree[A](values: Seq[A])(implicit treeBuilder: TreeBuilder[A], leafBuilder: LeafBuilder[A]): TreeLike[A] = {
+  def populateGeneralTree[A : TreeBuilder : LeafBuilder](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
-        var result: TreeLike[A] = treeBuilder(leafBuilder(h), Empty)
+        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(implicitly[LeafBuilder[A]].buildLeaf(h), Empty)
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -528,40 +534,53 @@ object TreeLike {
 }
 
 object GeneralTree {
-  implicit def treeBuilder[A](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
-    case GeneralTree(v, ns) => GeneralTree(v, ns :+ n2)
-    case Leaf(a) => GeneralTree(a, Seq(n2))
-    case _ => throw TreeException(s"not implemented: $n1")
+  trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
+    def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
+      case GeneralTree(v, ns) => GeneralTree(v, ns :+ n2)
+      case Leaf(a) => GeneralTree(a, Seq(n2))
+      case _ => throw TreeException(s"not implemented: $n1")
+    }
   }
+  implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int]
 
-  implicit def leafBuilder[A](a: A): Node[A] = Leaf(a)
+  trait GeneralLeafBuilder[A] extends LeafBuilder[A] {
+    def buildLeaf(a: A): Node[A] = Leaf(a)
+  }
+  implicit object GeneralLeafBuilderInt extends GeneralLeafBuilder[Int]
 }
 
 object UnvaluedBinaryTree {
-  // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
-  implicit def treeBuilder[A: Ordering](n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
-    case UnvaluedBinaryTree(l, r) =>
-      val pair =
-        if (AbstractBinaryTree.isOverlap(n2, l))
-          (treeBuilder(l, n2), r) // type 1
-        else if (AbstractBinaryTree.isOverlap(n2, r))
-          (l, treeBuilder(r, n2)) // type 2
-        else {
-          if (AbstractBinaryTree.isOrdered(l, n2))
-            if (AbstractBinaryTree.isOrdered(n2, r))
-              (UnvaluedBinaryTree(l, n2), r) // type 3
+  abstract class UnvaluedBinaryTreeBuilder[A : Ordering] extends TreeBuilder[A] {
+    def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
+      case UnvaluedBinaryTree(l, r) =>
+        val pair =
+          if (AbstractBinaryTree.isOverlap(n2, l))
+            (buildTree(l, n2), r) // type 1
+          else if (AbstractBinaryTree.isOverlap(n2, r))
+            (l, buildTree(r, n2)) // type 2
+          else {
+            if (AbstractBinaryTree.isOrdered(l, n2))
+              if (AbstractBinaryTree.isOrdered(n2, r))
+                (UnvaluedBinaryTree(l, n2), r) // type 3
+              else
+                (n1, n2) // type 4
             else
-              (n1, n2) // type 4
-          else
-            (n2, n1) // type 5
-        }
-      apply(pair._1, pair._2)
-    case Leaf(a) => treeBuilder(UnvaluedBinaryTree(a, Empty), n2)
-    case Empty => treeBuilder(n2, Empty) // TODO check this is OK
-    case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+              (n2, n1) // type 5
+          }
+        apply(pair._1, pair._2)
+      case l @ Leaf(_) => buildTree(UnvaluedBinaryTree(l, Empty), n2)
+      case Empty => buildTree(n2, Empty) // TODO check this is OK
+      case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+    }
   }
+  implicit object UnvaluedBinaryTreeBuilderInt extends UnvaluedBinaryTreeBuilder[Int]
+  implicit object UnvaluedBinaryTreeBuilderString extends UnvaluedBinaryTreeBuilder[String]
 
-  implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
+  trait UnvaluedBinaryLeafBuilder[A] extends LeafBuilder[A] {
+    def buildLeaf(a: A): Node[A] = Leaf(a)
+  }
+  implicit object UnvaluedBinaryLeafBuilderInt extends UnvaluedBinaryLeafBuilder[Int]
+  implicit object UnvaluedBinaryLeafBuilderString extends UnvaluedBinaryLeafBuilder[String]
 }
 
 object BinaryTree {
@@ -601,7 +620,7 @@ object AbstractBinaryTree {
     * @tparam A the underlying node type
     * @return true if node a compares as less than node b
     */
-  def isOrdered[A: Ordering](a: Node[A], b: Node[A]): Boolean = isOrdered(compare(a, b)).asBoolean(false)
+  def isOrdered[A: Ordering](a: Node[A], b: Node[A]): Boolean = isOrdered(compare(a, b)).toBoolean(false)
 
   /**
     * Given a sequence of comparison values, determine if the result is true, false or maybe.
