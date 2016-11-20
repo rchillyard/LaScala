@@ -40,15 +40,41 @@ object AccountRecord {
   }
   implicit object HasKeyAccountRecord extends HasKeyAccountRecord
 
+
 }
 
 object AccountDate {
   def parse(y: String, m: String, d: String): Try[AccountDate] = FP.map3(Try(y.toInt), Try(m.toInt), Try(d.toInt))(apply)
 }
+
+//object DatePredicates {
+//  val lt: Int=>Boolean = {_<0}
+//  val eq: Int=>Boolean = {_==0}
+//  def compareNodeAttribute[K,V,X : Ordering](g: V=>X)(f: Int=>Boolean)(d: X)(n: Node[Value[K,V]]): Boolean = n.get match {
+//    case Some(Value(v)) => f(implicitly[Ordering[X]].compare(g(v),d))
+//    case _ => false
+//  }
+//
+//  val onDate = compareWithDate(eq) _
+//  val beforeDate = compareWithDate(lt) _
+//
+//}
 /**
   * Created by scalaprof on 10/19/16.
   */
 class RecursiveSpec extends FlatSpec with Matchers {
+  
+  type NodeType = Value[String,AccountRecord]
+
+  object NodeType {
+    abstract class HasKeyNodeValue extends HasKey[NodeType] {
+      def getKey(v: NodeType): String = v.key
+
+      type K = String
+    }
+    implicit object HasKeyNodeValue extends HasKeyNodeValue
+
+  }
 
   behavior of "Recursive account lookup"
   it should "work" in {
@@ -61,39 +87,40 @@ class RecursiveSpec extends FlatSpec with Matchers {
 
     // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
     val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
-
     aso match {
       case Some(as) =>
-        println(as.take(20))
         import AccountRecord._
         import GeneralTree._
-        implicit object GeneralTreeBuilderValue extends GeneralTreeBuilder[Value[String,AccountRecord]]
-        implicit object GeneralLeafBuilderValue extends GeneralLeafBuilder[Value[String,AccountRecord]]
+        implicit object GeneralTreeBuilderValue extends GeneralTreeBuilder[NodeType]
+        implicit object GeneralLeafBuilderValue extends GeneralLeafBuilder[NodeType]
 
         val tree = KVTree.populateGeneralTree (as map Value[String, AccountRecord])
         tree.size shouldBe 100
+//        tree.depth shouldBe 2
         val ns = tree.nodeIterator(true)
         println(ns.toList)
         val lt: Int=>Boolean = {_<0}
         val eq: Int=>Boolean = {_==0}
-        def compareWithDate(n: Node[Value[String,AccountRecord]])(d: AccountDate)(f: Int=>Boolean): Boolean = n.get match {
+        def compareWithDate(f: Int=>Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
           case Some(Value(v)) => f(v.date.compare(d))
           case _ => false
         }
-        val on20140930: Node[Value[String,AccountRecord]]=>Boolean = compareWithDate(_)(AccountDate(2014, 9, 30))(eq)
-        val before20140930: Node[Value[String,AccountRecord]]=>Boolean = compareWithDate(_)(AccountDate(2014, 9, 30))(lt)
-        tree.find(on20140930) should matchPattern { case Some(n) => }
-        val before = tree.filter(before20140930)
-        before.size shouldBe 52
+
+        val onDate = compareWithDate(eq) _
+        val beforeDate = compareWithDate(lt) _
+        tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(n) => }
+        tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
 
         // TODO recreate this test
-//        val indexedTree = KVTree.createIndexedTree(tree)
-//        indexedTree.nodeIterator(true).size shouldBe 100
-//        val mptt = MPTT (indexedTree).asInstanceOf[IndexedNode[String,AccountRecord]] )
-//        mptt.index.size shouldBe 177
-//        println (mptt)
+        val indexedTree = KVTree.createIndexedTree(tree)
+        indexedTree.nodeIterator(true).size shouldBe 100
+        import NodeType._
+        val mptt = MPTT (indexedTree)
+        mptt.index.size shouldBe 34
+        println (mptt)
 
       case None => System.err.println("unable to yield a complete hierarchy")
     }
   }
 }
+

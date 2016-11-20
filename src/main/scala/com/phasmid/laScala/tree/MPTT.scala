@@ -43,19 +43,33 @@ case class MPTTEntry[K, T : HasKey](k: K, t: T)(val pre: Long, val post: Long) {
 }
 
 object MPTT {
-  def apply[K, T : HasKey](x: IndexedNode[T]): MPTT[K,T] = {
-    val hashMap = new mutable.HashMap[T,MPTTEntry[K,T]]()
-    def f(node: Node[T]): Option[MPTTEntry[K,T]] = node match {
-        // TODO recreate these lines....
-//      case IndexedLeaf(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(v.key,v.value)(l,r)
+//  def apply[K, T : HasKey](x: IndexedNode[T]): MPTT[K,T] = {
+//    val hashMap = new mutable.HashMap[T,MPTTEntry[K,T]]()
+//    def f(node: Node[T]): Option[MPTTEntry[K,T]] = node match {
+//      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(v.key,v)(l,r)
 //      case EmptyWithIndex => None
 //      case IndexedNode(n,l,r) => n.get match {
 //        case Some(z) => Some(MPTTEntry.apply(z)(l,r))
 //        case _ => None
 //      }
+//      case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
+//    }
+//    def g(mptt: MPTT[K,T], e: Option[MPTTEntry[K,T]]): MPTT[K,T] = e match { case Some(me) => MPTT[K,T](mptt.index + (me.key->me)); case None => mptt }
+//    Parent.traverse[Node[T], Option[MPTTEntry[K,T]], MPTT[K,T]](f, g)(List(x), MPTT[K,T](Map[K, MPTTEntry[K,T]]()))
+//  }
+  def apply[K, V : HasKey](x: IndexedNode[Value[K,V]]): MPTT[K,V] = {
+    val hashMap = new mutable.HashMap[K,MPTTEntry[K,V]]()
+    def f(node: Node[Value[K,V]]): Option[MPTTEntry[K,V]] = node match {
+      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply[K,V](v.key,v.value)(l,r)
+      case EmptyWithIndex => None
+      case EmptyWithKeyAndIndex() => None
+      case IndexedNode(n,l,r) => n.get match {
+        case Some(v) => Some(MPTTEntry.apply[K,V](v.key,v.value)(l,r))
+        case _ => None
+      }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
     }
-    def g(mptt: MPTT[K,T], e: Option[MPTTEntry[K,T]]): MPTT[K,T] = e match { case Some(me) => MPTT[K,T](mptt.index + (me.key->me)); case None => mptt }
-    Parent.traverse[Node[T], Option[MPTTEntry[K,T]], MPTT[K,T]](f, g)(List(x), MPTT[K,T](Map[K, MPTTEntry[K,T]]()))
+    def g(mptt: MPTT[K,V], e: Option[MPTTEntry[K,V]]): MPTT[K,V] = e match { case Some(me) => MPTT[K,V](mptt.index + (me.key->me)); case None => mptt }
+    Parent.traverse[Node[Value[K,V]], Option[MPTTEntry[K,V]], MPTT[K,V]](f, g)(List(x), MPTT[K,V](Map[K, MPTTEntry[K,V]]()))
   }
 }

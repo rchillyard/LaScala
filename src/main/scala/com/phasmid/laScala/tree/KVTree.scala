@@ -63,6 +63,17 @@ trait WithKey[K] {
   def key: K
 }
 
+trait IndexedNodeWithKey[K,V] extends IndexedNode[Value[K,V]] with WithKey[K]
+
+case class MutableGenericIndexedTreeWithKey[K,V](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[Value[K,V]], var children: Seq[Node[Value[K,V]]]) extends Branch[Value[K,V]] with IndexedNode[Value[K,V]] with WithKey[K] with IndexedNodeWithKey[K,V] {
+  def get = value
+
+  def key: K = value match {
+    case Some(v) => v.key
+    case None => throw TreeException(s"logic error: this type of tree must have value in all nodes")
+  }
+}
+
 /**
   * Class to represent a value which is potentially at a node in a tree.
   *
@@ -104,13 +115,34 @@ object KVTree {
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */
-  def createIndexedTree[K,V](node: Node[Value[K,V]], index: Int = 0): Node[Value[K,V]] with TreeIndex = node match {
-    case Leaf(x) => IndexedLeaf[Value[K,V]](Some(index), Some(index + 1), x)
+  def createIndexedTree[K,V](node: Node[Value[K,V]], index: Int = 0): IndexedNodeWithKey[K,V] = node match {
+      // CONSIDER refactoring to avoid two asInstanceOf
+    case Leaf(x) => IndexedLeafWithKey[K,V](Some(index), Some(index + 1), x)
     case UnvaluedBinaryTree(l, r) =>
       val rIndex = index + 1 + l.size + r.size
-      MutableGenericIndexedTree(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size)))
-    case Empty => EmptyWithIndex
+      // XXX This is not tail-recursive
+      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size))).asInstanceOf[IndexedNodeWithKey[K,V]]
+    case GeneralTree(v, children) =>
+      // TODO do this without using a mutable state
+      var lIndex = index
+      val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
+      val rIndex = lIndex
+      // XXX This is not tail-recursive
+      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
+    case Empty => EmptyWithKeyAndIndex[K,V]()
+    case EmptyWithIndex => EmptyWithKeyAndIndex[K,V]()
     case _ => throw TreeException(s"can't created IndexedTree from $node")
   }
+}
 
+case class IndexedLeafWithKey[K,V](lIndex: Option[Long], rIndex: Option[Long], value: Value[K,V]) extends AbstractLeaf[Value[K,V]](value) with IndexedNodeWithKey[K,V] {
+  override def depth: Int = 1
+  def render = s"""$value [$lIndex:$rIndex]"""
+  override def toString = s"""L("$value")"""
+  def key: K = value.key
+}
+case class EmptyWithKeyAndIndex[K,V]() extends AbstractEmpty with IndexedNodeWithKey[K,V] {
+  def lIndex: Option[Long] = None
+  def rIndex: Option[Long] = None
+  def key: K = null.asInstanceOf[K]
 }

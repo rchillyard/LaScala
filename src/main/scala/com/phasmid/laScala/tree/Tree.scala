@@ -267,8 +267,9 @@ trait LeafBuilder[A] {
 
 /**
   * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
+  * CONSIDER Restore sealed?
   */
-sealed trait TreeIndex {
+trait TreeIndex {
   /**
     * the left index (the number of other nodes to the "left" of this one
     *
@@ -287,9 +288,11 @@ sealed trait TreeIndex {
 /**
   * A branch of a tree
   *
+  * CONSIDER restoring sealed
+  *
   * @tparam A the underlying type of this Branch
   */
-sealed trait Branch[+A] extends TreeLike[A] {
+trait Branch[+A] extends TreeLike[A] {
 
   /**
     * Iterate on the nodes of this branch
