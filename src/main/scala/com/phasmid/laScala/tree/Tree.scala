@@ -10,7 +10,7 @@ import scala.language.implicitConversions
   *
   * @tparam A the underlying type of the tree/node
   */
-sealed trait Node[+A] {
+sealed trait Node[+A] extends Renderable {
 
   /**
     * @return the value of this node, if any
@@ -51,13 +51,6 @@ sealed trait Node[+A] {
   def depth: Int
 
   /**
-    * Create a String which represents this Node and its subtree (if any)
-    *
-    * @return an appropriate String
-    */
-  def render: String
-
-  /**
     * Method to determine if this Node includes the given node in its subtree (if any)
     *
     * @param node the node to be searched for
@@ -65,7 +58,6 @@ sealed trait Node[+A] {
     * @return true if node n is found in the sub-tree defined by this
     */
   def includes[B >: A](node: Node[B]): Boolean
-
 }
 
 /**
@@ -256,6 +248,15 @@ trait TreeLike[+A] extends Node[A] {
 
 }
 
+trait Renderable {
+  /**
+    * Create a String which represents this Renderable object in a manner that is convenient for showing a whole tree.
+    *
+    * @return an appropriate String
+    */
+  def render(indent: Int = 0): String
+}
+
 trait TreeBuilder[A] {
   def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A]
 }
@@ -312,9 +313,24 @@ trait Branch[+A] extends TreeLike[A] {
   /**
     * Create a String which represents this Node and its subtree
     *
+    * XXX not tail-recursive.
+    * TODO make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
     * @return an appropriate String
     */
-  def render: String = iterator(true).mkString(", ")
+  def render(indent: Int): String = {
+    val result = new StringBuilder
+    val nodeVal = get match {
+      case Some(a: Renderable) => a.render(indent)
+      case Some(a) => s"${Renderable.prefix(indent)}$a"
+      case _ => ""
+    }
+    result.append(s"$nodeVal\n")
+    val expansion = for (x <- children) yield x.render(indent+1)
+    result.append(expansion mkString "\n")
+    result.toString
+  }
+//  iterator(true).mkString(", ")
+
 //  renderRecursive[A]((ns, n) => n
 //  match {
 //    case Branch(x) => x ++ ns
@@ -351,7 +367,8 @@ case class Leaf[+A](value: A) extends AbstractLeaf[A](value) {
     *
     * @return an appropriate String
     */
-  def render: String = s"$value"
+  def render(indent: Int): String = if (value.isInstanceOf[Renderable]) value.asInstanceOf[Renderable].render(indent)
+  else s"${Renderable.prefix(indent)}$value"
 }
 
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
@@ -394,7 +411,8 @@ case object Empty extends AbstractEmpty
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
   override def depth: Int = 1
 
-  def render = s"""$value [$lIndex:$rIndex]"""
+  def render(indent: Int) = if (value.isInstanceOf[Renderable]) value.asInstanceOf[Renderable].render(indent)
+  else s"""${Renderable.prefix((indent))}$value [$lIndex:$rIndex]"""
 
   override def toString = s"""L("$value")"""
 }
@@ -440,7 +458,7 @@ abstract class AbstractEmpty extends TreeLike[Nothing] {
     *
     * @return an appropriate String
     */
-  def render = "ø"
+  def render(indent: Int) = s"${Renderable.prefix(indent)}ø"
 
 }
 
@@ -460,9 +478,13 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 
   def get: Option[Nothing] = None
 
-  def render: String = x
+  def render(indent: Int): String = x
 
   def depth: Int = 0
+}
+
+object Renderable {
+  def prefix(indent: Int) = "  "*indent
 }
 
 object Leaf

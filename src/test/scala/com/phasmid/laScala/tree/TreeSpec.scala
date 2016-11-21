@@ -10,6 +10,15 @@ import scala.io.Source
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends FlatSpec with Matchers {
+  behavior of "render"
+  it should "work for leaf" in {
+    Leaf(42).render(0) shouldBe "42"
+    Leaf(42).render(1) shouldBe "  42"
+  }
+  it should "work for GeneralTree" in {
+    val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
+    tree.render(0) shouldBe "0\n  1\n  2\n  3"
+  }
   behavior of "compare"
   it should "work for simple values" in {
     compare(1, 2) shouldBe -1
@@ -263,7 +272,8 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.includes(1) shouldBe true
     tree.depth shouldBe 3
-    tree.render shouldBe "1, 3, 5, 6"
+    val x = tree.render()
+    tree.render() shouldBe "\n\n    1\n    3\n\n    5\n    6"
   }
   val flatLandTree = "a{{about}above{{actually}ago{{alas}all{{and}another{{anything}appear{{are}as{{at}back{{be}because{{become}becoming{{been}below{{bringing}but{{by}call{{can}ceased{{circle}clearer{{condition}contrary{{correct}could{{country}countrymen{{dare}demonstrate{{described}distinguish{{down}drawing{{edge}edges{{exactly}except{{eye}far{{few}figure{{figures}find{{fixed}flatland{{flatlander}freely{{from}gradually{{happy}hard{{has}have{{hexagons}higher{{i}imagine{{impossible}in{{inhabitants}instead{{into}is{{it}its{{kind}last{{leaning}least{{like}line{{lines}live{{look}lower{{luminous}make{{middle}mind{{more}move{{moving}much{{my}nature{{necessity}nor{{not}nothing{{notion}now{{of}on{{once}one{{only}opened{{or}other{{our}oval{{over}p{{paper}penny{{pentagons}perceive{{place}placed{{places}power{{pretty}privileged{{readers}remaining{{rising}said{{say}see{{shadows}sheet{{should}sight{{sinking}so{{solid}space{{speedily}squares{{straight}such{{suppose}surface{{table}tables{{that}the{{their}them{{then}there{{things}this{{thus}to{{triangles}universe{{upon}us{{vast}very{{view}views{{visible}was{{we}were{{what}when{{which}who{{will}with{{without}world{{years}you{{your}yourself}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"
 }

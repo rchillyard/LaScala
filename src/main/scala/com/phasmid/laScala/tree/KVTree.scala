@@ -84,10 +84,14 @@ case class MutableGenericIndexedTreeWithKey[K,V](var lIndex: Option[Long], var r
   * @tparam K the type of the key
   * @tparam V the type of the value
   */
-case class Value[K, +V : HasKey](value: V) extends WithKey[K] {
+case class Value[K, +V : HasKey](value: V) extends WithKey[K] with Renderable {
   // NOTE we are explicitly casting the result of method key(value), which has type HasKey#K (that's to say
   // a parametric type defined by implementations of HasKey), to K which is declared independently for this Value type.
   def key: K = implicitly[HasKey[V]].getKey(value).asInstanceOf[K]
+
+  def render(indent: Int): String = s"${Renderable.prefix(indent)}${key}..."
+
+  override def toString = s"$key->$value"
 }
 
 object KVTree {
@@ -137,7 +141,7 @@ object KVTree {
 
 case class IndexedLeafWithKey[K,V](lIndex: Option[Long], rIndex: Option[Long], value: Value[K,V]) extends AbstractLeaf[Value[K,V]](value) with IndexedNodeWithKey[K,V] {
   override def depth: Int = 1
-  def render = s"""$value [$lIndex:$rIndex]"""
+  def render(indent: Int) = value.render(indent)
   override def toString = s"""L("$value")"""
   def key: K = value.key
 }
