@@ -1,7 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.{FP, HasKey}
+import com.phasmid.laScala.fp.{FP, HasKey, Spy}
 import com.phasmid.laScala._
 
 import scala.language.implicitConversions
@@ -61,16 +61,19 @@ sealed trait KVTree[K,+V] extends Branch[Value[K,V]] {
     Kleenean(map2(xo,yo)(_ == _))
   }
 
-  def attachNode[W >: V](tree: TreeLike[Value[K, W]], value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[TreeLike[Value[K, W]]] = {
+  def attachNode[W >: V](value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[KVTree[K, W]] = {
     val parentKey = implicitly[HasParent[K, Value[K, W]]].getParent(value)
-    val po = tree.find{n: Node[Value[K, W]] => n.get match {
+    val po = find{n: Node[Value[K, W]] => n.get match {
       case Some(v) => parentKey == v.key
       case None => false
     }}
+    Spy.spying = true
     val pt0 = FP.optionToTry(po)
-    val pt1 = pt0.recoverWith{case x => Try(leafBuilder.buildLeaf(valueBuilder.buildValue(parentKey)))}
+    val pt1 = pt0.recoverWith{case x =>
+      // FIXME here we need to join p to the tree, with root as parent if none found
+      for (p <- Try(leafBuilder.buildLeaf(valueBuilder.buildValue(parentKey)))) yield p}
     pt1 match {
-      case Success(p) => Success(asTree(p) :+ leafBuilder.buildLeaf(value))
+      case Success(p) => Success(Spy.spy("attached",(asTree(p) :+ leafBuilder.buildLeaf(value)).asInstanceOf[KVTree[K,V]]))
       case Failure(x) => Failure(TreeException(s"unable to find or create parent $parentKey in order to attach node for $value: ${x.getLocalizedMessage}"))
     }
   }
