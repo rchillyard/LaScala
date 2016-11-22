@@ -40,8 +40,6 @@ object AccountRecord {
     def getKey(x: AccountRecord): K = x.account
   }
   implicit object HasKeyAccountRecord extends HasKeyAccountRecord
-
-
 }
 
 object AccountDate {
@@ -64,8 +62,11 @@ object AccountDate {
   * Created by scalaprof on 10/19/16.
   */
 class RecursiveSpec extends FlatSpec with Matchers {
+
+
   
   type NodeType = Value[String,AccountRecord]
+
 
   behavior of "Recursive account lookup"
   it should "work" in {
@@ -81,12 +82,18 @@ class RecursiveSpec extends FlatSpec with Matchers {
     aso match {
       case Some(as) =>
         import AccountRecord._
-        import GeneralTree._
-        implicit object GeneralTreeBuilderValue extends GeneralTreeBuilder[NodeType]
-        implicit object GeneralLeafBuilderValue extends GeneralLeafBuilder[NodeType]
+        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
+        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[String,AccountRecord]
+        implicit object NodeTypeParent extends HasParent[String,NodeType] {
+         def getParent(t: NodeType): String = t.value.parent
+        }
+        implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
+          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,null,null))
+        }
 
-        val tree = KVTree.populateGeneralTree (as map Value[String, AccountRecord])
-        tree.size shouldBe 100
+        val tree = ParentChildTree.populateParentChildTree(as map Value[String, AccountRecord])
+        println(tree)
+//        tree.size shouldBe 100
         println(tree.render())
 //        tree.depth shouldBe 2
         val ns = tree.nodeIterator(true)
@@ -114,3 +121,36 @@ class RecursiveSpec extends FlatSpec with Matchers {
   }
 }
 
+object RecursiveSpec {
+  object NodeType {
+    abstract class HasParentNodeType extends HasParent[String,Value[String,AccountRecord]] {
+      def getParent(v: Value[String,AccountRecord]): String = v.value.parent
+    }
+    implicit object HasParentNodeType extends HasParentNodeType
+  }
+}
+
+object ParentChildTree {
+  /**
+    * This implementation of populateGeneralKVTree takes a sequence of Values, each of which specifies the parent as well as the attributes.
+    *
+    * @param values
+    * @param treeBuilder
+    * @param leafBuilder
+    * @tparam V
+    * @return
+    */
+  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev: HasParent[String,Value[String,V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String,V]): TreeLike[Value[String, V]] =
+  values match {
+    case h :: t =>
+      // TODO let's do this as a proper tail-recursion without using a var!
+      var tree: KVTree[String,V] = implicitly[TreeBuilder[Value[String, V]]].buildTree(implicitly[LeafBuilder[Value[String, V]]].buildLeaf(h), Empty).asInstanceOf[KVTree[String,V]]
+      for (w <- t) {
+        tree.attachNode(tree, w) match {
+          case Success(x) => tree = x.asInstanceOf[KVTree[String, V]]
+          case Failure(x) => throw x
+        }
+      }
+      tree
+  }
+}

@@ -257,14 +257,22 @@ trait Renderable {
   def render(indent: Int = 0): String
 }
 
+/**
+  * Trait to define a method for building a tree from a Node.
+  * TODO change the second parameter to an Option[Node[A]
+  * @tparam A the underlying type of the Node(s) and Tree
+  */
 trait TreeBuilder[A] {
   def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A]
 }
 
+/**
+  * Trait to define a method for building a leaf from a value.
+  * @tparam A the underlying type of the resulting Node
+  */
 trait LeafBuilder[A] {
   def buildLeaf(a: A): Node[A]
 }
-
 
 /**
   * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
@@ -340,6 +348,22 @@ trait Branch[+A] extends TreeLike[A] {
 }
 
 trait IndexedNode[A] extends Node[A] with TreeIndex
+
+/**
+  * This trait is used for a type class that enables a T value to yield a K value that relates to the parent of the node containing the value.
+  * This is typically used when building a tree from a list of parent-child relationships.
+  *
+  * @tparam K
+  * @tparam T
+  */
+trait HasParent[K,T] {
+  /**
+    * Get the key for the parent of the node containing t as its value
+    * @param t the value
+    * @return the parent key
+    */
+  def getParent(t: T): K
+}
 
 /**
   * A general branch of a tree, where there is a value at the node itself and the number of children is unbounded
@@ -559,6 +583,7 @@ object TreeLike {
 }
 
 object GeneralTree {
+  // CONSIDER moving these traits up
   trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
     def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
       case GeneralTree(v, ns) => GeneralTree(v, ns :+ n2)

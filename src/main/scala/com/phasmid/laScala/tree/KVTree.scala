@@ -1,10 +1,11 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.HasKey
+import com.phasmid.laScala.fp.{FP, HasKey}
 import com.phasmid.laScala._
 
 import scala.language.implicitConversions
+import scala.util.{Failure, Success, Try}
 
 /**
   * Trait which models the tree-like aspects of a tree
@@ -12,9 +13,19 @@ import scala.language.implicitConversions
   * @tparam K the underlying type of the tree/node keys
   * @tparam V the underlying type of the tree/node values
   */
-sealed trait KVTree[K,+V] extends TreeLike[Value[K,V]] {
+sealed trait KVTree[K,+V] extends Branch[Value[K,V]] {
 
-//  /**
+  //  iterator(true).mkString(", ")
+
+  //  renderRecursive[A]((ns, n) => n
+  //  match {
+  //    case Branch(x) => x ++ ns
+  //    case _ => ns
+  //  })
+
+
+
+  //  /**
 //    * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
 //    *
 //    * @param value       the value to add
@@ -49,6 +60,26 @@ sealed trait KVTree[K,+V] extends TreeLike[Value[K,V]] {
     val yo = n.get map {case v @ Value(_) => v.key}
     Kleenean(map2(xo,yo)(_ == _))
   }
+
+  def attachNode[W >: V](tree: TreeLike[Value[K, W]], value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[TreeLike[Value[K, W]]] = {
+    val parentKey = implicitly[HasParent[K, Value[K, W]]].getParent(value)
+    val po = tree.find{n: Node[Value[K, W]] => n.get match {
+      case Some(v) => parentKey == v.key
+      case None => false
+    }}
+    val pt0 = FP.optionToTry(po)
+    val pt1 = pt0.recoverWith{case x => Try(leafBuilder.buildLeaf(valueBuilder.buildValue(parentKey)))}
+    pt1 match {
+      case Success(p) => Success(asTree(p) :+ leafBuilder.buildLeaf(value))
+      case Failure(x) => Failure(TreeException(s"unable to find or create parent $parentKey in order to attach node for $value: ${x.getLocalizedMessage}"))
+    }
+  }
+
+    def asTree[W >: V](n: Node[Value[K,W]])(implicit treeBuilder: TreeBuilder[Value[K, W]]): KVTree[K, W] = n match {
+      case t: KVTree[K,W] => t
+      case _ => treeBuilder.buildTree(n,Empty).asInstanceOf[KVTree[K,W]]
+    }
+
 }
 
 /**
@@ -64,6 +95,35 @@ trait WithKey[K] {
 }
 
 trait IndexedNodeWithKey[K,V] extends IndexedNode[Value[K,V]] with WithKey[K]
+
+trait ValueBuilder[K,V] {
+  /**
+    * Build a Value from just the key. The value attributes will be nulls.
+    *
+    * CONSIDER having the attributes be Option values (but that will require quite a bit of work at this point)
+    *
+    * @param k the key component of the value alone
+    * @return an appropriate Value
+    */
+  def buildValue(k: K): Value[K,V]
+}
+/**
+  * A general branch of a KV-tree, where there is a value at the node itself and the number of children is unbounded.
+  * Parallel to GeneralTree
+  *
+  * @param value    the value of the branch
+  * @param children the children of this Node
+  * @tparam K the underlying key type of this GeneralTree
+  * @tparam V the underlying value type of this GeneralTree
+  */
+case class GeneralKVTree[K,V](value: Value[K,V], children: Seq[Node[Value[K,V]]]) extends KVTree[K,V] {
+  /**
+    * @return Some(value)
+    */
+  def get = Some(value)
+}
+
+
 
 case class MutableGenericIndexedTreeWithKey[K,V](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[Value[K,V]], var children: Seq[Node[Value[K,V]]]) extends Branch[Value[K,V]] with IndexedNode[Value[K,V]] with WithKey[K] with IndexedNodeWithKey[K,V] {
   def get = value
@@ -95,14 +155,24 @@ case class Value[K, +V : HasKey](value: V) extends WithKey[K] with Renderable {
 }
 
 object KVTree {
-  def populateGeneralTree[K,V](values: Seq[Value[K,V]])(implicit treeBuilder: TreeBuilder[Value[K,V]], leafBuilder: LeafBuilder[Value[K,V]]): TreeLike[Value[K,V]] = {
+  /**
+    * This implementation of populateGeneralKVTree takes a sequence of Values.
+    *
+    * @param values
+    * @param treeBuilder
+    * @param leafBuilder
+    * @tparam K
+    * @tparam V
+    * @return
+    */
+  def populateGeneralKVTree[K,V](values: Seq[Value[K,V]])(implicit treeBuilder: TreeBuilder[Value[K,V]], leafBuilder: LeafBuilder[Value[K,V]]): KVTree[K,V] = {
     values match {
       case h :: t =>
-        var result: TreeLike[Value[K,V]] = implicitly[TreeBuilder[Value[K,V]]].buildTree(implicitly[LeafBuilder[Value[K,V]]].buildLeaf(h), Empty)
+        var tree: KVTree[K,V] = implicitly[TreeBuilder[Value[K,V]]].buildTree(implicitly[LeafBuilder[Value[K,V]]].buildLeaf(h), Empty).asInstanceOf[KVTree[K,V]]
         for (w <- t) {
-          result = result :+ Leaf(w)
+          tree = (tree :+ Leaf(w)).asInstanceOf[KVTree[K,V]]
         }
-        result
+        tree
     }
   }
 
@@ -138,6 +208,19 @@ object KVTree {
     case _ => throw TreeException(s"can't created IndexedTree from $node")
   }
 }
+
+trait GeneralKVTreeBuilder[K,V] extends TreeBuilder[Value[K,V]] {
+  def buildTree(n1: Node[Value[K,V]], n2: Node[Value[K,V]]): TreeLike[Value[K,V]] = n1 match {
+    case GeneralKVTree(v, ns) => GeneralKVTree(v, ns :+ n2)
+    case Leaf(a) => GeneralKVTree(a, Seq(n2))
+    case _ => throw TreeException(s"not implemented: $n1")
+  }
+}
+trait GeneralKVLeafBuilder[K,V] extends LeafBuilder[Value[K,V]] {
+  def buildLeaf(a: Value[K,V]): Node[Value[K,V]] = Leaf(a)
+}
+
+object GeneralKVTree
 
 case class IndexedLeafWithKey[K,V](lIndex: Option[Long], rIndex: Option[Long], value: Value[K,V]) extends AbstractLeaf[Value[K,V]](value) with IndexedNodeWithKey[K,V] {
   override def depth: Int = 1
