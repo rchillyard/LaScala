@@ -91,6 +91,13 @@ class RecursiveSpec extends FlatSpec with Matchers {
         implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
           def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,null,null))
         }
+        implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
+          // XXX see comment on GeneralNodeParent
+          def isParent(parent: Node[NodeType], child: Node[NodeType]): Boolean = parent match {
+            case Branch(ns) => ns.contains(child)
+            case _ => false
+          }
+        }
 
         ParentChildTree.populateParentChildTree(as map Value[String, AccountRecord]) match {
           case Success(tree) =>
@@ -102,7 +109,8 @@ class RecursiveSpec extends FlatSpec with Matchers {
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
-              case Some(Value(v)) => f(v.date.compare(d))
+              case Some(Value(AccountRecord("root",_,_))) => false
+              case Some(Value(v)) => println(s"compareWithDate: v=$v, d=$d"); f(v.date.compare(d))
               case _ => false
             }
 
@@ -115,9 +123,9 @@ class RecursiveSpec extends FlatSpec with Matchers {
 
             // TODO recreate this test
             val indexedTree = KVTree.createIndexedTree(tree)
-            indexedTree.nodeIterator(true).size shouldBe 100
+            indexedTree.nodeIterator(true).size shouldBe 101
             val mptt = MPTT (indexedTree)
-            mptt.index.size shouldBe 34
+            mptt.index.size shouldBe 35
             println (mptt)
           case Failure(x) => System.err.println(s"exception: ${x.getLocalizedMessage}")
         }
@@ -147,15 +155,15 @@ object ParentChildTree {
     * @tparam V
     * @return
     */
-  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev: HasParent[String, Value[String, V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String, V]): Try[TreeLike[Value[String, V]]] =
+  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev1: HasParent[String, Value[String, V]], ev2: NodeParent[Value[String, V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String, V]): Try[TreeLike[Value[String, V]]] =
   {
     val root = valueBuilder.buildValue("root")
-      val ty = Try(implicitly[TreeBuilder[Value[String, V]]].buildTree(implicitly[LeafBuilder[Value[String, V]]].buildLeaf(root), Empty).asInstanceOf[KVTree[String, V]])
+      val ty = Try(implicitly[TreeBuilder[Value[String, V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[String, V]])
       println(s"initial tree: $ty")
       @tailrec
-      def inner(result: Try[KVTree[String, V]], values: List[Value[String, V]]): Try[KVTree[String, V]] = values match {
+      def inner(result: Try[TreeLike[Value[String, V]]], values: List[Value[String, V]]): Try[TreeLike[Value[String, V]]] = values match {
         case Nil => result
-        case y :: z => println(s"attach $y to tree"); inner(for (t <- result; u <- t.attachNode(y)) yield u, z)
+        case y :: z => println(s"attach $y to tree"); inner(for (t <- result; u = t :+ Some(y)) yield u, z)
       }
       inner(ty, values.toList)
   }

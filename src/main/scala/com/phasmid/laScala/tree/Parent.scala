@@ -34,7 +34,8 @@ object Parent {
     * @return   a value of R.
     */
   final def traverse[P : Parent, S, R](f: P => S, g: (R, S) => R, q: R => Boolean = {x: R => false})(ts: Seq[P], r: R): R = {
-    val h = {(ts: Seq[P], s: P) => implicitly[Parent[P]].children(s).toList ++ ts }
+    // NOTE that p itself does not and MUST not form part of the result of function h
+    val h = {(ps: Seq[P], p: P) => implicitly[Parent[P]].children(p).toList ++ ps }
     Recursion.recurse(f, g, h, q)(ts, r)
   }
 }

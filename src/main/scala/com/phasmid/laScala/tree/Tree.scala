@@ -98,31 +98,31 @@ trait TreeLike[+A] extends Node[A] {
     *
     * NOTE the implementation of this method assumes that the order of the operands is not important.
     *
-    * @param value       the value to add
+    * @param bo the optional value to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A : TreeBuilder : LeafBuilder](value: B): TreeLike[B] = :+(value)
+  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent](bo: Option[B]): TreeLike[B] = :+(bo)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
     *
-    * @param value       the value to add
+    * @param bo the optional value to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A : TreeBuilder : LeafBuilder](value: B): TreeLike[B] = :+(implicitly[LeafBuilder[B]].buildLeaf(value))
+  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent](bo: Option[B]): TreeLike[B] = :+(implicitly[LeafBuilder[B]].buildLeaf(bo))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
     *
     * NOTE the implementation of this method assumes that the order of the operands is not important.
     *
-    * @param node        the node to add
+    * @param node the node to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A : TreeBuilder : LeafBuilder](node: Node[B]): TreeLike[B] = this :+ node
+  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent](node: Node[B]): TreeLike[B] = this :+ node
 
   /**
     * Method to add a node to this tree
@@ -131,7 +131,24 @@ trait TreeLike[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A : TreeBuilder : LeafBuilder](node: Node[B]): TreeLike[B] = implicitly[TreeBuilder[B]].buildTree(this, node)
+  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent](node: Node[B]): TreeLike[B] = {
+    val (x, y: TreeLike[B]) = findParent(node) orElse(Some(this)) match {
+      case Some(n: TreeLike[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
+      case _ => throw TreeException(s"cannot find parent for $node or parent is not of type TreeLike")
+    }
+    // Replace node x with node y where x's value matches y's value
+    // XXX check that the cast following is justified
+    replaceNode(x,y)(_.get==_.get).asInstanceOf[TreeLike[B]]
+  }
+
+  /**
+    * Find a suitable parent for a node to be added to this tree.
+    * @param node the node to be added
+    * @tparam B the underlying type of the node
+    * @return a (optional) node which would be a suitable parent for node
+    */
+  def findParent[B >: A : NodeParent](node: Node[B]): Option[Node[B]] = find(implicitly[NodeParent[B]].isParent(_,node))
+
   /**
     * Iterate on the values of this tree
     *
@@ -214,6 +231,31 @@ trait TreeLike[+A] extends Node[A] {
 
   def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator(true).filter(p)
 
+  /**
+    * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
+    *
+    * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
+    * @param y the node to add
+    * @tparam B the underlying type of the new node (and the resulting tree)
+    * @return the resulting tree
+    */
+  def replaceNode[B >: A : TreeBuilder : LeafBuilder](x: Node[B], y: Node[B])(f: (Node[B],Node[B])=>Boolean): Node[B] = {
+    def replaceChildrenNodes(x: Node[B], y: Node[B])(f: (Node[B],Node[B])=>Boolean)(ns: NodeSeq[B]): NodeSeq[B] =
+      for (n <- ns) yield n match {
+        case t: TreeLike[B] => t.replaceNode(x, y)(f)
+        case _ => n
+      }
+    val treeBuilder = implicitly[TreeBuilder[B]]
+    if (f(this,x)) y
+    else this match {
+     case AbstractBinaryTree(l,r) =>
+       treeBuilder.buildTree(get, replaceChildrenNodes(x, y)(f)(Seq(l, r)))
+     case Branch(ns) => treeBuilder.buildTree(get,ns)
+     case _ => this
+   }
+  }
+
+
   //  /**
   //    * Method to safely cast Node n to a TreeLike object.
   //    * Note: This is not an instance method in that it does not reference this
@@ -248,6 +290,15 @@ trait TreeLike[+A] extends Node[A] {
 
 }
 
+/**
+  * This trait forms the basis for a type class which can determine if one node is the parent of another.
+  *
+  * @tparam A the underlying type of the Nodes
+  */
+trait NodeParent[A] {
+  def isParent(parent: Node[A], child: Node[A]): Boolean
+}
+
 trait Renderable {
   /**
     * Create a String which represents this Renderable object in a manner that is convenient for showing a whole tree.
@@ -259,11 +310,18 @@ trait Renderable {
 
 /**
   * Trait to define a method for building a tree from a Node.
-  * TODO change the second parameter to an Option[Node[A]
+  * CONSIDER change the third parameter to an Option[Node[A]
+  * CONSIDER making this trait covariant in A
   * @tparam A the underlying type of the Node(s) and Tree
   */
 trait TreeBuilder[A] {
-  def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A]
+  /**
+    * Build a new tree, given a value and child nodes
+    * @param maybeValue the (optional) value which the new tree will have at its root
+    * @param children the the children of the node
+    * @return a tree the (optional) value at the root and children as the immediate descendants
+    */
+  def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): TreeLike[A]
 }
 
 /**
@@ -271,7 +329,7 @@ trait TreeBuilder[A] {
   * @tparam A the underlying type of the resulting Node
   */
 trait LeafBuilder[A] {
-  def buildLeaf(a: A): Node[A]
+  def buildLeaf(ao: Option[A]): Node[A]
 }
 
 /**
@@ -302,6 +360,24 @@ trait TreeIndex {
   * @tparam A the underlying type of this Branch
   */
 trait Branch[+A] extends TreeLike[A] {
+
+  //  /**
+//    * Method to add a node to this tree, as the child of a specific parent node
+//    *
+//    * @param node the node to add
+//    * @tparam B the underlying type of the new node (and the resulting tree)
+//    * @return the resulting tree
+//    */
+//  def addNode[B >: A : TreeBuilder : LeafBuilder](parent: Node[B], node: Node[B]): TreeLike[B] = {
+//    val f: (Node[B]) => Node[B] = _ match {
+//      case `parent` => parent.asInstanceOf[TreeLike[B]] :+ node
+//      case n @ _ => n
+//    }
+//
+//    val g: (R_, S_) => R_ = ???
+//
+//    Parent.traverse(f,g)(this,Empty)
+//  }
 
   /**
     * Iterate on the nodes of this branch
@@ -535,10 +611,10 @@ object Node {
 
 object TreeLike {
   // TODO we want the key value to implement ordering, not the value itself
-  def populateOrderedTree[A: Ordering : TreeBuilder : LeafBuilder](values: Seq[A]): TreeLike[A] = {
+  def populateOrderedTree[A: Ordering : TreeBuilder : LeafBuilder : NodeParent](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
-        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(implicitly[LeafBuilder[A]].buildLeaf(h), Empty)
+        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -546,10 +622,10 @@ object TreeLike {
     }
   }
 
-  def populateGeneralTree[A : TreeBuilder : LeafBuilder](values: Seq[A]): TreeLike[A] = {
+  def populateGeneralTree[A : TreeBuilder : LeafBuilder : NodeParent](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
-        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(implicitly[LeafBuilder[A]].buildLeaf(h), Empty)
+        var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -585,22 +661,51 @@ object TreeLike {
 object GeneralTree {
   // CONSIDER moving these traits up
   trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
-    def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
-      case GeneralTree(v, ns) => GeneralTree(v, ns :+ n2)
-      case Leaf(a) => GeneralTree(a, Seq(n2))
-      case _ => throw TreeException(s"not implemented: $n1")
-    }
+    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): TreeLike[A] = GeneralTree(maybeValue.get,children)
   }
   implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int]
+  implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String]
 
   trait GeneralLeafBuilder[A] extends LeafBuilder[A] {
-    def buildLeaf(a: A): Node[A] = Leaf(a)
+    def buildLeaf(ao: Option[A]): Node[A] = (ao map (Leaf(_)) orElse(Some(Empty))).get
   }
   implicit object GeneralLeafBuilderInt extends GeneralLeafBuilder[Int]
+  implicit object GeneralLeafBuilderString extends GeneralLeafBuilder[String]
+
+  // CONSIDER reimplementing this in the more general form of BranchNodeParent
+  trait GeneralNodeParent[A] extends NodeParent[A] {
+    def isParent(parent: Node[A], child: Node[A]): Boolean = parent match {
+      case Branch(ns) => ns.contains(child)
+      case _ => false
+    }
+  }
+  implicit object GeneralNodeParentInt extends GeneralNodeParent[Int]
+  implicit object GeneralNodeParentString extends GeneralNodeParent[String]
 }
 
 object UnvaluedBinaryTree {
   abstract class UnvaluedBinaryTreeBuilder[A : Ordering] extends TreeBuilder[A] {
+    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): TreeLike[A] = {
+      val ns = children filterNot  (_==Empty)
+      ns.size match {
+        case 0 => buildTree(Empty, Empty)
+        case 1 => buildTree(ns.head, Empty)
+        case 2 => buildTree(ns.head, ns.last)
+        case 3 =>
+          println(s"buildTree with value: $maybeValue and children: $children")
+          // If there are more than two children, then the last element needs to be ordered appropriately amongst the first two children
+          val l = ns.head
+          val r = ns(1)
+          val x = ns(2)
+          if (AbstractBinaryTree.isOrdered(AbstractBinaryTree.compare(x, l)).toBoolean(true)) {
+            buildTree(None,Seq(buildTree(l,x),r))
+          }
+          else
+            buildTree(None,Seq(l,buildTree(r,x)))
+        case _ => throw TreeException(s"buildTree with value: $maybeValue and children: $children")
+      }
+    }
+
     def buildTree(n1: Node[A], n2: Node[A]): TreeLike[A] = n1 match {
       case UnvaluedBinaryTree(l, r) =>
         val pair =
@@ -619,7 +724,7 @@ object UnvaluedBinaryTree {
           }
         apply(pair._1, pair._2)
       case l @ Leaf(_) => buildTree(UnvaluedBinaryTree(l, Empty), n2)
-      case Empty => buildTree(n2, Empty) // TODO check this is OK
+      case Empty => UnvaluedBinaryTree(n2, Empty) // TODO check this is OK
       case _ => throw TreeException(s"treeBuilder not implemented for $n1")
     }
   }
@@ -627,10 +732,20 @@ object UnvaluedBinaryTree {
   implicit object UnvaluedBinaryTreeBuilderString extends UnvaluedBinaryTreeBuilder[String]
 
   trait UnvaluedBinaryLeafBuilder[A] extends LeafBuilder[A] {
-    def buildLeaf(a: A): Node[A] = Leaf(a)
+    // CONSIDER improving this (and similar implementations)?
+    def buildLeaf(ao: Option[A]): Node[A] = (ao map (Leaf(_)) orElse(Some(Empty))).get
   }
   implicit object UnvaluedBinaryLeafBuilderInt extends UnvaluedBinaryLeafBuilder[Int]
   implicit object UnvaluedBinaryLeafBuilderString extends UnvaluedBinaryLeafBuilder[String]
+
+  trait UnvaluedBinaryNodeParent[A] extends NodeParent[A] {
+    def isParent(parent: Node[A], child: Node[A]): Boolean = parent match {
+      case Branch(ns) => ns.contains(child)
+      case _ => false
+    }
+  }
+  implicit object UnvaluedBinaryNodeParentInt extends UnvaluedBinaryNodeParent[Int]
+  implicit object UnvaluedBinaryNodeParentString extends UnvaluedBinaryNodeParent[String]
 }
 
 object BinaryTree {
@@ -662,6 +777,9 @@ object BinaryTree {
 }
 
 object AbstractBinaryTree {
+
+  def unapply[A](t: AbstractBinaryTree[A]): Option[(Node[A],Node[A])] = Some((t.children.head,t.children.tail.head))
+
   /**
     * Method to determine if node a compares as less than node b
     *
@@ -701,8 +819,6 @@ object AbstractBinaryTree {
 
   /**
     * Determine whether all of the nodes on the left are ordered before all the nodes on the right
-    *
-    * Note: this is not recursive, as you can see by the lack of a return type
     *
     * @param anL the left-node
     * @param anR the right-node

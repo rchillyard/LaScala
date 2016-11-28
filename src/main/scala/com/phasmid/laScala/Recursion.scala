@@ -47,7 +47,7 @@ object Recursion {
     *
     * @param f  the map function which takes a P and T and produces an S.
     * @param g  the reduce function which accumulates the result (the accumulator is passed as its first parameter and an S value is passed as the second).
-    * @param h  the function which builds the T list from the existing T list and the given T.
+    * @param h  the function which builds the T list from the existing T list and the given T. It is essential that the given T does not go back, as is, into the list!
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
     * @param ts a list of Ts to be worked on.
     * @param r  the current value of the result, i.e. the "accumulator".
@@ -65,7 +65,7 @@ object Recursion {
     *
     * @param f  the map function which takes a P and T and produces an S.
     * @param g  the reduce function which accumulates the result (the accumulator is passed as its first parameter and an S value is passed as the second).
-    * @param h  the function which builds the T list from the existing T list and the given T.
+    * @param h  the function which builds the T list from the existing T list and the given T. It is essential that the given T does not go back, as is, into the list!
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
     * @param ts a list of Ts to be worked on.
     * @param c  a counter which will be incremented on each recursive call to countRecurse
@@ -87,7 +87,7 @@ object Recursion {
     *
     * @param f  the map function which takes a P and T and produces an S.
     * @param g  the reduce function which accumulates the result (the accumulator is passed as its first parameter and an S value is passed as the second).
-    * @param h  the function which builds the T list from the existing T list and the given T.
+    * @param h  the function which builds the T list from the existing T list and the given T. It is essential that the given T does not go back, as is, into the list!
     * @param y  the function which yields the next P from a P
     * @param q  the quick return function which, if q(r) yields true, the method immediately returns r. Defaults to always false.
     * @param ts a sequence of Ts to be worked on.

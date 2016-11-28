@@ -61,26 +61,33 @@ sealed trait KVTree[K,+V] extends Branch[Value[K,V]] {
     Kleenean(map2(xo,yo)(_ == _))
   }
 
-  def attachNode[W >: V](value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[KVTree[K, W]] = {
-    val parentKey = implicitly[HasParent[K, Value[K, W]]].getParent(value)
-    val po = find{n: Node[Value[K, W]] => n.get match {
-      case Some(v) => parentKey == v.key
+  def findByKey[W >: V](k: K): Option[Node[Value[K,W]]] =
+    find{n: Node[Value[K, W]] => n.get match {
+      case Some(v) => k == v.key
       case None => false
-    }}
-    Spy.spying = true
-    val pt0 = FP.optionToTry(po)
-    val pt1 = pt0.recoverWith{case x =>
-      // FIXME here we need to join p to the tree, with root as parent if none found
-      for (p <- Try(leafBuilder.buildLeaf(valueBuilder.buildValue(parentKey)))) yield p}
-    pt1 match {
-      case Success(p) => Success(Spy.spy("attached",(asTree(p) :+ leafBuilder.buildLeaf(value)).asInstanceOf[KVTree[K,V]]))
-      case Failure(x) => Failure(TreeException(s"unable to find or create parent $parentKey in order to attach node for $value: ${x.getLocalizedMessage}"))
     }
   }
 
+//  def attachNode[W >: V](value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[KVTree[K, W]] = {
+//    val parentKey = implicitly[HasParent[K, Value[K, W]]].getParent(value)
+//    val po = find{n: Node[Value[K, W]] => n.get match {
+//      case Some(v) => parentKey == v.key
+//      case None => false
+//    }}
+//    Spy.spying = true
+//    val pt0 = FP.optionToTry(po)
+//    val pt1 = pt0.recoverWith{case x =>
+//      // FIXME here we need to join p to the tree, with root as parent if none found
+//      for (p <- Try(leafBuilder.buildLeaf(Some(valueBuilder.buildValue(parentKey))))) yield p}
+//    pt1 match {
+//      case Success(p) => Success(Spy.spy("attached",(asTree(p) :+ leafBuilder.buildLeaf(value)).asInstanceOf[KVTree[K,V]]))
+//      case Failure(x) => Failure(TreeException(s"unable to find or create parent $parentKey in order to attach node for $value: ${x.getLocalizedMessage}"))
+//    }
+//  }
+
     def asTree[W >: V](n: Node[Value[K,W]])(implicit treeBuilder: TreeBuilder[Value[K, W]]): KVTree[K, W] = n match {
       case t: KVTree[K,W] => t
-      case _ => treeBuilder.buildTree(n,Empty).asInstanceOf[KVTree[K,W]]
+      case _ => treeBuilder.buildTree(n.get,Seq()).asInstanceOf[KVTree[K,W]]
     }
 
 }
@@ -158,26 +165,26 @@ case class Value[K, +V : HasKey](value: V) extends WithKey[K] with Renderable {
 }
 
 object KVTree {
-  /**
-    * This implementation of populateGeneralKVTree takes a sequence of Values.
-    *
-    * @param values
-    * @param treeBuilder
-    * @param leafBuilder
-    * @tparam K
-    * @tparam V
-    * @return
-    */
-  def populateGeneralKVTree[K,V](values: Seq[Value[K,V]])(implicit treeBuilder: TreeBuilder[Value[K,V]], leafBuilder: LeafBuilder[Value[K,V]]): KVTree[K,V] = {
-    values match {
-      case h :: t =>
-        var tree: KVTree[K,V] = implicitly[TreeBuilder[Value[K,V]]].buildTree(implicitly[LeafBuilder[Value[K,V]]].buildLeaf(h), Empty).asInstanceOf[KVTree[K,V]]
-        for (w <- t) {
-          tree = (tree :+ Leaf(w)).asInstanceOf[KVTree[K,V]]
-        }
-        tree
-    }
-  }
+//  /**
+//    * This implementation of populateGeneralKVTree takes a sequence of Values.
+//    *
+//    * @param values
+//    * @param treeBuilder
+//    * @param leafBuilder
+//    * @tparam K
+//    * @tparam V
+//    * @return
+//    */
+//  def populateGeneralKVTree[K,V](values: Seq[Value[K,V]])(implicit treeBuilder: TreeBuilder[Value[K,V]], leafBuilder: LeafBuilder[Value[K,V]]): KVTree[K,V] = {
+//    values match {
+//      case h :: t =>
+//        var tree: KVTree[K,V] = implicitly[TreeBuilder[Value[K,V]]].buildTree(implicitly[LeafBuilder[Value[K,V]]].buildLeaf(h), Empty).asInstanceOf[KVTree[K,V]]
+//        for (w <- t) {
+//          tree = (tree :+ Leaf(w)).asInstanceOf[KVTree[K,V]]
+//        }
+//        tree
+//    }
+//  }
 
   /**
     * XXX: this method is NOT tail-recursive
@@ -206,6 +213,13 @@ object KVTree {
       val rIndex = lIndex
       // XXX This is not tail-recursive
       MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
+    case GeneralKVTree(v, children) =>
+      // TODO combine with GeneralTree case (or eliminate the GeneralTree case)
+      var lIndex = index
+      val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
+      val rIndex = lIndex
+      // XXX This is not tail-recursive
+      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
     case Empty => EmptyWithKeyAndIndex[K,V]()
     case EmptyWithIndex => EmptyWithKeyAndIndex[K,V]()
     case _ => throw TreeException(s"can't created IndexedTree from $node")
@@ -213,14 +227,39 @@ object KVTree {
 }
 
 trait GeneralKVTreeBuilder[K,V] extends TreeBuilder[Value[K,V]] {
-  def buildTree(n1: Node[Value[K,V]], n2: Node[Value[K,V]]): TreeLike[Value[K,V]] = n1 match {
-    case GeneralKVTree(v, ns) => GeneralKVTree(v, ns :+ n2)
-    case Leaf(a) => GeneralKVTree(a, Seq(n2))
-    case _ => throw TreeException(s"not implemented: $n1")
-  }
+// TODO: this isn't right: we need to find where to add the node
+//  def buildTree[W >: V](tree:  Node[Value[K,W]], node: Node[Value[K,W]])(implicit ev: HasParent[K, Value[K, W]], leafBuilder: LeafBuilder[Value[K,W]], valueBuilder: ValueBuilder[K,W]): TreeLike[Value[K,W]] = {
+//    require(tree.isInstanceOf[KVTree[K,W]],"tree must be an instance of KVTree")
+//    val t = tree.asInstanceOf[KVTree[K,W]]
+//    val h = implicitly[HasParent[K, Value[K, W]]]
+//    val ko = node.get map (h.getParent(_))
+//    val vno = for (k <- ko; vn <- t.findByKey(k)) yield vn
+//    Spy.spying = true
+//    val pt0 = FP.optionToTry(vno)
+//    val pt1 = pt0.recoverWith{case x =>
+//      // FIXME here we need to join p to the tree, with root as parent if none found
+//      // FIXME don't use ko.get
+//      for (p <- Try(leafBuilder.buildLeaf(valueBuilder.buildValue(ko.get)))) yield p}
+//
+//    tree match {
+//      case GeneralKVTree(v, ns) => GeneralKVTree(v, ns :+ node)
+//      case Leaf(a) => GeneralKVTree(a, Seq(node))
+//      case _ => throw TreeException(s"not implemented: $tree")
+//    }
+//  }
+  /**
+    * Build a new tree, given a value and child nodes
+    *
+    * @param maybeValue the (optional) value which the new tree will have at its root
+    * @param children   the the children of the node
+    * @return a tree the (optional) value at the root and children as the immediate descendants
+    */
+  def buildTree(maybeValue: Option[Value[K, V]], children: Seq[Node[Value[K, V]]]): TreeLike[Value[K, V]] =
+  // TODO avoid use of get
+  GeneralKVTree(maybeValue.get,children)
 }
 trait GeneralKVLeafBuilder[K,V] extends LeafBuilder[Value[K,V]] {
-  def buildLeaf(a: Value[K,V]): Node[Value[K,V]] = Leaf(a)
+  def buildLeaf(ao: Option[Value[K, V]]): Node[Value[K, V]] = (ao map (Leaf(_)) orElse(Some(Empty))).get
 }
 
 object GeneralKVTree
