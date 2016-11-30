@@ -62,21 +62,18 @@ object AccountDate {
 /**
   * Created by scalaprof on 10/19/16.
   */
-class RecursiveSpec extends FlatSpec with Matchers {
+class FunctionalTest extends FlatSpec with Matchers {
 
-
-  
   type NodeType = Value[String,AccountRecord]
 
-
   behavior of "Recursive account lookup"
-  it should "work" in {
-
-    val uo = Option(getClass.getResource("sampleTree.txt"))
+  ignore should "work for miniSampleTree.txt" in {
+    Spy.spying = true
+    val uo = Option(getClass.getResource("miniSampleTree.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map ( _.openStream )
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
-    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(7), ws(5), ws(6))
+    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(2), ws(0), ws(1))
 
     // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
     val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
@@ -85,11 +82,18 @@ class RecursiveSpec extends FlatSpec with Matchers {
         import AccountRecord._
         implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
         implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[String,AccountRecord]
-        implicit object NodeTypeParent extends HasParent[String,NodeType] {
-         def getParent(t: NodeType): String = t.value.parent
-        }
         implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
-          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,null,null))
+          // TODO fix this totally arbitrary value for date
+          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,AccountDate(1900,1,1),"root"))
+        }
+        implicit object NodeTypeParent extends HasParent[NodeType] {
+          def getParentKey[K](t: NodeType): Option[K] = Some(t.value.parent.asInstanceOf[K])
+          def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
+            val treeBuilder = implicitly[TreeBuilder[NodeType]]
+            val leafBuilder = implicitly[LeafBuilder[NodeType]]
+            val vo = for (k <- getParentKey[String](t)) yield implicitly[ValueBuilder[String,AccountRecord]].buildValue(k)
+            for (v <- vo) yield treeBuilder.buildTree(vo,Seq())
+          }
         }
         implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
           // XXX see comment on GeneralNodeParent
@@ -110,15 +114,13 @@ class RecursiveSpec extends FlatSpec with Matchers {
             val eq: Int => Boolean = _ == 0
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
               case Some(Value(AccountRecord("root",_,_))) => false
-              case Some(Value(v)) => println(s"compareWithDate: v=$v, d=$d"); f(v.date.compare(d))
+              case Some(Value(v)) => f(v.date.compare(d))
               case _ => false
             }
 
             val onDate = compareWithDate(eq) _
             val beforeDate = compareWithDate(lt) _;
-            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern {
-              case Some(n) =>
-            }
+            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(n) => }
             tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
 
             // TODO recreate this test
@@ -127,7 +129,76 @@ class RecursiveSpec extends FlatSpec with Matchers {
             val mptt = MPTT (indexedTree)
             mptt.index.size shouldBe 35
             println (mptt)
-          case Failure(x) => System.err.println(s"exception: ${x.getLocalizedMessage}")
+          case Failure(x) =>
+            fail(s"Exception thrown populating tree",x)
+        }
+
+      case None => System.err.println("unable to yield a complete hierarchy")
+    }
+  }
+
+  ignore should "work for sampleTree.txt" in {
+    val uo = Option(getClass.getResource("sampleTree.txt"))
+    uo should matchPattern { case Some(_) => }
+    val so = uo map ( _.openStream )
+    val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
+    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(7), ws(5), ws(6))
+
+    // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
+    val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
+    aso match {
+      case Some(as) =>
+        import AccountRecord._
+        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
+        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[String,AccountRecord]
+        implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
+          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,null,null))
+        }
+        implicit object NodeTypeParent extends HasParent[NodeType] {
+          def getParentKey[K](t: NodeType): Option[K] = Some(t.value.parent.asInstanceOf[K])
+          def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
+            val treeBuilder = implicitly[TreeBuilder[NodeType]]
+            val leafBuilder = implicitly[LeafBuilder[NodeType]]
+            val vo = for (k <- getParentKey[String](t)) yield implicitly[ValueBuilder[String,AccountRecord]].buildValue(k)
+            for (v <- vo) yield treeBuilder.buildTree(None,Seq(leafBuilder.buildLeaf(v)))
+          }
+        }
+        implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
+          // XXX see comment on GeneralNodeParent
+          def isParent(parent: Node[NodeType], child: Node[NodeType]): Boolean = parent match {
+            case Branch(ns) => ns.contains(child)
+            case _ => false
+          }
+        }
+
+        ParentChildTree.populateParentChildTree(as map Value[String, AccountRecord]) match {
+          case Success(tree) =>
+            println(tree)
+            //        tree.size shouldBe 100
+            println(tree.render())
+            //        tree.depth shouldBe 2
+            val ns = tree.nodeIterator(true)
+            val lt: Int => Boolean = _ < 0
+            val eq: Int => Boolean = _ == 0
+            def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
+              case Some(Value(AccountRecord("root",_,_))) => false
+              case Some(Value(v)) => f(v.date.compare(d))
+              case _ => false
+            }
+
+            val onDate = compareWithDate(eq) _
+            val beforeDate = compareWithDate(lt) _;
+            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(n) => }
+            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
+
+            // TODO recreate this test
+            val indexedTree = KVTree.createIndexedTree(tree)
+            indexedTree.nodeIterator(true).size shouldBe 101
+            val mptt = MPTT (indexedTree)
+            mptt.index.size shouldBe 35
+            println (mptt)
+          case Failure(x) =>
+            fail(s"Exception thrown populating tree",x)
         }
 
       case None => System.err.println("unable to yield a complete hierarchy")
@@ -135,12 +206,13 @@ class RecursiveSpec extends FlatSpec with Matchers {
   }
 }
 
-object RecursiveSpec {
+object FunctionalTest {
   object NodeType {
-    abstract class HasParentNodeType extends HasParent[String,Value[String,AccountRecord]] {
-      def getParent(v: Value[String,AccountRecord]): String = v.value.parent
+    trait NodeTypeParent extends HasParent[Value[String,AccountRecord]] {
+      def createParent(t: Value[String, AccountRecord]): Option[Node[Value[String, AccountRecord]]] = None
+      def getParentKey[K](v: Value[String,AccountRecord]): Option[K] = Some(v.value.parent.asInstanceOf[K])
     }
-    implicit object HasParentNodeType extends HasParentNodeType
+    implicit object HasParentNodeType extends NodeTypeParent
   }
 }
 
@@ -155,7 +227,7 @@ object ParentChildTree {
     * @tparam V
     * @return
     */
-  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev1: HasParent[String, Value[String, V]], ev2: NodeParent[Value[String, V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String, V]): Try[TreeLike[Value[String, V]]] =
+  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev1: HasParent[Value[String, V]], ev2: NodeParent[Value[String, V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String, V]): Try[TreeLike[Value[String, V]]] =
   {
     val root = valueBuilder.buildValue("root")
       val ty = Try(implicitly[TreeBuilder[Value[String, V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[String, V]])
@@ -163,7 +235,7 @@ object ParentChildTree {
       @tailrec
       def inner(result: Try[TreeLike[Value[String, V]]], values: List[Value[String, V]]): Try[TreeLike[Value[String, V]]] = values match {
         case Nil => result
-        case y :: z => println(s"attach $y to tree"); inner(for (t <- result; u = t :+ Some(y)) yield u, z)
+        case y :: z => for (r <- result) println(s"attach $y to tree: "+r.render()); inner(for (t <- result; u = t :+ y) yield u, z)
       }
       inner(ty, values.toList)
   }

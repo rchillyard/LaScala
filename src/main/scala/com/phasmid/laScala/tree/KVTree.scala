@@ -61,6 +61,49 @@ sealed trait KVTree[K,+V] extends Branch[Value[K,V]] {
     Kleenean(map2(xo,yo)(_ == _))
   }
 
+  /**
+    * Find a suitable parent for a node to be added to this tree.
+    *
+    * This implementation returns the parent according to getParentKey and findByKey.
+    *
+    * @param node the node to be added
+    * @tparam B the underlying type of the node
+    * @return a (optional) node which would be a suitable parent for node
+    */
+  override def findParent[B >: Value[K, V] : NodeParent : HasParent](node: Node[B]): Option[Node[B]] = node.get match {
+    case Some(v) =>
+      (for (k <- implicitly[HasParent[B]].getParentKey[K](v); n <- findByKey(k)) yield n)
+    case _ => None
+  }
+
+  override def addNode[B >: Value[K, V] : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = {
+    // get (optional) the parent node
+    val no = findParent(node)
+
+    // now, based on the parent node (if it exists), we evaluate the (potentially updated) tree and the optional parent
+    val (tree, po) = no match {
+      case Some(_) => (this, no) // Got a parent: return this as tree and optional parent
+      case _ => node.get match {
+        case Some(v) =>
+          // Didn't get a parent: try to create one
+          Spy.spy(s"createParent: $v", implicitly[HasParent[B]].createParent(v)) match {
+            case qo @ Some(p) => (this :+ p, qo) // created one... update the tree and return it with the new (optional) parent
+            case _ => (this,None) // failed to create one... return this with none
+          }
+        case _ => (this,None)
+      }
+    }
+    val (x, y: TreeLike[B]) = po orElse (Some(tree)) match {
+      case Some(n: TreeLike[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
+      case _ => throw TreeException(s"cannot find parent for $node or parent is not of type TreeLike")
+    }
+
+    // Replace node x with node y where x's value matches y's value
+    // XXX check that the cast following is justified
+    tree.replaceNode(x, y)(_.get == _.get).asInstanceOf[TreeLike[B]]
+
+  }
+
   def findByKey[W >: V](k: K): Option[Node[Value[K,W]]] =
     find{n: Node[Value[K, W]] => n.get match {
       case Some(v) => k == v.key
@@ -69,7 +112,7 @@ sealed trait KVTree[K,+V] extends Branch[Value[K,V]] {
   }
 
 //  def attachNode[W >: V](value: Value[K, W])(implicit ev: HasParent[K,Value[K, W]], treeBuilder: TreeBuilder[Value[K, W]], leafBuilder: LeafBuilder[Value[K, W]], valueBuilder: ValueBuilder[K,W]): Try[KVTree[K, W]] = {
-//    val parentKey = implicitly[HasParent[K, Value[K, W]]].getParent(value)
+//    val parentKey = implicitly[HasParent[K, Value[K, W]]].getParentKey(value)
 //    val po = find{n: Node[Value[K, W]] => n.get match {
 //      case Some(v) => parentKey == v.key
 //      case None => false
@@ -126,11 +169,11 @@ trait ValueBuilder[K,V] {
   * @tparam K the underlying key type of this GeneralTree
   * @tparam V the underlying value type of this GeneralTree
   */
-case class GeneralKVTree[K,V](value: Value[K,V], children: Seq[Node[Value[K,V]]]) extends KVTree[K,V] {
+case class GeneralKVTree[K,V](value: Option[Value[K,V]], children: Seq[Node[Value[K,V]]]) extends KVTree[K,V] {
   /**
-    * @return Some(value)
+    * @return (optional) value
     */
-  def get = Some(value)
+  def get = value
 }
 
 
@@ -213,13 +256,13 @@ object KVTree {
       val rIndex = lIndex
       // XXX This is not tail-recursive
       MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
-    case GeneralKVTree(v, children) =>
+    case GeneralKVTree(vo, children) =>
       // TODO combine with GeneralTree case (or eliminate the GeneralTree case)
       var lIndex = index
       val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
       val rIndex = lIndex
       // XXX This is not tail-recursive
-      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
+      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), vo, indexedChildren).asInstanceOf[IndexedNodeWithKey[K,V]]
     case Empty => EmptyWithKeyAndIndex[K,V]()
     case EmptyWithIndex => EmptyWithKeyAndIndex[K,V]()
     case _ => throw TreeException(s"can't created IndexedTree from $node")
@@ -232,7 +275,7 @@ trait GeneralKVTreeBuilder[K,V] extends TreeBuilder[Value[K,V]] {
 //    require(tree.isInstanceOf[KVTree[K,W]],"tree must be an instance of KVTree")
 //    val t = tree.asInstanceOf[KVTree[K,W]]
 //    val h = implicitly[HasParent[K, Value[K, W]]]
-//    val ko = node.get map (h.getParent(_))
+//    val ko = node.get map (h.getParentKey(_))
 //    val vno = for (k <- ko; vn <- t.findByKey(k)) yield vn
 //    Spy.spying = true
 //    val pt0 = FP.optionToTry(vno)
@@ -254,12 +297,17 @@ trait GeneralKVTreeBuilder[K,V] extends TreeBuilder[Value[K,V]] {
     * @param children   the the children of the node
     * @return a tree the (optional) value at the root and children as the immediate descendants
     */
-  def buildTree(maybeValue: Option[Value[K, V]], children: Seq[Node[Value[K, V]]]): TreeLike[Value[K, V]] =
-  // TODO avoid use of get
-  GeneralKVTree(maybeValue.get,children)
+  def buildTree(maybeValue: Option[Value[K, V]], children: Seq[Node[Value[K, V]]]): TreeLike[Value[K, V]] = {
+    // TODO avoid use of get
+//    val addend = children.last
+//    addend.get match {
+//      case Some(v) => v.key
+//    }
+    GeneralKVTree(maybeValue, children)
+  }
 }
 trait GeneralKVLeafBuilder[K,V] extends LeafBuilder[Value[K,V]] {
-  def buildLeaf(ao: Option[Value[K, V]]): Node[Value[K, V]] = (ao map (Leaf(_)) orElse(Some(Empty))).get
+  def buildLeaf(a: Value[K, V]): Node[Value[K, V]] = Leaf(a)
 }
 
 object GeneralKVTree

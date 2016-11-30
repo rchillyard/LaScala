@@ -121,17 +121,17 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GenericTree" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Nil) :+ Some(1) :+ Some(2) :+ Some(3) :+ Some(4)
+    val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ Some(2)
+    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ 2
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
   }
   ignore should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Some(3)
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 3
     tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
   ignore should "work correctly for UnvaluedBinaryTree type 4" in {
@@ -141,14 +141,14 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   ignore should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Some(0)
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 0
     tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
   }
 
   behavior of "size"
   it should "work for GeneralTree" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Nil) :+ Some(1) :+ Some(2) :+ Some(3) :+ Some(4)
+    val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
     tree.size shouldBe 5
   }
   it should "work for UnvaluedBinaryTree" in {

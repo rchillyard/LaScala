@@ -2,6 +2,7 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala._
+import com.phasmid.laScala.fp.Spy
 
 import scala.language.implicitConversions
 
@@ -98,20 +99,20 @@ trait TreeLike[+A] extends Node[A] {
     *
     * NOTE the implementation of this method assumes that the order of the operands is not important.
     *
-    * @param bo the optional value to add
+    * @param b the value to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent](bo: Option[B]): TreeLike[B] = :+(bo)
+  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](b: B): TreeLike[B] = :+(b)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
     *
-    * @param bo the optional value to add
+    * @param b the value to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent](bo: Option[B]): TreeLike[B] = :+(implicitly[LeafBuilder[B]].buildLeaf(bo))
+  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](b: B): TreeLike[B] = :+(implicitly[LeafBuilder[B]].buildLeaf(b))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
@@ -122,7 +123,7 @@ trait TreeLike[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent](node: Node[B]): TreeLike[B] = this :+ node
+  def +:[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = this :+ node
 
   /**
     * Method to add a node to this tree
@@ -131,23 +132,32 @@ trait TreeLike[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent](node: Node[B]): TreeLike[B] = {
-    val (x, y: TreeLike[B]) = findParent(node) orElse(Some(this)) match {
+  def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = addNode(node)
+
+  def addNode[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = {
+    val hasParent = implicitly[HasParent[B]]
+    val nodeParent = implicitly[NodeParent[B]]
+    val no = Spy.spy(s"existing parent of node $node: ", findParent(node))
+    val (x, y: TreeLike[B]) = no orElse (Some(this)) match {
       case Some(n: TreeLike[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
       case _ => throw TreeException(s"cannot find parent for $node or parent is not of type TreeLike")
     }
     // Replace node x with node y where x's value matches y's value
     // XXX check that the cast following is justified
-    replaceNode(x,y)(_.get==_.get).asInstanceOf[TreeLike[B]]
+    replaceNode(x, y)(_.get == _.get).asInstanceOf[TreeLike[B]]
   }
 
   /**
-    * Find a suitable parent for a node to be added to this tree.
+    * Find a suitable and existing parent for the given Node. Note that the node has not yet become part of the this Tree so
+    * we can't just check if it's one of the children of a candidate parent.
+    *
+    * NOTE: this method will take time proportional to the number of nodes already in the tree and will visit each node if isParent always returns false
+    *
     * @param node the node to be added
     * @tparam B the underlying type of the node
     * @return a (optional) node which would be a suitable parent for node
     */
-  def findParent[B >: A : NodeParent](node: Node[B]): Option[Node[B]] = find(implicitly[NodeParent[B]].isParent(_,node))
+  def findParent[B >: A : NodeParent : HasParent](node: Node[B]): Option[Node[B]] = find(implicitly[NodeParent[B]].isParent(_,node))
 
   /**
     * Iterate on the values of this tree
@@ -293,6 +303,8 @@ trait TreeLike[+A] extends Node[A] {
 /**
   * This trait forms the basis for a type class which can determine if one node is the parent of another.
   *
+  * NOTE: this method is intended for existing trees -- it is not for use while building a tree
+  *
   * @tparam A the underlying type of the Nodes
   */
 trait NodeParent[A] {
@@ -329,7 +341,7 @@ trait TreeBuilder[A] {
   * @tparam A the underlying type of the resulting Node
   */
 trait LeafBuilder[A] {
-  def buildLeaf(ao: Option[A]): Node[A]
+  def buildLeaf(a: A): Node[A]
 }
 
 /**
@@ -429,16 +441,22 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   * This trait is used for a type class that enables a T value to yield a K value that relates to the parent of the node containing the value.
   * This is typically used when building a tree from a list of parent-child relationships.
   *
-  * @tparam K
   * @tparam T
   */
-trait HasParent[K,T] {
+trait HasParent[T] {
   /**
     * Get the key for the parent of the node containing t as its value
     * @param t the value
-    * @return the parent key
+    * @return the parent key wrapped as an Option
     */
-  def getParent(t: T): K
+  def getParentKey[K](t: T): Option[K]
+
+  /**
+    * In the event that a parent cannot be found, we sometimes have to create a new parent.
+    * @param t the value
+    * @return a new node wrapped as an Option
+    */
+  def createParent(t: T): Option[Node[T]]
 }
 
 /**
@@ -611,7 +629,7 @@ object Node {
 
 object TreeLike {
   // TODO we want the key value to implement ordering, not the value itself
-  def populateOrderedTree[A: Ordering : TreeBuilder : LeafBuilder : NodeParent](values: Seq[A]): TreeLike[A] = {
+  def populateOrderedTree[A: Ordering : TreeBuilder : LeafBuilder : NodeParent : HasParent](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
         var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
@@ -622,7 +640,7 @@ object TreeLike {
     }
   }
 
-  def populateGeneralTree[A : TreeBuilder : LeafBuilder : NodeParent](values: Seq[A]): TreeLike[A] = {
+  def populateGeneralTree[A : TreeBuilder : LeafBuilder : NodeParent : HasParent](values: Seq[A]): TreeLike[A] = {
     values match {
       case h :: t =>
         var result: TreeLike[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
@@ -667,7 +685,7 @@ object GeneralTree {
   implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String]
 
   trait GeneralLeafBuilder[A] extends LeafBuilder[A] {
-    def buildLeaf(ao: Option[A]): Node[A] = (ao map (Leaf(_)) orElse(Some(Empty))).get
+    def buildLeaf(a: A): Node[A] = Leaf(a)
   }
   implicit object GeneralLeafBuilderInt extends GeneralLeafBuilder[Int]
   implicit object GeneralLeafBuilderString extends GeneralLeafBuilder[String]
@@ -681,6 +699,14 @@ object GeneralTree {
   }
   implicit object GeneralNodeParentInt extends GeneralNodeParent[Int]
   implicit object GeneralNodeParentString extends GeneralNodeParent[String]
+
+  trait NodeTypeParent[A] extends HasParent[A] {
+    def createParent(a: A): Option[Node[A]] = None
+    def getParentKey[K](a: A): Option[K] = None
+  }
+  implicit object GeneralNodeTypeParentInt extends NodeTypeParent[Int]
+  implicit object GeneralNodeTypeParentString extends NodeTypeParent[String]
+
 }
 
 object UnvaluedBinaryTree {
@@ -733,7 +759,7 @@ object UnvaluedBinaryTree {
 
   trait UnvaluedBinaryLeafBuilder[A] extends LeafBuilder[A] {
     // CONSIDER improving this (and similar implementations)?
-    def buildLeaf(ao: Option[A]): Node[A] = (ao map (Leaf(_)) orElse(Some(Empty))).get
+    def buildLeaf(a: A): Node[A] = Leaf(a)
   }
   implicit object UnvaluedBinaryLeafBuilderInt extends UnvaluedBinaryLeafBuilder[Int]
   implicit object UnvaluedBinaryLeafBuilderString extends UnvaluedBinaryLeafBuilder[String]
@@ -746,6 +772,14 @@ object UnvaluedBinaryTree {
   }
   implicit object UnvaluedBinaryNodeParentInt extends UnvaluedBinaryNodeParent[Int]
   implicit object UnvaluedBinaryNodeParentString extends UnvaluedBinaryNodeParent[String]
+
+  trait NodeTypeParent[A] extends HasParent[A] {
+    def createParent(a: A): Option[Node[A]] = None
+    def getParentKey[K](a: A): Option[K] = None
+  }
+  implicit object UnvaluedBinaryNodeTypeParentInt extends NodeTypeParent[Int]
+  implicit object UnvaluedBinaryNodeTypeParentString extends NodeTypeParent[String]
+
 }
 
 object BinaryTree {
