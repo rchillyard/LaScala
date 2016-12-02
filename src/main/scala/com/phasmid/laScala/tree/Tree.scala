@@ -1,7 +1,7 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala._
+import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.Spy
 
 import scala.language.implicitConversions
@@ -59,6 +59,33 @@ sealed trait Node[+A] extends Renderable {
     * @return true if node n is found in the sub-tree defined by this
     */
   def includes[B >: A](node: Node[B]): Boolean
+
+  /**
+    * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
+    *
+    * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
+    *
+    * @param x the node to be replaced with y
+    * @param y the node to replace x
+    * @param f function to determine if two nodes are the same
+    * @tparam B the underlying type of the new node (and the resulting tree)
+    * @return the resulting tree
+    */
+  def replaceNode[B >: A : TreeBuilder : LeafBuilder](x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean): Node[B] = {
+    def replaceChildrenNodes(x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean)(ns: NodeSeq[B]): NodeSeq[B] =
+    // TODO remove the match logic
+      for (n <- ns) yield n match {
+        case t => t.replaceNode(x, y)(f)
+      }
+
+    if (f(this, x))
+      Spy.spy(s"replaceNode: matched $x with this so return", y) // this and x are the same so simply return y
+    else
+      this match {
+        case Branch(ns) => implicitly[TreeBuilder[B]].buildTree(get, replaceChildrenNodes(x, y)(f)(ns))
+        case _ => this
+      }
+  }
 }
 
 /**
@@ -81,9 +108,9 @@ trait TreeLike[+A] extends Node[A] {
     * @return the size of the subtree
     */
   def size: Int = Parent.traverse[Node[A], Int, Int](_.get match {
-    case Some(a) => 1
+    case Some(_) => 1
     case _ => 0
-  }, _ + _, { x => false })(List(this), 0)
+  }, _ + _, { _ => false })(List(this), 0)
 
   /**
     * NOTE: that this is NOT tail-recursive
@@ -134,12 +161,12 @@ trait TreeLike[+A] extends Node[A] {
     */
   def :+[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = addNode(node)
 
-  def addNode[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B]): TreeLike[B] = {
-    val hasParent = implicitly[HasParent[B]]
-    val nodeParent = implicitly[NodeParent[B]]
+
+  def addNode[B >: A : TreeBuilder : LeafBuilder : NodeParent : HasParent](node: Node[B], allowRecursion: Boolean = true): TreeLike[B] = {
     val no = Spy.spy(s"existing parent of node $node: ", findParent(node))
-    val (x, y: TreeLike[B]) = no orElse (Some(this)) match {
+    val (x, y: TreeLike[B]) = no orElse Some(this) match {
       case Some(n: TreeLike[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
+      case Some(n: Node[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, Seq(node)))
       case _ => throw TreeException(s"cannot find parent for $node or parent is not of type TreeLike")
     }
     // Replace node x with node y where x's value matches y's value
@@ -241,45 +268,6 @@ trait TreeLike[+A] extends Node[A] {
 
   def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator(true).filter(p)
 
-  /**
-    * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
-    *
-    * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
-    * @param y the node to add
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def replaceNode[B >: A : TreeBuilder : LeafBuilder](x: Node[B], y: Node[B])(f: (Node[B],Node[B])=>Boolean): Node[B] = {
-    def replaceChildrenNodes(x: Node[B], y: Node[B])(f: (Node[B],Node[B])=>Boolean)(ns: NodeSeq[B]): NodeSeq[B] =
-      for (n <- ns) yield n match {
-        case t: TreeLike[B] => t.replaceNode(x, y)(f)
-        case _ => n
-      }
-    val treeBuilder = implicitly[TreeBuilder[B]]
-    if (f(this,x)) y
-    else this match {
-     case AbstractBinaryTree(l,r) =>
-       treeBuilder.buildTree(get, replaceChildrenNodes(x, y)(f)(Seq(l, r)))
-     case Branch(ns) => treeBuilder.buildTree(get,ns)
-     case _ => this
-   }
-  }
-
-
-  //  /**
-  //    * Method to safely cast Node n to a TreeLike object.
-  //    * Note: This is not an instance method in that it does not reference this
-  //    *
-  //    * @param n         the node to cast
-  //    * @param treeBuilder implicit implementation of TreeMaker trait
-  //    * @tparam B the underlying type of node n
-  //    * @return if n is already a TreeLike object then return it, otherwise return a sub-tree based on n
-  //    */
-  //  def asTree[B >: A : Ordering](n: Node[B])(implicit treeBuilder: TreeBuilder[B]): TreeLike[B] = n match {
-  //    case t: TreeLike[B] => t
-  //    case _ => treeBuilder(n,Empty)
-  //  }
-
 //  /**
 //    * This was designed for BinaryTree or GeneralTree. Needs testing in general.
 //    * It doesn't work properly at present.
@@ -373,24 +361,6 @@ trait TreeIndex {
   */
 trait Branch[+A] extends TreeLike[A] {
 
-  //  /**
-//    * Method to add a node to this tree, as the child of a specific parent node
-//    *
-//    * @param node the node to add
-//    * @tparam B the underlying type of the new node (and the resulting tree)
-//    * @return the resulting tree
-//    */
-//  def addNode[B >: A : TreeBuilder : LeafBuilder](parent: Node[B], node: Node[B]): TreeLike[B] = {
-//    val f: (Node[B]) => Node[B] = _ match {
-//      case `parent` => parent.asInstanceOf[TreeLike[B]] :+ node
-//      case n @ _ => n
-//    }
-//
-//    val g: (R_, S_) => R_ = ???
-//
-//    Parent.traverse(f,g)(this,Empty)
-//  }
-
   /**
     * Iterate on the nodes of this branch
     *
@@ -425,31 +395,27 @@ trait Branch[+A] extends TreeLike[A] {
     result.append(expansion mkString "\n")
     result.toString
   }
-//  iterator(true).mkString(", ")
-
-//  renderRecursive[A]((ns, n) => n
-//  match {
-//    case Branch(x) => x ++ ns
-//    case _ => ns
-//  })
-
 }
 
 trait IndexedNode[A] extends Node[A] with TreeIndex
 
 /**
-  * This trait is used for a type class that enables a T value to yield a K value that relates to the parent of the node containing the value.
+  * This trait is used for a type class that enables a T value to yield a String value that relates to the parent of the node containing the value.
   * This is typically used when building a tree from a list of parent-child relationships.
+  * I tried to make the key type polymorphic but I just couldn't do it, even with a type definition in the trait.
+  * The problem is subtle and could be revisited at some later date.
   *
   * @tparam T
   */
 trait HasParent[T] {
+
   /**
     * Get the key for the parent of the node containing t as its value
+    *
     * @param t the value
     * @return the parent key wrapped as an Option
     */
-  def getParentKey[K](t: T): Option[K]
+  def getParentKey(t: T): Option[String]
 
   /**
     * In the event that a parent cannot be found, we sometimes have to create a new parent.
@@ -485,8 +451,10 @@ case class Leaf[+A](value: A) extends AbstractLeaf[A](value) {
     *
     * @return an appropriate String
     */
-  def render(indent: Int): String = if (value.isInstanceOf[Renderable]) value.asInstanceOf[Renderable].render(indent)
-  else s"${Renderable.prefix(indent)}$value"
+  def render(indent: Int): String = value match {
+    case renderable: Renderable => renderable.render(indent)
+    case _ => s"${Renderable.prefix(indent)}$value"
+  }
 }
 
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
@@ -529,14 +497,16 @@ case object Empty extends AbstractEmpty
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
   override def depth: Int = 1
 
-  def render(indent: Int) = if (value.isInstanceOf[Renderable]) value.asInstanceOf[Renderable].render(indent)
-  else s"""${Renderable.prefix((indent))}$value [$lIndex:$rIndex]"""
+  def render(indent: Int): String = value match {
+    case renderable: Renderable => renderable.render(indent)
+    case _ => s"""${Renderable.prefix((indent))}$value [$lIndex:$rIndex]"""
+  }
 
   override def toString = s"""L("$value")"""
 }
 
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
-  def get = value
+  def get: Option[A] = value
 }
 
 case class TreeException(msg: String) extends Exception(msg)
@@ -602,7 +572,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 }
 
 object Renderable {
-  def prefix(indent: Int) = "  "*indent
+  def prefix(indent: Int): String = "  " *indent
 }
 
 object Leaf
@@ -702,7 +672,8 @@ object GeneralTree {
 
   trait NodeTypeParent[A] extends HasParent[A] {
     def createParent(a: A): Option[Node[A]] = None
-    def getParentKey[K](a: A): Option[K] = None
+
+    def getParentKey(a: A): Option[String] = None
   }
   implicit object GeneralNodeTypeParentInt extends NodeTypeParent[Int]
   implicit object GeneralNodeTypeParentString extends NodeTypeParent[String]
@@ -718,7 +689,6 @@ object UnvaluedBinaryTree {
         case 1 => buildTree(ns.head, Empty)
         case 2 => buildTree(ns.head, ns.last)
         case 3 =>
-          println(s"buildTree with value: $maybeValue and children: $children")
           // If there are more than two children, then the last element needs to be ordered appropriately amongst the first two children
           val l = ns.head
           val r = ns(1)
@@ -773,12 +743,15 @@ object UnvaluedBinaryTree {
   implicit object UnvaluedBinaryNodeParentInt extends UnvaluedBinaryNodeParent[Int]
   implicit object UnvaluedBinaryNodeParentString extends UnvaluedBinaryNodeParent[String]
 
-  trait NodeTypeParent[A] extends HasParent[A] {
+  trait NodeTypeHasParentWithStringKey[A] extends HasParent[A] {
     def createParent(a: A): Option[Node[A]] = None
-    def getParentKey[K](a: A): Option[K] = None
+
+    def getParentKey(a: A): Option[String] = None
   }
-  implicit object UnvaluedBinaryNodeTypeParentInt extends NodeTypeParent[Int]
-  implicit object UnvaluedBinaryNodeTypeParentString extends NodeTypeParent[String]
+
+  implicit object UnvaluedBinaryNodeTypeHasParentWithStringKeyInt$ extends NodeTypeHasParentWithStringKey[Int]
+
+  implicit object UnvaluedBinaryNodeTypeHasParentWithStringKeyString$ extends NodeTypeHasParentWithStringKey[String]
 
 }
 

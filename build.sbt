@@ -6,7 +6,7 @@ version := "1.0.0-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
-val scalaTestVersion = "2.2.6"
+val scalaTestVersion = "3.0.1"
 val scalaModules = "org.scala-lang.modules"
 val scalaModulesVersion = "1.0.4"
 
@@ -29,3 +29,26 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.13.2" % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 )
+
+// The following values can be used for Scala 2.10 although bear in mind that some parts of the code
+// will only compile in 2.11. If you don't need these parts of the code, then you can build with 2.10
+// simply by fixing the logging imports.
+
+//scalaVersion := "2.10.6"
+//
+//val scalaTestVersion = "2.2.6"
+//
+//// NOTE: Akka is used only for testing this package.
+//val akkaGroup = "com.typesafe.akka"
+//val akkaVersion = "2.3.15"
+//
+//resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+//
+//libraryDependencies ++= Seq(
+//  "codes.reactive" %% "scala-time" % "0.4.0",
+//  "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+//  "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
+//  akkaGroup %% "akka-actor" % akkaVersion % "test",
+//  "org.scalacheck" %% "scalacheck" % scalaTestVersion % "test",
+//  "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+//)

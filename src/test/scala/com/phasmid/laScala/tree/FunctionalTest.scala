@@ -1,7 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.Kleenean
-import com.phasmid.laScala.fp.{FP, HasKey, Spy}
+import com.phasmid.laScala.fp.{FP, HasKey}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.annotation.tailrec
@@ -64,11 +64,11 @@ object AccountDate {
   */
 class FunctionalTest extends FlatSpec with Matchers {
 
-  type NodeType = Value[String,AccountRecord]
+  type NodeType = Value[AccountRecord]
 
   behavior of "Recursive account lookup"
-  ignore should "work for miniSampleTree.txt" in {
-    Spy.spying = true
+  it should "work for miniSampleTree.txt" in {
+    //    Spy.spying = true
     val uo = Option(getClass.getResource("miniSampleTree.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map ( _.openStream )
@@ -80,19 +80,19 @@ class FunctionalTest extends FlatSpec with Matchers {
     aso match {
       case Some(as) =>
         import AccountRecord._
-        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
-        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[String,AccountRecord]
-        implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
+        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
+        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[AccountRecord]
+        implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
           // TODO fix this totally arbitrary value for date
-          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,AccountDate(1900,1,1),"root"))
+          def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
         }
         implicit object NodeTypeParent extends HasParent[NodeType] {
-          def getParentKey[K](t: NodeType): Option[K] = Some(t.value.parent.asInstanceOf[K])
+          def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
           def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
             val treeBuilder = implicitly[TreeBuilder[NodeType]]
-            val leafBuilder = implicitly[LeafBuilder[NodeType]]
-            val vo = for (k <- getParentKey[String](t)) yield implicitly[ValueBuilder[String,AccountRecord]].buildValue(k)
-            for (v <- vo) yield treeBuilder.buildTree(vo,Seq())
+            //            val leafBuilder = implicitly[LeafBuilder[NodeType]]
+            val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
+            for (_ <- vo) yield treeBuilder.buildTree(vo, Seq())
           }
         }
         implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
@@ -103,13 +103,14 @@ class FunctionalTest extends FlatSpec with Matchers {
           }
         }
 
-        ParentChildTree.populateParentChildTree(as map Value[String, AccountRecord]) match {
+        ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
           case Success(tree) =>
             println(tree)
-            //        tree.size shouldBe 100
+            tree.size shouldBe 9
             println(tree.render())
-            //        tree.depth shouldBe 2
+            tree.depth shouldBe 3
             val ns = tree.nodeIterator(true)
+            println(ns.toList)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
@@ -119,15 +120,15 @@ class FunctionalTest extends FlatSpec with Matchers {
             }
 
             val onDate = compareWithDate(eq) _
-            val beforeDate = compareWithDate(lt) _;
-            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(n) => }
-            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
+            val beforeDate = compareWithDate(lt) _
+            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(_) => }
+            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 5
 
             // TODO recreate this test
             val indexedTree = KVTree.createIndexedTree(tree)
-            indexedTree.nodeIterator(true).size shouldBe 101
+            indexedTree.nodeIterator(true).size shouldBe 9
             val mptt = MPTT (indexedTree)
-            mptt.index.size shouldBe 35
+            mptt.index.size shouldBe 6
             println (mptt)
           case Failure(x) =>
             fail(s"Exception thrown populating tree",x)
@@ -149,17 +150,17 @@ class FunctionalTest extends FlatSpec with Matchers {
     aso match {
       case Some(as) =>
         import AccountRecord._
-        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
-        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[String,AccountRecord]
-        implicit object ValueBuilderNodeType extends ValueBuilder[String,AccountRecord] {
-          def buildValue(k: String): Value[String, AccountRecord] = Value(AccountRecord(k,null,null))
+        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
+        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[AccountRecord]
+        implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
+          def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, null, null))
         }
         implicit object NodeTypeParent extends HasParent[NodeType] {
-          def getParentKey[K](t: NodeType): Option[K] = Some(t.value.parent.asInstanceOf[K])
+          def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
           def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
             val treeBuilder = implicitly[TreeBuilder[NodeType]]
             val leafBuilder = implicitly[LeafBuilder[NodeType]]
-            val vo = for (k <- getParentKey[String](t)) yield implicitly[ValueBuilder[String,AccountRecord]].buildValue(k)
+            val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
             for (v <- vo) yield treeBuilder.buildTree(None,Seq(leafBuilder.buildLeaf(v)))
           }
         }
@@ -171,13 +172,14 @@ class FunctionalTest extends FlatSpec with Matchers {
           }
         }
 
-        ParentChildTree.populateParentChildTree(as map Value[String, AccountRecord]) match {
+        ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
           case Success(tree) =>
             println(tree)
-            //        tree.size shouldBe 100
+            tree.size shouldBe 100
             println(tree.render())
-            //        tree.depth shouldBe 2
+            tree.depth shouldBe 2
             val ns = tree.nodeIterator(true)
+            println(ns)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
@@ -187,8 +189,8 @@ class FunctionalTest extends FlatSpec with Matchers {
             }
 
             val onDate = compareWithDate(eq) _
-            val beforeDate = compareWithDate(lt) _;
-            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(n) => }
+            val beforeDate = compareWithDate(lt) _
+            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(_) => }
             tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
 
             // TODO recreate this test
@@ -208,9 +210,11 @@ class FunctionalTest extends FlatSpec with Matchers {
 
 object FunctionalTest {
   object NodeType {
-    trait NodeTypeParent extends HasParent[Value[String,AccountRecord]] {
-      def createParent(t: Value[String, AccountRecord]): Option[Node[Value[String, AccountRecord]]] = None
-      def getParentKey[K](v: Value[String,AccountRecord]): Option[K] = Some(v.value.parent.asInstanceOf[K])
+
+    trait NodeTypeParent extends HasParent[Value[AccountRecord]] {
+      def createParent(t: Value[AccountRecord]): Option[Node[Value[AccountRecord]]] = None
+
+      def getParentKey(v: Value[AccountRecord]): Option[String] = Some(v.value.parent)
     }
     implicit object HasParentNodeType extends NodeTypeParent
   }
@@ -221,21 +225,21 @@ object ParentChildTree {
     * This implementation of populateGeneralKVTree takes a sequence of Values, each of which specifies the parent as well as the attributes.
     *
     * NOTE: this implementation relies on the fact that parent nodes, if they have values at all, will be mentioned BEFORE any of their children
-    * @param values
-    * @param treeBuilder
-    * @param leafBuilder
-    * @tparam V
-    * @return
+    *
+    * @param values      the values to become nodes in the resulting tree
+    * @param treeBuilder the tree builder
+    * @param leafBuilder the leaf builder
+    * @tparam V the underlying type of the Values
+    * @return the newly created tree
     */
-  def populateParentChildTree[V](values: Seq[Value[String, V]])(implicit ev1: HasParent[Value[String, V]], ev2: NodeParent[Value[String, V]], treeBuilder: TreeBuilder[Value[String, V]], leafBuilder: LeafBuilder[Value[String, V]], valueBuilder: ValueBuilder[String, V]): Try[TreeLike[Value[String, V]]] =
+  def populateParentChildTree[V](values: Seq[Value[V]])(implicit ev1: HasParent[Value[V]], ev2: NodeParent[Value[V]], treeBuilder: TreeBuilder[Value[V]], leafBuilder: LeafBuilder[Value[V]], valueBuilder: ValueBuilder[V]): Try[TreeLike[Value[V]]] =
   {
     val root = valueBuilder.buildValue("root")
-      val ty = Try(implicitly[TreeBuilder[Value[String, V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[String, V]])
-      println(s"initial tree: $ty")
+    val ty = Try(implicitly[TreeBuilder[Value[V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[V]])
       @tailrec
-      def inner(result: Try[TreeLike[Value[String, V]]], values: List[Value[String, V]]): Try[TreeLike[Value[String, V]]] = values match {
+      def inner(result: Try[TreeLike[Value[V]]], values: List[Value[V]]): Try[TreeLike[Value[V]]] = values match {
         case Nil => result
-        case y :: z => for (r <- result) println(s"attach $y to tree: "+r.render()); inner(for (t <- result; u = t :+ y) yield u, z)
+        case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }
       inner(ty, values.toList)
   }

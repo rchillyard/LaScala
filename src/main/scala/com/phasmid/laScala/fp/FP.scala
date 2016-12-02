@@ -215,7 +215,7 @@ object FP {
   def named[T, R](name: String, f: T => R) = new ((T) => R) {
     def apply(v1: T): R = f(v1)
 
-    override def toString = name
+    override def toString: String = name
   }
 
   /**
@@ -228,7 +228,7 @@ object FP {
     */
   def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = {
     val result = Try(xo.get)
-    if (t != null) result.recoverWith { case e: java.util.NoSuchElementException => Failure(t) }
+    if (t != null) result.recoverWith { case _: java.util.NoSuchElementException => Failure(t) }
     else result
   }
 
@@ -357,6 +357,8 @@ object FP {
   /**
     * TODO unit test
     *
+    * NOTE: not available with 2.10
+    *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *
     * @param ty1     a Try[T] value
@@ -368,8 +370,8 @@ object FP {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { x: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case z: java.util.NoSuchElementException => default }
+  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   /**
     * TODO unit test
@@ -387,8 +389,8 @@ object FP {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { x: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case z: java.util.NoSuchElementException => default }
+  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
