@@ -37,29 +37,12 @@ case class MPTT[T: HasKey](index: Map[String, MPTTEntry[T]]) extends (String => 
   */
 case class MPTTEntry[T: HasKey](k: String, t: T)(val pre: Long, val post: Long) {
   def contains(x: MPTTEntry[T]): Boolean = this.pre <= x.pre && this.post >= x.post
-
-  // NOTE: we are explicitly casting the underlying type of key in T to String
-  def key: String = implicitly[HasKey[T]].getKey(t).asInstanceOf[String]
+  def key: String = implicitly[HasKey[T]].getKey(t).toString
   override def toString = s"$t: $pre,$post"
 }
 
 object MPTT {
-//  def apply[K, T : HasKey](x: IndexedNode[T]): MPTT[K,T] = {
-//    val hashMap = new mutable.HashMap[T,MPTTEntry[K,T]]()
-//    def f(node: Node[T]): Option[MPTTEntry[K,T]] = node match {
-//      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(v.key,v)(l,r)
-//      case EmptyWithIndex => None
-//      case IndexedNode(n,l,r) => n.get match {
-//        case Some(z) => Some(MPTTEntry.apply(z)(l,r))
-//        case _ => None
-//      }
-//      case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
-//    }
-//    def g(mptt: MPTT[K,T], e: Option[MPTTEntry[K,T]]): MPTT[K,T] = e match { case Some(me) => MPTT[K,T](mptt.index + (me.key->me)); case None => mptt }
-//    Parent.traverse[Node[T], Option[MPTTEntry[K,T]], MPTT[K,T]](f, g)(List(x), MPTT[K,T](Map[K, MPTTEntry[K,T]]()))
-//  }
 def apply[V: HasKey](x: IndexedNode[Value[V]]): MPTT[V] = {
-  //    val hashMap = new mutable.HashMap[String,MPTTEntry[V]]()
   def f(node: Node[Value[V]]): Option[MPTTEntry[V]] = node match {
     case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply[V](v.key, v.value)(l, r)
       case EmptyWithIndex => None

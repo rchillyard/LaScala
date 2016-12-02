@@ -45,8 +45,8 @@ class MPTTSpec extends FlatSpec with Matchers {
 //      case _ => Seq[String]()
 //    }
 //    import UnvaluedBinaryTree._
-//    val tree = TreeLike.populateOrderedTree(z map(Value(_)))
-//    val mptt = MPTT(TreeLike.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]).asInstanceOf[IndexedNode[String]])
+//    val tree = Tree.populateOrderedTree(z map(Value(_)))
+//    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]).asInstanceOf[IndexedNode[String]])
 //    mptt.index.size shouldBe 177
 //
 //    println(mptt)

@@ -263,7 +263,7 @@ class TreeSpec extends FlatSpec with Matchers {
       case _ => Seq[String]()
     }
     import UnvaluedBinaryTree._
-    val tree = TreeLike.populateOrderedTree(z)
+    val tree = Tree.populateOrderedTree(z)
     val strings = tree.iterator(true).take(10).toList
     strings shouldBe List("a", "about", "above", "actually", "ago", "alas", "all", "and", "another", "anything")
   }
@@ -337,7 +337,7 @@ class TreeSpec extends FlatSpec with Matchers {
 //      case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
 //      case _ => Seq[String]()
 //    }
-//    val tree = TreeLike.populateTree(z)
+//    val tree = Tree.populateTree(z)
 //    tree.includes("flatland") shouldBe true
 //    tree.depth shouldBe 15
 //    tree.size shouldBe 177
@@ -358,7 +358,7 @@ class TreeSpec extends FlatSpec with Matchers {
 //      case Some(ws) => (ws map {_.toLowerCase} filterNot {_.isEmpty} distinct) sorted
 //      case _ => Seq[String]()
 //    }
-//    val tree = TreeLike.populateOrderedTree(z)
+//    val tree = Tree.populateOrderedTree(z)
 //    tree.includes("flatland") shouldBe true
 //    tree.depth shouldBe 90
 //    tree.size shouldBe 177

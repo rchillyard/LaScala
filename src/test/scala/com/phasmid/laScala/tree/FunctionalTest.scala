@@ -81,16 +81,14 @@ class FunctionalTest extends FlatSpec with Matchers {
       case Some(as) =>
         import AccountRecord._
         implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
-        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[AccountRecord]
         implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
           // TODO fix this totally arbitrary value for date
           def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
         }
         implicit object NodeTypeParent extends HasParent[NodeType] {
           def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
-          def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
+          def createParent(t: NodeType): Option[Tree[NodeType]] = {
             val treeBuilder = implicitly[TreeBuilder[NodeType]]
-            //            val leafBuilder = implicitly[LeafBuilder[NodeType]]
             val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
             for (_ <- vo) yield treeBuilder.buildTree(vo, Seq())
           }
@@ -151,17 +149,15 @@ class FunctionalTest extends FlatSpec with Matchers {
       case Some(as) =>
         import AccountRecord._
         implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
-        implicit object GeneralKVLeafBuilderValueNodeType extends GeneralKVLeafBuilder[AccountRecord]
         implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
           def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, null, null))
         }
         implicit object NodeTypeParent extends HasParent[NodeType] {
           def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
-          def createParent(t: NodeType): Option[TreeLike[NodeType]] = {
+          def createParent(t: NodeType): Option[Tree[NodeType]] = {
             val treeBuilder = implicitly[TreeBuilder[NodeType]]
-            val leafBuilder = implicitly[LeafBuilder[NodeType]]
             val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
-            for (v <- vo) yield treeBuilder.buildTree(None,Seq(leafBuilder.buildLeaf(v)))
+            for (v <- vo) yield treeBuilder.buildTree(None,Seq(treeBuilder.buildLeaf(v)))
           }
         }
         implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
@@ -232,12 +228,12 @@ object ParentChildTree {
     * @tparam V the underlying type of the Values
     * @return the newly created tree
     */
-  def populateParentChildTree[V](values: Seq[Value[V]])(implicit ev1: HasParent[Value[V]], ev2: NodeParent[Value[V]], treeBuilder: TreeBuilder[Value[V]], leafBuilder: LeafBuilder[Value[V]], valueBuilder: ValueBuilder[V]): Try[TreeLike[Value[V]]] =
+  def populateParentChildTree[V](values: Seq[Value[V]])(implicit ev1: HasParent[Value[V]], ev2: NodeParent[Value[V]], treeBuilder: TreeBuilder[Value[V]], valueBuilder: ValueBuilder[V]): Try[Tree[Value[V]]] =
   {
     val root = valueBuilder.buildValue("root")
     val ty = Try(implicitly[TreeBuilder[Value[V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[V]])
       @tailrec
-      def inner(result: Try[TreeLike[Value[V]]], values: List[Value[V]]): Try[TreeLike[Value[V]]] = values match {
+      def inner(result: Try[Tree[Value[V]]], values: List[Value[V]]): Try[Tree[Value[V]]] = values match {
         case Nil => result
         case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }

@@ -30,8 +30,6 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   implicit object GeneralKVTreeBuilderStringInt extends GeneralKVTreeBuilder[Int]
 
-  implicit object GeneralKVLeafBuilderStringInt extends GeneralKVLeafBuilder[Int]
-
   implicit object ValueBuilderNodeType extends ValueBuilder[Int] {
     def buildValue(k: String): Value[Int] = Value[Int](k.toInt)
   }
@@ -40,9 +38,8 @@ class KVTreeSpec extends FlatSpec with Matchers {
     // Here, we take the Int value, modulo 10, and turn that into a String
     def getParentKey(t: Value[Int]): Option[String] = Some(t.value./(10).toString)
 
-    def createParent(t: Value[Int]): Option[TreeLike[Value[Int]]] = {
+    def createParent(t: Value[Int]): Option[Tree[Value[Int]]] = {
       val treeBuilder = implicitly[TreeBuilder[Value[Int]]]
-      //        val leafBuilder = implicitly[LeafBuilder[Value[Int]]]
       val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[Int]].buildValue(k)
       for (_ <- vo) yield treeBuilder.buildTree(vo, Seq())
     }

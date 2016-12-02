@@ -37,7 +37,7 @@ class ParentSpec extends FlatSpec with Matchers {
       case _ => Seq[String]()
     }
     import GeneralTree._
-    val tree = TreeLike.populateOrderedTree(z)
+    val tree = Tree.populateOrderedTree(z)
     println(tree)
     def f(t: Node[String]): Option[String] = t.get
     def g(ns: Seq[String], wo: Option[String]): Seq[String] = wo match { case Some(i) => ns :+ i; case _ => ns}
