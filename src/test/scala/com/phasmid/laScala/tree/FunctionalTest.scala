@@ -47,18 +47,6 @@ object AccountDate {
   def parse(y: String, m: String, d: String): Try[AccountDate] = FP.map3(Try(y.toInt), Try(m.toInt), Try(d.toInt))(apply)
 }
 
-//object DatePredicates {
-//  val lt: Int=>Boolean = {_<0}
-//  val eq: Int=>Boolean = {_==0}
-//  def compareNodeAttribute[K,V,X : Ordering](g: V=>X)(f: Int=>Boolean)(d: X)(n: Node[Value[K,V]]): Boolean = n.get match {
-//    case Some(Value(v)) => f(implicitly[Ordering[X]].compare(g(v),d))
-//    case _ => false
-//  }
-//
-//  val onDate = compareWithDate(eq) _
-//  val beforeDate = compareWithDate(lt) _
-//
-//}
 /**
   * Created by scalaprof on 10/19/16.
   */
@@ -68,15 +56,37 @@ class FunctionalTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
   it should "work for miniSampleTree.txt" in {
+    checkTreeFromResource(TestDetailsMiniSample, 9, 3, 5, 9, 6)
+  }
+  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository.
+  ignore should "work for sampleTree.txt" in {
+    checkTreeFromResource(TestDetailsSample, 113, 3, 64, 113, 47)
+  }
+
+  trait BuildAccountRecord {
+    def createAccountRecord(ws: Array[String]): Option[AccountRecord]
+  }
+  abstract class AbstractTestDetails(val resourceName: String) extends BuildAccountRecord
+  case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
+    def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
+  }
+  case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
+    def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
+  }
+  private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
     //    Spy.spying = true
-    val uo = Option(getClass.getResource("miniSampleTree.txt"))
+    val uo = Option(getClass.getResource(tester.resourceName))
     uo should matchPattern { case Some(_) => }
-    val so = uo map ( _.openStream )
+    val so = uo map (_.openStream)
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
-    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(2), ws(0), ws(1))
+    val aoso = for (wss <- wsso) yield for (ws <- wss) yield tester.createAccountRecord(ws)
 
     // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
     val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
+    checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
+  }
+
+  private def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]) = {
     aso match {
       case Some(as) =>
         import AccountRecord._
@@ -87,6 +97,7 @@ class FunctionalTest extends FlatSpec with Matchers {
         }
         implicit object NodeTypeParent extends HasParent[NodeType] {
           def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
+
           def createParent(t: NodeType): Option[Tree[NodeType]] = {
             val treeBuilder = implicitly[TreeBuilder[NodeType]]
             val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
@@ -103,16 +114,17 @@ class FunctionalTest extends FlatSpec with Matchers {
 
         ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
           case Success(tree) =>
-            println(tree)
-            tree.size shouldBe 9
+//            println(tree)
+            tree.size shouldBe size
             println(tree.render())
-            tree.depth shouldBe 3
+            tree.depth shouldBe depth
             val ns = tree.nodeIterator(true)
-            println(ns.toList)
+//            println(ns.toList)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
+
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
-              case Some(Value(AccountRecord("root",_,_))) => false
+              case Some(Value(AccountRecord("root", _, _))) => false
               case Some(Value(v)) => f(v.date.compare(d))
               case _ => false
             }
@@ -120,83 +132,16 @@ class FunctionalTest extends FlatSpec with Matchers {
             val onDate = compareWithDate(eq) _
             val beforeDate = compareWithDate(lt) _
             tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(_) => }
-            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 5
+            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe before
 
             // TODO recreate this test
             val indexedTree = KVTree.createIndexedTree(tree)
-            indexedTree.nodeIterator(true).size shouldBe 9
-            val mptt = MPTT (indexedTree)
-            mptt.index.size shouldBe 6
-            println (mptt)
+            indexedTree.nodeIterator(true).size shouldBe iteratorSize
+            val mptt = MPTT(indexedTree)
+            mptt.index.size shouldBe mpttSize
+            println(mptt)
           case Failure(x) =>
-            fail(s"Exception thrown populating tree",x)
-        }
-
-      case None => System.err.println("unable to yield a complete hierarchy")
-    }
-  }
-
-  ignore should "work for sampleTree.txt" in {
-    val uo = Option(getClass.getResource("sampleTree.txt"))
-    uo should matchPattern { case Some(_) => }
-    val so = uo map ( _.openStream )
-    val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
-    val aoso = for (wss <- wsso) yield for(ws <- wss) yield AccountRecord.parse(ws(7), ws(5), ws(6))
-
-    // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
-    val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
-    aso match {
-      case Some(as) =>
-        import AccountRecord._
-        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
-        implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
-          def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, null, null))
-        }
-        implicit object NodeTypeParent extends HasParent[NodeType] {
-          def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
-          def createParent(t: NodeType): Option[Tree[NodeType]] = {
-            val treeBuilder = implicitly[TreeBuilder[NodeType]]
-            val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
-            for (v <- vo) yield treeBuilder.buildTree(None,Seq(treeBuilder.buildLeaf(v)))
-          }
-        }
-        implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
-          // XXX see comment on GeneralNodeParent
-          def isParent(parent: Node[NodeType], child: Node[NodeType]): Boolean = parent match {
-            case Branch(ns) => ns.contains(child)
-            case _ => false
-          }
-        }
-
-        ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
-          case Success(tree) =>
-            println(tree)
-            tree.size shouldBe 100
-            println(tree.render())
-            tree.depth shouldBe 2
-            val ns = tree.nodeIterator(true)
-            println(ns)
-            val lt: Int => Boolean = _ < 0
-            val eq: Int => Boolean = _ == 0
-            def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
-              case Some(Value(AccountRecord("root",_,_))) => false
-              case Some(Value(v)) => f(v.date.compare(d))
-              case _ => false
-            }
-
-            val onDate = compareWithDate(eq) _
-            val beforeDate = compareWithDate(lt) _
-            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(_) => }
-            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe 52
-
-            // TODO recreate this test
-            val indexedTree = KVTree.createIndexedTree(tree)
-            indexedTree.nodeIterator(true).size shouldBe 101
-            val mptt = MPTT (indexedTree)
-            mptt.index.size shouldBe 35
-            println (mptt)
-          case Failure(x) =>
-            fail(s"Exception thrown populating tree",x)
+            fail(s"Exception thrown populating tree", x)
         }
 
       case None => System.err.println("unable to yield a complete hierarchy")
@@ -224,7 +169,6 @@ object ParentChildTree {
     *
     * @param values      the values to become nodes in the resulting tree
     * @param treeBuilder the tree builder
-    * @param leafBuilder the leaf builder
     * @tparam V the underlying type of the Values
     * @return the newly created tree
     */

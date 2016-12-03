@@ -1,6 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.HasKey
+import com.phasmid.laScala.tree.MPTTEntry.HasKeyStringString
 
 import scala.collection.mutable
 
@@ -39,6 +40,14 @@ case class MPTTEntry[T: HasKey](k: String, t: T)(val pre: Long, val post: Long) 
   def contains(x: MPTTEntry[T]): Boolean = this.pre <= x.pre && this.post >= x.post
   def key: String = implicitly[HasKey[T]].getKey(t).toString
   override def toString = s"$t: $pre,$post"
+}
+
+object MPTTEntry {
+  implicit object HasKeyStringString extends HasKey[String] {
+    type K = String
+    def getKey(v: String): String = v
+  }
+  def apply(k: String)(pre: Long, post: Long): MPTTEntry[String] = apply(k,k)(pre,post)
 }
 
 object MPTT {
