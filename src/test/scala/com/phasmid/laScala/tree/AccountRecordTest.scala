@@ -47,46 +47,64 @@ object AccountDate {
   def parse(y: String, m: String, d: String): Try[AccountDate] = FP.map3(Try(y.toInt), Try(m.toInt), Try(d.toInt))(apply)
 }
 
+trait BuildAccountRecord {
+  def createAccountRecord(ws: Array[String]): Option[AccountRecord]
+}
+abstract class AbstractTestDetails(val resourceName: String) extends BuildAccountRecord
+
 /**
   * Created by scalaprof on 10/19/16.
   */
-class FunctionalTest extends FlatSpec with Matchers {
-
-  type NodeType = Value[AccountRecord]
+class AccountRecordTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
   it should "work for miniSampleTree.txt" in {
+    case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
+      def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
+    }
     checkTreeFromResource(TestDetailsMiniSample, 9, 3, 5, 9, 6)
   }
   // XXX we ignore this because I have not committed the sampleTree.txt file to the repository.
-  ignore should "work for sampleTree.txt" in {
+  it should "work for sampleTree.txt" in {
+    case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
+      def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
+    }
     checkTreeFromResource(TestDetailsSample, 113, 3, 64, 113, 47)
-  }
-
-  trait BuildAccountRecord {
-    def createAccountRecord(ws: Array[String]): Option[AccountRecord]
-  }
-  abstract class AbstractTestDetails(val resourceName: String) extends BuildAccountRecord
-  case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
-    def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
-  }
-  case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
-    def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
   }
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
     //    Spy.spying = true
+    val aso = AccountRecordTest.readAccountData(tester)
+    val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
+    println(checks)
+    checks should matchPattern { case Success((`size`,`depth`,Some(_),`before`,`iteratorSize`,`mpttSize`)) => }
+  }
+
+}
+
+object AccountRecordTest {
+  type NodeType = Value[AccountRecord]
+
+  object NodeType {
+
+    trait NodeTypeParent extends HasParent[Value[AccountRecord]] {
+      def createParent(t: Value[AccountRecord]): Option[Node[Value[AccountRecord]]] = None
+
+      def getParentKey(v: Value[AccountRecord]): Option[String] = Some(v.value.parent)
+    }
+    implicit object HasParentNodeType extends NodeTypeParent
+  }
+
+  def readAccountData(tester: AbstractTestDetails) = {
     val uo = Option(getClass.getResource(tester.resourceName))
-    uo should matchPattern { case Some(_) => }
     val so = uo map (_.openStream)
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
     val aoso = for (wss <- wsso) yield for (ws <- wss) yield tester.createAccountRecord(ws)
 
     // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
-    val aso = (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
-    checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
+    (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 
-  private def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]) = {
+  def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]) = {
     aso match {
       case Some(as) =>
         import AccountRecord._
@@ -114,12 +132,10 @@ class FunctionalTest extends FlatSpec with Matchers {
 
         ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
           case Success(tree) =>
-//            println(tree)
-            tree.size shouldBe size
+            //            println(tree)
             println(tree.render())
-            tree.depth shouldBe depth
             val ns = tree.nodeIterator(true)
-//            println(ns.toList)
+            //            println(ns.toList)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
 
@@ -131,34 +147,21 @@ class FunctionalTest extends FlatSpec with Matchers {
 
             val onDate = compareWithDate(eq) _
             val beforeDate = compareWithDate(lt) _
-            tree.find(onDate(AccountDate(2014, 9, 30))) should matchPattern { case Some(_) => }
-            tree.filter(beforeDate(AccountDate(2014, 9, 30))).size shouldBe before
 
             // TODO recreate this test
             val indexedTree = KVTree.createIndexedTree(tree)
-            indexedTree.nodeIterator(true).size shouldBe iteratorSize
             val mptt = MPTT(indexedTree)
-            mptt.index.size shouldBe mpttSize
             println(mptt)
-          case Failure(x) =>
-            fail(s"Exception thrown populating tree", x)
+            Success((tree.size,tree.depth,tree.find(onDate(AccountDate(2014, 9, 30))),tree.filter(beforeDate(AccountDate(2014, 9, 30))).size,indexedTree.nodeIterator(true).size,mptt.index.size))
+          case f @ Failure(x) => f
         }
 
-      case None => System.err.println("unable to yield a complete hierarchy")
+
+
+      case None => Failure(TreeException("unable to yield a complete hierarchy"))
     }
   }
-}
 
-object FunctionalTest {
-  object NodeType {
-
-    trait NodeTypeParent extends HasParent[Value[AccountRecord]] {
-      def createParent(t: Value[AccountRecord]): Option[Node[Value[AccountRecord]]] = None
-
-      def getParentKey(v: Value[AccountRecord]): Option[String] = Some(v.value.parent)
-    }
-    implicit object HasParentNodeType extends NodeTypeParent
-  }
 }
 
 object ParentChildTree {
