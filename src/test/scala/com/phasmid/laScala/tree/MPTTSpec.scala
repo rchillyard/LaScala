@@ -39,12 +39,7 @@ class MPTTSpec extends FlatSpec with Matchers {
   }
 
   behavior of "real-life GeneralTree"
-  ignore should "build correctly" in {
-//    import GeneralTree._
-//    implicit object HasKeyStringString extends HasKey[String] {
-//      type K = String
-//      def getKey(v: String): String = v
-//    }
+  it should "build correctly" in {
     implicit object HasKeyInt extends HasKey[Int] {
       type K = String
       def getKey(v: Int): String = v.toString
@@ -54,11 +49,44 @@ class MPTTSpec extends FlatSpec with Matchers {
       def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
     }
     val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
-    println(tree)
     val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedNode[Int]]
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
-
-    //    tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
+    mptt.contains("0","0") should matchPattern { case Some(true) => }
+    mptt.contains("0","1") should matchPattern { case Some(true) => }
+    mptt.contains("0","11") should matchPattern { case Some(true) => }
+    mptt.contains("0","14") should matchPattern { case Some(true) => }
+    mptt.contains("0","2") should matchPattern { case Some(true) => }
+    mptt.contains("0","21") should matchPattern { case Some(true) => }
+    mptt.contains("0","23") should matchPattern { case Some(true) => }
+    mptt.contains("0","3") should matchPattern { case Some(true) => }
+    mptt.contains("0","4") should matchPattern { case Some(true) => }
+    mptt.contains("1","0") should matchPattern { case Some(false) => }
+    mptt.contains("1","1") should matchPattern { case Some(true) => }
+    mptt.contains("1","11") should matchPattern { case Some(true) => }
+    mptt.contains("1","14") should matchPattern { case Some(true) => }
+    mptt.contains("1","2") should matchPattern { case Some(false) => }
+    mptt.contains("1","21") should matchPattern { case Some(false) => }
+    mptt.contains("1","23") should matchPattern { case Some(false) => }
+    mptt.contains("1","3") should matchPattern { case Some(false) => }
+    mptt.contains("1","4") should matchPattern { case Some(false) => }
+    mptt.contains("2","0") should matchPattern { case Some(false) => }
+    mptt.contains("2","1") should matchPattern { case Some(false) => }
+    mptt.contains("2","11") should matchPattern { case Some(false) => }
+    mptt.contains("2","14") should matchPattern { case Some(false) => }
+    mptt.contains("2","2") should matchPattern { case Some(true) => }
+    mptt.contains("2","21") should matchPattern { case Some(true) => }
+    mptt.contains("2","23") should matchPattern { case Some(true) => }
+    mptt.contains("2","3") should matchPattern { case Some(false) => }
+    mptt.contains("2","4") should matchPattern { case Some(false) => }
+    mptt.contains("3","0") should matchPattern { case Some(false) => }
+    mptt.contains("3","1") should matchPattern { case Some(false) => }
+    mptt.contains("3","11") should matchPattern { case Some(false) => }
+    mptt.contains("3","14") should matchPattern { case Some(false) => }
+    mptt.contains("3","2") should matchPattern { case Some(false) => }
+    mptt.contains("3","21") should matchPattern { case Some(false) => }
+    mptt.contains("3","23") should matchPattern { case Some(false) => }
+    mptt.contains("3","3") should matchPattern { case Some(true) => }
+    mptt.contains("3","4") should matchPattern { case Some(false) => }
   }
     behavior of "real-life UnvaluedBinaryTree"
   ignore should "build correctly" in {
@@ -88,6 +116,10 @@ class MPTTSpec extends FlatSpec with Matchers {
       def createParent(t: Value[String]): Option[Node[Value[String]]] = None
     }
     implicit object ValueHasParent extends ValueHasParent
+    implicit object HasKeyValueString extends HasKey[Value[String]] {
+      type K = String
+      def getKey(v: Value[String]): String = v.value
+    }
     val tree = Tree.populateOrderedTree(z map(Value(_)))
     val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]).asInstanceOf[IndexedNode[Value[String]]])
     mptt.index.size shouldBe 177

@@ -4,6 +4,7 @@ import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.{HasKey, Spy}
 
+import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 /**
@@ -672,12 +673,20 @@ object Tree {
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */
-  def createIndexedTree[A](node: Node[A], index: Int = 0): Node[A] with TreeIndex = node match {
-    case Leaf(x) => IndexedLeaf[A](Some(index), Some(index + 1), x)
+  def createIndexedTree[A : HasKey](node: Node[A], index: Int = 0): IndexedNode[A] = node match {
+    case Leaf(x) => IndexedLeafWithKey1[A](Some(index), Some(index + 1), x)
     case UnvaluedBinaryTree(l, r) =>
       val rIndex = index + 1 + l.size + r.size
       MutableGenericIndexedTree(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size)))
-    case Empty => EmptyWithIndex
+    case GeneralTree(a, ans) =>
+      @tailrec
+      def inner(r: Seq[Node[A]], work: (Int,Seq[Node[A]])): Seq[Node[A]] = work._2 match {
+        case Nil => r
+        case h::t => inner(r :+ createIndexedTree(h,work._1), (work._1+h.size,t))
+      }
+      val rIndex = index + 1 + (ans map (_.size) sum)
+      MutableGenericIndexedTree(Some(index), Some(rIndex), Some(a), inner(Nil,(index, ans)))
+    case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[A]] // XXX check this is OK
     case _ => throw TreeException(s"can't created IndexedTree from $node")
   }
 }

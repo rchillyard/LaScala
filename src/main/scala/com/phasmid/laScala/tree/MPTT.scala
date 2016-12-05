@@ -55,11 +55,11 @@ object MPTT {
     val hasKey = implicitly[HasKey[T]]
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
         // XXX try to remove cast here and later
-      case IndexedLeafWithKey1(lo, ro, v: T) => for (l <- lo; r <- ro) yield MPTTEntry.apply(hasKey.getKey(v), v)(l, r).asInstanceOf[MPTTEntry[T]]
+      case IndexedLeafWithKey1(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(hasKey.getKey(v), v)(l, r).asInstanceOf[MPTTEntry[T]]
       case EmptyWithIndex => None
       case EmptyWithKeyAndIndex() => None
       case IndexedNode(n,l,r) => n.get match {
-        case Some(v: T) => Some(MPTTEntry.apply(hasKey.getKey(v), v)(l, r))
+        case Some(v) => Some(MPTTEntry.apply(hasKey.getKey(v), v)(l, r))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
