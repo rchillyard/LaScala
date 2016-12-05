@@ -22,13 +22,24 @@ class SpySpec extends FlatSpec with Matchers {
     is shouldBe List(1,2)
     spyMessage shouldBe "explicit spy: i: 1\nexplicit spy: i: 2\n"
   }
-  it should "not expand the message when spying is off" in {
+  it should "not expand the message when spying is off (global)" in {
     Spy.spying = false
     var spyMessage: String = ""
     var spySpyMessage: String = ""
     def f(s: => String): String = {spySpyMessage = s; s}
     implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
     val is = for (i <- 1 to 2) yield Spy.spy(f("i"),i)
+    is shouldBe List(1,2)
+    spyMessage shouldBe ""
+    spySpyMessage shouldBe ""
+  }
+  it should "not expand the message when spying is off (local)" in {
+    Spy.spying = true
+    var spyMessage: String = ""
+    var spySpyMessage: String = ""
+    def f(s: => String): String = {spySpyMessage = s; s}
+    implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
+    val is = for (i <- 1 to 2) yield Spy.spy(f("i"),i,false)
     is shouldBe List(1,2)
     spyMessage shouldBe ""
     spySpyMessage shouldBe ""

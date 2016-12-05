@@ -85,7 +85,7 @@ object Recursion {
     *
     * CONSIDER reformulating the quick-return function to take an S as its input, rather than an R. That would, however, not be trivial.
     *
-    * @param f  the map function which takes a P and T and produces an S.
+    * @param f  the map function which takes a C and T and produces an S.
     * @param g  the reduce function which accumulates the result (the accumulator is passed as its first parameter and an S value is passed as the second).
     * @param h  the function which builds the T list from the existing T list and the given T. It is essential that the given T does not go back, as is, into the list!
     * @param y  the function which yields the next P from a P
@@ -108,4 +108,12 @@ object Recursion {
         case Nil => r
         case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(c), g(r, f(c, t)))
       }
+}
+
+object Factorial {
+  def f(x: Int, y: Int) = x
+  def g(x: BigInt, y: Int): BigInt = x*y
+  def h(xs: Seq[Int], x: Int): Seq[Int] = if (x>1) xs :+ x-1 else xs
+  def y(x: Int) = x+1
+  def factorial(n: Int): BigInt = Recursion.genericCountRecurse[Int,Int,BigInt,Int](f,g,h,y)(Seq(n),1,1)
 }

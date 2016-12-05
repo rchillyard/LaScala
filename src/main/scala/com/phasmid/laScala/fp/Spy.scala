@@ -22,6 +22,9 @@ object Spy {
     */
   def apply(x: Unit): Spy = new Spy()
 
+  /**
+    * This is the global setting for whether to invoke the spyFunc of each spy invocation. However, each invocation can also turn spying off for itself.
+    */
   var spying: Boolean = false
 
   /**
@@ -30,10 +33,12 @@ object Spy {
     *
     * @param w a String to be used as the prefix of the resulting message
     * @param x the value being spied on
+    * @param b if true AND if spying is true, the spyFunc will be called (defaults to true)
+    * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
     * @tparam X the type of the value
-    * @return the value
+    * @return the value of x
     */
-  def spy[X](w: => String, x: X)(implicit spyFunc: String=>Spy): X = {if (spying) spyFunc(s"$w: $x"); x}
+  def spy[X](w: => String, x: X, b: Boolean = true)(implicit spyFunc: String=>Spy): X = { if (b&&spying) spyFunc(s"$w: $x"); x }
 
   /**
     * This is the default spy function

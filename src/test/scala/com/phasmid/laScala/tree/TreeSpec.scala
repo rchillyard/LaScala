@@ -1,6 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.Kleenean
+import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.tree.AbstractBinaryTree._
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -10,6 +11,8 @@ import scala.io.Source
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends FlatSpec with Matchers {
+  Spy.spying = true
+
   behavior of "render"
   it should "work for leaf" in {
     Leaf(42).render(0) shouldBe "42"
@@ -179,9 +182,13 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "compareValues"
   it should "work for Leaf" in {
-    val tree1 = Leaf(1)
-    val tree2 = Leaf(1)
-    tree2.compareValues(tree1) should matchPattern { case Kleenean(Some(true)) => }
+    val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val leaf1 = Leaf(1)
+    val leaf2 = Leaf(2)
+    tree1.compareValues(leaf1) should matchPattern { case Kleenean(Some(true)) => }
+    leaf1.compareValues(tree1) should matchPattern { case Kleenean(Some(true)) => }
+    tree1.compareValues(leaf2) should matchPattern { case Kleenean(Some(false)) => }
+    leaf2.compareValues(tree1) should matchPattern { case Kleenean(Some(false)) => }
   }
 
   behavior of "like"
@@ -202,22 +209,49 @@ class TreeSpec extends FlatSpec with Matchers {
   }
 
   behavior of "includes"
+  it should "work for GeneralTree with Node" in {
+    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    tree.includes(Leaf(1)) shouldBe true
+    tree.includes(Leaf(2)) shouldBe true
+    tree.includes(Leaf(3)) shouldBe true
+    tree.includes(Leaf(4)) shouldBe false
+    tree.includes(Leaf(0)) shouldBe false
+  }
+  it should "work for UnvaluedBinaryTree with Node" in {
+    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
+    tree.includes(Leaf(1)) shouldBe true
+    tree.includes(Leaf(2)) shouldBe false
+    tree.includes(Leaf(3)) shouldBe true
+    tree.includes(Leaf(4)) shouldBe false
+    tree.includes(Leaf(5)) shouldBe true
+    tree.includes(Leaf(6)) shouldBe true
+  }
+  behavior of "includes"
   it should "work for GeneralTree" in {
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
-    tree.includes(1) shouldBe true
-    tree.includes(2) shouldBe true
-    tree.includes(3) shouldBe true
-    tree.includes(4) shouldBe false
-    tree.includes(0) shouldBe false
+    tree.includesValue(1) shouldBe true
+    tree.includesValue(2) shouldBe true
+    tree.includesValue(3) shouldBe true
+    tree.includesValue(4) shouldBe false
+    tree.includesValue(0) shouldBe false
   }
   it should "work for UnvaluedBinaryTree" in {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
-    tree.includes(1) shouldBe true
-    tree.includes(2) shouldBe false
-    tree.includes(3) shouldBe true
-    tree.includes(4) shouldBe false
-    tree.includes(5) shouldBe true
-    tree.includes(6) shouldBe true
+    tree.includesValue(1) shouldBe true
+    tree.includesValue(2) shouldBe false
+    tree.includesValue(3) shouldBe true
+    tree.includesValue(4) shouldBe false
+    tree.includesValue(5) shouldBe true
+    tree.includesValue(6) shouldBe true
+  }
+  it should "work for GeneralTree using the two-parameter form" in {
+    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    tree.includes(1,1) shouldBe true
+    tree.includes(1,2) shouldBe true
+    tree.includes(1,3) shouldBe true
+    tree.includes(2,3) shouldBe false
+    tree.includes(2,1) shouldBe false
+    tree.includesValue(0) shouldBe false
   }
 
   behavior of "find"
@@ -270,7 +304,7 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "UnvaluedBinaryTree"
   it should "apply correctly with varargs" in {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
-    tree.includes(1) shouldBe true
+    tree.includesValue(1) shouldBe true
     tree.depth shouldBe 3
     val x = tree.render()
     tree.render() shouldBe "\n\n    1\n    3\n\n    5\n    6"

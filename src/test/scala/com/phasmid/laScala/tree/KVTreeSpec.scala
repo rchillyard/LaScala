@@ -111,11 +111,11 @@ class KVTreeSpec extends FlatSpec with Matchers {
   behavior of "includes"
   it should "work for GeneralKVTree" in {
     val tree = GeneralKVTree[Int](Some(Value(1)), Seq(Leaf(Value(2)), Leaf(Value(3))))
-    tree.includes(Value(1)) shouldBe true
-    tree.includes(Value(2)) shouldBe true
-    tree.includes(Value(3)) shouldBe true
-    tree.includes(Value(4)) shouldBe false
-    tree.includes(Value(0)) shouldBe false
+    tree.includesValue(Value(1)) shouldBe true
+    tree.includesValue(Value(2)) shouldBe true
+    tree.includesValue(Value(3)) shouldBe true
+    tree.includesValue(Value(4)) shouldBe false
+    tree.includesValue(Value(0)) shouldBe false
   }
 
   behavior of "find"

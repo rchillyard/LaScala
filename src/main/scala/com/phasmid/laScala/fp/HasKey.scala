@@ -8,6 +8,6 @@ package com.phasmid.laScala.fp
   * Created by scalaprof on 11/17/16.
   */
 trait HasKey[V] {
-  type K
-  def getKey(v: V): K
+  type K // TODO make this generic again (replace String return by K)
+  def getKey(v: V): String
 }

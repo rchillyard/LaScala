@@ -38,7 +38,7 @@ sealed trait KVTree[+V] extends Branch[Value[V]] {
     */
   override def findParent[B >: Value[V] : NodeParent](node: Node[B])(implicit hp: HasParent[B]): Option[Node[B]] = node.get match {
     case Some(v) =>
-      for (k <- implicitly[HasParent[B]].getParentKey(v); n <- Spy.spy(s"key for $v is $k and parent node is: ", findByKey(k))) yield n
+      for (k <- implicitly[HasParent[B]].getParentKey(v); n <- Spy.spy(s"key for $v is $k and parent node is: ", findByKey(k), false)) yield n
     case _ => None
   }
 
@@ -53,13 +53,13 @@ sealed trait KVTree[+V] extends Branch[Value[V]] {
         case Some(v) =>
           if (allowRecursion) {
             // Didn't get a parent: try to create one
-            Spy.spy(s"addNode: createParent (with recursion) for value: $v for $node in tree $this", implicitly[HasParent[B]].createParent(v)) match {
+            Spy.spy(s"addNode: createParent (with recursion) for value: $v for $node in tree $this", implicitly[HasParent[B]].createParent(v), false) match {
               // NOTE: the following line involves a recursive call -- take care!
               case qo@Some(p) => (addNode(p, false), qo) // created one... update the tree and return it with the new (optional) parent
               case _ => (this, None) // failed to create one... return this with none
             }
           }
-          else Spy.spy(s"addNode: no parent but recursion not allowed for for $node in tree $this", (this, None))
+          else Spy.spy(s"addNode: no parent but recursion not allowed for for $node in tree $this", (this, None), false)
         case _ => (this,None)
       }
     }
@@ -220,7 +220,8 @@ object GeneralKVTree
 case class IndexedLeafWithKey[V](lIndex: Option[Long], rIndex: Option[Long], value: Value[V]) extends AbstractLeaf[Value[V]](value) with IndexedNodeWithKey[V] {
   override def depth: Int = 1
 
-  def render(indent: Int): String = value.render(indent)
+  override def render(indent: Int): String = value.render(indent)
+
   override def toString = s"""L("$value")"""
 
   def key: String = value.key

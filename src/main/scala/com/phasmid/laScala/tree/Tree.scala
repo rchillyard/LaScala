@@ -2,7 +2,7 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.Spy
+import com.phasmid.laScala.fp.{HasKey, Spy}
 
 import scala.language.implicitConversions
 
@@ -61,6 +61,15 @@ sealed trait Node[+A] extends Renderable {
   def includes[B >: A](node: Node[B]): Boolean
 
   /**
+    * Determine if this subtree includes a value equal to b
+    *
+    * @param b the value to be searched
+    * @tparam B the type of b
+    * @return true if value b is found in the sub-tree defined by this
+    */
+  def includesValue[B >: A](b: B): Boolean
+
+  /**
     * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
     *
     * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
@@ -79,7 +88,7 @@ sealed trait Node[+A] extends Renderable {
       }
 
     if (f(this, x))
-      Spy.spy(s"replaceNode: matched $x with this so return", y) // this and x are the same so simply return y
+      Spy.spy(s"replaceNode: matched $x with this so return", y, false) // this and x are the same so simply return y
     else
       this match {
         case Branch(ns) => implicitly[TreeBuilder[B]].buildTree(get, replaceChildrenNodes(x, y)(f)(ns))
@@ -88,7 +97,7 @@ sealed trait Node[+A] extends Renderable {
   }
 }
 
-/**
+ /**
   * Trait which models the tree-like aspects of a tree
   *
   * @tparam A the underlying type of the tree/node
@@ -161,7 +170,7 @@ trait Tree[+A] extends Node[A] {
 
 
   def addNode[B >: A : TreeBuilder : NodeParent : HasParent](node: Node[B], allowRecursion: Boolean = true): Tree[B] = {
-    val no = Spy.spy(s"existing parent of node $node: ", findParent(node))
+    val no = Spy.spy(s"existing parent of node $node: ", findParent(node), false)
     val (x, y: Tree[B]) = no orElse Some(this) match {
       case Some(n: Tree[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
       case Some(n: Node[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, Seq(node)))
@@ -214,7 +223,7 @@ trait Tree[+A] extends Node[A] {
   def like[B >: A](node: Node[B]): Maybe = node match {
     case Branch(ns) =>
       def cf(t: (Node[B], Node[B])): Maybe = t._1.compareValues(t._2)
-      (children zip ns).foldLeft(Kleenean(None))(_ :& cf(_))
+      (children zip ns).foldLeft(Kleenean(None))(_ :&& cf(_))
     case _ => Kleenean(false)
   }
 
@@ -225,11 +234,15 @@ trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of n
     * @return true if node n is found in the sub-tree defined by this
     */
-  def includes[B >: A](node: Node[B]): Boolean = {
-    val f: Node[B] => Maybe = { n => n compareValues node }
-    val g: (Boolean, Maybe) => Boolean = { (b, m) => (b |: m) ().getOrElse(false) }
-    Parent.traverse[Node[B], Maybe, Boolean](f, g, { x => x })(List(this), false)
+  def includes[B >: A](node: Node[B]): Boolean = (this compareValues node)() match {
+    case Some(true) => true
+    case _ => children.foldLeft[Boolean](false)((b, n) => if (b) b else n includes node)
   }
+
+//    val f: Node[B] => Maybe = { n => n compareValues node }
+//    val g: (Boolean, Maybe) => Boolean = { (b, m) => (b |: m) ().getOrElse(false) }
+//    Parent.traverse[Node[B], Maybe, Boolean](f, g, { x => x })(List(this), false)
+
 
   /**
     * Determine if this subtree includes a value equal to b
@@ -238,18 +251,36 @@ trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return true if value b is found in the sub-tree defined by this
     */
-  def includes[B >: A](b: B): Boolean = Parent.traverse[Node[B], Boolean, Boolean]({ n => n.get match {
+  def includesValue[B >: A](b: B): Boolean = get match {
     case Some(`b`) => true
-    case _ => false
+    case _ => children.foldLeft[Boolean](false)((x, n) => if (x) x else n.includesValue(b))
   }
-  }, _ | _, { x => x })(List(this), false)
+
+//    Parent.traverse[Node[B], Boolean, Boolean]({ n => n.get match {
+//    case Some(`b`) => true
+//    case _ => false
+//  }
+//  }, _ | _, { x => x })(List(this), false)
+
+  /**
+    * Determine if this tree has a subtree matching b which includes c
+    *
+    * @param subtree the value of the subtree to be searched
+    * @param element the value of the element to be found in the subtree
+    * @tparam B the type of subtree and element
+    * @return true if value element is found in the sub-tree defined by subtree
+    */
+  def includes[B >: A](subtree: B, element: B): Boolean = find(subtree) match {
+    case Some(s: Node[B]) => s.includesValue(element) //Spy.spy(s"includes: ${s.get.get}:${element}",s.includesValue(element), false)
+    case _ => println(s"includes: $subtree not found"); false
+  }
 
   /**
     * @param b value to be found, looking at the value of each node in turn (depth first)
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => n.get.contains(b)})
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => Spy.spy(s"find: $b in $n",n.get.contains(b), false)})
 
   /**
     *
@@ -265,6 +296,7 @@ trait Tree[+A] extends Node[A] {
   }
 
   def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator(true).filter(p)
+
 
 //  /**
 //    * This was designed for BinaryTree or GeneralTree. Needs testing in general.
@@ -441,17 +473,7 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   * @param value the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-case class Leaf[+A](value: A) extends AbstractLeaf[A](value) {
-  /**
-    * Create a String which represents this Node and its subtree (if any)
-    *
-    * @return an appropriate String
-    */
-  def render(indent: Int): String = value match {
-    case renderable: Renderable => renderable.render(indent)
-    case _ => s"${Renderable.prefix(indent)}$value"
-  }
-}
+case class Leaf[+A](value: A) extends AbstractLeaf[A](value)
 
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
   assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
@@ -493,13 +515,24 @@ case object Empty extends AbstractEmpty
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
   override def depth: Int = 1
 
-  def render(indent: Int): String = value match {
+  override def render(indent: Int): String = value match {
     case renderable: Renderable => renderable.render(indent)
     case _ => s"""${Renderable.prefix((indent))}$value [$lIndex:$rIndex]"""
   }
 
   override def toString = s"""L("$value")"""
 }
+
+trait IndexedNodeWithKey1[A] extends IndexedNode[A] with WithKey
+
+case class IndexedLeafWithKey1[A : HasKey](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with IndexedNodeWithKey1[A] {
+  override def depth: Int = 1
+
+  override def toString = s"""L("$value")"""
+
+  def key: String = implicitly[HasKey[A]].getKey(value)
+}
+
 
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
   def get: Option[A] = value
@@ -524,7 +557,13 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 
   def includes[B >: A](node: Node[B]): Boolean = this == node
 
-  def includes[B >: A](b: B): Boolean = a == b
+  def includesValue[B >: A](b: B): Boolean = a == b
+
+  def render(indent: Int): String = a match {
+    case renderable: Renderable => renderable.render(indent)
+    case _ => s"${Renderable.prefix(indent)}$a"
+  }
+
 }
 
 abstract class AbstractEmpty extends Tree[Nothing] {
@@ -554,6 +593,8 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   def includes[B >: Nothing](node: Node[B]): Boolean = false
 
   def includes[B >: Nothing](b: B): Boolean = false
+
+  def includesValue[B >: Nothing](b: B): Boolean = false
 
   def size: Int = 0
 

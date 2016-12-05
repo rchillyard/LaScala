@@ -40,13 +40,25 @@ class MPTTSpec extends FlatSpec with Matchers {
 
   behavior of "real-life GeneralTree"
   ignore should "build correctly" in {
-    import GeneralTree._
+//    import GeneralTree._
+//    implicit object HasKeyStringString extends HasKey[String] {
+//      type K = String
+//      def getKey(v: String): String = v
+//    }
+    implicit object HasKeyInt extends HasKey[Int] {
+      type K = String
+      def getKey(v: Int): String = v.toString
+    }
     trait NodeTypeParentInt extends HasParent[Int] {
       def createParent(a: Int): Option[Node[Int]] = None
       def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
     }
-    val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4 :+ 14
-    tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
+    val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
+    println(tree)
+    val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedNode[Int]]
+    val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
+
+    //    tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
   }
     behavior of "real-life UnvaluedBinaryTree"
   ignore should "build correctly" in {
@@ -77,7 +89,7 @@ class MPTTSpec extends FlatSpec with Matchers {
     }
     implicit object ValueHasParent extends ValueHasParent
     val tree = Tree.populateOrderedTree(z map(Value(_)))
-    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]).asInstanceOf[IndexedNode[Value[String]]])
+    val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]).asInstanceOf[IndexedNode[Value[String]]])
     mptt.index.size shouldBe 177
 
     println(mptt)
