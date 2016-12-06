@@ -28,17 +28,42 @@ object Spy {
   var spying: Boolean = false
 
   /**
-    * This method is used in development/debug phase to see the values of expressions
+    * This method is used in development/debug phase to "see" the values of expressions
     * without altering the flow of the code.
     *
-    * @param w a String to be used as the prefix of the resulting message
-    * @param x the value being spied on
-    * @param b if true AND if spying is true, the spyFunc will be called (defaults to true)
-    * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
+    * The behavior implied by "see" is defined by the spyFunc. This could be a simple println (which is the default) or a SLF4J debug function or whatever.
+    *
+    * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value
+    * @param x       the value being spied on
+    * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true)
+    * @param spyFunc (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true
     * @tparam X the type of the value
     * @return the value of x
     */
-  def spy[X](w: => String, x: X, b: Boolean = true)(implicit spyFunc: String=>Spy): X = { if (b&&spying) spyFunc(s"$w: $x"); x }
+  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy): X = {
+    if (b && spying) {
+      lazy val w = message
+      val msg = if (w contains "{}")
+        w.replace("{}", s"$x")
+      else
+        x match {
+          case () => w
+          case _ => s"$w: $x"
+        }
+      spyFunc(msg)
+    }
+    x
+  }
+
+  /**
+    * This method is used in development/debug phase to "see" a string while returning Unit.
+    *
+    * @param w       a String to be used as the prefix of the resulting message
+    * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true)
+    * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
+    * @return the value of x
+    */
+  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy) {spy(w, (), b); ()}
 
   /**
     * This is the default spy function

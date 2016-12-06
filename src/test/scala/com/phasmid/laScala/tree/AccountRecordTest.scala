@@ -85,8 +85,30 @@ class AccountRecordTest extends FlatSpec with Matchers {
     val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
 //    println(checks)
     checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
+
     checks match {
-      case Success((_,_,_,_,_,_,tree,mptt)) => AccountRecordTest.doBenchmark(tree,mptt)
+      case Success((_,_,_,_,_,_,tree,mptt)) =>
+        val nodes: Seq[Node[Value[AccountRecord]]] = tree.nodeIterator(true).toList
+        val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
+        val values = tree.iterator(true).toList
+        val trues = for (n <- branchNodes; v <- n.get) yield tree.includesValue(v)
+        val allTrue = trues.forall(_==true)
+        allTrue shouldBe true
+        val results = for (x <- values; y <- values) yield (x,y,Some(tree.includes(x,y))==mptt.contains(x.key,y.key))
+        println("checking for disagreement between tree and MPTT")
+        val good = results filter (_._3)
+        println(s"${good.size} results out of ${results.size}")
+        val bad = results find (!_._3)
+        bad match {
+          case Some(r) =>
+            val index = results indexWhere (!_._3)
+            println(s"failed on $index-th element out of ${results.size}")
+            val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
+            println(message)
+//            fail(message)
+          case _ =>
+        }
+        AccountRecordTest.doBenchmark(tree,mptt)
       case _ => fail(s"checks did not come back as expected: $checks")
     }
   }
@@ -156,7 +178,11 @@ object AccountRecordTest {
             val onDate = compareWithDate(eq) _
             val beforeDate = compareWithDate(lt) _
 
-            // TODO recreate this test
+            import AccountRecord._
+            implicit object HasKeyValueAccountRecord extends HasKey[Value[AccountRecord]] {
+              type K = String
+              def getKey(v: Value[AccountRecord]): String = v.key
+            }
             val indexedTree = KVTree.createIndexedTree(tree)
             val mptt = MPTT.createValuedMPTT(indexedTree)
             Success((tree.size,tree.depth,tree.filter(beforeDate(AccountDate(2014, 9, 30))).size,indexedTree.nodeIterator(true).size,mptt.index.size,tree.find(onDate(AccountDate(2014, 9, 30))),tree,mptt))

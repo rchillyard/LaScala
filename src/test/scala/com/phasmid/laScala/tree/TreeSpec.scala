@@ -11,7 +11,7 @@ import scala.io.Source
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends FlatSpec with Matchers {
-  Spy.spying = true
+  Spy.spying = false
 
   behavior of "render"
   it should "work for leaf" in {
@@ -46,6 +46,12 @@ class TreeSpec extends FlatSpec with Matchers {
     isOrdered(compare(Leaf(1), Leaf(2))) should matchPattern { case Kleenean(Some(true)) => }
     isOrdered(compare(Leaf(2), Leaf(1))) should matchPattern { case Kleenean(Some(false)) => }
     isOrdered(compare(Leaf(1), Leaf(1))) should matchPattern { case Kleenean(None) => }
+    isOrdered(compare(Leaf(1), Empty)) should matchPattern { case Kleenean(None) => }
+    isOrdered(compare(Empty, Leaf(1))) should matchPattern { case Kleenean(None) => }
+    isOrdered(compare(Leaf(4),UnvaluedBinaryTree(Leaf(3),Empty))) should matchPattern { case Kleenean(Some(false)) => }
+    isOrdered(compare(UnvaluedBinaryTree(Leaf(3),Empty),Leaf(4))) should matchPattern { case Kleenean(Some(true)) => }
+    isOrdered(compare(Leaf(3),UnvaluedBinaryTree(Leaf(4),Empty))) should matchPattern { case Kleenean(Some(true)) => }
+    isOrdered(compare(UnvaluedBinaryTree(Leaf(4),Empty),Leaf(3))) should matchPattern { case Kleenean(Some(false)) => }
   }
 
   it should "work for node-sequence" in {
@@ -60,6 +66,12 @@ class TreeSpec extends FlatSpec with Matchers {
     isOrdered(compare(Seq(Leaf(3)), Seq(Leaf(3)))) should matchPattern { case Kleenean(None) => }
   }
 
+  behavior of "isOrdered"
+  it should "work with nodes" in {
+    isOrdered(Leaf(1), Leaf(2)) shouldBe true
+    isOrdered(Leaf(1), Leaf(1)) shouldBe true
+    isOrdered(Leaf(2), Leaf(1)) shouldBe false
+  }
   behavior of "nodeIterator"
 
   it should "work properly for GenericBranch" in {
@@ -101,7 +113,6 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ Leaf(2)
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.iterator(true).toSeq shouldBe Seq(1, 2, 3, 5, 6)
     tree.iterator(false).toSeq shouldBe Seq(1, 2, 3, 5, 6)
   }
@@ -130,8 +141,10 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ 2
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
+//    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
+    tree.iterator().toList shouldBe List(1,2,3,5,6)
   }
+
   ignore should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 3

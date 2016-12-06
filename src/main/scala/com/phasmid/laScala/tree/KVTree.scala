@@ -4,6 +4,7 @@ import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.{HasKey, Spy}
 
+import scala.annotation.tailrec
 import scala.language.implicitConversions
 
 /**
@@ -102,7 +103,7 @@ trait WithKey {
   def key: String
 }
 
-trait IndexedNodeWithKey[V] extends IndexedNode[Value[V]] with WithKey
+//trait IndexedNodeWithKey[V] extends IndexedNode[Value[V]] with WithKey
 
 trait ValueBuilder[V] {
   /**
@@ -130,7 +131,7 @@ case class GeneralKVTree[V](value: Option[Value[V]], children: Seq[Node[Value[V]
   def get: Option[Value[V]] = value
 }
 
-case class MutableGenericIndexedTreeWithKey[V](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[Value[V]], var children: Seq[Node[Value[V]]]) extends Branch[Value[V]] with IndexedNode[Value[V]] with WithKey with IndexedNodeWithKey[V] {
+case class MutableGenericIndexedTreeWithKey[V](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[Value[V]], var children: Seq[Node[Value[V]]]) extends Branch[Value[V]] with IndexedNode[Value[V]] with WithKey with IndexedNodeWithKey1[Value[V]] {
   def get = value
 
   def key: String = value match {
@@ -157,6 +158,34 @@ case class Value[+V: HasKey](value: V) extends WithKey with Renderable {
 }
 
 object KVTree {
+  // TODO: this is copied from Tree and we should combine them.
+  def createIndexedTree[V : HasKey](node: Node[Value[V]], index: Int = 0): IndexedNode[Value[V]] = {
+    implicit object HasKeyValueV extends HasKey[Value[V]] {
+      type K = String
+      def getKey(v: Value[V]): String = v.key
+    }
+    @tailrec
+    def inner(r: Seq[Node[Value[V]]], work: (Int, Seq[Node[Value[V]]])): Seq[Node[Value[V]]] = work._2 match {
+      case Nil => r
+      case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + h.size, t))
+    }
+    node match {
+      case Leaf(x) => IndexedLeafWithKey1[Value[V]](Some(index), Some(index + 1), x)
+      case UnvaluedBinaryTree(l, r) =>
+        val rIndex = index + 1 + l.size + r.size
+        MutableGenericIndexedTree(Some(index), Some(rIndex), None, inner(Nil, (index, Seq(l,r))))
+      case GeneralTree(a, ans) =>
+        val rIndex = index + 1 + (ans map (_.size) sum)
+        MutableGenericIndexedTree(Some(index), Some(rIndex), Some(a), inner(Nil, (index, ans)))
+      case GeneralKVTree(vo, children) =>
+        // TODO combine with GeneralTree case (or eliminate the GeneralTree case)
+        val rIndex = index + 1 + (children map (_.size) sum)
+        MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), vo, inner(Nil, (index, children)))
+      case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[Value[V]]] // XXX check this is OK
+      case _ => throw TreeException(s"can't created IndexedTree from $node")
+    }
+  }
+
   /**
     * XXX: this method is NOT tail-recursive
     *
@@ -169,31 +198,40 @@ object KVTree {
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */
-  def createIndexedTree[V](node: Node[Value[V]], index: Int = 0): IndexedNodeWithKey[V] = node match {
-      // CONSIDER refactoring to avoid two asInstanceOf
-    case Leaf(x) => IndexedLeafWithKey[V](Some(index), Some(index + 1), x)
-    case UnvaluedBinaryTree(l, r) =>
-      val rIndex = index + 1 + l.size + r.size
-      // XXX This is not tail-recursive
-      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size))).asInstanceOf[IndexedNodeWithKey[V]]
-    case GeneralTree(v, children) =>
-      // TODO do this without using a mutable state
-      var lIndex = index
-      val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
-      val rIndex = lIndex
-      // XXX This is not tail-recursive
-      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey[V]]
-    case GeneralKVTree(vo, children) =>
-      // TODO combine with GeneralTree case (or eliminate the GeneralTree case)
-      var lIndex = index
-      val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
-      val rIndex = lIndex
-      // XXX This is not tail-recursive
-      MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), vo, indexedChildren).asInstanceOf[IndexedNodeWithKey[V]]
-    case Empty => EmptyWithKeyAndIndex[V]()
-    case EmptyWithIndex => EmptyWithKeyAndIndex[V]()
-    case _ => throw TreeException(s"can't created IndexedTree from $node")
-  }
+//  def createIndexedKVTree[V](node: Node[Value[V]], index: Int = 0): IndexedNodeWithKey1[Value[V]] = {
+//    implicit object HasKeyValueV extends HasKey[Value[V]] {
+//      type K = String
+//      def getKey(v: Value[V]): String = v.key
+//    }
+//    node match {
+//
+//      // CONSIDER refactoring to avoid two asInstanceOf
+//      case Leaf(x) =>
+//        IndexedLeafWithKey1[Value[V]](Some(index), Some(index + 1), x)
+//      case UnvaluedBinaryTree(l, r) =>
+//        val rIndex = index + 1 + l.size + r.size
+//        // XXX This is not tail-recursive
+//        MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size))).asInstanceOf[IndexedNodeWithKey1[Value[V]]]
+//      case GeneralTree(v, children) =>
+//        // TODO do this without using a mutable state
+//        var lIndex = index
+//        val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
+//        val rIndex = lIndex
+//        // XXX This is not tail-recursive
+//        MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), Some(v), indexedChildren).asInstanceOf[IndexedNodeWithKey1[Value[V]]]
+//      case GeneralKVTree(vo, children) =>
+//        // TODO combine with GeneralTree case (or eliminate the GeneralTree case)
+//        var lIndex = index
+//        val indexedChildren = for (n <- children; s = n.size) yield { val childIndex = lIndex; lIndex += s; createIndexedTree(n, childIndex) }
+//        val rIndex = lIndex
+//        // XXX This is not tail-recursive
+//        MutableGenericIndexedTreeWithKey(Some(index), Some(rIndex), vo, indexedChildren).asInstanceOf[IndexedNodeWithKey1[Value[V]]]
+//      // TODO check the following casts
+//      case Empty => EmptyWithKeyAndIndex[V]().asInstanceOf[IndexedNodeWithKey1[Value[V]]]
+//      case EmptyWithIndex => EmptyWithKeyAndIndex[V]().asInstanceOf[IndexedNodeWithKey1[Value[V]]]
+//      case _ => throw TreeException(s"can't created IndexedTree from $node")
+//    }
+//  }
 }
 
 trait GeneralKVTreeBuilder[V] extends TreeBuilder[Value[V]] {
@@ -217,17 +255,17 @@ trait GeneralKVTreeBuilder[V] extends TreeBuilder[Value[V]] {
 
 object GeneralKVTree
 
-case class IndexedLeafWithKey[V](lIndex: Option[Long], rIndex: Option[Long], value: Value[V]) extends AbstractLeaf[Value[V]](value) with IndexedNodeWithKey[V] {
-  override def depth: Int = 1
+//case class IndexedLeafWithKey[V](lIndex: Option[Long], rIndex: Option[Long], value: Value[V]) extends AbstractLeaf[Value[V]](value) with IndexedNodeWithKey[V] {
+//  override def depth: Int = 1
+//
+//  override def render(indent: Int): String = value.render(indent)
+//
+//  override def toString = s"""L("$value")"""
+//
+//  def key: String = value.key
+//}
 
-  override def render(indent: Int): String = value.render(indent)
-
-  override def toString = s"""L("$value")"""
-
-  def key: String = value.key
-}
-
-case class EmptyWithKeyAndIndex[V]() extends AbstractEmpty with IndexedNodeWithKey[V] {
+case class EmptyWithKeyAndIndex[V]() extends AbstractEmpty with IndexedNodeWithKey1[Value[V]] {
   def lIndex: Option[Long] = None
   def rIndex: Option[Long] = None
 

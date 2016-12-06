@@ -18,10 +18,10 @@ class FunctionalTest extends FlatSpec with Matchers {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    checkTreeFromResource(TestDetailsSample, 113, 3, 64, 113, 47)
+    checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
   }
   // XXX we ignore this because I have not committed the exampleTree.txt file to the repository.
-  it should "work for exampleTree.txt" in {
+  ignore should "work for exampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("exampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
@@ -34,7 +34,7 @@ class FunctionalTest extends FlatSpec with Matchers {
     val aso = AccountRecordTest.readAccountData(tester)
     val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
     println(checks)
-    checks should matchPattern { case Success((`size`,`depth`,Some(_),`before`,`iteratorSize`,`mpttSize`,_,_)) => }
+    checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
   }
 }
 

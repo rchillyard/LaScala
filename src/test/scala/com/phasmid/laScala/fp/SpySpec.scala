@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
   * Created by scalaprof on 8/5/16.
   */
 class SpySpec extends FlatSpec with Matchers {
-  behavior of "Spy"
+  behavior of "Spy.spy"
   it should "work with implicit spy func" in {
     Spy.spying = true
     val is = for (i <- 1 to 2) yield Spy.spy("i",i)
@@ -44,4 +44,21 @@ class SpySpec extends FlatSpec with Matchers {
     spyMessage shouldBe ""
     spySpyMessage shouldBe ""
   }
+  it should "work with {}-style message" in {
+    Spy.spying = true
+    var spyMessage: String = ""
+    implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"Hello: $s\n" )
+    val is = for (i <- 1 to 2) yield Spy.spy("{} is the value for i",i)
+    is shouldBe List(1,2)
+    spyMessage shouldBe "Hello: 1 is the value for i\nHello: 2 is the value for i\n"
+  }
+  behavior of "Spy.log"
+  it should "work with explicit spy func" in {
+    Spy.spying = true
+    var spyMessage: String = ""
+    implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
+    Spy.log("my log message")
+    spyMessage shouldBe "explicit spy: my log message\n"
+  }
+
 }

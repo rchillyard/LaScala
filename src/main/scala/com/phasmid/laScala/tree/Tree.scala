@@ -22,10 +22,10 @@ sealed trait Node[+A] extends Renderable {
   /**
     * Iterate on the nodes which are the descendants of this node (including this node at start or end of result)
     *
-    * @param depthFirst if true then we iterate depth-first, else breadth-first
+    * @param depthFirst if true then we iterate depth-first, else breadth-first (defaults to true)
     * @return an iterator of nodes
     */
-  def nodeIterator(depthFirst: Boolean): Iterator[Node[A]]
+  def nodeIterator(depthFirst: Boolean = true): Iterator[Node[A]]
 
   /**
     * Method to determine if this Node's value is equal to node n's value WITHOUT any recursion.
@@ -35,6 +35,17 @@ sealed trait Node[+A] extends Renderable {
     * @return true if this is "like" n
     */
   def compareValues[B >: A](n: Node[B]): Maybe = Kleenean(map2(get, n.get)(_ == _))
+
+  /**
+    * Method to determine if this Node is a leaf or a branch node
+    * @return true if this Node is a leaf
+    */
+  def isLeaf: Boolean = this match {
+    case AbstractLeaf(_) => true
+    case Empty => true
+    case Branch(_) => false
+    case _ => println(s"isLeaf fell through with $this"); false
+  }
 
   /**
     * Calculate the size of this node's subtree
@@ -171,7 +182,7 @@ trait Tree[+A] extends Node[A] {
 
 
   def addNode[B >: A : TreeBuilder : NodeParent : HasParent](node: Node[B], allowRecursion: Boolean = true): Tree[B] = {
-    val no = Spy.spy(s"existing parent of node $node: ", findParent(node), false)
+    val no = Spy.spy(s"addNode: $node with existing parent: ", findParent(node), true)
     val (x, y: Tree[B]) = no orElse Some(this) match {
       case Some(n: Tree[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
       case Some(n: Node[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, Seq(node)))
@@ -197,10 +208,10 @@ trait Tree[+A] extends Node[A] {
   /**
     * Iterate on the values of this tree
     *
-    * @param depthFirst if true then we iterate depth-first, else breadth-first
+    * @param depthFirst if true then we iterate depth-first, else breadth-first (defaults to true)
     * @return an iterator of values
     */
-  def iterator(depthFirst: Boolean): Iterator[A] = for (n <- nodeIterator(depthFirst); a <- n.get) yield a
+  def iterator(depthFirst: Boolean = true): Iterator[A] = for (n <- nodeIterator(depthFirst); a <- n.get) yield a
 
   /**
     * Create a String which represents the value of this Node and the values of its immediate descendants
@@ -248,6 +259,8 @@ trait Tree[+A] extends Node[A] {
   /**
     * Determine if this subtree includes a value equal to b
     *
+    * CONSIDER renaming this back to just includes (as it was previously)
+    *
     * @param b the value to be searched
     * @tparam B the type of b
     * @return true if value b is found in the sub-tree defined by this
@@ -273,7 +286,7 @@ trait Tree[+A] extends Node[A] {
     */
   def includes[B >: A](subtree: B, element: B): Boolean = find(subtree) match {
     case Some(s: Node[B]) => s.includesValue(element) //Spy.spy(s"includes: ${s.get.get}:${element}",s.includesValue(element), false)
-    case _ => println(s"includes: $subtree not found"); false
+    case _ => false
   }
 
   /**
@@ -564,7 +577,6 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
     case renderable: Renderable => renderable.render(indent)
     case _ => s"${Renderable.prefix(indent)}$a"
   }
-
 }
 
 abstract class AbstractEmpty extends Tree[Nothing] {
@@ -612,9 +624,19 @@ object Renderable {
   def prefix(indent: Int): String = "  " *indent
 }
 
-object Leaf
+object AbstractLeaf {
+  def unapply[A](t: Node[A]): Option[A] = t match {
+    case Leaf(x) => Some(x)
+    case IndexedLeaf(_,_,x) => Some(x)
+    case IndexedLeafWithKey1(_,_,x) => Some(x)
+    case _ => None
+  }
+}
+object Leaf {
+ }
 
 object Node {
+
   /**
     * Implicit definition of a Parent for the (type-parameterized, i.e. generic) type Node[A]
     *
@@ -673,21 +695,23 @@ object Tree {
     *
     *         TODO figure out why we can't actually use IndexedNode as return type
     */
-  def createIndexedTree[A : HasKey](node: Node[A], index: Int = 0): IndexedNode[A] = node match {
-    case Leaf(x) => IndexedLeafWithKey1[A](Some(index), Some(index + 1), x)
-    case UnvaluedBinaryTree(l, r) =>
-      val rIndex = index + 1 + l.size + r.size
-      MutableGenericIndexedTree(Some(index), Some(rIndex), None, Seq(createIndexedTree(l, index), createIndexedTree(r, index + 1 + l.size)))
-    case GeneralTree(a, ans) =>
-      @tailrec
-      def inner(r: Seq[Node[A]], work: (Int,Seq[Node[A]])): Seq[Node[A]] = work._2 match {
-        case Nil => r
-        case h::t => inner(r :+ createIndexedTree(h,work._1), (work._1+h.size,t))
-      }
-      val rIndex = index + 1 + (ans map (_.size) sum)
-      MutableGenericIndexedTree(Some(index), Some(rIndex), Some(a), inner(Nil,(index, ans)))
-    case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[A]] // XXX check this is OK
-    case _ => throw TreeException(s"can't created IndexedTree from $node")
+  def createIndexedTree[A : HasKey](node: Node[A], index: Int = 0): IndexedNode[A] = {
+    @tailrec
+    def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = work._2 match {
+      case Nil => r
+      case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + h.size, t))
+    }
+    node match {
+      case Leaf(x) => IndexedLeafWithKey1[A](Some(index), Some(index + 1), x)
+      case UnvaluedBinaryTree(l, r) =>
+        val rIndex = index + 1 + l.size + r.size
+        MutableGenericIndexedTree(Some(index), Some(rIndex), None, inner(Nil, (index, Seq(l,r))))
+      case GeneralTree(a, ans) =>
+        val rIndex = index + 1 + (ans map (_.size) sum)
+        MutableGenericIndexedTree(Some(index), Some(rIndex), Some(a), inner(Nil, (index, ans)))
+      case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[A]] // XXX check this is OK
+      case _ => throw TreeException(s"can't created IndexedTree from $node")
+    }
   }
 }
 
@@ -723,7 +747,7 @@ object GeneralTree {
 object UnvaluedBinaryTree {
   abstract class UnvaluedBinaryTreeBuilder[A : Ordering] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
-      val ns = children filterNot  (_==Empty)
+      val ns = children filterNot (_ == Empty)
       ns.size match {
         case 0 => buildTree(Empty, Empty)
         case 1 => buildTree(ns.head, Empty)
@@ -733,38 +757,67 @@ object UnvaluedBinaryTree {
           val l = ns.head
           val r = ns(1)
           val x = ns(2)
-          if (AbstractBinaryTree.isOrdered(AbstractBinaryTree.compare(x, l)).toBoolean(true)) {
-            buildTree(None,Seq(buildTree(l,x),r))
-          }
-          else
-            buildTree(None,Seq(l,buildTree(r,x)))
+          assert(AbstractBinaryTree.isOrdered(l,r), "logic error: l,r are not properly ordered")
+          if (AbstractBinaryTree.isOrdered(x, l)) buildTree(None, Seq(x, buildTree(l, r)))
+          else buildTree(None, Seq(l, buildTree(r, x)))
         case _ => throw TreeException(s"buildTree with value: $maybeValue and children: $children")
       }
     }
 
-    def buildTree(n1: Node[A], n2: Node[A]): Tree[A] = n1 match {
-      case UnvaluedBinaryTree(l, r) =>
-        val pair =
-          if (AbstractBinaryTree.isOverlap(n2, l))
-            (buildTree(l, n2), r) // type 1
-          else if (AbstractBinaryTree.isOverlap(n2, r))
-            (l, buildTree(r, n2)) // type 2
-          else {
-            if (AbstractBinaryTree.isOrdered(l, n2))
-              if (AbstractBinaryTree.isOrdered(n2, r))
-                (UnvaluedBinaryTree(l, n2), r) // type 3
+    // TODO simplify this: now that we explicitly order n1, n2 we don't have to be so particular about the various non-overlapping cases
+    def buildTree(x: Node[A], y: Node[A]): Tree[A] = {
+      // XXX if x,y are ordered correctly (or overlapping) we create n1, n2 in same order, otherwise we flip the order
+      val (n1, n2) = if (AbstractBinaryTree.isOrdered(x, y)) (x,y) else (y,x)
+      assert(Spy.spy(s"isOrdered n1=$n1, n2=$n2",AbstractBinaryTree.isOrdered(n1,n2)), "logic error")
+      n1 match {
+        case UnvaluedBinaryTree(l, r) =>
+          Spy.spy(s"buildTree from UnvaluedBinaryTree: ($l, $r) and $n2",())
+          val pair =
+            if (Spy.spy(s"isOverlap1 $n2 $l", AbstractBinaryTree.isOverlap(n2, l)))
+              Spy.spy("type1", (buildTree(l, n2), r)) // type 1
+            else if (Spy.spy(s"isOverlap2 $n2 $r", AbstractBinaryTree.isOverlap(n2, r)))
+              Spy.spy("type2", (l, buildTree(r, n2))) // type 2
+            else {
+              if (Spy.spy(s"isOrdered3 $l $n2", AbstractBinaryTree.isOrdered(l, n2)))
+                if (Spy.spy(s"isOrdered4 $n2 $r", AbstractBinaryTree.isOrdered(n2, r)))
+                  Spy.spy("type3", (apply(l, n2), r)) // type 3
+                else
+                  Spy.spy("type4", (n1, n2)) // type 4
               else
-                (n1, n2) // type 4
-            else
-              (n2, n1) // type 5
+                Spy.spy("type5", (n2, n1)) // type 5
+            }
+          println(s"buildTree: apply($pair")
+          apply(pair._1, pair._2)
+        case p@Leaf(_) =>
+          n2 match {
+            case UnvaluedBinaryTree(l, r) =>
+              Spy.spy(s"buildTree (leaf) from UnvaluedBinaryTree: ($l, $r) and $p", ())
+              val pair =
+                if (Spy.spy(s"isOverlap1 (leaf) $p $l", AbstractBinaryTree.isOverlap(p, l)))
+                  Spy.spy("type1 (leaf)", (buildTree(l, p), r)) // type 1
+                else if (Spy.spy(s"isOverlap2 (leaf) $p $r", AbstractBinaryTree.isOverlap(p, r)))
+                  Spy.spy("type2 (leaf)", (l, buildTree(r, p))) // type 2
+                else {
+                  if (Spy.spy(s"isOrdered3 (leaf) $l $p", AbstractBinaryTree.isOrdered(l, p)))
+                    if (Spy.spy(s"isOrdered4 (leaf) $p $r", AbstractBinaryTree.isOrdered(p, r)))
+                      Spy.spy("type3 (leaf)", (apply(l, p), r)) // type 3
+                    else
+                      Spy.spy("type4 (leaf)", (n2, p)) // type 4
+                  else
+                    Spy.spy("type5 (leaf)", (p, n2)) // type 5
+                }
+              println(s"buildTree (leaf): apply($pair")
+              apply(pair._1, pair._2)
+            case q@Leaf(_) => if (AbstractBinaryTree.isOrdered(p,q)) apply(p,q) else apply(q,p)
+            case _ => throw TreeException(s"treeBuilder not implemented for Leaf $p and $n1")
           }
-        apply(pair._1, pair._2)
-      case l @ Leaf(_) => buildTree(UnvaluedBinaryTree(l, Empty), n2)
-      case Empty => UnvaluedBinaryTree(n2, Empty) // TODO check this is OK
-      case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+        case Empty => apply(x, Empty) // TODO check this is OK
+        case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+      }
     }
-    def buildLeaf(a: A): Node[A] = Leaf(a)
-  }
+      def buildLeaf(a: A): Node[A] = Leaf(a)
+    }
+
   implicit object UnvaluedBinaryTreeBuilderInt extends UnvaluedBinaryTreeBuilder[Int]
   implicit object UnvaluedBinaryTreeBuilderString extends UnvaluedBinaryTreeBuilder[String]
 
@@ -829,7 +882,7 @@ object AbstractBinaryTree {
     * @tparam A the underlying node type
     * @return true if node a compares as less than node b
     */
-  def isOrdered[A: Ordering](a: Node[A], b: Node[A]): Boolean = isOrdered(compare(a, b)).toBoolean(false)
+  def isOrdered[A: Ordering](a: Node[A], b: Node[A]): Boolean = isOrdered(compare(a, b)).toBoolean(true)
 
   /**
     * Given a sequence of comparison values, determine if the result is true, false or maybe.
@@ -867,15 +920,13 @@ object AbstractBinaryTree {
     * @return true if the proposition is proven
     */
   def compare[A: Ordering](anL: Node[A], anR: Node[A]): Seq[Int] = anL match {
-    case Leaf(a) => compare(a, anR)
+    case AbstractLeaf(a) => compare(a, anR)
     case Branch(ans) => anR match {
-      case Leaf(b) => compare(b, ans).map {
-        -_
-      }
+      case AbstractLeaf(b) => compare(b, ans).map(-_)
       case Branch(bns) => compare(ans, bns)
-      case Empty => Seq(-1)
+      case Empty => Seq(0)
     }
-    case Empty => Seq(-1)
+    case Empty => Seq(0)
   }
 
   /**
@@ -915,7 +966,7 @@ object AbstractBinaryTree {
   def compare[A: Ordering](a: A, an: Node[A]): Seq[Int] = an match {
     case Leaf(b) => Seq(compare(a, b))
     case Branch(as) => compare(a, as)
-    case Empty => Seq(-1)
+    case Empty => Seq(0)
     case _ => throw TreeException(s"match error for: $a, $an")
   }
 
@@ -941,7 +992,7 @@ object AbstractBinaryTree {
 }
 
 object Branch {
-  def unapply[A](e: Branch[A]): Option[(NodeSeq[A])] = Some(e.children)
+  def unapply[A](e: Tree[A]): Option[(NodeSeq[A])] = Some(e.children)
 }
 
 object IndexedNode {
