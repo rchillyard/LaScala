@@ -47,7 +47,7 @@ sealed trait Value extends Scalar {
 }
 
 trait ValueMaker extends (Any => Try[Value]) {
-  def apply(a: Any) = a match {
+  def apply(a: Any): Try[Value] = a match {
     case as: Seq[Any] => for (vs <- sequence(as)) yield SequenceValue(vs, as)
     case x => value(x)
   }
@@ -133,7 +133,7 @@ case class DateValue(x: LocalDate, source: Any) extends BaseDateScalar(x, source
 case class SequenceValue(xs: Seq[Value], source: Any) extends BaseScalar(xs, source) with Value {
   override def asSequence: Option[Seq[Value]] = Some(xs)
 
-  override def toString = xs.toString
+  override def toString: String = xs.toString
 
   def defaultFormat: String = null
 }
@@ -271,7 +271,7 @@ object Value {
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 
-  val quoted = """"([^"]*)"""".r
+  private val quoted = """"([^"]*)"""".r
 }
 
 

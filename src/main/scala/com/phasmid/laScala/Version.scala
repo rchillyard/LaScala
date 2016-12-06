@@ -2,7 +2,7 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.values.Incrementable
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 /**
   * Trait Version provides a means of labeling something such that different versions can be compared.
@@ -90,7 +90,7 @@ abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V
 
   def nextVersion: Try[V] = incrementable.increment(tag)
 
-  override def toString = render
+  override def toString: String = render
 }
 
 case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends IncrementableVersion[Long](tag) {

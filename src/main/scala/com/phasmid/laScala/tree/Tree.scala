@@ -182,7 +182,7 @@ trait Tree[+A] extends Node[A] {
 
 
   def addNode[B >: A : TreeBuilder : NodeParent : HasParent](node: Node[B], allowRecursion: Boolean = true): Tree[B] = {
-    val no = Spy.spy(s"addNode: $node with existing parent: ", findParent(node), true)
+    val no = Spy.spy(s"addNode: $node with existing parent: ", findParent(node))
     val (x, y: Tree[B]) = no orElse Some(this) match {
       case Some(n: Tree[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, n.children :+ node))
       case Some(n: Node[B]) => (n, implicitly[TreeBuilder[B]].buildTree(n.get, Seq(node)))
@@ -309,7 +309,7 @@ trait Tree[+A] extends Node[A] {
     Parent.traverse[Node[B], Option[Node[B]], Option[Node[B]]](f, g, q)(List(this), None)
   }
 
-  def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator(true).filter(p)
+   def filter[B >: A](p: Node[B] => Boolean): Iterator[Node[B]] = nodeIterator().filter(p)
 
 
 //  /**
@@ -447,7 +447,7 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   * I tried to make the key type polymorphic but I just couldn't do it, even with a type definition in the trait.
   * The problem is subtle and could be revisited at some later date.
   *
-  * @tparam T
+  * @tparam T the underlying type
   */
 trait HasParent[T] {
 
@@ -531,7 +531,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
 
   override def render(indent: Int): String = value match {
     case renderable: Renderable => renderable.render(indent)
-    case _ => s"""${Renderable.prefix((indent))}$value [$lIndex:$rIndex]"""
+    case _ => s"""${Renderable.prefix(indent)}$value [$lIndex:$rIndex]"""
   }
 
   override def toString = s"""L("$value")"""

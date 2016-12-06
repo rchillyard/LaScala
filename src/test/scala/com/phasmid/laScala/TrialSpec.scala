@@ -153,6 +153,8 @@ class TrialSpec extends FlatSpec with Matchers with Inside {
   "|:" should "keep the Failures correctly" in {
     def failure1(x: String): Try[String] = Failure(new Exception("1"))
     def failure2(x: String): Try[String] = Failure(new Exception("2"))
+
+    // XXX we actually need the place-holders here
     val r = failure1 _ |: failure2 _ |: Trial.none
     val r1 = r("x")
     r1 should matchPattern { case Failure(_) => }

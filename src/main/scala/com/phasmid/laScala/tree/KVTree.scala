@@ -132,7 +132,7 @@ case class GeneralKVTree[V](value: Option[Value[V]], children: Seq[Node[Value[V]
 }
 
 case class MutableGenericIndexedTreeWithKey[V](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[Value[V]], var children: Seq[Node[Value[V]]]) extends Branch[Value[V]] with IndexedNode[Value[V]] with WithKey with IndexedNodeWithKey1[Value[V]] {
-  def get = value
+  def get: Option[Value[V]] = value
 
   def key: String = value match {
     case Some(v) => v.key
@@ -186,18 +186,18 @@ object KVTree {
     }
   }
 
-  /**
-    * XXX: this method is NOT tail-recursive
-    *
-    * CONSIDER: not sure we really need this method since it behaves exactly like the one in Tree
-    *
-    * @param node  the node representing the tree to be indexed
-    * @param index the starting value of index
-    * @tparam V the underlying value type
-    * @return an IndexedNode[Value[K,V]
-    *
-    *         TODO figure out why we can't actually use IndexedNode as return type
-    */
+  //  /**
+  //    * XXX: this method is NOT tail-recursive
+  //    *
+  //    * CONSIDER: not sure we really need this method since it behaves exactly like the one in Tree
+  //    *
+  //    * @param node  the node representing the tree to be indexed
+  //    * @param index the starting value of index
+  //    * @tparam V the underlying value type
+  //    * @return an IndexedNode[Value[K,V]
+  //    *
+  //    *         TODO figure out why we can't actually use IndexedNode as return type
+  //    */
 //  def createIndexedKVTree[V](node: Node[Value[V]], index: Int = 0): IndexedNodeWithKey1[Value[V]] = {
 //    implicit object HasKeyValueV extends HasKey[Value[V]] {
 //      type K = String

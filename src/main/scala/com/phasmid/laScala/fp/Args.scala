@@ -18,7 +18,7 @@ case class Args(args: List[Any]) extends (() => Try[(Any,Args)]) {
 //        else if (r.isInstanceOf[String])
 //          Try (r.t)
         else throw new Exception(s"args head is not of type: $clazz but is of type ${r.getClass}")
-      case f @ Failure(t) => f.asInstanceOf[Try[(T, Args)]]
+      case f@Failure(_) => f.asInstanceOf[Try[(T, Args)]]
     }
   }
   def isEmpty: Boolean = args.isEmpty

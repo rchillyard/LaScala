@@ -5,9 +5,9 @@ import java.net.{URI, URL}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
 import com.phasmid.laScala.Trial
 import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
 
 // For now, until we can convert to Java8 datetimes
 //import org.joda.time._
@@ -49,7 +49,7 @@ trait ProductStream[X <: Product] {
   /**
     * @return a materialized (non-lazy) List version of the tuples.
     */
-  lazy val asList = tuples.toList
+  lazy val asList: List[X] = tuples.toList
 
   /**
     * map method
@@ -118,7 +118,7 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
     *
     * @return a Stream of Map[String,Scalar] objects
     */
-  def asMaps = {
+  def asMaps: Try[Stream[Map[String, Scalar]]] = {
     def m(t: X): Try[Map[String, Scalar]] = {
       val xWys = t.productIterator zip header.toIterator map {
         case (v, k) => Scalar.tryScalarTuple(k, v)
@@ -300,7 +300,7 @@ object TupleStream {
       case Success(as) =>
         val x: Seq[Any] = for (a <- as) yield a.get
         Success(Tuples.toTuple(x).asInstanceOf[X])
-      case Failure(t) => ast.asInstanceOf[Try[X]]
+      case Failure(_) => ast.asInstanceOf[Try[X]]
     }
   }
 
@@ -338,7 +338,7 @@ object CSV {
 
   def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Option[Seq[String]]): CSV[X] = apply(parser, Source.fromFile(input).getLines.toStream, optionalHeader)
 
-  def project[X <: Product, Y](i: Int)(x: X) = x.productElement(i).asInstanceOf[Y]
+  def project[X <: Product, Y](i: Int)(x: X): Y = x.productElement(i).asInstanceOf[Y]
 }
 
 abstract class CsvParserBase(f: String => Try[Scalar]) extends JavaTokenParsers {
@@ -346,7 +346,7 @@ abstract class CsvParserBase(f: String => Try[Scalar]) extends JavaTokenParsers 
     * @return the trial function that will convert a String into Try[Any]
     *         This method is referenced only by CSV class (not by TupleStream, which does no element conversion).
     */
-  def elementParser = f
+  def elementParser: (String) => Try[Scalar] = f
 }
 
 case class CsvParser(
@@ -373,7 +373,7 @@ case class CsvParser(
 object CsvParser {
   val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s", "d-MMM-yy")
   // etc.
-  val dateParser = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
+  val dateParser: Trial[String, Scalar] = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
 
   /**
     * The default parser will parse most dates, will parse quoted strings, integers, booleans and floating point values (as Double).
@@ -385,31 +385,30 @@ object CsvParser {
     { case date2(s) => dateParser(s) } :|
     { case s@(date0(_) | date1(_) | date6(_) | dateISO(_) | date7(_)) => dateParser(s) } :^
     { case quoted(w) => w } :^
-    { case whole(s) => s.toInt } :^
-    { case truth(w) => true } :^
-    { case untruth(w) => false } :^
+    { case whole(s) => s.toInt } :^ { case truth(_) => true } :^ { case untruth(_) => false } :^
     { case s@(floating(_) | floating(_, _) | floating(_, _, _)) => s.toDouble} :|
     Trial.none[String, Scalar]
   /**
     * The lax parser is essentially the same as the defaultParser.
     * However, if it cannot match on of those patterns, it will succeed, returning the string as is.
     */
-  val laxParser = defaultParser :^ (s => s)
-  val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
-  val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
+  private val laxParser = defaultParser :^ (s => s)
+  private val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
+  private val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
   // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats
-  val date2 = """^\"(\d{1,2}\/\d{1,2}\/\d{2,4})\"$""".r
+  private val date2 =
+    """^\"(\d{1,2}\/\d{1,2}\/\d{2,4})\"$""".r
   // ISO 8601
-  val dateISO =
+  private val dateISO =
     """(?m)^(0[1-9]|1\d|2[0-8]|29(?=-\d\d-(?!1[01345789]00|2[1235679]00)\d\d(?:[02468][048]|[13579][26]))|30(?!-02)|31(?=-0[13578]|-1[02]))-(0[1-9]|1[0-2])-([12]\d{3}) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$""".r
-  val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
-  val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
-  val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
-  val date7 = """^(\d{1,2}-\w{3}-\d{2})$""".r
+  private val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
+  private val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
+  private val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
+  private val date7 = """^(\d{1,2}-\w{3}-\d{2})$""".r
 
   def parseDate(dfs: Seq[String])(s: String): Try[Scalar] = {
     @tailrec def loop(formats: Seq[DateTimeFormatter], result: Try[Scalar]): Try[Scalar] = result match {
-      case Success(d) => result
+      case Success(_) => result
       case Failure(_) => formats match {
         case Nil => result
         case h :: t => loop(t, Try(new DateScalar(LocalDate.parse(s, h), s)))

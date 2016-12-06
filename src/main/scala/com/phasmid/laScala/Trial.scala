@@ -41,7 +41,7 @@ object Trial {
     * @param f the function which will create a Throwable based on the input value.
     * @tparam V the type of the input parameter
     * @tparam T the underlying type of the resulting Try
-    * @return a terminator trial which always fils
+    * @return a terminator trial which always fails
     */
   def none[V, T](f: Any=>Throwable): Trial[V, T] = Trial.apply(v => Failure(f(v)))
 

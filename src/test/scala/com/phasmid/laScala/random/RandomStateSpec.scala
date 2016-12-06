@@ -9,9 +9,9 @@ import scala.language.postfixOps
   */
 class RandomStateSpec extends FlatSpec with Matchers {
 
-  def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
+  private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
 
-  def mean(xs: Seq[Double]) = xs.sum / xs.length
+  private def mean(xs: Seq[Double]) = xs.sum / xs.length
 
   // XXX Clearly, this doesn't look good. We will soon learn how to write
   // generic methods like sum and mean. But for now, this is what we've got.
@@ -21,11 +21,11 @@ class RandomStateSpec extends FlatSpec with Matchers {
 
   "RandomState(0L)" should "match case RandomState(4804307197456638271)" in {
     val r: RandomState[Long] = RandomState(0L)
-    r.next should matchPattern { case JavaRandomState(4804307197456638271L,identity) => }
+    r.next should matchPattern { case JavaRandomState(4804307197456638271L, _) => }
   }
   it should "match case RandomState(-1034601897293430941) on next" in {
     val r: RandomState[Long] = RandomState(0L)
-    r.next.next should matchPattern { case JavaRandomState(-1034601897293430941L,identity) => }
+    r.next.next should matchPattern { case JavaRandomState(-1034601897293430941L, _) => }
   }
   "7th element of RandomState(0)" should "match case RandomState(5082315122564986995L)" in {
     val lrs = RandomState(0).toStream.slice(6, 7)

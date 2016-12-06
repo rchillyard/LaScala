@@ -10,10 +10,12 @@ import org.slf4j.LoggerFactory
 class SmartLoggerSpec extends FlatSpec with Matchers {
   class ElephantLogger {
     private var memory = ""
-    def log(s: String) = {
+
+    def log(s: String): Unit = {
       memory = memory + s + "\n"
     }
-    def get = memory
+
+    def get: String = memory
   }
   "SmartLogger" should "work" in {
     val logger = SmartLoggerSlf4JInfo(LoggerFactory.getLogger(getClass))

@@ -71,8 +71,8 @@ class AccountRecordTest extends FlatSpec with Matchers {
     }
     checkTreeFromResource(TestDetailsMiniSample, 13, 3, 6, 13, 5)
   }
-  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository.
-  it should "work for sampleTree.txt" in {
+  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and it is more of a functional test)
+  ignore should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
@@ -88,13 +88,13 @@ class AccountRecordTest extends FlatSpec with Matchers {
 
     checks match {
       case Success((_,_,_,_,_,_,tree,mptt)) =>
-        val nodes: Seq[Node[Value[AccountRecord]]] = tree.nodeIterator(true).toList
+        val nodes: Seq[Node[Value[AccountRecord]]] = tree.nodeIterator().toList
         val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
-        val values = tree.iterator(true).toList
+        val values = tree.iterator().toList
         val trues = for (n <- branchNodes; v <- n.get) yield tree.includesValue(v)
         val allTrue = trues.forall(_==true)
         allTrue shouldBe true
-        val results = for (x <- values; y <- values) yield (x,y,Some(tree.includes(x,y))==mptt.contains(x.key,y.key))
+        val results = for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y)))
         println("checking for disagreement between tree and MPTT")
         val good = results filter (_._3)
         println(s"${good.size} results out of ${results.size}")
@@ -127,7 +127,7 @@ object AccountRecordTest {
     implicit object HasParentNodeType extends NodeTypeParent
   }
 
-  def readAccountData(tester: AbstractTestDetails) = {
+  def readAccountData(tester: AbstractTestDetails): Option[Seq[AccountRecord]] = {
     val uo = Option(getClass.getResource(tester.resourceName))
     val so = uo map (_.openStream)
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
@@ -165,7 +165,7 @@ object AccountRecordTest {
 
         ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
           case Success(tree) =>
-            val ns = tree.nodeIterator(true)
+            //            val ns = tree.nodeIterator(true)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
 
@@ -185,15 +185,15 @@ object AccountRecordTest {
             }
             val indexedTree = KVTree.createIndexedTree(tree)
             val mptt = MPTT.createValuedMPTT(indexedTree)
-            Success((tree.size,tree.depth,tree.filter(beforeDate(AccountDate(2014, 9, 30))).size,indexedTree.nodeIterator(true).size,mptt.index.size,tree.find(onDate(AccountDate(2014, 9, 30))),tree,mptt))
-          case f @ Failure(x) => Failure(x)
+            Success((tree.size, tree.depth, tree.filter(beforeDate(AccountDate(2014, 9, 30))).size, indexedTree.nodeIterator().size, mptt.index.size, tree.find(onDate(AccountDate(2014, 9, 30))), tree, mptt))
+          case Failure(x) => Failure(x)
         }
 
       case None => Failure(TreeException("unable to yield a complete hierarchy"))
     }
   }
 
-  def doBenchmark(tree: Tree[NodeType], mptt: MPTT[AccountRecord]) = {
+  def doBenchmark(tree: Tree[NodeType], mptt: MPTT[AccountRecord]): Unit = {
     import AccountRecord._
     implicit object ValueOrdering extends Ordering[NodeType] {
       def compare(x: NodeType, y: NodeType): Int = implicitly[Ordering[AccountRecord]].compare(x.value,y.value)
@@ -201,26 +201,34 @@ object AccountRecordTest {
     implicit object NodeOrdering extends Ordering[Node[NodeType]] {
       def compare(x: Node[NodeType], y: Node[NodeType]): Int = FP.map2(x.get,y.get)(implicitly[Ordering[NodeType]].compare).get
     }
-    val nodes = tree.iterator(true).toList
+    val nodes = tree.iterator().toList
 //    println(nodes)
     val snodes = nodes.sorted
     val pairs = nodes zip snodes
     val keys = nodes map (_.key) zip (snodes map (_.key))
     import Benchmark._
     val fIncludes: (NodeType,NodeType)=>(String,String,Boolean) = {(x,y) => (x.key,y.key,tree.includes(x,y))}
-    10000.times { pairs map (fIncludes.tupled) }
-    val ns1 = 10000.times { pairs map (fIncludes.tupled) }
+    10000.times {
+      pairs map fIncludes.tupled
+    }
+    val ns1 = 10000.times {
+      pairs map fIncludes.tupled
+    }
     println(s"Benchmark time for tree.includes (nanosecs) = $ns1")
-    val r1 = pairs map (fIncludes.tupled)
+    //    val r1 = pairs map fIncludes.tupled
 //    for (r <- r1) println(s"${r._1},${r._2},${r._3}")
 
 //    println(mptt)
 
     val fContains: (String,String)=>(String,String,Boolean) = {(x,y) => (x,y,mptt.contains(x,y).get)}
-    10000.times { keys map (fContains.tupled) }
-    val ns2 = 10000.times { keys map (fContains.tupled) }
+    10000.times {
+      keys map fContains.tupled
+    }
+    val ns2 = 10000.times {
+      keys map fContains.tupled
+    }
     println(s"Benchmark time for mptt.contains (nanosecs) = $ns2")
-    val r2 = keys map (fContains.tupled)
+    //    val r2 = keys map fContains.tupled
 //    for (r <- r2) println(s"${r._1},${r._2},${r._3}")
 
   }

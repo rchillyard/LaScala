@@ -3,7 +3,6 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala.fp.HasKey
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.immutable.SortedSet
 import scala.io.Source
 
 /**
@@ -49,7 +48,7 @@ class MPTTSpec extends FlatSpec with Matchers {
       def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
     }
     val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
-    val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedNode[Int]]
+    val indexedTree = Tree.createIndexedTree(tree)
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
     mptt.contains("0","0") should matchPattern { case Some(true) => }
     mptt.contains("0","1") should matchPattern { case Some(true) => }
@@ -121,7 +120,7 @@ class MPTTSpec extends FlatSpec with Matchers {
       def getKey(v: Value[String]): String = v.value
     }
     val tree = Tree.populateOrderedTree(z map(Value(_)))
-    val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]).asInstanceOf[IndexedNode[Value[String]]])
+    val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]))
     mptt.index.size shouldBe 177
 
     println(mptt)

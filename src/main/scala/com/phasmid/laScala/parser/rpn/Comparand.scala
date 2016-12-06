@@ -1,8 +1,8 @@
 package com.phasmid.laScala.parser.rpn
 
-import com.phasmid.laScala.values.Orderable
 import com.phasmid.laScala.RuleException
 import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.values.Orderable
 
 import scala.language.implicitConversions
 import scala.util._
@@ -28,7 +28,7 @@ object Comparand {
     * @return an Evaluable
     */
   def apply[X: Orderable](s: String)(implicit lookup: String => Option[X]): Evaluable[X] = {
-    val n: Orderable[X] = implicitly[Orderable[X]]
+    //    val n: Orderable[X] = implicitly[Orderable[X]]
     val lookupR = """\$(\w+)""".r
     s match {
       case lookupR(x) => Comparand[X](FP.optionToTry(lookup(x), new Exception(s"no value for lookup: $x")))

@@ -90,7 +90,7 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
 case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
   // XXX: this is somewhat experimental
-  override def toString = if (b) "always" else "never"
+  override def toString: String = if (b) "always" else "never"
 }
 
 sealed trait PredicateExpr
@@ -168,14 +168,14 @@ class RuleParser extends JavaTokenParsers {
 
   def booleanPredicate: Parser[BooleanPredicateExpr] = booleanOp ~ expr ^^ { case o ~ v => BooleanPredicateExpr(o, v) }
 
-  def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case i ~ l ~ o ~ h => RangePredicateExpr(l, h) }
+  def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case _ ~ l ~ _ ~ h => RangePredicateExpr(l, h) }
 
-  val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
+  private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
-  val lesserOp = regex("""<|<=""".r)
-  val identifier = regex("""\w+""".r)
-  val identifierWithPeriods = regex("""[\w\.]+""".r)
-  val doubleQuote = """"""".r
+  private val lesserOp = regex("""<|<=""".r)
+  private val identifier = regex("""\w+""".r)
+  private val identifierWithPeriods = regex("""[\w\.]+""".r)
+  private val doubleQuote = """"""".r
 
   abstract class ExprFactor extends Expression
 
@@ -302,7 +302,7 @@ class RuleParser extends JavaTokenParsers {
 
   def number: Parser[String] = floatingPointNumber | wholeNumber | failure("problem with number")
 
-  def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case at ~ id => id.toString; case s => s.toString; }
+  def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case _ ~ id => id.toString; case s => s.toString; }
 
   // CONSIDER: this works for variables on RHS, but we can't have something like {x.y} on the LHS of the condition. We could allow for that
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }

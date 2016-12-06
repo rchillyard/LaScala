@@ -85,13 +85,13 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "work with a scale factor" in {
     val p: Predicate[Int] = GT(3)
-    val variables: Map[String, Int] = Map("x" -> 3)
+    //    val variables: Map[String, Int] = Map("x" -> 3)
     val q: Predicate[Int] = p map { x => 2 * x }
     q.apply(4) should matchPattern { case Success(false) => }
     q.apply(8) should matchPattern { case Success(true) => }
   }
   "x > $z" should "be parsed" in {
-    val variables: Map[String, Int] = Map("x" -> 2, "y" -> 4, "z" -> 3)
+    //    val variables: Map[String, Int] = Map("x" -> 2, "y" -> 4, "z" -> 3)
     val p = new RuleParser()
     val rt: Try[RuleLike] = p.parseRule("x > $z")
     rt should matchPattern { case Success(_) => }
@@ -220,7 +220,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p() should matchPattern { case Success(true) => }
   }
   it should "work with function" in {
-    val p = Never :| { s: Any => Success(true) }
+    val p = Never :| { _: Any => Success(true) }
     p() should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {
@@ -245,7 +245,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p() should matchPattern { case Success(false) => }
   }
   it should "work with function" in {
-    val p = { s: Any => Success(true) } &: Never
+    val p = { _: Any => Success(true) } &: Never
     p() should matchPattern { case Success(false) => }
   }
   it should "evaluate in the correct order" in {
@@ -270,7 +270,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p() should matchPattern { case Success(true) => }
   }
   it should "work with function" in {
-    val p = { s: Any => Success(true) } |: Never
+    val p = { _: Any => Success(true) } |: Never
     p() should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {

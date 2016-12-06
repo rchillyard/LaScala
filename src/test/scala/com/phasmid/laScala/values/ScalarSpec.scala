@@ -76,7 +76,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val x = Scalar("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work with month names" in {
     implicit val pattern = "dd-MMM-yy"
@@ -84,7 +84,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val gloriousTwelfth = formatter.parse("12-Aug-16")
     println(gloriousTwelfth)
     val x = DateScalar("12-Aug-16")
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   "QuotedStringScalar" should "be None" in {
     val x = QuotedStringScalar(""""1"""")
@@ -148,7 +148,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work work without leading 0s" in {
     implicit val pattern = "y-M-d"
@@ -156,7 +156,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work implicitly" in {
     val x: Scalar = LocalDate.of(2016, 7, 10)
@@ -169,7 +169,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   "attribute map" should "work" in {
     val m: Map[String, Scalar] = Map("k" -> Scalar("k"), "1" -> Scalar(1), "b" -> Scalar(true), "1.0" -> Scalar(1.0))
-    val xos = for ((k, v) <- m) yield v.asValuable[Double]
+    val xos = for ((_, v) <- m) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 3
     xs.head shouldBe 1
@@ -178,7 +178,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "work when given raw strings" in {
     val wWm: Map[String, String] = Map("k" -> "k", "1" -> "1", "1.0" -> "1.0")
     val wVm = Scalar.sequence(wWm)
-    val xos = for ((k, v) <- wVm) yield v.asValuable[Double]
+    val xos = for ((_, v) <- wVm) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 2
     xs.head shouldBe 1
@@ -195,7 +195,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val w: Any = "k"
     val vy = Scalar.tryScalar(w)
     val xoy: Try[Option[Double]] = for (vs <- vy) yield vs.asValuable[Double]
-    xoy should matchPattern { case Success(xos) => }
+    xoy should matchPattern { case Success(_) => }
     inside(xoy) {
       case Success(xo) =>
         xo should matchPattern { case None => }

@@ -65,16 +65,16 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   it should """parse "1" as "1"""" in (CsvParser.defaultParser(""""1"""") should matchPattern { case Success(StringScalar("1", _)) => })
   it should """parse 2016-3-8 as datetime""" in {
     val dt = CsvParser.defaultParser("2016-3-8")
-    dt should matchPattern { case Success(d: DateScalar) => }
+    dt should matchPattern { case Success(_: DateScalar) => }
     dt.get shouldBe DateScalar(2016, 3, 8)
   }
   it should """parse 12-Aug-16 as datetime""" in {
     val pattern = "dd-MMM-yy"
         val formatter = DateTimeFormatter.ofPattern(pattern)
-        val gloriousTwelfth = formatter.parse("12-Aug-16")
+    formatter.parse("12-Aug-16")
 
     val dt = CsvParser.defaultParser("12-Aug-16")
-    dt should matchPattern { case Success(d: DateScalar) => }
+    dt should matchPattern { case Success(_: DateScalar) => }
     println(dt.get.render)
     println(DateScalar(2016, 8, 12))
     dt.get shouldBe DateScalar(2016, 8, 12)
@@ -90,7 +90,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   "CsvParser.parseDate" should "work" in {
     val dt = CsvParser.parseDate(CsvParser.dateFormatStrings)("2016-03-08")
-    dt should matchPattern { case Success(x) => }
+    dt should matchPattern { case Success(_) => }
     dt.get shouldBe DateScalar(2016, 3, 8)
   }
 

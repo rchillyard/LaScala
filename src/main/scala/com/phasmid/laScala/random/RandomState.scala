@@ -67,7 +67,8 @@ object RandomState {
   */
 case class UniformDouble(x: Double) {
   require(x>=0.0 && x<=1.0)
-  def +(y: Double) = x + y
+
+  def +(y: Double): Double = x + y
 }
 
 object UniformDoubleRandomState

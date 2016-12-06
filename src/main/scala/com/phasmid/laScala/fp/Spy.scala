@@ -1,5 +1,7 @@
 package com.phasmid.laScala.fp
 
+import scala.language.implicitConversions
+
 /**
   * This class and its related object provide a quick-and-dirty spy feature for peeking at the values of Scala
   * expressions.
@@ -17,8 +19,9 @@ object Spy {
   /**
     * This method (and the related class Spy) is here only to enable the implicit spyFunc mechanism.
     * It you declare the return from spyFunc as Unit, the compiler doesn't know where to look for the implicit function.
-    * @param x
-    * @return
+    *
+    * @param x ignored
+    * @return a new Spy instance
     */
   def apply(x: Unit): Spy = new Spy()
 

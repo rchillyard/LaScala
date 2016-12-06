@@ -9,6 +9,7 @@ import org.scalatest.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
+import scala.util.matching.Regex
 
 /**
   *
@@ -19,13 +20,13 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "lift(Future[Try[T]])" should "succeed for http://www.google.com" in {
     val uyf = Future(Try(new URL("http://www.google.com")))
     val uf = flatten(uyf)
-    whenReady(uf) { u => u should matchPattern { case x: URL => } }
+    whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "lift(Try[Future[T]])" should "succeed for http://www.google.com" in {
     val ufy = Try(Future(new URL("http://www.google.com")))
     val uf = flatten(ufy)
-    whenReady(uf) { u => u should matchPattern { case x: URL => } }
+    whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." in {
@@ -47,7 +48,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val ws = List("www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
     sequence(uys) match {
-      case Failure(e) => Succeeded
+      case Failure(_) => Succeeded
       case _ => Failed
     }
   }
@@ -89,14 +90,14 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val uefs = for {uf <- ufs} yield sequence(uf)
     val uesf = Future.sequence(uefs)
     whenReady(uesf) { ues => Assertions.assert(ues.length == 3) }
-    whenReady(uesf) { ues => (ues.head, ues(1)) should matchPattern { case (Right(x), Right(y)) => } }
-    whenReady(uesf) { ues => ues(2) should matchPattern { case Left(x) => } }
+    whenReady(uesf) { ues => (ues.head, ues(1)) should matchPattern { case (Right(_), Right(_)) => } }
+    whenReady(uesf) { ues => ues(2) should matchPattern { case Left(_) => } }
   }
 
   "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
-    for {uef <- uefs} whenReady(uef) { case Right(u) => true; case Left(e) => true; case _ => Assertions.fail() }
+    for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true; case _ => Assertions.fail() }
   }
 
   "Sequence[Either]" should "succeed" in {
@@ -158,7 +159,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val one = Success(1)
     val two = Success(2)
     def sum(x: Int, y: Int) = x + y
-    implicit val continue: Int => Boolean = x => true
+
+    implicit val continue: Int => Boolean = _ => true
     map2lazy(one, two)(sum) should matchPattern { case Success(3) => }
     map2lazy(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -178,7 +180,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val two = Success(2)
     val three = Success(3)
     def sum(x: Int, y: Int, z: Int) = x + y + z
-    implicit val continue: Int => Boolean = x => true
+
+    implicit val continue: Int => Boolean = _ => true
     map3lazy(one, two, three)(sum) should matchPattern { case Success(6) => }
     map3lazy(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -232,7 +235,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val t1 = Try(a1.toInt)
       val t2 = Try(a2.toInt)
 
-      val test = FP.map2(t1, t2)((a:Int,b:Int) => a.toString()+b.toString())
+      val test = FP.map2(t1, t2)((a: Int, b: Int) => a.toString + b.toString)
 
       test should matchPattern {
         case Success("1234") =>
@@ -248,7 +251,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     // TODO this was originally a Failure and I have broken that.
     test should matchPattern{
-      case Success(name) =>
+      case Success(_) =>
     }
   }
 
@@ -265,7 +268,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val p6 = Try(20)
       val p7 = Try(28)
 
-      val test = FP.map7(p1,p2,p3,p4,p5,p6,p7)(new Reviews(_,_,_,_,_,_,_))
+      val test = FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews(_, _, _, _, _, _, _))
 
       test.get should matchPattern{
         case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) =>
@@ -298,7 +301,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val aux = FP.invert2(a)
 
       Try(aux(0)(2)) should matchPattern{
-        case Failure(e) =>
+        case Failure(_) =>
       }
     }
 
@@ -357,11 +360,8 @@ case class Movie(format: Format, production: Production, reviews: Reviews, direc
   * @param duration    its length in minutes
   */
 case class Format(color: Boolean, language: String, aspectRatio: Double, duration: Int) {
-  override def toString = {
-    val x = color match {
-      case true => "Color";
-      case _ => "B&W"
-    }
+  override def toString: String = {
+    val x = if (color) "Color" else "B&W"
     s"$x,$language,$aspectRatio,$duration"
   }
 }
@@ -375,7 +375,7 @@ case class Format(color: Boolean, language: String, aspectRatio: Double, duratio
   * @param titleYear the year the title was registered (?)
   */
 case class Production(country: String, budget: Int, gross: Int, titleYear: Int) {
-  def isKiwi = this match {
+  def isKiwi: Boolean = this match {
     case Production("New Zealand", _, _, _) => true
     case _ => false
   }
@@ -405,12 +405,16 @@ case class Principal(name: Name, facebookLikes: Int) {
   * @param suffix suffix
   */
 case class Name(first: String, middle: Option[String], last: String, suffix: Option[String]) {
-  override def toString = {
-    case class Result(r: StringBuffer) { def append(s: String): Unit = r.append(" "+s); override def toString = r.toString}
+  override def toString: String = {
+    case class Result(r: StringBuffer) {
+      def append(s: String): Unit = r.append(" " + s);
+
+      override def toString: String = r.toString
+    }
     val r: Result = Result(new StringBuffer(first))
-    middle foreach (r.append)
+    middle foreach r.append
     r.append(last)
-    suffix foreach (r.append)
+    suffix foreach r.append
     r.toString
   }
 }
@@ -419,14 +423,14 @@ case class Name(first: String, middle: Option[String], last: String, suffix: Opt
   * The US rating
   */
 case class Rating(code: String, age: Option[Int]) {
-  override def toString = code + (age match {
+  override def toString: String = code + (age match {
     case Some(x) => "-" + x
     case _ => ""
   })
 }
 
 object Rating {
-  val rRating = """^(\w*)(-(\d\d))?$""".r
+  val rRating: Regex = """^(\w*)(-(\d\d))?$""".r
 
   /**
     * Alternative apply method for the Rating class such that a single String is decoded

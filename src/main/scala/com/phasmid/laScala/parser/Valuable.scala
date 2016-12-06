@@ -130,13 +130,13 @@ object Valuable {
 
     def minus(x: Double, y: Double) = Try(x - y)
 
-    def negate(x: Double) = minus(zero, x)
+    def negate(x: Double): Try[Double] = minus(zero, x)
 
     def times(x: Double, y: Double) = Try(x * y)
 
     def div(x: Double, y: Double) = Try(x / y)
 
-    def invert(x: Double) = div(one, x)
+    def invert(x: Double): Try[Double] = div(one, x)
 
     def pow(x: Double, y: Double): Try[Double] = Try(math.pow(x, y))
 
@@ -158,7 +158,7 @@ object Valuable {
 
     def minus(x: Int, y: Int) = Try(x - y)
 
-    def negate(x: Int) = minus(zero, x)
+    def negate(x: Int): Try[Int] = minus(zero, x)
 
     def times(x: Int, y: Int) = Try(x * y)
 
@@ -186,7 +186,7 @@ object Valuable {
 
     def minus(x: Long, y: Long) = Try(x - y)
 
-    def negate(x: Long) = minus(zero, x)
+    def negate(x: Long): Try[Long] = minus(zero, x)
 
     def times(x: Long, y: Long) = Try(x * y)
 

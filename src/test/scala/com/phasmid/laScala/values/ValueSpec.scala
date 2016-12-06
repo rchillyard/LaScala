@@ -64,7 +64,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val x = Value("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   "QuotedStringValue" should "be None" in {
     val x = QuotedStringValue(""""1"""")
@@ -121,7 +121,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work with single digits given appropriate pattern" in {
     implicit val pattern = "y-M-d"
@@ -130,7 +130,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
-    x.asOrderable[LocalDate] should matchPattern { case Some(d) => }
+    x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work implicitly" in {
     val x: Value = LocalDate.of(2016, 7, 10)
@@ -166,7 +166,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   "attribute map" should "work" in {
     val m: Map[String, Value] = Map("k" -> Value("k"), "1" -> Value(1), "b" -> Value(true), "1.0" -> Value(1.0))
-    val xos = for ((k, v) <- m) yield v.asValuable[Double]
+    val xos = for ((_, v) <- m) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 3
     xs.head shouldBe 1
@@ -175,7 +175,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   it should "work when given raw strings" in {
     val wWm: Map[String, String] = Map("k" -> "k", "1" -> "1", "1.0" -> "1.0")
     val wVm = Value.sequence(wWm)
-    val xos = for ((k, v) <- wVm) yield v.asValuable[Double]
+    val xos = for ((_, v) <- wVm) yield v.asValuable[Double]
     val xs = xos.flatten
     xs.size shouldBe 2
     xs.head shouldBe 1
@@ -224,7 +224,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val ws = List[Any]("k", 1, 1.0)
     val vsy = Value.trySequence(ws)
     val xosy: Try[Seq[Option[Double]]] = for (vs <- vsy) yield for (v <- vs) yield v.asValuable[Double]
-    xosy should matchPattern { case Success(xos) => }
+    xosy should matchPattern { case Success(_) => }
     inside(xosy) {
       case Success(xos) =>
         xos should matchPattern { case List(None, Some(1.0), Some(1.0)) => }

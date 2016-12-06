@@ -167,7 +167,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
   */
 abstract class BasePredicate[T](name: String) extends Predicate[T] {
   self =>
-  override def toString = name
+  override def toString: String = name
 }
 
 /**
@@ -178,7 +178,7 @@ abstract class BasePredicate[T](name: String) extends Predicate[T] {
   * @tparam T the underlying type of the Predicate
   */
 case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T) = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
 
 
   /**
@@ -202,7 +202,7 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
   * @tparam T the underlying type of the Predicate
   */
 case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T) = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
 
   /**
     * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential
@@ -382,7 +382,7 @@ case class Func[T](p: T => Boolean) extends BasePredicate[T](s"function $p") {
   * @tparam V the output type of the function f and the underlying type of the resulting Predicate
   */
 case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p with $f") {
-  def apply(x: T) = p(f(x))
+  def apply(x: T): Try[Boolean] = p(f(x))
 
   /**
     *
@@ -462,7 +462,7 @@ case class InRange(r: Range) extends BasePredicate[Int](s"in $r") {
   * @tparam T the type of both min and max, and also the underlying type of the resulting Predicate
   */
 case class InBounds[T: Ordering](min: T, max: T) extends BasePredicate[T](s"in bounds $min..$max") {
-  def apply(x: T) = (GE(min) :& LE(max)) (x)
+  def apply(x: T): Try[Boolean] = (GE(min) :& LE(max)) (x)
 
   /**
     * The map function for Predicate. Note that for operators such as >, <=, etc. it is essential

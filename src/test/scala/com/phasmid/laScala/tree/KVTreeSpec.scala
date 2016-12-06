@@ -56,7 +56,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   it should "work properly for GeneralKVTree" in {
     val tree = GeneralKVTree(Some(Value[Int](0)), Seq(Leaf(Value[Int](1)), Leaf(Value[Int](2)), Leaf(Value[Int](3))))
-    val ns = tree.nodeIterator(true)
+    val ns = tree.nodeIterator()
     ns.size shouldBe 4
   }
 

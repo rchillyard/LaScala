@@ -115,26 +115,26 @@ class RuleParserSpec extends FlatSpec with Matchers {
   }
   it should """parse x>1 & (x<3 | x=99) using parseRule""" in {
     val parser = new RuleParser()
-    parser.parseRule("x>1 & (x<3 | x=99)") should matchPattern { case scala.util.Success(r) => }
+    parser.parseRule("x>1 & (x<3 | x=99)") should matchPattern { case scala.util.Success(_) => }
   }
   it should """parse "strikePrice > 95% * $basePrice & strikePrice < 105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13"""" in {
     val parser = new RuleParser()
-    parser.parseRule("strikePrice > 95% * $basePrice & strikePrice < 105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13") should matchPattern { case scala.util.Success(r) => }
+    parser.parseRule("strikePrice > 95% * $basePrice & strikePrice < 105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13") should matchPattern { case scala.util.Success(_) => }
   }
   it should """parse "strikePrice in 95% * $basePrice...105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13"""" in {
     val parser = new RuleParser()
-    parser.parseRule("strikePrice in 95% * $basePrice...105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13") should matchPattern { case scala.util.Success(r) => }
+    parser.parseRule("strikePrice in 95% * $basePrice...105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13") should matchPattern { case scala.util.Success(_) => }
   }
   it should """parse "true & (strikePrice in 95% * $basePrice...105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13)"""" in {
     val parser = new RuleParser()
     val rule = parser.parseRule("true & (strikePrice in 95% * $basePrice...105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13)")
-    rule should matchPattern { case scala.util.Success(r) => }
+    rule should matchPattern { case scala.util.Success(_) => }
   }
   // FIXME this is string is the result of serializing the rule above
   ignore should """parse "true & (strikePrice in bounds 95 100 / $basePrice *..105 100 / $basePrice *) & (sharpeRatio >0.4) & (EV <$EBITDA 13 *)"""" in {
     val parser = new RuleParser()
     val rule = parser.parseRule("true & (strikePrice in bounds 95 100 / $basePrice *..105 100 / $basePrice *) & (sharpeRatio >0.4) & (EV <$EBITDA 13 *)")
-    rule should matchPattern { case scala.util.Success(r) => }
+    rule should matchPattern { case scala.util.Success(_) => }
   }
   "expression" should "parse 1 as 1" in {
     val parser = new RuleParser
@@ -234,7 +234,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
   "parseExpression" should """parse 1 as List("1")""" in {
     val parser = new RuleParser()
     val r = parser.parseExpression("1")
-    r should matchPattern { case Success(e) => }
+    r should matchPattern { case Success(_) => }
     r.get.toRPN shouldBe List("1")
   }
   it should "parse 1B as ..." in {

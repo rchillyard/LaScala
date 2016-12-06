@@ -48,6 +48,7 @@ class OrderableSpec extends FlatSpec with Matchers {
   "zero string" should "result in OrderableString of length zero" in {
     implicit val pattern = ""
     val dt = OrderableString.zero
+    // TODO put a test here
   }
   "string1" should "be the string string1" in {
     OrderableString compare("string", "string") shouldBe 0

@@ -92,7 +92,7 @@ class RPNSpec extends FlatSpec with Matchers {
   "parseExpression" should """parse 1 as List("1")""" in {
     val parser = new RuleParser()
     val r = parser.parseExpression("1")
-    r should matchPattern { case Success(e) => }
+    r should matchPattern { case Success(_) => }
     r.get.toRPN shouldBe List("1")
   }
   it should "parse 1B as ..." in {

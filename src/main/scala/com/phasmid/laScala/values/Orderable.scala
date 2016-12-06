@@ -86,11 +86,11 @@ object Orderable {
   implicit object OrderableLong extends OrderableLong
 
   trait OrderableDouble extends Orderable[Double] {
-    def unit(x: Double) = x
+    def unit(x: Double): Double = x
 
     def fromString(s: String)(implicit pattern: String = "") = Try(s.toDouble)
 
-    def viaLookup(k: String, f: String => Option[Double]) = optionToTry(f(k), new OrderableException(s"$k is not defined"))
+    def viaLookup(k: String, f: String => Option[Double]): Try[Double] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
 
     def zero = 0.0
 
@@ -100,13 +100,13 @@ object Orderable {
   implicit object OrderableDouble extends OrderableDouble
 
   trait OrderableRational extends Orderable[Rational] {
-    def unit(x: Rational) = x
+    def unit(x: Rational): Rational = x
 
     def fromString(s: String)(implicit pattern: String = "") = Try(Rational(s))
 
-    def viaLookup(k: String, f: String => Option[Rational]) = optionToTry(f(k), new OrderableException(s"$k is not defined"))
+    def viaLookup(k: String, f: String => Option[Rational]): Try[Rational] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
 
-    def zero = Rational.zero
+    def zero: Rational = Rational.zero
 
     def compare(x: Rational, y: Rational): Int = x.compare(y)
   }
@@ -140,7 +140,7 @@ object Orderable {
 
     val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
-    def formatter(s: String) = DateTimeFormatter.ofPattern(s)
+    def formatter(s: String): DateTimeFormatter = DateTimeFormatter.ofPattern(s)
   }
 
   implicit object OrderableLocalDate extends OrderableLocalDate

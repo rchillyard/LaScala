@@ -67,7 +67,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   it should "convert to map properly" in {
     val c = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13"))
-    val iItIm = c toMap { case (x, y) => x }
+    val iItIm = c toMap { case (x, _) => x }
     iItIm.get(8) should matchPattern { case Some((8, 13)) => }
   }
   it should "map into (Double,Double) properly" in {
@@ -106,7 +106,6 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     }
   }
   "sample.csv" should "be (String,Int) stream using URI" in {
-    val x = getClass.getResource("sample.csv")
     val iWts = CSV[(String, Int)](getClass.getResource("sample.csv").toURI).tuples
     iWts.head match {
       case (q, y) => assert(q == "Sunday" && y == 1)
@@ -153,7 +152,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", _, _, _) => }
     inside (x.head) {
-      case (_,ltp, ltd, per) =>
+      case (_, _, ltd, per) =>
         assert (per > 8 && per < 20)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         assert(ltd.isAfter(LocalDate.parse("2016-08-02", formatter)))

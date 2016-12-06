@@ -142,7 +142,7 @@ object LongRNG {
   * Note that we would like to specify a require statement but such are not legal in Value types
   */
 case class UniformDouble(x: Double) {
-  def +(y: Double) = x + y
+  def +(y: Double): Double = x + y
 }
 
 object UniformDoubleRNG {
@@ -152,7 +152,7 @@ object UniformDoubleRNG {
 object GaussianRNG {
   def apply: RNG[(Double, Double)] = GaussianRNG(System.currentTimeMillis())
 
-  def logic(n: Long) = {
+  private def logic(n: Long) = {
     val r1 = UniformDoubleRNG(n)
     val r2 = r1.next
     val u = r1.apply.x
@@ -162,11 +162,11 @@ object GaussianRNG {
     (tuple, r2)
   }
 
-  def values(n: Long) = logic(n)._1
+  def values(n: Long): (Double, Double) = logic(n)._1
 }
 
 object UniformDouble {
   def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
 
-  def +(x: Double, y: random.UniformDouble) = y + x
+  def +(x: Double, y: random.UniformDouble): Double = y + x
 }

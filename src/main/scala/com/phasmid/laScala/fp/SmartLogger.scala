@@ -42,7 +42,7 @@ trait SmartLogger {
     * @param name   the name of this milestone
     * @param values the values to be shown for this milestone (0, 1, or N values)
     */
-  def milestone(name: String)(values: Any*) = logFunc(milestoneFormatter(name)(values: _*))
+  def milestone(name: String)(values: Any*): Unit = logFunc(milestoneFormatter(name)(values: _*))
 
   /**
     * log a milestone with this number and values
@@ -50,14 +50,14 @@ trait SmartLogger {
     * @param x      the number of this milestone
     * @param values the values to be shown for this milestone (0, 1, or N values)
     */
-  def milestone(x: Int)(values: Any*) = logFunc(milestoneFormatter(x.toString)(values: _*))
+  def milestone(x: Int)(values: Any*): Unit = logFunc(milestoneFormatter(x.toString)(values: _*))
 
   /**
     * log a milestone with the next sequential number and the given values
     *
     * @param values the values to be shown for this milestone (0, 1, or N values)
     */
-  def milestone()(values: Any*) = logFunc(milestoneFormatter({
+  def milestone()(values: Any*): Unit = logFunc(milestoneFormatter({
     ms = ms + 1; ms.toString
   })(values: _*))
 
@@ -145,9 +145,9 @@ object SmartLoggerBasic {
   * @param logger an Slf4J logger
   */
 case class SmartLoggerSlf4JInfo(logger: Logger) extends SmartLogger {
-  def logFunc = logger.info
+  def logFunc: (String) => Unit = logger.info
 
-  def errorFunc = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
+  def errorFunc: (String, Throwable) => Unit = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
 }
 
 /**
@@ -156,9 +156,9 @@ case class SmartLoggerSlf4JInfo(logger: Logger) extends SmartLogger {
   * @param logger an Slf4J logger
   */
 case class SmartLoggerSlf4JDebug(logger: Logger) extends SmartLogger {
-  def logFunc = logger.debug
+  def logFunc: (String) => Unit = logger.debug
 
-  def errorFunc = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
+  def errorFunc: (String, Throwable) => Unit = { (s, x) => logger.warn(s"Exception thrown for $s: ${x.getLocalizedMessage}") }
 }
 
 object SmartLoggerSlf4JInfo {

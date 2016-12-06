@@ -1,6 +1,6 @@
 package com.phasmid.laScala.cache
 
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -61,7 +61,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
     *
     * @param k the key to the element which is to be expired.
     */
-  def expire(k: K) = {}
+  def expire(k: K): Unit = {}
 
   /**
     * method to take action whenever a key value is actually fulfilled.
@@ -160,7 +160,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
     */
   def apply(k: K): V = unwrap(get(k))
 
-  def mutableMap = m
+  def mutableMap: CacheMap[K, V, M] = m
 
   /**
     * Method to unwrap a value of type M[V].
@@ -175,7 +175,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
     evaluationFunc(k)
   }
 
-  override def toString = m.toString
+  override def toString: String = m.toString
 }
 
 /**
@@ -284,7 +284,7 @@ object Cache {
   /**
     * This logger is used only for debug -- there is a carper
     */
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 }
 
 /**
@@ -446,11 +446,11 @@ trait Mappish[K, V, M[_]] {
   // CONSIDER a different scope for this method
   private[cache] def mutableMap: CacheMap[K, V, M]
 
-  def clear() = mutableMap.clear()
+  def clear(): Unit = mutableMap.clear()
 
-  def asMap = mutableMap.toMap
+  def asMap: Map[K, V] = mutableMap.toMap
 
-  def contains(k: K) = mutableMap.contains(k)
+  def contains(k: K): Boolean = mutableMap.contains(k)
 }
 
 /**

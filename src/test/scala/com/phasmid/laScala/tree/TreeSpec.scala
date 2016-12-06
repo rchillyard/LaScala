@@ -15,12 +15,12 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "render"
   it should "work for leaf" in {
-    Leaf(42).render(0) shouldBe "42"
+    Leaf(42).render() shouldBe "42"
     Leaf(42).render(1) shouldBe "  42"
   }
   it should "work for GeneralTree" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
-    tree.render(0) shouldBe "0\n  1\n  2\n  3"
+    tree.render() shouldBe "0\n  1\n  2\n  3"
   }
   behavior of "compare"
   it should "work for simple values" in {
@@ -76,12 +76,12 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work properly for GenericBranch" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
-    val ns = tree.nodeIterator(true)
+    val ns = tree.nodeIterator()
     ns.size shouldBe 4
   }
   it should "work properly for UnvaluedBinaryTree" in {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
-    val ns = tree.nodeIterator(true)
+    val ns = tree.nodeIterator()
     ns.size shouldBe 7
   }
 
@@ -96,7 +96,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work properly for UnvaluedBinaryTree" in {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
-    val ns = tree.iterator(true).toList
+    val ns = tree.iterator().toList
     ns.size shouldBe 4
     ns shouldBe List(1, 3, 5, 6)
   }
@@ -107,13 +107,13 @@ class TreeSpec extends FlatSpec with Matchers {
     import GeneralTree._
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3))) :+ Leaf(4)
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
-    tree.iterator(true).toSeq shouldBe Seq(1, 2, 3, 4, 0)
+    tree.iterator().toSeq shouldBe Seq(1, 2, 3, 4, 0)
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 2, 3, 4)
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ Leaf(2)
-    tree.iterator(true).toSeq shouldBe Seq(1, 2, 3, 5, 6)
+    tree.iterator().toSeq shouldBe Seq(1, 2, 3, 5, 6)
     tree.iterator(false).toSeq shouldBe Seq(1, 2, 3, 5, 6)
   }
   ignore should "work correctly for UnvaluedBinaryTree type 2/3" in {
@@ -311,7 +311,7 @@ class TreeSpec extends FlatSpec with Matchers {
     }
     import UnvaluedBinaryTree._
     val tree = Tree.populateOrderedTree(z)
-    val strings = tree.iterator(true).take(10).toList
+    val strings = tree.iterator().take(10).toList
     strings shouldBe List("a", "about", "above", "actually", "ago", "alas", "all", "and", "another", "anything")
   }
   behavior of "UnvaluedBinaryTree"
@@ -319,7 +319,6 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.includesValue(1) shouldBe true
     tree.depth shouldBe 3
-    val x = tree.render()
     tree.render() shouldBe "\n\n    1\n    3\n\n    5\n    6"
   }
   val flatLandTree = "a{{about}above{{actually}ago{{alas}all{{and}another{{anything}appear{{are}as{{at}back{{be}because{{become}becoming{{been}below{{bringing}but{{by}call{{can}ceased{{circle}clearer{{condition}contrary{{correct}could{{country}countrymen{{dare}demonstrate{{described}distinguish{{down}drawing{{edge}edges{{exactly}except{{eye}far{{few}figure{{figures}find{{fixed}flatland{{flatlander}freely{{from}gradually{{happy}hard{{has}have{{hexagons}higher{{i}imagine{{impossible}in{{inhabitants}instead{{into}is{{it}its{{kind}last{{leaning}least{{like}line{{lines}live{{look}lower{{luminous}make{{middle}mind{{more}move{{moving}much{{my}nature{{necessity}nor{{not}nothing{{notion}now{{of}on{{once}one{{only}opened{{or}other{{our}oval{{over}p{{paper}penny{{pentagons}perceive{{place}placed{{places}power{{pretty}privileged{{readers}remaining{{rising}said{{say}see{{shadows}sheet{{should}sight{{sinking}so{{solid}space{{speedily}squares{{straight}such{{suppose}surface{{table}tables{{that}the{{their}them{{then}there{{things}this{{thus}to{{triangles}universe{{upon}us{{vast}very{{view}views{{visible}was{{we}were{{what}when{{which}who{{will}with{{without}world{{years}you{{your}yourself}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"

@@ -124,7 +124,7 @@ trait Scalar {
 }
 
 trait ScalarMaker extends (Any => Try[Scalar]) {
-  def apply(a: Any) = a match {
+  def apply(a: Any): Try[Scalar] = a match {
     case x => value(x)
   }
 
@@ -146,7 +146,7 @@ abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) 
 
   override def toString = s"IntScalar: $render"
 
-  override def defaultFormat = IntScalar.getDefaultFormat
+  override def defaultFormat: String = IntScalar.getDefaultFormat
 }
 
 /**
@@ -165,7 +165,7 @@ abstract class BaseBooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, 
 
   override def toString = s"BooleanScalar: $source"
 
-  override def defaultFormat = BooleanScalar.getDefaultFormat
+  override def defaultFormat: String = BooleanScalar.getDefaultFormat
 }
 
 /**
@@ -192,7 +192,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
 
   override def toString = s"DoubleScalar: $render"
 
-  override def defaultFormat = DoubleScalar.getDefaultFormat
+  override def defaultFormat: String = DoubleScalar.getDefaultFormat
 }
 
 /**
@@ -215,7 +215,7 @@ abstract class BaseRationalScalar(x: Rational, source: Any) extends BaseScalar(x
   override val defaultFormat = "%f"
 
   // TODO we need to create a renderFormatted for Rational
-  override def renderFormatted(format: => String) = x.toString
+  override def renderFormatted(format: => String): String = x.toString
 }
 
 /**
@@ -278,7 +278,7 @@ abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, s
 
   override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Try(implicitly[Incrementable[X]].unit(x.asInstanceOf[X])).toOption
 
-  override def toString = source.toString
+  override def toString: String = source.toString
 
   override def equals(obj: scala.Any): Boolean = obj match {
     case o: DateScalar => x.equals(o.x)
@@ -304,9 +304,11 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
 
   def get: Any = value
 
-  override def toString = getClass.getSimpleName + get.toString
+  override def toString: String = getClass.getSimpleName + get.toString
 
-  def renderFormatted(format: => String) = if (format == null) source.toString else Try{ format.format(value)  } match {
+  def renderFormatted(format: => String): String = if (format == null) source.toString else Try {
+    format.format(value)
+  } match {
     case Success(s) => s
     case Failure(_) => source.toString
   }
@@ -330,14 +332,16 @@ object BooleanScalar {
 
 object IntScalar {
   def apply(x: Int): IntScalar = IntScalar(x, x)
-  def setDefaultFormat(format: String) = { defaultFormat = format}
+
+  def setDefaultFormat(format: String): Unit = {defaultFormat = format}
   def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%d"
 }
 
 object DoubleScalar {
   def apply(x: Double): DoubleScalar = DoubleScalar(x, x)
-  def setDefaultFormat(format: String) = { defaultFormat = format}
+
+  def setDefaultFormat(format: String): Unit = {defaultFormat = format}
   def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%f"
 }
@@ -436,7 +440,7 @@ object Scalar {
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 
-  val quoted = """"([^"]*)"""".r
+  private val quoted = """"([^"]*)"""".r
 }
 
 

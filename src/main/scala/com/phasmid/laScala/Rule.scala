@@ -1,7 +1,7 @@
 package com.phasmid.laScala
 
-import fp.FP._
 import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.parser.rpn.{Comparand, RPN}
 import com.phasmid.laScala.values.Orderable
@@ -104,7 +104,7 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
 }
 
 abstract class BaseRule[T](name: String) extends Rule[T] {
-  override def toString = name
+  override def toString: String = name
 }
 
 /**
@@ -133,7 +133,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
-  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[And[U]] =
     for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new And[U](s1, s2)
 }
 
@@ -163,7 +163,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
-  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[Or[U]] =
     for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new Or[U](s1, s2)
 }
 
@@ -193,7 +193,7 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
-  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) =
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[BoundPredicate[U]] =
     for (t1 <- lf(t); p1 <- p tryMap rf) yield new BoundPredicate[U](t1, p1)
 }
 
@@ -254,7 +254,6 @@ object Rule {
   }
 
   def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit pattern: String): Try[Rule[X]] = {
-    val orderable = implicitly[Orderable[X]]
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
     implicit val pattern = ""
