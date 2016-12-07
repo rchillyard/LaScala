@@ -1,7 +1,7 @@
 package com.phasmid.laScala.fp
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.slf4j.LoggerFactory
+import org.slf4j.{LoggerFactory}
 
 /**
   * Created by scalaprof on 8/5/16.
@@ -21,6 +21,13 @@ class SpySpec extends FlatSpec with Matchers {
     val is = for (i <- 1 to 2) yield Spy.spy("i",i)
     is shouldBe List(1,2)
     spyMessage shouldBe "explicit spy: i: 1\nexplicit spy: i: 2\n"
+  }
+  it should "work with explicit logger spy func" in {
+    implicit val spyFunc = Spy.getSlf4jDebugSpyFunc(getClass)
+    Spy.spying = true
+    val is = for (i <- 1 to 2) yield Spy.spy("i",i)
+    is shouldBe List(1,2)
+    // you should see log messages written to console (assuming your logging level, i.e. logback-test.xml, is set to DEBUG)
   }
   it should "not expand the message when spying is off (global)" in {
     Spy.spying = false
@@ -60,5 +67,4 @@ class SpySpec extends FlatSpec with Matchers {
     Spy.log("my log message")
     spyMessage shouldBe "explicit spy: my log message\n"
   }
-
 }

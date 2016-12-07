@@ -54,7 +54,7 @@ object MPTT {
   def apply[T : HasKey](x: IndexedNode[T]): MPTT[T] = {
     val hasKey = implicitly[HasKey[T]]
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
-      case IndexedLeafWithKey1(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(hasKey.getKey(v), v)(l, r)
+      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(hasKey.getKey(v), v)(l, r)
       case EmptyWithIndex => None
       case EmptyWithKeyAndIndex() => None
       case IndexedNode(n,l,r) => n.get match {
@@ -74,7 +74,7 @@ object MPTT {
 
 def createValuedMPTT[V: HasKey](x: IndexedNode[Value[V]]): MPTT[V] = {
   def f(node: Node[Value[V]]): Option[MPTTEntry[V]] = node match {
-    case IndexedLeafWithKey1(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply[V](v.key, v.value)(l, r)
+    case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply[V](v.key, v.value)(l, r)
       case EmptyWithIndex => None
       case EmptyWithKeyAndIndex() => None
       case IndexedNode(n,l,r) => n.get match {

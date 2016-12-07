@@ -7,114 +7,12 @@ import com.phasmid.laScala.fp.{HasKey, Spy}
 import scala.annotation.tailrec
 import scala.language.implicitConversions
 
-/**
-  * Trait which models the node of a tree
-  *
-  * @tparam A the underlying type of the tree/node
-  */
-sealed trait Node[+A] extends Renderable {
-
-  /**
-    * @return the value of this node, if any
-    */
-  def get: Option[A]
-
-  /**
-    * Iterate on the nodes which are the descendants of this node (including this node at start or end of result)
-    *
-    * @param depthFirst if true then we iterate depth-first, else breadth-first (defaults to true)
-    * @return an iterator of nodes
-    */
-  def nodeIterator(depthFirst: Boolean = true): Iterator[Node[A]]
-
-  /**
-    * Method to determine if this Node's value is equal to node n's value WITHOUT any recursion.
-    *
-    * @param n the node to be compared
-    * @tparam B the underlying type of n
-    * @return true if this is "like" n
-    */
-  def compareValues[B >: A](n: Node[B]): Maybe = Kleenean(map2(get, n.get)(_ == _))
-
-  /**
-    * Method to determine if this Node is a leaf or a branch node
-    * @return true if this Node is a leaf
-    */
-  def isLeaf: Boolean = this match {
-    case AbstractLeaf(_) => true
-    case Empty => true
-    case Branch(_) => false
-    case _ => println(s"isLeaf fell through with $this"); false
-  }
-
-  /**
-    * Calculate the size of this node's subtree
-    *
-    * @return the size of the subtree
-    */
-  def size: Int
-
-  /**
-    * Method to determine the depth of the tree headed by this Node.
-    * Ideally, we would put this method into Tree, but because of the specific (non-tail-recursive)
-    * implementation, it is actually more logical to declare it here.
-    *
-    * @return the maximum depth of the tree headed by this Node
-    */
-  def depth: Int
-
-  /**
-    * Method to determine if this Node includes the given node in its subtree (if any)
-    *
-    * @param node the node to be searched for
-    * @tparam B the underlying type of n
-    * @return true if node n is found in the sub-tree defined by this
-    */
-  def includes[B >: A](node: Node[B]): Boolean
-
-  /**
-    * Determine if this subtree includes a value equal to b
-    *
-    * @param b the value to be searched
-    * @tparam B the type of b
-    * @return true if value b is found in the sub-tree defined by this
-    */
-  def includesValue[B >: A](b: B): Boolean
-
-  /**
-    * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
-    *
-    * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
-    *
-    * @param x the node to be replaced with y
-    * @param y the node to replace x
-    * @param f function to determine if two nodes are the same
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def replaceNode[B >: A : TreeBuilder](x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean): Node[B] = {
-    def replaceChildrenNodes(x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean)(ns: NodeSeq[B]): NodeSeq[B] =
-    // TODO remove the match logic
-      for (n <- ns) yield n match {
-        case t => t.replaceNode(x, y)(f)
-      }
-
-    if (f(this, x))
-      Spy.spy(s"replaceNode: matched $x with this so return", y, false) // this and x are the same so simply return y
-    else
-      this match {
-        case Branch(ns) => implicitly[TreeBuilder[B]].buildTree(get, replaceChildrenNodes(x, y)(f)(ns))
-        case _ => this
-      }
-  }
-}
-
  /**
   * Trait which models the tree-like aspects of a tree
   *
   * @tparam A the underlying type of the tree/node
   */
-trait Tree[+A] extends Node[A] {
+sealed trait Tree[+A] extends Node[A] {
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -333,53 +231,111 @@ trait Tree[+A] extends Node[A] {
 }
 
 /**
-  * This trait forms the basis for a type class which can determine if one node is the parent of another.
+  * Trait which models the node of a tree
   *
-  * NOTE: this method is intended for existing trees -- it is not for use while building a tree
-  *
-  * @tparam A the underlying type of the Nodes
+  * @tparam A the underlying type of the tree/node
   */
-trait NodeParent[A] {
-  def isParent(parent: Node[A], child: Node[A]): Boolean
-}
+sealed trait Node[+A] extends Renderable {
 
-trait Renderable {
   /**
-    * Create a String which represents this Renderable object in a manner that is convenient for showing a whole tree.
+    * @return the value of this node, if any
+    */
+  def get: Option[A]
+
+  /**
+    * Iterate on the nodes which are the descendants of this node (including this node at start or end of result)
     *
-    * @return an appropriate String
+    * @param depthFirst if true then we iterate depth-first, else breadth-first (defaults to true)
+    * @return an iterator of nodes
     */
-  def render(indent: Int = 0): String
-}
-
-/**
-  * Trait to define a method for building a tree from a Node.
-  * CONSIDER change the third parameter to an Option[Node[A]
-  * CONSIDER making this trait covariant in A
-  * @tparam A the underlying type of the Node(s) and Tree
-  */
-trait TreeBuilder[A] {
-  /**
-    * Build a new tree, given a value and child nodes
-    * @param maybeValue the (optional) value which the new tree will have at its root
-    * @param children the the children of the node
-    * @return a tree the (optional) value at the root and children as the immediate descendants
-    */
-  def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A]
+  def nodeIterator(depthFirst: Boolean = true): Iterator[Node[A]]
 
   /**
-    * Build a new leaf, given a value
-    * @param a the value for the leaf
-    * @return a node which is a leaf node
+    * Method to determine if this Node's value is equal to node n's value WITHOUT any recursion.
+    *
+    * @param n the node to be compared
+    * @tparam B the underlying type of n
+    * @return true if this is "like" n
     */
-  def buildLeaf(a: A): Node[A]
+  def compareValues[B >: A](n: Node[B]): Maybe = Kleenean(map2(get, n.get)(_ == _))
+
+  /**
+    * Method to determine if this Node is a leaf or a branch node
+    * @return true if this Node is a leaf
+    */
+  def isLeaf: Boolean = this match {
+    case AbstractLeaf(_) => true
+    case Empty => true
+    case Branch(_) => false
+    case _ => println(s"isLeaf fell through with $this"); false
+  }
+
+  /**
+    * Calculate the size of this node's subtree
+    *
+    * @return the size of the subtree
+    */
+  def size: Int
+
+  /**
+    * Method to determine the depth of the tree headed by this Node.
+    * Ideally, we would put this method into Tree, but because of the specific (non-tail-recursive)
+    * implementation, it is actually more logical to declare it here.
+    *
+    * @return the maximum depth of the tree headed by this Node
+    */
+  def depth: Int
+
+  /**
+    * Method to determine if this Node includes the given node in its subtree (if any)
+    *
+    * @param node the node to be searched for
+    * @tparam B the underlying type of n
+    * @return true if node n is found in the sub-tree defined by this
+    */
+  def includes[B >: A](node: Node[B]): Boolean
+
+  /**
+    * Determine if this subtree includes a value equal to b
+    *
+    * @param b the value to be searched
+    * @tparam B the type of b
+    * @return true if value b is found in the sub-tree defined by this
+    */
+  def includesValue[B >: A](b: B): Boolean
+
+  /**
+    * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
+    *
+    * NOTE: we could provide that B provides evidence of Ordering[B] because this is required for an abstract binary tree
+    *
+    * @param x the node to be replaced with y
+    * @param y the node to replace x
+    * @param f function to determine if two nodes are the same
+    * @tparam B the underlying type of the new node (and the resulting tree)
+    * @return the resulting tree
+    */
+  def replaceNode[B >: A : TreeBuilder](x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean): Node[B] = {
+    def replaceChildrenNodes(x: Node[B], y: Node[B])(f: (Node[B], Node[B]) => Boolean)(ns: NodeSeq[B]): NodeSeq[B] =
+    // TODO remove the match logic
+      for (n <- ns) yield n match {
+        case t => t.replaceNode(x, y)(f)
+      }
+
+    if (f(this, x))
+      Spy.spy(s"replaceNode: matched $x with this so return", y, false) // this and x are the same so simply return y
+    else
+      this match {
+        case Branch(ns) => implicitly[TreeBuilder[B]].buildTree(get, replaceChildrenNodes(x, y)(f)(ns))
+        case _ => this
+      }
+  }
 }
 
 /**
   * Trait which models an index that is useful for building an indexed tree, especially an MPTT-type index.
-  * CONSIDER Restore sealed?
   */
-trait TreeIndex {
+sealed trait TreeIndex {
   /**
     * the left index (the number of other nodes to the "left" of this one
     *
@@ -397,8 +353,6 @@ trait TreeIndex {
 
 /**
   * A branch of a tree
-  *
-  * CONSIDER restoring sealed
   *
   * @tparam A the underlying type of this Branch
   */
@@ -439,7 +393,64 @@ trait Branch[+A] extends Tree[A] {
   }
 }
 
+/**
+  * Trait which combines the Node and TreeIndex traits
+  *
+  * @tparam A the underlying type of the tree/node
+  */
 trait IndexedNode[A] extends Node[A] with TreeIndex
+
+/**
+  * Trait which combines the IndexedNode and WithKey traits
+  *
+  * @tparam A the underlying type of the tree/node
+  */
+trait IndexedNodeWithKey[A] extends IndexedNode[A] with WithKey
+
+/**
+  * This trait forms the basis for a type class which can determine if one node is the parent of another.
+  *
+  * NOTE: this method is intended for existing trees -- it is not for use while building a tree
+  *
+  * @tparam A the underlying type of the Nodes
+  */
+trait NodeParent[A] {
+  def isParent(parent: Node[A], child: Node[A]): Boolean
+}
+
+/**
+  * Trait which defines behavior of something which can be rendered as a String
+  */
+trait Renderable {
+  /**
+    * Create a String which represents this Renderable object in a manner that is convenient for showing a whole tree.
+    *
+    * @return an appropriate String
+    */
+  def render(indent: Int = 0): String
+}
+
+/**
+  * Trait to define a method for building a tree from a Node.
+  * CONSIDER making this trait covariant in A
+  * @tparam A the underlying type of the Node(s) and Tree
+  */
+trait TreeBuilder[A] {
+  /**
+    * Build a new tree, given a value and child nodes
+    * @param maybeValue the (optional) value which the new tree will have at its root
+    * @param children the the children of the node
+    * @return a tree the (optional) value at the root and children as the immediate descendants
+    */
+  def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A]
+
+  /**
+    * Build a new leaf, given a value
+    * @param a the value for the leaf
+    * @return a node which is a leaf node
+    */
+  def buildLeaf(a: A): Node[A]
+}
 
 /**
   * This trait is used for a type class that enables a T value to yield a String value that relates to the parent of the node containing the value.
@@ -482,50 +493,53 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
 }
 
 /**
-  * A leaf whose value is a
+  * Case class for a leaf whose value is a
   *
-  * @param value the value of this leaf
+  * @param a the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-case class Leaf[+A](value: A) extends AbstractLeaf[A](value)
+case class Leaf[+A](a: A) extends AbstractLeaf[A](a)
 
+/**
+  * Case class for a binary tree where the nodes themselves do not have values
+  *
+  * @param left the left-side node
+  * @param right the right-side node (assumed to come after the left side node)
+  * @tparam A the underlying type which must be Orderable.
+  */
 case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
-  assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
 
   /**
     * @return None
     */
   def get = None
-
 }
 
-case class BinaryTree[+A: Ordering](value: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
-  assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+/**
+  * Case class for a binary tree with a value at each node
+  *
+  * @param a the value of the root node of this binary tree
+  * @param left the left-side node
+  * @param right the right-side node (assumed to come after the left side node)
+  * @tparam A the underlying type which must be Orderable.
+  */
+case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends AbstractBinaryTree[A](left, right) {
 
   /**
     * @return None
     */
   def get = None
-
-}
-
-abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
-
-  /**
-    * Return a sequence made up of left and right
-    *
-    * @return the immediate descendants (children) of this branch
-    */
-  def children: Seq[Node[A]] = Seq(left, right)
 
 }
 
 /**
-  * Empty object which is necessary for (non-ideal) BinaryTrees.
-  * There should be no need for a GeneralTree to reference an Empty but it might happen.
+  * Case class for an indexed leaf
+  *
+  * @param lIndex the (optional) index to the left of the leaf
+  * @param rIndex the (optional) index to the right of the leaf
+  * @param value the leaf value
+  * @tparam A the underlying type of this Leaf
   */
-case object Empty extends AbstractEmpty
-
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex {
   override def depth: Int = 1
 
@@ -537,9 +551,15 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   override def toString = s"""L("$value")"""
 }
 
-trait IndexedNodeWithKey1[A] extends IndexedNode[A] with WithKey
-
-case class IndexedLeafWithKey1[A : HasKey](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with IndexedNodeWithKey1[A] {
+/**
+  * Case class for an indexed leaf with key
+  *
+  * @param lIndex the (optional) index to the left of the leaf
+  * @param rIndex the (optional) index to the right of the leaf
+  * @param value the leaf value
+  * @tparam A the underlying type of this Leaf which must implement HasKey
+  */
+case class IndexedLeafWithKey[A : HasKey](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with IndexedNodeWithKey[A] {
   override def depth: Int = 1
 
   override def toString = s"""L("$value")"""
@@ -547,12 +567,49 @@ case class IndexedLeafWithKey1[A : HasKey](lIndex: Option[Long], rIndex: Option[
   def key: String = implicitly[HasKey[A]].getKey(value)
 }
 
-
+/**
+  * A mutable (temporary) tree used as a preliminary to building an MPTT index
+  *
+  * @param lIndex the (optional) index to the left of the node
+  * @param rIndex the (optional) index to the right of the node
+  * @param value the leaf value
+  * @param children the children of this node
+  * @tparam A the underlying type of this Branch
+  */
 case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
   def get: Option[A] = value
 }
 
-case class TreeException(msg: String) extends Exception(msg)
+/**
+  * The exception class for Trees
+  * @param msg the message to be yielded by the exception
+  * @param cause the cause (defaults to null)
+  */
+case class TreeException(msg: String, cause: Throwable = null) extends Exception(msg, cause)
+
+/**
+  * Empty object which is necessary for (non-ideal) BinaryTrees.
+  * There should be no need for a GeneralTree to reference an Empty but it might happen.
+  */
+case object Empty extends AbstractEmpty
+
+/**
+  * Base class for binary trees
+  * @param left the left node
+  * @param right the right node
+  * @tparam A the underlying type of this binary tree
+  */
+abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) extends Branch[A] {
+  assume(AbstractBinaryTree.isOrdered(left, right), s"$left is not ordered properly with $right")
+
+  /**
+    * Return a sequence made up of left and right
+    *
+    * @return the immediate descendants (children) of this branch
+    */
+  def children: Seq[Node[A]] = Seq(left, right)
+
+}
 
 /**
   * Abstract base class for a leaf whose value is a
@@ -579,6 +636,9 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   }
 }
 
+/**
+  * Base class for Empty nodes
+  */
 abstract class AbstractEmpty extends Tree[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
@@ -628,12 +688,12 @@ object AbstractLeaf {
   def unapply[A](t: Node[A]): Option[A] = t match {
     case Leaf(x) => Some(x)
     case IndexedLeaf(_,_,x) => Some(x)
-    case IndexedLeafWithKey1(_,_,x) => Some(x)
+    case IndexedLeafWithKey(_,_,x) => Some(x)
     case _ => None
   }
 }
-object Leaf {
- }
+
+object Leaf
 
 object Node {
 
@@ -702,7 +762,7 @@ object Tree {
       case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + h.size, t))
     }
     node match {
-      case Leaf(x) => IndexedLeafWithKey1[A](Some(index), Some(index + 1), x)
+      case Leaf(x) => IndexedLeafWithKey[A](Some(index), Some(index + 1), x)
       case UnvaluedBinaryTree(l, r) =>
         val rIndex = index + 1 + l.size + r.size
         MutableGenericIndexedTree(Some(index), Some(rIndex), None, inner(Nil, (index, Seq(l,r))))
@@ -786,7 +846,6 @@ object UnvaluedBinaryTree {
               else
                 Spy.spy("type5", (n2, n1)) // type 5
             }
-          println(s"buildTree: apply($pair")
           apply(pair._1, pair._2)
         case p@Leaf(_) =>
           n2 match {
@@ -806,7 +865,6 @@ object UnvaluedBinaryTree {
                   else
                     Spy.spy("type5 (leaf)", (p, n2)) // type 5
                 }
-              println(s"buildTree (leaf): apply($pair")
               apply(pair._1, pair._2)
             case q@Leaf(_) => if (AbstractBinaryTree.isOrdered(p,q)) apply(p,q) else apply(q,p)
             case _ => throw TreeException(s"treeBuilder not implemented for Leaf $p and $n1")
@@ -872,6 +930,12 @@ object BinaryTree {
 
 object AbstractBinaryTree {
 
+  /**
+    * Extractor for use in pattern matching
+    * @param t the tree
+    * @tparam A the tree type
+    * @return an optional tuple of two children
+    */
   def unapply[A](t: AbstractBinaryTree[A]): Option[(Node[A],Node[A])] = Some((t.children.head,t.children.tail.head))
 
   /**

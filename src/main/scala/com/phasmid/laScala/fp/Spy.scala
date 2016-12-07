@@ -1,5 +1,7 @@
 package com.phasmid.laScala.fp
 
+import org.slf4j.{Logger, LoggerFactory}
+
 import scala.language.implicitConversions
 
 /**
@@ -36,18 +38,21 @@ object Spy {
     *
     * The behavior implied by "see" is defined by the spyFunc. This could be a simple println (which is the default) or a SLF4J debug function or whatever.
     *
-    * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value
-    * @param x       the value being spied on
-    * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true)
-    * @param spyFunc (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true
-    * @tparam X the type of the value
-    * @return the value of x
+    * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
+    * @param x       the value being spied on and which will be returned by this method.
+    * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true). However, note that this is intended only for the situation
+    *                where the default spyFunc is being used. If a logging spyFunc is used, then logging should be turned on/off at the class level via the
+    *                logging configuration file.
+    * @param spyFunc (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true.
+    * @tparam X the type of the value.
+    * @return the value of x.
     */
   def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy): X = {
     if (b && spying) {
       lazy val w = message
-      val msg = if (w contains "{}")
-        w.replace("{}", s"$x")
+      val brackets = "{}"
+      val msg = if (w contains brackets)
+        w.replace(brackets, s"$x")
       else
         x match {
           case () => w
@@ -73,4 +78,18 @@ object Spy {
     * @param s the message to be output when spying
     */
   implicit def spyFunc(s: String): Spy =  Spy(println("spy: "+s))
+
+  /**
+    * Get a spyFunc that can be made an implicit val at the point of the spy method invocation so that spy causes logging rather than println statements
+    * @param logger the logger to be used (at the level of debug).
+    * @return a spy function
+    */
+  def getSlf4jDebugSpyFunc(logger: Logger): (String) => Spy = { s => Spy(logger.debug(s)) }
+
+  /**
+    * Get a spyFunc that can be made an implicit val at the point of the spy method invocation so that spy causes logging rather than println statements
+    * @param clazz the class to be used to get an appropriate logger
+    * @return a spy function
+    */
+  def getSlf4jDebugSpyFunc(clazz: Class[_]): (String) => Spy = getSlf4jDebugSpyFunc(LoggerFactory.getLogger(getClass))
 }
