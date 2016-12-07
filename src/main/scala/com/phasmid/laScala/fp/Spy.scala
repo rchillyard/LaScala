@@ -43,18 +43,21 @@ object Spy {
     *
     * The behavior implied by "see" is defined by the spyFunc. This could be a simple println (which is the default) or a SLF4J debug function or whatever.
     *
+    * The caller MUST provide an implicit value in scope for a Logger (unless the spyFunc has been explicitly defined to use some other non-logging mechanism, such as calling getPrintlnSpyFunc).
+    *
     * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
+    *                Note that the message will only be evaluated if spying will actually occur, otherwise, since it is call-by-name, it will never be evaluated.
     * @param x       the value being spied on and which will be returned by this method.
     * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true). However, note that this is intended only for the situation
     *                where the default spyFunc is being used. If a logging spyFunc is used, then logging should be turned on/off at the class level via the
     *                logging configuration file.
     * @param spyFunc (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true.
+    * @param isEnabledFunc (implicit) the function to be called to determine if spying is enabled -- by default this will be based on the (implicit) logger.
     * @tparam X the type of the value.
     * @return the value of x.
     */
   def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean): X = {
-    if (b && spying) {
-      val enabled = isEnabledFunc
+    if (b && spying && isEnabledFunc(mySpy)) {
       lazy val w = message
       val brackets = "{}"
       val msg = if (w contains brackets)
@@ -120,4 +123,6 @@ object Spy {
     * @return a spy function
     */
   def getPrintlnSpyFunc(ps: PrintStream = System.out): String=>Spy = {s => Spy(ps.println(prefix+s))}
+
+  private val mySpy = apply(())
 }
