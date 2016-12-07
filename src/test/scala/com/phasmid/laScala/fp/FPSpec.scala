@@ -146,10 +146,19 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     fOptionToTry(None) should matchPattern { case Failure(_) => }
   }
 
-  "map2" should "succeed" in {
+  "map2(Option)" should "succeed" in {
+    val one = Some(1)
+    val two = Some(2)
+    def sum(x: Int, y: Int) = x + y
+    map2(one, two)(sum) should matchPattern { case Some(3) => }
+    map2(one, None)(sum) should matchPattern { case None => }
+  }
+
+  "map2(Try)" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
     def sum(x: Int, y: Int) = x + y
+    implicit val logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }

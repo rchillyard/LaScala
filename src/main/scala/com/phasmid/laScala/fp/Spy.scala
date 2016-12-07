@@ -1,16 +1,20 @@
 package com.phasmid.laScala.fp
 
+import java.io.PrintStream
+
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.language.implicitConversions
 
 /**
-  * This class and its related object provide a quick-and-dirty spy feature for peeking at the values of Scala
+  * This class and its related object provide a functional-programming style (if somewhat quick-and-dirty) spy feature for logging (or otherwise peeking at) the values of Scala
   * expressions.
+  *
+  * While this mechanism (by default) logs values using SLF4J, it does so in a functional style. You do not have to break up your functional expressions to write logging statements.
   *
   * In order, to use it with an explicitly defined spyFunc, please see the way it's done in SpySpec.
   *
-  * By default, spying is turned off so, if you want to turn it on for a run, you must set spying to true.
+  * By default, spying is turned on so, if you want to turn it off for a run, you must set spying to false.
   *
   * Created by scalaprof on 8/17/16.
   */
@@ -29,8 +33,9 @@ object Spy {
 
   /**
     * This is the global setting for whether to invoke the spyFunc of each spy invocation. However, each invocation can also turn spying off for itself.
+    * Normally it is true.
     */
-  var spying: Boolean = false
+  var spying: Boolean = true
 
   /**
     * This method is used in development/debug phase to "see" the values of expressions
@@ -47,8 +52,9 @@ object Spy {
     * @tparam X the type of the value.
     * @return the value of x.
     */
-  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy): X = {
+  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean): X = {
     if (b && spying) {
+      val enabled = isEnabledFunc
       lazy val w = message
       val brackets = "{}"
       val msg = if (w contains brackets)
@@ -71,25 +77,47 @@ object Spy {
     * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
     * @return the value of x
     */
-  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy) {spy(w, (), b); ()}
+  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean) {spy(w, (), b); ()}
+
+  /**
+    * The standard prefix for spy messages: "spy: "
+    */
+  private val prefix = "spy: "
 
   /**
     * This is the default spy function
+    *
     * @param s the message to be output when spying
     */
-  implicit def spyFunc(s: String): Spy =  Spy(println("spy: "+s))
+  implicit def spyFunc(s: String)(implicit logger: Logger): Spy =  Spy(logger.debug(prefix+s))
 
   /**
-    * Get a spyFunc that can be made an implicit val at the point of the spy method invocation so that spy causes logging rather than println statements
-    * @param logger the logger to be used (at the level of debug).
-    * @return a spy function
+    * This is the default isEnabled function
+    * This method takes a Spy object (essentially a Unit) and returns a Boolean if the logger is enabled for debug.
+    *
+    * Note that it is necessary that this method takes a Spy, in the same way that the spyFunc must return a Spy --
+    * so that the implicits can be found.
+    *
+    * @param x an instance of Spy
+    * @param logger an (implicit) logger
+    * @return true if the logger is debugEnabled
     */
-  def getSlf4jDebugSpyFunc(logger: Logger): (String) => Spy = { s => Spy(logger.debug(s)) }
+  implicit def isEnabledFunc(x: Spy)(implicit logger: Logger): Boolean = logger.isDebugEnabled
 
   /**
-    * Get a spyFunc that can be made an implicit val at the point of the spy method invocation so that spy causes logging rather than println statements
-    * @param clazz the class to be used to get an appropriate logger
+    * Convenience method to get a logger for a class.
+    * By using this method, the caller does not need to import any logging classes.
+    *
+    * @param clazz class for which the logger is required
+    * @return a Logger
+    */
+  def getLogger(clazz: Class[_]): Logger = LoggerFactory.getLogger(clazz)
+
+  /**
+    * Get a println-type spyFunc that can be made an implicit val at the point of the spy method invocation so that spy invokes println statements instead of logging.
+    *
+    * @param ps the PrintStream to use (defaults to System.out).
     * @return a spy function
     */
-  def getSlf4jDebugSpyFunc(clazz: Class[_]): (String) => Spy = getSlf4jDebugSpyFunc(LoggerFactory.getLogger(getClass))
+  def getPrintlnSpyFunc(ps: PrintStream = System.out): String=>Spy = {s => Spy(ps.println(prefix+s))}
 }

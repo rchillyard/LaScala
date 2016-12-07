@@ -1,6 +1,6 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.fp.{FP, Spy}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
@@ -30,11 +30,13 @@ class FunctionalTest extends FlatSpec with Matchers {
 
   // XXX: this should be kept in synchrony with the corresponding method in AccountRecordTest
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
-    //    Spy.spying = true
+    val safe = Spy.spying
+    Spy.spying = false
     val aso = AccountRecordTest.readAccountData(tester)
     val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
     println(checks)
     checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
+    Spy.spying = safe
   }
 }
 

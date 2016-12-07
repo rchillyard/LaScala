@@ -1,7 +1,6 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.{HasKey, Spy}
-//import com.phasmid.laScala.tree.MPTTEntry.HasKeyStringString
 
 import scala.collection.mutable
 
@@ -37,6 +36,7 @@ case class MPTT[T: HasKey](index: Map[String, MPTTEntry[T]]) extends (String => 
   * @tparam T the type of the value
   */
 case class MPTTEntry[T: HasKey](k: String, t: T)(val pre: Long, val post: Long) {
+  implicit val logger = Spy.getLogger(getClass)
   def contains(x: MPTTEntry[T]): Boolean = Spy.spy(s"contains: MPTTEntry($k,$t)($pre,$post); $x",this.pre <= x.pre && this.post >= x.post)
   def key: String = implicitly[HasKey[T]].getKey(t).toString
   override def toString = s"$t: $pre,$post"

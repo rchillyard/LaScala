@@ -3,6 +3,7 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.{HasKey, Spy}
+import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -14,7 +15,9 @@ import scala.language.implicitConversions
   */
 sealed trait Tree[+A] extends Node[A] {
 
-  /**
+   override implicit val logger = Spy.getLogger(getClass)
+
+   /**
     * @return the immediate descendants (children) of this branch
     */
   def children: Seq[Node[A]]
@@ -192,7 +195,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => Spy.spy(s"find: $b in $n",n.get.contains(b), false)})
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => Spy.spy(s"find: $b in $n",n.get.contains(b))})
 
   /**
     *
@@ -236,6 +239,8 @@ sealed trait Tree[+A] extends Node[A] {
   * @tparam A the underlying type of the tree/node
   */
 sealed trait Node[+A] extends Renderable {
+
+  implicit val logger = Spy.getLogger(getClass)
 
   /**
     * @return the value of this node, if any
@@ -323,7 +328,7 @@ sealed trait Node[+A] extends Renderable {
       }
 
     if (f(this, x))
-      Spy.spy(s"replaceNode: matched $x with this so return", y, false) // this and x are the same so simply return y
+      Spy.spy(s"replaceNode: matched $x with this so return", y) // this and x are the same so simply return y
     else
       this match {
         case Branch(ns) => implicitly[TreeBuilder[B]].buildTree(get, replaceChildrenNodes(x, y)(f)(ns))
@@ -805,6 +810,8 @@ object GeneralTree {
 }
 
 object UnvaluedBinaryTree {
+  implicit val logger = Spy.getLogger(getClass)
+
   abstract class UnvaluedBinaryTreeBuilder[A : Ordering] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
       val ns = children filterNot (_ == Empty)

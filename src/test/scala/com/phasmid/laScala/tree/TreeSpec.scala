@@ -11,7 +11,6 @@ import scala.io.Source
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends FlatSpec with Matchers {
-  Spy.spying = false
 
   behavior of "render"
   it should "work for leaf" in {

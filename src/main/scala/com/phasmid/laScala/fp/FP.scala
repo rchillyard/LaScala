@@ -63,6 +63,7 @@ object FP {
       val uss = for {use <- uses2; uso = sequence(use); us <- uso} yield us
       uss flatten
     }
+
     for {es <- esf; e = filter(es)} yield e
   }
 
@@ -128,8 +129,9 @@ object FP {
 
   /**
     * Perform recover on a sequence of Try objects.
+    *
     * @param xys the sequence of tries
-    * @param t the Throwable to replace the nonfatal throwable already reported.
+    * @param t   the Throwable to replace the nonfatal throwable already reported.
     * @tparam X the underlying type of the tries
     * @return xys essentially unchanged though with the side-effect of having written any non-fatal exceptions to the console and all non-fatal failures replaced by Failure(t)
     */
@@ -244,13 +246,14 @@ object FP {
   /**
     * Alternative to the toOption method in Option.
     * This method will throw any fatal failures, log any non-fatal failures and then convert the Try to an Option
+    *
     * @param xy the Try object
     * @tparam X the underlying type of Try
     * @return an Option which is Some(x) for Success(x) and None for Failure(t) where t has been handled as a side-effect
     */
-  def toOption[X](xy: Try[X], fLog: (Throwable) => Unit = { x => System.err.println(x.getLocalizedMessage)}): Option[X] = xy.recoverWith({
+  def toOption[X](xy: Try[X], fLog: (Throwable) => Unit = { x => System.err.println(x.getLocalizedMessage) }): Option[X] = xy.recoverWith({
     case NonFatal(x) => fLog(x); Failure(new NoSuchElementException)
-    case x @ _ => throw x
+    case x@_ => throw x
   }).toOption
 
   /**
@@ -265,12 +268,13 @@ object FP {
 
   /**
     * Method to yield an Option[X] value based on a X-predicate and an X value.
+    *
     * @param p the predicate
     * @param t the value to wrap in Some if the predicate is satisfied
     * @tparam X the underlying type of the value and the resulting Option
     * @return Option[X]
     */
-  def toOption[X](p: X=>Boolean)(t: X): Option[X] = toOption(p(t),t)
+  def toOption[X](p: X => Boolean)(t: X): Option[X] = toOption(p(t), t)
 
   /**
     * TODO unit test

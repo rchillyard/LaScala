@@ -76,11 +76,16 @@ class AccountRecordTest extends FlatSpec with Matchers {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
+    val safe = Spy.spying
+    Spy.spying = false
     checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
+    Spy.spying = safe
   }
 
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
-//        Spy.spying = true
+    val safe = Spy.spying
+    Spy.spying = false
+
     val aso = AccountRecordTest.readAccountData(tester)
     val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
 //    println(checks)
@@ -111,6 +116,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
         AccountRecordTest.doBenchmark(tree,mptt)
       case _ => fail(s"checks did not come back as expected: $checks")
     }
+    Spy.spying = safe
   }
 }
 
