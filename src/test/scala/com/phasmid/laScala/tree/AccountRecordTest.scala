@@ -76,10 +76,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    val safe = Spy.spying
-    Spy.spying = false
-    checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
-    Spy.spying = safe
+    Spy.noSpy(checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24))
   }
 
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
@@ -208,31 +205,20 @@ object AccountRecordTest {
       def compare(x: Node[NodeType], y: Node[NodeType]): Int = FP.map2(x.get,y.get)(implicitly[Ordering[NodeType]].compare).get
     }
     val nodes = tree.iterator().toList
-//    println(nodes)
     val snodes = nodes.sorted
     val pairs = nodes zip snodes
     val keys = nodes map (_.key) zip (snodes map (_.key))
     import Benchmark._
-    val fIncludes: (NodeType,NodeType)=>(String,String,Boolean) = {(x,y) => (x.key,y.key,tree.includes(x,y))}
-    10000.times {
-      pairs map fIncludes.tupled
-    }
-    val ns1 = 10000.times {
-      pairs map fIncludes.tupled
-    }
+    val fIncludes: (NodeType,NodeType)=>(String,String,Boolean) = {(x,y) => (x.toString,y.toString,tree.includes(x,y))}
+    10000.times(pairs map fIncludes.tupled)
+    val ns1 = 10000.times(pairs map fIncludes.tupled)
     println(s"Benchmark time for tree.includes (nanosecs) = $ns1")
     //    val r1 = pairs map fIncludes.tupled
 //    for (r <- r1) println(s"${r._1},${r._2},${r._3}")
 
-//    println(mptt)
-
     val fContains: (String,String)=>(String,String,Boolean) = {(x,y) => (x,y,mptt.contains(x,y).get)}
-    10000.times {
-      keys map fContains.tupled
-    }
-    val ns2 = 10000.times {
-      keys map fContains.tupled
-    }
+    10000.times(keys map fContains.tupled)
+    val ns2 = 10000.times(keys map fContains.tupled)
     println(s"Benchmark time for mptt.contains (nanosecs) = $ns2")
     //    val r2 = keys map fContains.tupled
 //    for (r <- r2) println(s"${r._1},${r._2},${r._3}")

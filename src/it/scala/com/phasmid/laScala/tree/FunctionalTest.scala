@@ -30,13 +30,9 @@ class FunctionalTest extends FlatSpec with Matchers {
 
   // XXX: this should be kept in synchrony with the corresponding method in AccountRecordTest
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
-    val safe = Spy.spying
-    Spy.spying = false
     val aso = AccountRecordTest.readAccountData(tester)
-    val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
+    val checks = Spy.noSpy(AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso))
     println(checks)
     checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
-    Spy.spying = safe
   }
 }
-
