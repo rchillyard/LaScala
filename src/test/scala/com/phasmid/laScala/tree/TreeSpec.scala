@@ -115,17 +115,18 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 5, 6)
     tree.iterator(false).toSeq shouldBe Seq(1, 2, 3, 5, 6)
   }
-  ignore should "work correctly for UnvaluedBinaryTree type 2/3" in {
+  it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(3)
     tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
-  ignore should "work correctly for UnvaluedBinaryTree type 4" in {
+  it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(3))) :+ Leaf(4)
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(3))), Leaf(4))
+    tree.iterator().toList shouldBe List(1,2,3,4)
+    tree shouldBe UnvaluedBinaryTree(Leaf(1),UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2),Leaf(3)),Leaf(4)))
   }
-  ignore should "work correctly for UnvaluedBinaryTree type 5" in {
+  it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(0)
     tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
@@ -140,21 +141,20 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ 2
-//    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.iterator().toList shouldBe List(1,2,3,5,6)
   }
 
-  ignore should "work correctly for UnvaluedBinaryTree type 2/3" in {
+  it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 3
     tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
-  ignore should "work correctly for UnvaluedBinaryTree type 4" in {
+  it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), Empty) :+ Leaf(2) :+ Leaf(3) :+ Leaf(4)
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(2)), Leaf(3)), Leaf(4)), Empty)
+    tree.iterator().toList shouldBe List(1,2,3,4)
   }
-  ignore should "work correctly for UnvaluedBinaryTree type 5" in {
+  it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 0
     tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
@@ -298,7 +298,7 @@ class TreeSpec extends FlatSpec with Matchers {
     }).toList shouldBe Seq(Leaf(1), Leaf(3), Leaf(5))
   }
 
-  ignore should "work correctly for unsorted Flatland tree" in {
+  it should "work correctly for unsorted Flatland tree" in {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map (_.openStream)
@@ -309,7 +309,7 @@ class TreeSpec extends FlatSpec with Matchers {
       case _ => Seq[String]()
     }
     import UnvaluedBinaryTree._
-    val tree = Tree.populateOrderedTree(z)
+    val tree = Spy.noSpy(Tree.populateOrderedTree(z))
     val strings = tree.iterator().take(10).toList
     strings shouldBe List("a", "about", "above", "actually", "ago", "alas", "all", "and", "another", "anything")
   }

@@ -33,7 +33,7 @@ object Spy {
 
   /**
     * This is the global setting for whether to invoke the spyFunc of each spy invocation. However, each invocation can also turn spying off for itself.
-    * Normally it is true.
+    * Normally it is true. Think of this as the red emergency button. Setting this to false turns all spying off everywhere.
     */
   var spying: Boolean = true
 
@@ -81,6 +81,22 @@ object Spy {
     * @return the value of x
     */
   def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean) {spy(w, (), b); ()}
+
+  /**
+    * This method can be used if you have an expression you would like to be evaluated WITHOUT any spying going on.
+    * Bear in mind that this turns off ALL spying during the evaluation of x
+    *
+    * @param x the expression
+    * @tparam X the type of the expression
+    * @return the expression
+    */
+  def noSpy[X](x: => X): X = {
+    val safe = spying
+    spying = false
+    val r = x
+    spying = safe
+    r
+  }
 
   /**
     * The standard prefix for spy messages: "spy: "

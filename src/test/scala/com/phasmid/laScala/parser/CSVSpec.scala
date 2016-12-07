@@ -114,7 +114,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (q, y) => assert(q == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) should be("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
   }
   ignore should "be (String,Int) stream" in {
     val iWts = CSV[(String, Int)](new FileInputStream(new File("src/test/scala/com/phasmid/laScala/parser/sample.csv"))).tuples
@@ -125,7 +125,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (x, y) => assert(x == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) should be("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
   }
   ignore should "be (String,Int) stream using File" in {
     val iWts = CSV[(String, Int)](new File("sample.csv")).tuples
@@ -136,7 +136,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (x, y) => assert(x == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) should be("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
   }
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")

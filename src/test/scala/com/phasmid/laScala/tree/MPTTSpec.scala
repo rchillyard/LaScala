@@ -1,6 +1,6 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.HasKey
+import com.phasmid.laScala.fp.{HasKey, Spy}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
@@ -88,7 +88,7 @@ class MPTTSpec extends FlatSpec with Matchers {
     mptt.contains("3","4") should matchPattern { case Some(false) => }
   }
     behavior of "real-life UnvaluedBinaryTree"
-  ignore should "build correctly" in {
+  it should "build correctly" in {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map {_.openStream}
@@ -119,18 +119,29 @@ class MPTTSpec extends FlatSpec with Matchers {
       type K = String
       def getKey(v: Value[String]): String = v.value
     }
-    val tree = Tree.populateOrderedTree(z map(Value(_)))
+    val tree = Spy.noSpy(Tree.populateOrderedTree(z map(Value(_))))
     val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[Value[String]]]))
-    mptt.index.size shouldBe 177
+    mptt.index.size shouldBe 176
 
     println(mptt)
 
     println(mptt.index.keySet)
 
-    // First we do it the slow way
-    val meo = tree.find("flatland")
-    println(s"flatland tree: ${meo.get}")
-//    meo.exists(_.includes("flatlander")) shouldBe true
+    val nodes = tree.nodeIterator().filter(_.isLeaf).toList
+    println(nodes)
+    val flatland = nodes.find(_.get.contains(Value("flatland")))
+    flatland should matchPattern { case Some(_) => }
+    flatland match {
+      case Some(node) => node.includesValue(Value("flatland")) shouldBe true
+      case _ => fail("logic")
+    }
+
+    // NOTE: the logic that follows here doesn't make any sense for an UnvaluedBinaryTree -- it might make sense for a BinaryTree
+//    // First we do it the slow way
+//    val meo = tree.find(Value("flatland"))
+//    meo should matchPattern { case Some(_) => }
+//    println(s"flatland tree: ${meo.get}")
+//    meo.exists(_.includes(Leaf(Value("flatlander")))) shouldBe true
 //
 //    // Next we do it the fast way
 //    mptt.contains("flatland","flatlander") shouldBe Some(true)
@@ -143,8 +154,8 @@ class MPTTSpec extends FlatSpec with Matchers {
 //    // this is failing
 ////    testMpttLookup(mptt,"edges","surface") should matchPattern { case Some(true) => }
 //
-//    val x = mptt.index.keySet
-//    val xSorted = SortedSet[String]() ++ x
+//    val x = mptt.index.keySet.toList
+//    val xSorted = x.sorted
 //
 //    def check(a: (String, String)): Boolean = !testMpttLookup(mptt, a._1, a._2)
 //    println((x zip xSorted))

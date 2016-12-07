@@ -195,7 +195,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => Spy.spy(s"find: $b in $n",n.get.contains(b))})
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => n.get.contains(b)})
 
   /**
     *
@@ -302,6 +302,8 @@ sealed trait Node[+A] extends Renderable {
 
   /**
     * Determine if this subtree includes a value equal to b
+    *
+    * CONSIDER renaming this as includes
     *
     * @param b the value to be searched
     * @tparam B the type of b
@@ -874,7 +876,8 @@ object UnvaluedBinaryTree {
                 }
               apply(pair._1, pair._2)
             case q@Leaf(_) => if (AbstractBinaryTree.isOrdered(p,q)) apply(p,q) else apply(q,p)
-            case _ => throw TreeException(s"treeBuilder not implemented for Leaf $p and $n1")
+            case Empty => UnvaluedBinaryTree(p,Empty)
+            case _ => throw TreeException(s"treeBuilder not implemented for Leaf $p and $n2")
           }
         case Empty => apply(x, Empty) // TODO check this is OK
         case _ => throw TreeException(s"treeBuilder not implemented for $n1")
