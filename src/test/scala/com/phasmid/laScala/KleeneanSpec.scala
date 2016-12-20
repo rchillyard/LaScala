@@ -1,5 +1,6 @@
 package com.phasmid.laScala
 
+import com.phasmid.laScala.fp.Spy
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.util._
@@ -91,5 +92,14 @@ class KleeneanSpec extends FlatSpec with Matchers with Inside {
     Kleenean(true).deny should matchPattern { case Kleenean(Some(false)) => }
     Kleenean(false).deny should matchPattern { case Kleenean(Some(true)) => }
     Kleenean(0).deny should matchPattern { case Kleenean(None) => }
+  }
+
+  behavior of ":&&"
+  it should "work" in {
+    def cf(t: (Int, Int)): Maybe = Kleenean(t._1.==(t._2))
+    val x1 = Seq(1,2,3)
+    val x2 = Seq(1,2,4)
+    (x1 zip x1).foldLeft(Kleenean(true))(_ :&& cf(_)) should matchPattern { case Kleenean(Some(true)) => }
+    (x1 zip x2).foldLeft(Kleenean(None))(_ :&& cf(_)) should matchPattern { case Kleenean(Some(false)) => }
   }
 }

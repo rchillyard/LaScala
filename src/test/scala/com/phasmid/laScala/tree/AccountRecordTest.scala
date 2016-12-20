@@ -8,7 +8,9 @@ import scala.annotation.tailrec
 import scala.io.Source
 import scala.util._
 
-case class AccountRecord(account: String, date: AccountDate, parent: String)
+case class AccountRecord(account: String, date: AccountDate, parent: String) {
+  def key: String = s"$account/$date"
+}
 
 case class AccountDate(year: Int, month: Int, day: Int) extends Ordering[AccountDate] {
   def compare(other: AccountDate): Int = compare(this,other)
@@ -17,6 +19,7 @@ case class AccountDate(year: Int, month: Int, day: Int) extends Ordering[Account
 }
 
 object AccountRecord {
+  def apply(account: String): AccountRecord = apply(account, AccountDate(1900, 1, 1), "root")
   def parse(account: String, date: String, parent: String): Option[AccountRecord] = {
     val nodeR = """([A-Z\d-]{20})""".r
     val accountR = """([A-Z\d-]{4,20})""".r
@@ -35,12 +38,37 @@ object AccountRecord {
     }
     FP.toOption(FP.map3(a,d,p)(apply))
   }
+  type NodeType = AccountRecord // XXX: can inline this
 
-  abstract class HasKeyAccountRecord extends HasKey[AccountRecord] {
-    type K = String
-    def getKey(x: AccountRecord): K = s"${x.account}/${x.date}"
+    implicit object AccountRecordKeyOps extends KeyOps[String,NodeType] {
+      //  type K
+      def getKeyFromValue(v: NodeType): String = v.key
+      def getParentKey(v: NodeType): Option[String] = Some(v.parent)
+    }
+  implicit object NodeTypeParent extends HasParent[String,NodeType] {
+    def getParent(tree: Tree[NodeType], t: NodeType): Option[Node[NodeType]] =
+      for (k <- getParentKey(t); kVTree = tree.asInstanceOf[KVTree[String,AccountRecord]]; n <- kVTree.findByKey(k)) yield n
+
+    def createValueFromKey(k: String): NodeType = null.asInstanceOf[NodeType] // FIXME
+
+    def getParentKey(t: NodeType): Option[String] = Some(t.parent)
+
+//    def createParent(t: NodeType): Option[Tree[NodeType]] = {
+//      val treeBuilder = implicitly[TreeBuilder[NodeType]]
+//      val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
+//      for (_ <- vo) yield treeBuilder.buildTree(vo, Seq())
+//    }
   }
-  implicit object HasKeyAccountRecord extends HasKeyAccountRecord
+
+
+
+  //  abstract class HasKeyAccountRecord extends HasKey[AccountRecord] {
+//    def createValueFromKey(k: K): AccountRecord = null.asInstanceOf[AccountRecord] // FIXME
+//
+//    type K = String
+//    def getKey(x: AccountRecord): K = s"${x.account}/${x.date}"
+//  }
+//  implicit object HasKeyAccountRecord extends HasKeyAccountRecord
 
   implicit object OrderingAccountRecord extends Ordering[AccountRecord] {
     def compare(x: AccountRecord, y: AccountRecord): Int = x.account.compareTo(y.account) match {
@@ -71,64 +99,56 @@ class AccountRecordTest extends FlatSpec with Matchers {
     }
     checkTreeFromResource(TestDetailsMiniSample, 13, 3, 6, 13, 5)
   }
-  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and it is more of a functional test)
-  ignore should "work for sampleTree.txt" in {
+  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
+  it should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    Spy.noSpy(checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24))
+    checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
   }
 
-  private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
-    val safe = Spy.spying
-    Spy.spying = false
+  private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) =
+    {
+      implicit val logger = Spy.getLogger(getClass)
+      val aso = AccountRecordTest.readAccountData(tester)
+      val checks = Spy.noSpy(AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso))
+      checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
 
-    val aso = AccountRecordTest.readAccountData(tester)
-    val checks = AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso)
-//    println(checks)
-    checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
+      checks match {
+        case Success((_,_,_,_,_,_,tree,mptt)) =>
+          println(tree.size)
+          println(tree)
+          println(tree.render())
+          println(mptt)
+          val nodes: Seq[Node[AccountRecord]] = Spy.noSpy(tree.nodeIterator().toList)
+          val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
+          val trues = for (n <- branchNodes; v <- n.get) yield Spy.noSpy(tree.includesValue(v))
+          val allTrue = Spy.spy("all true",trues.forall(_==true))
+          allTrue shouldBe true
 
-    checks match {
-      case Success((_,_,_,_,_,_,tree,mptt)) =>
-        val nodes: Seq[Node[Value[AccountRecord]]] = tree.nodeIterator().toList
-        val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
-        val values = tree.iterator().toList
-        val trues = for (n <- branchNodes; v <- n.get) yield tree.includesValue(v)
-        val allTrue = trues.forall(_==true)
-        allTrue shouldBe true
-        val results = for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y)))
-        println("checking for disagreement between tree and MPTT")
-        val good = results filter (_._3)
-        println(s"${good.size} results out of ${results.size}")
-        val bad = results find (!_._3)
-        bad match {
-          case Some(r) =>
-            val index = results indexWhere (!_._3)
-            println(s"failed on $index-th element out of ${results.size}")
-            val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
-            println(message)
-//            fail(message)
-          case _ =>
-        }
-        AccountRecordTest.doBenchmark(tree,mptt)
-      case _ => fail(s"checks did not come back as expected: $checks")
+          val values = Spy.noSpy(tree.iterator().toList)
+          val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y))))
+          Spy.log("checking for disagreement between tree and MPTT")
+          Spy.log(s"${(results filter (_._3)).size} results out of ${results.size}")
+          results find (!_._3) match {
+            case Some(r) =>
+              val index = results indexWhere (!_._3)
+              if (index>=0) Spy.log(s"failed on $index-th element out of ${results.size}")
+              val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
+              Spy.log(message)
+              val (x,y,b) = results(index)
+              val subtree = tree.find(x)
+              val node = tree.find(y)
+              Spy.spy(s"this is the (first) failure case: $subtree includes $node",tree.includes(subtree,node))
+            case _ =>
+          }
+//          Spy.noSpy(AccountRecordTest.doBenchmark(tree,mptt))
+        case _ => fail(s"checks did not come back as expected: $checks")
+      }
     }
-    Spy.spying = safe
-  }
 }
 
 object AccountRecordTest {
-  type NodeType = Value[AccountRecord]
-
-  object NodeType {
-
-    trait NodeTypeParent extends HasParent[Value[AccountRecord]] {
-      def createParent(t: Value[AccountRecord]): Option[Node[Value[AccountRecord]]] = None
-
-      def getParentKey(v: Value[AccountRecord]): Option[String] = Some(v.value.parent)
-    }
-    implicit object HasParentNodeType extends NodeTypeParent
-  }
 
   def readAccountData(tester: AbstractTestDetails): Option[Seq[AccountRecord]] = {
     val uo = Option(getClass.getResource(tester.resourceName))
@@ -140,41 +160,34 @@ object AccountRecordTest {
     (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 
-  def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int,Int,Int,Int,Int,Option[Node[Value[AccountRecord]]],Tree[Value[AccountRecord]],MPTT[AccountRecord])] = {
+  def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int,Int,Int,Int,Int,Option[Node[AccountRecord]],Tree[AccountRecord],MPTT[AccountRecord])] = {
     aso match {
       case Some(as) =>
         import AccountRecord._
-        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[AccountRecord]
-        implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
-          // TODO fix this totally arbitrary value for date
-          def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
-        }
-        implicit object NodeTypeParent extends HasParent[NodeType] {
-          def getParentKey(t: NodeType): Option[String] = Some(t.value.parent)
+        import GeneralKVTree._
+        implicit object GeneralKVTreeBuilderNodeType extends GeneralKVTreeBuilder[String,AccountRecord]
+//        implicit object ValueBuilderNodeType extends ValueBuilder[AccountRecord] {
+//          // TODO fix this totally arbitrary value for date
+//          def buildValue(k: String): Value[AccountRecord] = Value(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
+//        }
 
-          def createParent(t: NodeType): Option[Tree[NodeType]] = {
-            val treeBuilder = implicitly[TreeBuilder[NodeType]]
-            val vo = for (k <- getParentKey(t)) yield implicitly[ValueBuilder[AccountRecord]].buildValue(k)
-            for (_ <- vo) yield treeBuilder.buildTree(vo, Seq())
-          }
-        }
-        implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
-          // XXX see comment on GeneralNodeParent
-          def isParent(parent: Node[NodeType], child: Node[NodeType]): Boolean = parent match {
-            case Branch(ns) => ns.contains(child)
-            case _ => false
-          }
-        }
+//        implicit object NodeTypeNodeParent extends NodeParent[NodeType] {
+//          // XXX see comment on GeneralNodeParent
+//          def isParent(parent: Node[NodeType], child: Node[NodeType]): Boolean = parent match {
+//            case Branch(_,ns) => ns.contains(child)
+//            case _ => false
+//          }
+//        }
 
-        ParentChildTree.populateParentChildTree(as map Value[AccountRecord]) match {
+        ParentChildTree.populateParentChildTree(as) match {
           case Success(tree) =>
             //            val ns = tree.nodeIterator(true)
             val lt: Int => Boolean = _ < 0
             val eq: Int => Boolean = _ == 0
 
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[NodeType]): Boolean = n.get match {
-              case Some(Value(AccountRecord("root", _, _))) => false
-              case Some(Value(v)) => f(v.date.compare(d))
+              case Some(AccountRecord("root", _, _)) => false
+              case Some(v) => f(v.date.compare(d))
               case _ => false
             }
 
@@ -182,11 +195,13 @@ object AccountRecordTest {
             val beforeDate = compareWithDate(lt) _
 
             import AccountRecord._
-            implicit object HasKeyValueAccountRecord extends HasKey[Value[AccountRecord]] {
-              type K = String
-              def getKey(v: Value[AccountRecord]): String = v.key
-            }
-            val indexedTree = KVTree.createIndexedTree(tree)
+//            implicit object HasKeyValueAccountRecord extends HasKey[Value[AccountRecord]] {
+//              def createValueFromKey(k: K): Value[AccountRecord] = null.asInstanceOf[Value[AccountRecord]] // FIXME
+//
+//              type K = String
+//              def getKey(v: Value[AccountRecord]): String = v.key
+//            }
+            val indexedTree = Tree.createIndexedTree(tree)
             val mptt = MPTT.createValuedMPTT(indexedTree)
             Success((tree.size, tree.depth, tree.filter(beforeDate(AccountDate(2014, 9, 30))).size, indexedTree.nodeIterator().size, mptt.index.size, tree.find(onDate(AccountDate(2014, 9, 30))), tree, mptt))
           case Failure(x) => Failure(x)
@@ -196,11 +211,11 @@ object AccountRecordTest {
     }
   }
 
-  def doBenchmark(tree: Tree[NodeType], mptt: MPTT[AccountRecord]): Unit = {
+  def doBenchmark(tree: Tree[AccountRecord], mptt: MPTT[AccountRecord]): Unit = {
     import AccountRecord._
-    implicit object ValueOrdering extends Ordering[NodeType] {
-      def compare(x: NodeType, y: NodeType): Int = implicitly[Ordering[AccountRecord]].compare(x.value,y.value)
-    }
+//    implicit object ValueOrdering extends Ordering[NodeType] {
+//      def compare(x: NodeType, y: NodeType): Int = implicitly[Ordering[AccountRecord]].compare(x,y)
+//    }
     implicit object NodeOrdering extends Ordering[Node[NodeType]] {
       def compare(x: Node[NodeType], y: Node[NodeType]): Int = FP.map2(x.get,y.get)(implicitly[Ordering[NodeType]].compare).get
     }
@@ -227,6 +242,7 @@ object AccountRecordTest {
 }
 
 object ParentChildTree {
+
   /**
     * This implementation of populateGeneralKVTree takes a sequence of Values, each of which specifies the parent as well as the attributes.
     *
@@ -237,12 +253,12 @@ object ParentChildTree {
     * @tparam V the underlying type of the Values
     * @return the newly created tree
     */
-  def populateParentChildTree[V](values: Seq[Value[V]])(implicit ev1: HasParent[Value[V]], ev2: NodeParent[Value[V]], treeBuilder: TreeBuilder[Value[V]], valueBuilder: ValueBuilder[V]): Try[Tree[Value[V]]] =
+  def populateParentChildTree[V](values: Seq[V])(implicit treeBuilder: TreeBuilder[V], ko: KeyOps[String,V], hp: HasParent[String,V]): Try[Tree[V]] =
   {
-    val root = valueBuilder.buildValue("root")
-    val ty = Try(implicitly[TreeBuilder[Value[V]]].buildTree(Some(root), Seq()).asInstanceOf[KVTree[V]])
+//    val root = valueBuilder.buildValue("root")
+    val ty = Try(implicitly[TreeBuilder[V]].buildTree(Some(hp.createValueFromKey("root")), Seq()).asInstanceOf[KVTree[String,V]])
       @tailrec
-      def inner(result: Try[Tree[Value[V]]], values: List[Value[V]]): Try[Tree[Value[V]]] = values match {
+      def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {
         case Nil => result
         case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }

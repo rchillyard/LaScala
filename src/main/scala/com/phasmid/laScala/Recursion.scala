@@ -108,7 +108,25 @@ object Recursion {
         case Nil => r
         case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(c), g(r, f(c, t)))
       }
+
+  @tailrec
+  final def genericRecurse[R, T](f: (R,T)=>R, g: (Seq[T],T)=>Seq[T], q: R => Boolean = { _: R => false })(r: R, ts: Seq[T]): R =
+    if (q(r))
+      r
+    else
+      ts match {
+        case Nil => r
+        case t :: h => genericRecurse(f,g,q)(f(r,t),g(h,t))
+      }
 }
+
+// FIXME this is broken but should be fixed!
+
+//object Factorial {
+//  def f(x: BigInt, y: Int): BigInt = x * y
+//  def g(x: Seq[Int], y: Int): Seq[Int] = x :+ y-1
+//  def factorial(n: Int): BigInt = Recursion.genericRecurse[BigInt,Int](f,g)(1,Seq(n))
+//}
 
 object Factorial {
   def f(x: Int, y: Int): Int = x

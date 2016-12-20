@@ -1,13 +1,13 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{HasKey, Spy}
+import com.phasmid.laScala.fp.{Spy}
 
 import scala.collection.mutable
 
 /**
   * Created by scalaprof on 11/7/16.
   */
-case class MPTT[T: HasKey](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntry[T]) {
+case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntry[T]) {
 
   /**
     * Method to determine if given node is within given subtree
@@ -35,30 +35,33 @@ case class MPTT[T: HasKey](index: Map[String, MPTTEntry[T]]) extends (String => 
   * @param post the post-index
   * @tparam T the type of the value
   */
-case class MPTTEntry[T: HasKey](k: String, t: T)(val pre: Long, val post: Long) {
+case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit ko: KeyOps[String,T]) {
   implicit val logger = Spy.getLogger(getClass)
   def contains(x: MPTTEntry[T]): Boolean = Spy.spy(s"contains: MPTTEntry($k,$t)($pre,$post); $x",this.pre <= x.pre && this.post >= x.post)
-  def key: String = implicitly[HasKey[T]].getKey(t).toString
+  def key: String = ko.getKeyFromValue(t).toString
   override def toString = s"$t: $pre,$post"
 }
 
 object MPTTEntry {
-  implicit object HasKeyStringString extends HasKey[String] {
-    type K = String
-    def getKey(v: String): String = v
-  }
-  def apply(k: String)(pre: Long, post: Long): MPTTEntry[String] = apply(k,k)(pre,post)
+//  implicit object HasKeyStringString extends HasKey[String] {
+//    type K = String
+//    def getKey(v: String): String = v
+//    def createValueFromKey(k: K): String = null.asInstanceOf[String] // FIXME
+//  }
+  def apply(k: String)(pre: Long, post: Long)(implicit ko: KeyOps[String,String]): MPTTEntry[String] = apply(k,k)(pre,post)
 }
 
 object MPTT {
-  def apply[T : HasKey](x: IndexedNode[T]): MPTT[T] = {
-    val hasKey = implicitly[HasKey[T]]
+//  implicit object StringKeyOps extends KeyOps[String,T] {
+//    def getKey(v: T): String = v.toString //CHECK
+//  }
+
+  def apply[T](x: IndexedNode[T])(implicit ko: KeyOps[String,T]): MPTT[T] = {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
-      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(hasKey.getKey(v), v)(l, r)
+      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(ko.getKeyFromValue(v), v)(l, r)
       case EmptyWithIndex => None
-      case EmptyWithKeyAndIndex() => None
       case IndexedNode(n,l,r) => n.get match {
-        case Some(v) => Some(MPTTEntry.apply(hasKey.getKey(v), v)(l, r))
+        case Some(v) => Some(MPTTEntry.apply(ko.getKeyFromValue(v), v)(l, r))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
@@ -72,13 +75,13 @@ object MPTT {
     Parent.traverse[Node[T], Option[MPTTEntry[T]], MPTT[T]](f, g)(List(x), MPTT[T](Map[String, MPTTEntry[T]]()))
   }
 
-def createValuedMPTT[V: HasKey](x: IndexedNode[Value[V]]): MPTT[V] = {
-  def f(node: Node[Value[V]]): Option[MPTTEntry[V]] = node match {
-    case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply[V](v.key, v.value)(l, r)
+  // TODO eliminate this -- it is now identical to apply
+def createValuedMPTT[V](x: IndexedNode[V])(implicit ko: KeyOps[String,V]): MPTT[V] = {
+  def f(node: Node[V]): Option[MPTTEntry[V]] = node match {
+    case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(ko.getKeyFromValue(v), v)(l, r)
       case EmptyWithIndex => None
-      case EmptyWithKeyAndIndex() => None
       case IndexedNode(n,l,r) => n.get match {
-        case Some(v) => Some(MPTTEntry.apply[V](v.key, v.value)(l, r))
+        case Some(v) => Some(MPTTEntry.apply[V](ko.getKeyFromValue(v), v)(l, r))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
@@ -89,6 +92,6 @@ def createValuedMPTT[V: HasKey](x: IndexedNode[Value[V]]): MPTT[V] = {
     case None => mptt
   }
 
-  Parent.traverse[Node[Value[V]], Option[MPTTEntry[V]], MPTT[V]](f, g)(List(x), MPTT[V](Map[String, MPTTEntry[V]]()))
+  Parent.traverse[Node[V], Option[MPTTEntry[V]], MPTT[V]](f, g)(List(x), MPTT[V](Map[String, MPTTEntry[V]]()))
   }
 }

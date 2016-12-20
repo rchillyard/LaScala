@@ -75,6 +75,8 @@ object Spy {
   /**
     * This method is used in development/debug phase to "see" a string while returning Unit.
     *
+    * CONSIDER renaming this method as debug and providing warn, info, etc. versions
+    *
     * @param w       a String to be used as the prefix of the resulting message
     * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true)
     * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true

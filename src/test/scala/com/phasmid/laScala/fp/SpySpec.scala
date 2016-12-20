@@ -49,6 +49,17 @@ class SpySpec extends FlatSpec with Matchers {
     is shouldBe List(1,2)
     // you should see messages written to console with "spy" prefix
   }
+  it should "not evaluate the argument (noSpy)" in {
+    Spy.spying = true
+    var spyMessage: String = ""
+    var spySpyMessage: String = ""
+    def f(s: => String): String = {spySpyMessage = s; s}
+    implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
+    val is = Spy.noSpy(for (i <- 1 to 2) yield Spy.spy(f("i"),i))
+    is shouldBe List(1,2)
+    spyMessage shouldBe ""
+    spySpyMessage shouldBe ""
+  }
   it should "not expand the message when spying is off (global)" in {
     Spy.spying = false
     var spyMessage: String = ""
