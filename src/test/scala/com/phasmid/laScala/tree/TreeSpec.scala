@@ -5,71 +5,25 @@ import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.tree.AbstractBinaryTree._
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.annotation.tailrec
 import scala.io.Source
+import scala.util.Try
 
 /**
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends FlatSpec with Matchers {
-  implicit val logger = Spy.getLogger(getClass)
+  private implicit val logger = Spy.getLogger(getClass)
 
   implicit object IntStringKeyOps extends KeyOps[String,Int] {
     def getKeyFromValue(v: Int): String = v.toString
     def getParentKey(v: Int): Option[String] = Some((v/10).toString)
+    def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }
 
   implicit object StringStringKeyOps extends KeyOps[String,String] {
     def getKeyFromValue(v: String): String = v
     def getParentKey(v: String): Option[String] = Some(v.substring(0,v.length-1))
-  }
-
-  // CONSIDER moving this trait -- it doesn't really belong here
-  trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
-    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get,children)
-    def buildLeaf(a: A): Node[A] = Leaf(a)
-    // CONSIDER using getParentKey for getParent
-//    def getParent(tree: Tree[A], t: A): Option[Node[A]] = ??? // tree.find(t / 10)
-    def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
-      case b @ Branch(_, _) => Spy.spy(s"branch nodesAlike $b $y",(b like y).toBoolean(false))
-      case AbstractLeaf(a) => Spy.spy(s"leaf nodesAlike $a $y",y.get contains a)
-      case _ => x == y
-    }
-  }
-//  implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int]
-//  implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String]
-
-  // CONSIDER reimplementing this in the more general form of BranchNodeParent
-  trait GeneralNodeParent[A] extends NodeParent[A] {
-    def isParent(parent: Node[A], child: Node[A]): Boolean = parent match {
-      case Branch(_,ns) => ns.contains(child)
-      case _ => false
-    }
-  }
-  implicit object GeneralNodeParentInt extends GeneralNodeParent[Int]
-  implicit object GeneralNodeParentString extends GeneralNodeParent[String]
-
-  object HasParentImplicits {
-
-    trait StringHasParent[A] extends HasParent[String, A]
-
-    // CONSIDER recombining these and switching based on the type of Tree
-    implicit object GeneralStringIntHasParent$ extends StringHasParent[Int] {
-
-      def getParentKey(t: Int): Option[String] = Some((t / 10).toString)
-
-      // CONSIDER returning Try[Int] here instead
-      def createValueFromKey(k: String): Int = k.toInt
-    }
-
-    implicit object BinaryStringIntHasParent$ extends StringHasParent[Int] {
-
-      def getParentKey(t: Int): Option[String] = None
-
-      // CONSIDER returning Try[Int] here instead
-      def createValueFromKey(k: String): Int = k.toInt
-    }
-
+    def createValueFromKey(k: String): Option[String] = Some(k)
   }
 
   behavior of "render"
@@ -133,7 +87,7 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   behavior of "nodeIterator"
 
-  it should "work properly for GenericBranch" in {
+  it should "work properly for GeneralTree" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.nodeIterator()
     ns.size shouldBe 4
@@ -146,7 +100,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "iterator"
 
-  it should "work properly for GenericBranch" in {
+  it should "work properly for GeneralTree" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.iterator(false).toList
     ns.size shouldBe 4
@@ -162,9 +116,8 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of ":+(node)"
 
-  it should "work correctly for GenericTree" in {
+  it should "work correctly for GeneralTree" in {
     import GeneralTree._
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3))) :+ Leaf(4)
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 4, 0)
@@ -172,14 +125,12 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ Leaf(2)
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 5, 6)
     tree.iterator(false).toSeq shouldBe Seq(1, 2, 3, 5, 6)
   }
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(3)
     println(tree.iterator().toList)
     println(UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4))).iterator().toList)
@@ -187,14 +138,12 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(3))) :+ Leaf(4)
     tree.iterator().toList shouldBe List(1,2,3,4)
     tree shouldBe UnvaluedBinaryTree(Leaf(1),UnvaluedBinaryTree(Leaf(2),UnvaluedBinaryTree(Leaf(3),Leaf(4))))
   }
   it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(0)
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0),Leaf(1)),UnvaluedBinaryTree(Leaf(2),Leaf(4)))
   }
@@ -202,32 +151,27 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralTree" in {
     import GeneralTree._
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ 2
     tree.iterator().toList shouldBe List(1,2,3,5,6)
   }
 
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 3
     tree shouldBe UnvaluedBinaryTree(Leaf(1),UnvaluedBinaryTree(Leaf(2),UnvaluedBinaryTree(Leaf(3),Leaf(4))))
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), Empty) :+ Leaf(2) :+ Leaf(3) :+ Leaf(4)
     tree.iterator().toList shouldBe List(1,2,3,4)
   }
   it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 0
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0),Leaf(1)),UnvaluedBinaryTree(Leaf(2),Leaf(4)))
   }
@@ -235,33 +179,16 @@ class TreeSpec extends FlatSpec with Matchers {
     implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int] {
       def getParent(tree: Tree[Int], t: Int): Option[Node[Int]] = tree.find(t / 10)
     }
-//    implicit object IntParent extends HasParent[String,Int] {
-//      def getParentKey(t: Int): Option[String] = Some((t/10).toString)
-//      def createParent(t: Int): Option[Node[Int]] = Some(implicitly[TreeBuilder[Int]].buildTree(Some(t / 10), Seq()))
-//      def getParent(tree: Tree[Int], t: Int): Option[Node[Int]] = ???
-//      def createValueFromKey(k: String): Int = ???
-//}
-    implicit object IntNodeParent extends NodeParent[Int] {
-      def isParent(parent: Node[Int], child: Node[Int]): Boolean = FP.map2(parent.get,child.get)(_==_/10).getOrElse(false)
-    }
-    import HasParentImplicits.GeneralStringIntHasParent$
-    val tree = Tree.populateGeneralTree(Some(0), Seq(11,12,13,22,23,3,4))
-    println(tree)
-    val ns = tree.iterator(false).toList
-    ns.size shouldBe 10
-    ns shouldBe List(0,1,11,12,13,2,22,23,3,4)
   }
 
   behavior of "size"
   it should "work for GeneralTree" in {
     import GeneralTree._
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
     tree.size shouldBe 5
   }
   it should "work for UnvaluedBinaryTree" in {
     import UnvaluedBinaryTree._
-    import HasParentImplicits.BinaryStringIntHasParent$
     val tree = UnvaluedBinaryTree(Leaf(1), Empty) :+ Leaf(2) :+ Leaf(3) :+ Leaf(4)
     tree.size shouldBe 4
   }
@@ -299,7 +226,6 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "like"
   it should "work for GeneralTree" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     val tree2 = GeneralTree(1, Seq(Leaf(5), Leaf(6)))
     val tree3 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(5), Leaf(6)))))
@@ -317,7 +243,6 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "includes"
   it should "work for GeneralTree with Node" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     tree.includes(Leaf(1)) shouldBe true
     tree.includes(Leaf(2)) shouldBe true
@@ -336,7 +261,6 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   behavior of "includes"
   it should "work for GeneralTree" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     tree.includesValue(1) shouldBe true
     tree.includesValue(2) shouldBe true
@@ -354,7 +278,6 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.includesValue(6) shouldBe true
   }
   it should "work for GeneralTree using the two-parameter form" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     tree.includes(1,1) shouldBe true
     tree.includes(1,2) shouldBe true
@@ -366,7 +289,6 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "find"
   it should "work for GeneralTree" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     tree.find(1) should matchPattern { case Some(GeneralTree(1, Seq(Leaf(2), Leaf(3)))) => }
     tree.find(2) should matchPattern { case Some(Leaf(2)) => }
@@ -386,7 +308,6 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "filter"
   it should "work for GeneralTree" in {
-    import HasParentImplicits.GeneralStringIntHasParent$
     val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     tree.filter(_.get.get%2==1).toList shouldBe Seq(Leaf(3), GeneralTree(1, Seq(Leaf(2), Leaf(3))))
   }
@@ -409,10 +330,6 @@ class TreeSpec extends FlatSpec with Matchers {
       case _ => Seq[String]()
     }
     import UnvaluedBinaryTree._
-    implicit object StringStringHasParent extends HasParent[String,String] {
-      def getParentKey(t: String): Option[String] = None
-      def createValueFromKey(k: String): String = k
-    }
     val tree = Spy.noSpy(Tree.populateOrderedTree(z))
     val strings = tree.iterator().take(10).toList
     strings shouldBe List("a", "about", "above", "actually", "ago", "alas", "all", "and", "another", "anything")

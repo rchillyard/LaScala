@@ -1,31 +1,25 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{Spy}
+import com.phasmid.laScala.fp.Spy
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
+import scala.util.Try
 
 /**
   * Created by scalaprof on 10/19/16.
   */
 class MPTTSpec extends FlatSpec with Matchers {
 
-//  abstract class HasKeyString extends HasKey[String] {
-//    type K = String
-//    def getKey(x: String): K = x
-//
-//    def createValueFromKey(w: String): String = w
-//  }
-//  implicit object HasKeyString extends HasKeyString
-
-//  trait OrderingValueString extends Ordering[String] {
-//    def compare(x: String, y: String): Int = x.value.compareTo(y.value)
-//  }
-//  implicit object OrderingValueString extends OrderingValueString
-
   implicit object StringStringKeyOps extends KeyOps[String,String] {
     def getKeyFromValue(v: String): String = v
     def getParentKey(a: String): Option[String] = Some(a.substring(0,a.length-1))
+    def createValueFromKey(k: String): Option[String] = Some(k)
+  }
+  implicit object StringIntKeyOps extends KeyOps[String,Int] {
+    def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
+    def getKeyFromValue(v: Int): String = v.toString
+    def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }
 
   behavior of "MPTTEntry.contains"
@@ -46,20 +40,6 @@ class MPTTSpec extends FlatSpec with Matchers {
 
   behavior of "real-life GeneralTree"
   it should "build correctly" in {
-//    implicit object HasKeyInt extends HasKey[Int] {
-//      def createValueFromKey(w: String): Int = ??? // FIXME
-//
-//      type K = String
-//      def getKey(v: Int): String = v.toString
-//    }
-    trait StringIntHasParent extends HasParent[String,Int] {
-      def createParent(a: Int): Option[Node[Int]] = None
-      def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
-    }
-    implicit object StringIntKeyOps extends KeyOps[String,Int] {
-      def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
-      def getKeyFromValue(v: Int): String = v.toString
-    }
     val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
     val indexedTree = Tree.createIndexedTree(tree)
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
@@ -116,44 +96,8 @@ class MPTTSpec extends FlatSpec with Matchers {
     trait OrderingValueString extends Ordering[String] {
       def compare(x: String, y: String): Int = x.compareTo(y)
     }
-    implicit object OrderingValueString extends OrderingValueString
-//    implicit object UnvaluedBinaryTreeBuilderValueString extends UnvaluedBinaryTreeBuilder[String]
-//    trait ValueNodeParent extends NodeParent[String] {
-//      // XXX: this doesn't really make sense for a binary tree where nodes don't typically have values!
-//      def isParent(parent: Node[String], child: Node[String]): Boolean = false
-//    }
-//    implicit object ValueNodeParent extends ValueNodeParent
-
-//    trait ValueHasParent extends HasParent[String,String] {
-//      def getParent(tree: Tree[String], t: String): Option[Node[String]] = ???
-//
-//      def createValueFromKey(k: String): String = k
-//
-//      // XXX: this doesn't really make sense for a binary tree where nodes don't typically have values!
-//      def getParentKey(t: String): Option[String] = None
-//      def createParent(t: String): Option[Node[String]] = None
-//    }
-//    implicit object ValueHasParent extends ValueHasParent
-//    implicit object HasKeyValueString extends HasKey[String] {
-//      def createValueFromKey(w: String): String = Value(w)
-//
-//      type K = String
-//      def getKey(v: String): String = v.value
-//    }
-
-//    implicit object StringValueKeyOps extends KeyOps[String,String] {
-//      def getParentKey(t: String): String = ???
-//
-//      def getKey(t: String): String = ???
-//
-//      def createValueFromKey(k: String): String = ???
-//    }
-    implicit object StringStringHasParent extends HasParent[String,String] {
-  def getParentKey(t: String): Option[String] = ???
-  def createValueFromKey(k: String): String = ???
-}
     val tree = Spy.noSpy(Tree.populateOrderedTree(z))
-    val mptt = MPTT.createValuedMPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
+    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
     mptt.index.size shouldBe 176
 
     println(mptt)
@@ -162,10 +106,10 @@ class MPTTSpec extends FlatSpec with Matchers {
 
     val nodes = tree.nodeIterator().filter(_.isLeaf).toList
     println(nodes)
-    val flatland = nodes.find(_.get.contains(("flatland")))
+    val flatland = nodes.find(_.get.contains("flatland"))
     flatland should matchPattern { case Some(_) => }
     flatland match {
-      case Some(node) => node.includesValue(("flatland")) shouldBe true
+      case Some(node) => node.includesValue("flatland") shouldBe true
       case _ => fail("logic")
     }
 
