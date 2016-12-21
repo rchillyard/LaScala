@@ -122,12 +122,11 @@ sealed trait Tree[+A] extends Node[A] {
          // NOTE: we should always get a match when this is a binary tree
          case Some(parent) => replaceNode(parent,parent + node)(tb.nodesAlike)
          case None =>
-           System.err.println(s"addNode: no parent for $node")
            val bo = Spy.spy(s"addNode: no parent for $node",for (v <- node.get; k <- ko.getParentKey(v); z <- ko.createValueFromKey(k)) yield z)
            if (allowRecursion)
-           addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
-           else
-             this
+            addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
+           else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
+             throw TreeException("logic error")
        }
 
      case None => throw TreeException("cannot add node without value")
@@ -578,6 +577,8 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   * @tparam A the underlying type of this Leaf
   */
 case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
+  private implicit val logger = Spy.getLogger(getClass)
+
   /**
     * Method to add the given node to this node specifically
     *
@@ -585,7 +586,7 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K, B]): Node[B] = implicitly[TreeBuilder[B]].buildTree(get, Seq(this, node))
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K, B]): Node[B] = Spy.spy(s"(Leaf) $this + $node",implicitly[TreeBuilder[B]].buildTree(get, Seq(node)))
 }
 
 /**

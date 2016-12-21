@@ -39,11 +39,6 @@ object AccountRecord {
     FP.toOption(FP.map3(a,d,p)(apply))
   }
 
-    implicit object AccountRecordKeyOps extends KeyOps[String,AccountRecord] {
-      def getKeyFromValue(v: AccountRecord): String = v.key
-      def getParentKey(v: AccountRecord): Option[String] = Some(v.parent)
-      def createValueFromKey(k: String): Option[AccountRecord] = Some(AccountRecord(k,AccountDate(1900,1,1),""))
-    }
   implicit object OrderingAccountRecord extends Ordering[AccountRecord] {
     def compare(x: AccountRecord, y: AccountRecord): Int = x.account.compareTo(y.account) match {
       case 0 => x.date.compare(y.date)
@@ -68,19 +63,18 @@ class AccountRecordTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
 
-  // TODO reinstate this test
-  ignore should "work for miniSampleTree.txt" in {
+  it should "work for miniSampleTree.txt" in {
     case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
     }
-    checkTreeFromResource(TestDetailsMiniSample, 13, 3, 6, 13, 5)
+    checkTreeFromResource(TestDetailsMiniSample, 9, 4, 5, 9, 9)
   }
   // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
   ignore should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
+    checkTreeFromResource(TestDetailsSample, 113, 4, 64, 113, 77)
   }
 
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) =
@@ -92,20 +86,18 @@ class AccountRecordTest extends FlatSpec with Matchers {
 
       checks match {
         case Success((_,_,_,_,_,_,tree,mptt)) =>
-          println(tree.size)
-          println(tree)
-          println(tree.render())
-          println(mptt)
+//          println(mptt)
           val nodes: Seq[Node[AccountRecord]] = Spy.noSpy(tree.nodeIterator().toList)
           val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
           val trues = for (n <- branchNodes; v <- n.get) yield Spy.noSpy(tree.includesValue(v))
           val allTrue = Spy.spy("all true",trues.forall(_==true))
           allTrue shouldBe true
-
           val values = Spy.noSpy(tree.iterator().toList)
           val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y))))
-          Spy.log("checking for disagreement between tree and MPTT")
-          Spy.log(s"$results count (_._3) results out of ${results.size}")
+          Spy.log(s"checking for disagreement between tree and MPTT:")
+          Spy.log(s"${results count (!_._3)} incompatible results out of ${results.size}")
+          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
+          Spy.noSpy((results take 10) foreach (show _).tupled)
           results find (!_._3) match {
             case Some(r) =>
               val index = results indexWhere (!_._3)
@@ -118,13 +110,19 @@ class AccountRecordTest extends FlatSpec with Matchers {
               Spy.spy(s"this is the (first) failure case: $subtree includes $node",tree.includes(subtree,node))
             case _ =>
           }
-//          Spy.noSpy(AccountRecordTest.doBenchmark(tree,mptt))
+          Spy.noSpy(AccountRecordTest.doBenchmark(tree,mptt))
         case _ => fail(s"checks did not come back as expected: $checks")
       }
     }
 }
 
 object AccountRecordTest {
+
+  trait AccountRecordKeyOps extends KeyOps[String,AccountRecord] {
+    def getParentKey(v: AccountRecord): Option[String] = Some(v.parent)
+    def createValueFromKey(k: String): Option[AccountRecord] = Some(AccountRecord(k,AccountDate(1900,1,1),"root"))
+  }
+
 
   def readAccountData(tester: AbstractTestDetails): Option[Seq[AccountRecord]] = {
     val uo = Option(getClass.getResource(tester.resourceName))
@@ -137,13 +135,12 @@ object AccountRecordTest {
   }
 
   def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int,Int,Int,Int,Int,Option[Node[AccountRecord]],Tree[AccountRecord],MPTT[AccountRecord])] = {
+    implicit object AccountRecordKeyOps extends AccountRecordKeyOps {
+      def getKeyFromValue(v: AccountRecord): String = v.key
+    }
     aso match {
       case Some(as) =>
-        import AccountRecord._
-        import GeneralKVTree._
-        implicit object GeneralKVTreeBuilderAccountRecord extends GeneralKVTreeBuilder[String,AccountRecord]
-
-        ParentChildTree.populateParentChildTree(as) match {
+        createAccountRecordTree(as) match {
           case Success(tree) =>
             //            val ns = tree.nodeIterator(true)
             val lt: Int => Boolean = _ < 0
@@ -157,8 +154,6 @@ object AccountRecordTest {
 
             val onDate = compareWithDate(eq) _
             val beforeDate = compareWithDate(lt) _
-
-            import AccountRecord._
             val indexedTree = Tree.createIndexedTree(tree)
             val mptt = MPTT(indexedTree)
             Success((tree.size, tree.depth, tree.filter(beforeDate(AccountDate(2014, 9, 30))).size, indexedTree.nodeIterator().size, mptt.index.size, tree.find(onDate(AccountDate(2014, 9, 30))), tree, mptt))
@@ -167,6 +162,15 @@ object AccountRecordTest {
 
       case None => Failure(TreeException("unable to yield a complete hierarchy"))
     }
+  }
+
+  private def createAccountRecordTree(as: Seq[AccountRecord]) = {
+    implicit object AccountRecordKeyOps extends AccountRecordKeyOps {
+      def getKeyFromValue(v: AccountRecord): String = v.parent
+    }
+    implicit object GeneralKVTreeBuilderAccountRecord extends GeneralKVTreeBuilder[String,AccountRecord]
+
+    ParentChildTree.populateParentChildTree(as)
   }
 
   def doBenchmark(tree: Tree[AccountRecord], mptt: MPTT[AccountRecord]): Unit = {

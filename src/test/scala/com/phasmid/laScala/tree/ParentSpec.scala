@@ -26,7 +26,7 @@ class ParentSpec extends FlatSpec with Matchers {
   def f(t: Node[Int]): Option[Int] = t.get
   def g(ns: Seq[Int], io: Option[Int]): Seq[Int] = io match { case Some(i) => ns :+ i; case _ => ns}
 
-  it should "work correctly for GenericTree" in {
+  it should "work correctly for GeneralTree" in {
     val tree = GeneralTree(1,Seq(Leaf(2),Leaf(3)))
     println(tree)
     Parent.traverse(f,g)(List[Node[Int]](tree),List[Int]()) shouldBe List(1,2,3)
@@ -43,8 +43,8 @@ class ParentSpec extends FlatSpec with Matchers {
     println(tree)
     Parent.traverse(f,g)(List[Node[Int]](tree),List[Int]()) shouldBe List(1,2,3,4)
   }
-  // FIXME this should be fixed -- but why is it a GeneralTree? Surely it should be a BinaryTree
-  ignore should "work correctly for unsorted Flatland tree" in {
+
+  it should "work correctly for unsorted Flatland tree" in {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map {_.openStream}
@@ -54,7 +54,7 @@ class ParentSpec extends FlatSpec with Matchers {
       case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
       case _ => Seq[String]()
     }
-    import GeneralTree._
+    import UnvaluedBinaryTree._
     val tree = Tree.populateOrderedTree(z)
     println(tree)
     def f(t: Node[String]): Option[String] = t.get

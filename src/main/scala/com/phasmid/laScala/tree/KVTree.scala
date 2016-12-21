@@ -71,8 +71,8 @@ abstract class GeneralKVTreeBuilder[K,V](implicit ko: KeyOps[K,V]) extends TreeB
     * @return true if they are the same
     */
   def nodesAlike(x: Node[V], y: Node[V]): Boolean = x match {
-    case b @ Branch(_, _) => Spy.spy(s"branch nodesAlike $b $y",(b like y).toBoolean(false))
-    case AbstractLeaf(a) => Spy.spy(s"leaf nodesAlike $a $y",y.get contains a)
+    case b @ Branch(_, _) => Spy.spy(s"branch nodesAlike $b and $y",(b like y).toBoolean(false))
+    case AbstractLeaf(a) => Spy.spy(s"leaf nodesAlike $x and $y",y.get contains a)
     case _ => x == y
   }
 
