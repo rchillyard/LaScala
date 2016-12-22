@@ -118,7 +118,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
           val nodes: Seq[Node[AccountRecord]] = Spy.noSpy(tree.nodeIterator().toList)
           val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
           val trues = for (n <- branchNodes; v <- n.get) yield Spy.noSpy(tree.includesValue(v))
-          val allTrue = Spy.spy("all true",trues.forall(_==true))
+          val allTrue = trues.forall(_ == true)
           allTrue shouldBe true
           val values = Spy.noSpy(tree.iterator().toList)
           val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y))))
@@ -132,11 +132,11 @@ class AccountRecordTest extends FlatSpec with Matchers {
               val index = results indexWhere (!_._3)
               if (index>=0) Spy.log(s"failed on $index-th element out of ${results.size}")
               val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
-              Spy.log(message)
+              logger.info(message)
               val (x,y, _) = results(index)
               val subtree = tree.find(x)
               val node = tree.find(y)
-              Spy.spy(s"this is the (first) failure case: $subtree includes $node",tree.includes(subtree,node))
+              logger.info(s"this is the (first) failure case: $subtree includes $node " + tree.includes(subtree, node))
 //              val ok = values==values.sorted
 //              Spy.log(s"ok: $ok")
 //              (values.sorted take 25) foreach println

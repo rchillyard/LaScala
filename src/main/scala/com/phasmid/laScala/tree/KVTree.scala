@@ -3,7 +3,6 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.{FP, Spy}
-import org.slf4j.Logger
 
 import scala.language.implicitConversions
 
@@ -14,7 +13,7 @@ import scala.language.implicitConversions
   * @tparam K the Key type
   * @tparam V the underlying type of the tree/node values
   */
-abstract class KVTree[K,+V]()(implicit vo: ValueOps[K,V]) extends Branch[V] {
+abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] {
 
   private implicit val logger = Spy.getLogger(getClass)
 
@@ -29,13 +28,13 @@ abstract class KVTree[K,+V]()(implicit vo: ValueOps[K,V]) extends Branch[V] {
   override def compareValues[B >: V](n: Node[B]): Maybe = {
     val xo = get map (v => vo.getKeyFromValue(v))
     val yo = n.get map (v => vo.asInstanceOf[ValueOps[K, B]].getKeyFromValue(v)) // CHECK
-    Kleenean(map2(xo,yo)(_ == _))
+    Kleenean(map2(xo, yo)(_ == _))
   }
 
-  def asTree[W >: V](n: Node[W])(implicit treeBuilder: TreeBuilder[W]): KVTree[K,W] = n match {
-    case t: KVTree[K,W] => t
-    case _ => treeBuilder.buildTree(n.get, Seq()).asInstanceOf[KVTree[K,W]]
-    }
+  def asTree[W >: V](n: Node[W])(implicit treeBuilder: TreeBuilder[W]): KVTree[K, W] = n match {
+    case t: KVTree[K, W] => t
+    case _ => treeBuilder.buildTree(n.get, Seq()).asInstanceOf[KVTree[K, W]]
+  }
 }
 
 /**
@@ -46,7 +45,7 @@ abstract class KVTree[K,+V]()(implicit vo: ValueOps[K,V]) extends Branch[V] {
   * @param children the children of this Node
   * @tparam V the underlying value type of this GeneralTree
   */
-case class GeneralKVTree[K,V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K,V]) extends KVTree[K,V] {
+case class GeneralKVTree[K, V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
   /**
     * @return (optional) value
     */
@@ -62,12 +61,13 @@ object KVTree
   * @tparam K key type
   * @tparam V value type
   */
-abstract class GeneralKVTreeBuilder[K,V](implicit vo: ValueOps[K,V]) extends TreeBuilder[V] {
+abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends TreeBuilder[V] {
   private implicit val logger = Spy.getLogger(getClass)
 
   implicit object NodeOrdering extends Ordering[Node[V]] {
-    def compare(x: Node[V], y: Node[V]): Int = FP.map2(x.get,y.get)(implicitly[Ordering[V]].compare).get
+    def compare(x: Node[V], y: Node[V]): Int = FP.map2(x.get, y.get)(implicitly[Ordering[V]].compare).get
   }
+
   /**
     * This method determines if the two given nodes are structurally the same
     *
@@ -76,8 +76,8 @@ abstract class GeneralKVTreeBuilder[K,V](implicit vo: ValueOps[K,V]) extends Tre
     * @return true if they are the same
     */
   def nodesAlike(x: Node[V], y: Node[V]): Boolean = x match {
-    case b @ Branch(_, _) => Spy.spy(s"branch nodesAlike $b and $y",(b like y).toBoolean(false))
-    case AbstractLeaf(a) => Spy.spy(s"leaf nodesAlike $x and $y",y.get contains a)
+    case b@Branch(_, _) => (b like y).toBoolean(false)
+    case AbstractLeaf(a) => y.get contains a
     case _ => x == y
   }
 
@@ -89,7 +89,7 @@ abstract class GeneralKVTreeBuilder[K,V](implicit vo: ValueOps[K,V]) extends Tre
     * @return the Node to which the new node will be attached (if such a node exists). Note that this might be a leaf
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
-    // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
+  // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
     for (k <- vo.getParentKey(a); n <- tree.findByKey(k)(vo)) yield n
 
   /**

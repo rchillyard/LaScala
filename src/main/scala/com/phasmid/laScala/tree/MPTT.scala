@@ -11,15 +11,16 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
 
   /**
     * Method to determine if given node is within given subtree
+    *
     * @param subtree the subtree
-    * @param node the node
+    * @param node    the node
     * @return true if subtree contains node
     */
   def contains(subtree: String, node: String): Option[Boolean] = for (e1 <- get(subtree); e2 <- get(node)) yield e1.contains(e2)
 
   override def toString: String = {
     val r = new mutable.StringBuilder()
-    for ((k,v) <- index) r.append(s"$k -> $v\n")
+    for ((k, v) <- index) r.append(s"$k -> $v\n")
     r.toString
   }
 
@@ -30,28 +31,32 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
 
 /**
   * CONSIDER why does this have two parameter sets?
-  * @param t the value
-  * @param pre the pre-index
+  *
+  * @param t    the value
+  * @param pre  the pre-index
   * @param post the post-index
   * @tparam T the type of the value
   */
-case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit vo: ValueOps[String,T]) {
+case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit vo: ValueOps[String, T]) {
   private implicit val logger = Spy.getLogger(getClass)
-  def contains(x: MPTTEntry[T]): Boolean = Spy.spy(s"contains: MPTTEntry($k,$t)($pre,$post); $x",this.pre <= x.pre && this.post >= x.post)
+
+  def contains(x: MPTTEntry[T]): Boolean = this.pre <= x.pre && this.post >= x.post
+
   def key: String = vo.getKeyFromValue(t).toString
+
   override def toString = s"$t: $pre,$post"
 }
 
 object MPTTEntry {
-  def apply(k: String)(pre: Long, post: Long)(implicit vo: ValueOps[String,String]): MPTTEntry[String] = apply(k,k)(pre,post)
+  def apply(k: String)(pre: Long, post: Long)(implicit vo: ValueOps[String, String]): MPTTEntry[String] = apply(k, k)(pre, post)
 }
 
 object MPTT {
-  def apply[T](x: IndexedNode[T])(implicit vo: ValueOps[String,T]): MPTT[T] = {
+  def apply[T](x: IndexedNode[T])(implicit vo: ValueOps[String, T]): MPTT[T] = {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
-//      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r)
+      //      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r)
       case EmptyWithIndex => None
-      case IndexedNode(n,l,r) => n.get match {
+      case IndexedNode(n, l, r) => n.get match {
         case Some(v) => Some(MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r))
         case _ => None
       }
