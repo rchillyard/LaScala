@@ -18,7 +18,7 @@ class FunctionalTest extends FlatSpec with Matchers {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    checkTreeFromResource(TestDetailsSample, 201, 3, 114, 201, 24)
+    checkTreeFromResource(TestDetailsSample, 113, 4, 64, 113, 77)
   }
   // XXX we ignore this because I have not committed the exampleTree.txt file to the repository.
   ignore should "work for exampleTree.txt" in {

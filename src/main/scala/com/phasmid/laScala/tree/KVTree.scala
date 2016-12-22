@@ -2,7 +2,7 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.Spy
+import com.phasmid.laScala.fp.{FP, Spy}
 import org.slf4j.Logger
 
 import scala.language.implicitConversions
@@ -63,6 +63,9 @@ object KVTree
 abstract class GeneralKVTreeBuilder[K,V](implicit ko: KeyOps[K,V]) extends TreeBuilder[V] {
   private implicit val logger = Spy.getLogger(getClass)
 
+  implicit object NodeOrdering extends Ordering[Node[V]] {
+    def compare(x: Node[V], y: Node[V]): Int = FP.map2(x.get,y.get)(implicitly[Ordering[V]].compare).get
+  }
   /**
     * This method determines if the two given nodes are structurally the same
     *
@@ -94,7 +97,7 @@ abstract class GeneralKVTreeBuilder[K,V](implicit ko: KeyOps[K,V]) extends TreeB
     * @param children   the the children of the node
     * @return a tree the (optional) value at the root and children as the immediate descendants
     */
-  def buildTree(maybeValue: Option[V], children: Seq[Node[V]]): Tree[V] = GeneralKVTree(maybeValue, children)
+  def buildTree(maybeValue: Option[V], children: Seq[Node[V]]): Tree[V] = GeneralKVTree(maybeValue, children.sorted)
 
   /**
     * Build a new leaf for a GeneralKVTree

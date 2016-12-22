@@ -510,15 +510,18 @@ trait TreeBuilder[A] {
 }
 
 /**
-  * This trait is implemented by a type class which pertains to the underlying value type of a tree.
+  * This trait is implemented by a type class which pertains to the underlying VALUE type of a tree.
   * It does not pertain to the shape of the tree.
+  *
+  * TODO rename this as ValueOps
   *
   * @tparam K the key type
   * @tparam V the value type
   */
-trait KeyOps[K,V] {
+trait KeyOps[K,V] extends Ordering[V] {
   /**
     * Extract the key from a value v
+    *
     * @param v the value whose key we require
     * @return the key
     */
@@ -539,6 +542,13 @@ trait KeyOps[K,V] {
     * @return a value for the parent node, wrapped in Try
     */
   def createValueFromKey(k: K): Option[V]
+}
+
+trait StringKeyOps[V] extends KeyOps[String,V] {
+  def getKeyFromValue(v: V): String = v.toString
+  def getParentKey(v: V): Option[String]
+  def createValueFromKey(k: String): Option[V]
+  def compare(x: V, y: V): Int = getKeyFromValue(x).compare(getKeyFromValue(y))
 }
 
 /**

@@ -9,15 +9,24 @@ import scala.io.Source
 import scala.util._
 
 case class AccountRecord(account: String, date: AccountDate, parent: String) {
+  /**
+    * Get the key which is used for accessing nodes and also for comparing nodes for the purpose of building an ordered tree
+    * @return the key based on this AccountRecord
+    */
   def key: String = s"$account/$date"
 }
 
-case class AccountDate(year: Int, month: Int, day: Int) extends Ordering[AccountDate] {
-  def compare(other: AccountDate): Int = compare(this,other)
-  def compare(x: AccountDate, y: AccountDate): Int =
-    Kleenean(Kleenean(x.year.compareTo(y.year))() orElse Kleenean(x.month.compareTo(y.month))() orElse Kleenean(x.day.compareTo(y.day))()).toInt
+case class AccountDate(year: Int, month: Int, day: Int) {
+  override def toString = f"$year%4d/$month%02d/$day%02d"
 }
 
+object AccountDate {
+  def parse(y: String, m: String, d: String): Try[AccountDate] = FP.map3(Try(y.toInt), Try(m.toInt), Try(d.toInt))(apply)
+  implicit object AccountDateOrdering extends Ordering[AccountDate] {
+    def compare(x: AccountDate, y: AccountDate): Int =
+      Kleenean(Kleenean(x.year.compareTo(y.year))() orElse Kleenean(x.month.compareTo(y.month))() orElse Kleenean(x.day.compareTo(y.day))()).toInt
+  }
+}
 object AccountRecord {
   def apply(account: String): AccountRecord = apply(account, AccountDate(1900, 1, 1), "root")
   def parse(account: String, date: String, parent: String): Option[AccountRecord] = {
@@ -40,16 +49,10 @@ object AccountRecord {
   }
 
   implicit object OrderingAccountRecord extends Ordering[AccountRecord] {
-    def compare(x: AccountRecord, y: AccountRecord): Int = x.account.compareTo(y.account) match {
-      case 0 => x.date.compare(y.date)
-      case x @ _ => x
-    }
+    def compare(x: AccountRecord, y: AccountRecord): Int = x.key.compareTo(y.key)
   }
 }
 
-object AccountDate {
-  def parse(y: String, m: String, d: String): Try[AccountDate] = FP.map3(Try(y.toInt), Try(m.toInt), Try(d.toInt))(apply)
-}
 
 trait BuildAccountRecord {
   def createAccountRecord(ws: Array[String]): Option[AccountRecord]
@@ -60,6 +63,31 @@ abstract class AbstractTestDetails(val resourceName: String) extends BuildAccoun
   * Created by scalaprof on 10/19/16.
   */
 class AccountRecordTest extends FlatSpec with Matchers {
+
+  behavior of "AccountDate"
+
+  it should "form correct string" in {
+    AccountDate(2016,12,31).toString shouldBe "2016/12/31"
+    AccountDate(2016,4,1).toString shouldBe "2016/04/01"
+  }
+
+  behavior of "AccountRecord"
+
+  it should "form correct string" in {
+    AccountRecord("Account#1",AccountDate(2016,12,31),"Account#0").toString shouldBe "AccountRecord(Account#1,2016/12/31,Account#0)"
+  }
+
+  it should "form correct key" in {
+    AccountRecord("Account#1",AccountDate(2016,12,31),"Account#0").key.toString shouldBe "Account#1/2016/12/31"
+  }
+
+  it should "compare correctly" in {
+    val ac1q3 = AccountRecord("Account#1",AccountDate(2016,9,31),"Account#0")
+    val ac1q4 = AccountRecord("Account#1",AccountDate(2016,12,31),"Account#0")
+    implicit val ord = AccountRecord.OrderingAccountRecord
+    ord.compare(ac1q3,ac1q4) shouldBe -1
+    ac1q3.key.compareTo(ac1q4.key) shouldBe -1
+  }
 
   behavior of "Recursive account lookup"
 
@@ -95,9 +123,10 @@ class AccountRecordTest extends FlatSpec with Matchers {
           val values = Spy.noSpy(tree.iterator().toList)
           val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y))))
           Spy.log(s"checking for disagreement between tree and MPTT:")
-          Spy.log(s"${results count (!_._3)} incompatible results out of ${results.size}")
+          val badResults = results filter (!_._3)
+          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
           def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
-          Spy.noSpy((results take 10) foreach (show _).tupled)
+          Spy.noSpy((badResults take 10) foreach (show _).tupled)
           results find (!_._3) match {
             case Some(r) =>
               val index = results indexWhere (!_._3)
@@ -108,6 +137,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
               val subtree = tree.find(x)
               val node = tree.find(y)
               Spy.spy(s"this is the (first) failure case: $subtree includes $node",tree.includes(subtree,node))
+              assert(index == -1,"there are inconsistencies between tree and MPTT")
             case _ =>
           }
           Spy.noSpy(AccountRecordTest.doBenchmark(tree,mptt))
@@ -118,7 +148,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
 
 object AccountRecordTest {
 
-  trait AccountRecordKeyOps extends KeyOps[String,AccountRecord] {
+  trait AccountRecordKeyOps extends StringKeyOps[AccountRecord] {
     def getParentKey(v: AccountRecord): Option[String] = Some(v.parent)
     def createValueFromKey(k: String): Option[AccountRecord] = Some(AccountRecord(k,AccountDate(1900,1,1),"root"))
   }
@@ -136,7 +166,7 @@ object AccountRecordTest {
 
   def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int,Int,Int,Int,Int,Option[Node[AccountRecord]],Tree[AccountRecord],MPTT[AccountRecord])] = {
     implicit object AccountRecordKeyOps extends AccountRecordKeyOps {
-      def getKeyFromValue(v: AccountRecord): String = v.key
+      override def getKeyFromValue(v: AccountRecord): String = v.key
     }
     aso match {
       case Some(as) =>
@@ -148,7 +178,7 @@ object AccountRecordTest {
 
             def compareWithDate(f: Int => Boolean)(d: AccountDate)(n: Node[AccountRecord]): Boolean = n.get match {
               case Some(AccountRecord("root", _, _)) => false
-              case Some(v) => f(v.date.compare(d))
+              case Some(v) => f(implicitly[Ordering[AccountDate]].compare(v.date,d))
               case _ => false
             }
 
@@ -166,7 +196,8 @@ object AccountRecordTest {
 
   private def createAccountRecordTree(as: Seq[AccountRecord]) = {
     implicit object AccountRecordKeyOps extends AccountRecordKeyOps {
-      def getKeyFromValue(v: AccountRecord): String = v.parent
+      override def compare(x: AccountRecord, y: AccountRecord): Int = x.key.compare(y.key)
+      override def getKeyFromValue(v: AccountRecord): String = v.parent
     }
     implicit object GeneralKVTreeBuilderAccountRecord extends GeneralKVTreeBuilder[String,AccountRecord]
 

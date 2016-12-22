@@ -14,14 +14,12 @@ import scala.util.Try
 class TreeSpec extends FlatSpec with Matchers {
   private implicit val logger = Spy.getLogger(getClass)
 
-  implicit object IntStringKeyOps extends KeyOps[String,Int] {
-    def getKeyFromValue(v: Int): String = v.toString
+  implicit object IntStringKeyOps extends StringKeyOps[Int] {
     def getParentKey(v: Int): Option[String] = Some((v/10).toString)
     def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }
 
-  implicit object StringStringKeyOps extends KeyOps[String,String] {
-    def getKeyFromValue(v: String): String = v
+  implicit object StringStringKeyOps extends StringKeyOps[String] {
     def getParentKey(v: String): Option[String] = Some(v.substring(0,v.length-1))
     def createValueFromKey(k: String): Option[String] = Some(k)
   }
