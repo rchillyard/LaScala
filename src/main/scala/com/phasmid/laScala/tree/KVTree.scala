@@ -10,9 +10,11 @@ import scala.language.implicitConversions
 /**
   * Trait which models the tree-like aspects of a tree
   *
+  * @param vo the (implicit) ValueOps
+  * @tparam K the Key type
   * @tparam V the underlying type of the tree/node values
   */
-abstract class KVTree[K,+V]()(implicit ko: KeyOps[K,V]) extends Branch[V] {
+abstract class KVTree[K,+V]()(implicit vo: ValueOps[K,V]) extends Branch[V] {
 
   private implicit val logger = Spy.getLogger(getClass)
 
@@ -25,8 +27,8 @@ abstract class KVTree[K,+V]()(implicit ko: KeyOps[K,V]) extends Branch[V] {
     * @return true if this is "like" n
     */
   override def compareValues[B >: V](n: Node[B]): Maybe = {
-    val xo = get map (v => ko.getKeyFromValue(v))
-    val yo = n.get map (v => ko.asInstanceOf[KeyOps[K, B]].getKeyFromValue(v)) // CHECK
+    val xo = get map (v => vo.getKeyFromValue(v))
+    val yo = n.get map (v => vo.asInstanceOf[ValueOps[K, B]].getKeyFromValue(v)) // CHECK
     Kleenean(map2(xo,yo)(_ == _))
   }
 
@@ -44,7 +46,7 @@ abstract class KVTree[K,+V]()(implicit ko: KeyOps[K,V]) extends Branch[V] {
   * @param children the children of this Node
   * @tparam V the underlying value type of this GeneralTree
   */
-case class GeneralKVTree[K,V](value: Option[V], children: Seq[Node[V]])(implicit ko: KeyOps[K,V]) extends KVTree[K,V] {
+case class GeneralKVTree[K,V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K,V]) extends KVTree[K,V] {
   /**
     * @return (optional) value
     */
@@ -56,11 +58,11 @@ object KVTree
 /**
   * Base class implementing TreeBuilder for GeneralKVTree
   *
-  * @param ko implicit KeyOps
+  * @param vo implicit ValueOps
   * @tparam K key type
   * @tparam V value type
   */
-abstract class GeneralKVTreeBuilder[K,V](implicit ko: KeyOps[K,V]) extends TreeBuilder[V] {
+abstract class GeneralKVTreeBuilder[K,V](implicit vo: ValueOps[K,V]) extends TreeBuilder[V] {
   private implicit val logger = Spy.getLogger(getClass)
 
   implicit object NodeOrdering extends Ordering[Node[V]] {
@@ -87,8 +89,8 @@ abstract class GeneralKVTreeBuilder[K,V](implicit ko: KeyOps[K,V]) extends TreeB
     * @return the Node to which the new node will be attached (if such a node exists). Note that this might be a leaf
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
-    // XXX: the following is somewhat ugly but it is necessary to explicitly pass the ko parameter
-    for (k <- ko.getParentKey(a); n <- tree.findByKey(k)(ko)) yield n
+    // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
+    for (k <- vo.getParentKey(a); n <- tree.findByKey(k)(vo)) yield n
 
   /**
     * Build a new tree, given a value and child nodes

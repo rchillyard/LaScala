@@ -11,11 +11,11 @@ import scala.util.Try
   */
 class MPTTSpec extends FlatSpec with Matchers {
 
-  implicit object StringStringKeyOps extends StringKeyOps[String] {
+  implicit object StringStringValueOps$ extends StringValueOps[String] {
     def getParentKey(a: String): Option[String] = Some(a.substring(0,a.length-1))
     def createValueFromKey(k: String): Option[String] = Some(k)
   }
-  implicit object StringIntKeyOps extends StringKeyOps[Int] {
+  implicit object StringIntValueOps$ extends StringValueOps[Int] {
     def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
     def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }

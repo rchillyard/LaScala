@@ -48,7 +48,7 @@ sealed trait Tree[+A] extends Node[A] {
      * @tparam B the underlying type of the new node (and the resulting tree)
      * @return the resulting tree
      */
-   def +[K,B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K,B]): Node[B] = implicitly[TreeBuilder[B]].buildTree(get,children:+node)
+   def +[K,B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K,B]): Node[B] = implicitly[TreeBuilder[B]].buildTree(get,children:+node)
 
    /**
     * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
@@ -59,7 +59,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[K,B >: A : TreeBuilder](b: B)(implicit ko: KeyOps[K,B]): Tree[B] = :+(b)
+  def +:[K,B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K,B]): Tree[B] = :+(b)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
@@ -68,7 +68,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](b: B)(implicit ko: KeyOps[K,B]): Tree[B] = :+(implicitly[TreeBuilder[B]].buildLeaf(b))
+  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K,B]): Tree[B] = :+(implicitly[TreeBuilder[B]].buildLeaf(b))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
@@ -79,7 +79,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K,B]): Tree[B] = this :+ node
+  def +:[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K,B]): Tree[B] = this :+ node
 
   /**
     * Method to add a node to this tree
@@ -88,20 +88,20 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K,B]): Tree[B] = addNode(node)
+  def :+[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K,B]): Tree[B] = addNode(node)
 
    /**
      * Non tail-recursive method to find a Node in a tree by its key
      * @param k the key
-     * @param ko (implicit) KeyOps
+     * @param vo (implicit) ValueOps
      * @tparam K the key type
      * @tparam B the value type
      * @return optionally the node found
      */
-   def findByKey[K, B >: A](k: K)(implicit ko: KeyOps[K,B]): Option[Node[B]] =
+   def findByKey[K, B >: A](k: K)(implicit vo: ValueOps[K,B]): Option[Node[B]] =
      find { n: Node[B] =>
        n.get match {
-         case Some(v) => k == ko.getKeyFromValue(v)
+         case Some(v) => k == vo.getKeyFromValue(v)
          case None => false
        }
      }
@@ -114,7 +114,7 @@ sealed trait Tree[+A] extends Node[A] {
      * @tparam B the underlying type of the node to be added (and the tree to be returned)
      * @return a tree which is a modified form of this
      */
-   protected [tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit ko: KeyOps[K,B]): Tree[B] = node.get match {
+   protected [tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K,B]): Tree[B] = node.get match {
      case Some(t) =>
        val tb = implicitly[TreeBuilder[B]]
        val no = Spy.spy(s"addNode: this=$this, node=$node with existing parent: ", tb.getParent(this, t))
@@ -122,7 +122,7 @@ sealed trait Tree[+A] extends Node[A] {
          // NOTE: we should always get a match when this is a binary tree
          case Some(parent) => replaceNode(parent,parent + node)(tb.nodesAlike)
          case None =>
-           val bo = Spy.spy(s"addNode: no parent for $node",for (v <- node.get; k <- ko.getParentKey(v); z <- ko.createValueFromKey(k)) yield z)
+           val bo = Spy.spy(s"addNode: no parent for $node",for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
            if (allowRecursion)
             addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
            else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
@@ -376,19 +376,23 @@ sealed trait Node[+A] extends Renderable {
     * Method to add the given node to this node specifically
     *
     * @param node the node to add
+    * @param vo the (implicit) ValueOps
+    * @tparam K the key type
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K,B]): Node[B]
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K,B]): Node[B]
 
   /**
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
     * @param node a node
     * @param allowRecursion ignore for now
+    * @param vo the (implicit) ValueOps
+    * @tparam K the key type
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected [tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean = true)(implicit ko: KeyOps[K,B]): Tree[B]
+  protected [tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean = true)(implicit vo: ValueOps[K,B]): Tree[B]
 }
 
 /**
@@ -513,12 +517,10 @@ trait TreeBuilder[A] {
   * This trait is implemented by a type class which pertains to the underlying VALUE type of a tree.
   * It does not pertain to the shape of the tree.
   *
-  * TODO rename this as ValueOps
-  *
   * @tparam K the key type
   * @tparam V the value type
   */
-trait KeyOps[K,V] extends Ordering[V] {
+trait ValueOps[K,V] extends Ordering[V] {
   /**
     * Extract the key from a value v
     *
@@ -544,7 +546,7 @@ trait KeyOps[K,V] extends Ordering[V] {
   def createValueFromKey(k: K): Option[V]
 }
 
-trait StringKeyOps[V] extends KeyOps[String,V] {
+trait StringValueOps[V] extends ValueOps[String,V] {
   def getKeyFromValue(v: V): String = v.toString
   def getParentKey(v: V): Option[String]
   def createValueFromKey(k: String): Option[V]
@@ -596,7 +598,7 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K, B]): Node[B] = Spy.spy(s"(Leaf) $this + $node",implicitly[TreeBuilder[B]].buildTree(get, Seq(node)))
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = Spy.spy(s"(Leaf) $this + $node",implicitly[TreeBuilder[B]].buildTree(get, Seq(node)))
 }
 
 /**
@@ -656,7 +658,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K, B]): Node[B] = ??? // TODO implement me
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 }
 
 ///**
@@ -669,26 +671,26 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
 //  * @param lIndex the (optional) index to the left of the leaf
 //  * @param rIndex the (optional) index to the right of the leaf
 //  * @param value the leaf value
-//  * @param ko the (implicit) KeyOps
+//  * @param vo the (implicit) ValueOps
 //  * @tparam K the key type
 //  * @tparam A the underlying type of this Leaf
 //  */
-//case class IndexedLeafWithKey[K,A](lIndex: Option[Long], rIndex: Option[Long], value: A)(implicit ko: KeyOps[K,A]) extends AbstractLeaf[A](value) with IndexedNode[A] {
+//case class IndexedLeafWithKey[K,A](lIndex: Option[Long], rIndex: Option[Long], value: A)(implicit vo: ValueOps[K,A]) extends AbstractLeaf[A](value) with IndexedNode[A] {
 //  override def depth: Int = 1
 //
 //  override def toString = s"""L("$value")"""
 //
-//  def key: K = ko.getKeyFromValue(value)
+//  def key: K = vo.getKeyFromValue(value)
 //
 //  /**
 //    *
 //    * @param node the node to add
-//    * @param ko2 the (implicit) KeyOps for this method
+//    * @param vo2 the (implicit) ValueOps for this method
 //    * @tparam L the key type for this method
 //    * @tparam B the underlying type of the new node (and the resulting tree)
 //    * @return the resulting tree
 //    */
-//  def +[L, B >: A : TreeBuilder](node: Node[B])(implicit ko2: KeyOps[L, B]): Node[B] = ??? // TODO implement me
+//  def +[L, B >: A : TreeBuilder](node: Node[B])(implicit vo2: ValueOps[L, B]): Node[B] = ??? // TODO implement me
 //}
 
 /**
@@ -757,13 +759,14 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
     *
     * @param node           a node
     * @param allowRecursion ignore for now
+    * @param vo the (implicit) ValueOps
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit ko: KeyOps[K, B]): Tree[B] = node.get match {
+  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(_) =>
       // CHECK all of this
-      val bo = for (v <- node.get; k <- ko.getParentKey(v); z <- ko.createValueFromKey(k)) yield z
+      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
       addNode(implicitly[TreeBuilder[B]].buildTree(bo, Seq(node)), allowRecursion)
 
     case None => throw TreeException("cannot add node without value")
@@ -798,9 +801,9 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   */
 abstract class Punctuation(x: String) extends Node[Nothing] {
 
-  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit ko: KeyOps[K, B]): Node[B] = ??? // TODO implement me
+  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 
-  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit ko: KeyOps[K, B]): Tree[B] = ???
+  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ???
 
   def includes[B >: Nothing](node: Node[B]): Boolean = false
 
@@ -865,7 +868,16 @@ object Tree {
   // TODO we want the key value to implement ordering, not the value itself
   // TODO implement this like for general tree (below)
 
-  def populateOrderedTree[K, A: Ordering : TreeBuilder](values: Seq[A])(implicit ko: KeyOps[K, A]): Tree[A] = {
+  /**
+    * Method to populate an ordered tree. Actually, we can remove the Ordering context bound
+    *
+    * @param values the values of the nodes to put in the tree
+    * @param vo the (implicit) ValueOps
+    * @tparam K the key type
+    * @tparam A the underlying value type
+    * @return a Tree[A]
+    */
+  def populateOrderedTree[K, A : TreeBuilder](values: Seq[A])(implicit vo: ValueOps[K, A]): Tree[A] = {
     values match {
       case h :: t =>
         var result: Tree[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
@@ -876,7 +888,7 @@ object Tree {
     }
   }
 
-  def populateGeneralTree[K, A : TreeBuilder](root: Option[A], values: Seq[A])(implicit ko: KeyOps[K, A]): Tree[A] = {
+  def populateGeneralTree[K, A : TreeBuilder](root: Option[A], values: Seq[A])(implicit vo: ValueOps[K, A]): Tree[A] = {
     @tailrec
     def inner(result: Tree[A], work: Seq[A]): Tree[A] = work match {
       case Nil => result
@@ -898,7 +910,7 @@ object Tree {
     * @tparam A the underlying type
     * @return an IndexedNode[A]
     */
-  def createIndexedTree[K, A](node: Node[A], index: Int = 0)(implicit ko: KeyOps[K,A]): IndexedNode[A] = {
+  def createIndexedTree[K, A](node: Node[A], index: Int = 0)(implicit vo: ValueOps[K,A]): IndexedNode[A] = {
     @tailrec
     def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = work._2 match {
       case Nil => r

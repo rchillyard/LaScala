@@ -35,24 +35,24 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
   * @param post the post-index
   * @tparam T the type of the value
   */
-case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit ko: KeyOps[String,T]) {
+case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit vo: ValueOps[String,T]) {
   private implicit val logger = Spy.getLogger(getClass)
   def contains(x: MPTTEntry[T]): Boolean = Spy.spy(s"contains: MPTTEntry($k,$t)($pre,$post); $x",this.pre <= x.pre && this.post >= x.post)
-  def key: String = ko.getKeyFromValue(t).toString
+  def key: String = vo.getKeyFromValue(t).toString
   override def toString = s"$t: $pre,$post"
 }
 
 object MPTTEntry {
-  def apply(k: String)(pre: Long, post: Long)(implicit ko: KeyOps[String,String]): MPTTEntry[String] = apply(k,k)(pre,post)
+  def apply(k: String)(pre: Long, post: Long)(implicit vo: ValueOps[String,String]): MPTTEntry[String] = apply(k,k)(pre,post)
 }
 
 object MPTT {
-  def apply[T](x: IndexedNode[T])(implicit ko: KeyOps[String,T]): MPTT[T] = {
+  def apply[T](x: IndexedNode[T])(implicit vo: ValueOps[String,T]): MPTT[T] = {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
-//      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(ko.getKeyFromValue(v), v)(l, r)
+//      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r)
       case EmptyWithIndex => None
       case IndexedNode(n,l,r) => n.get match {
-        case Some(v) => Some(MPTTEntry.apply(ko.getKeyFromValue(v), v)(l, r))
+        case Some(v) => Some(MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")

@@ -12,11 +12,11 @@ class ParentSpec extends FlatSpec with Matchers {
 
   behavior of "traverse"
 
-  implicit object IntStringKeyOps extends StringKeyOps[Int] {
+  implicit object IntStringValueOps$ extends StringValueOps[Int] {
     def getParentKey(v: Int): Option[String] = Some((v/10).toString)
     def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }
-  implicit object StringStringKeyOps extends StringKeyOps[String] {
+  implicit object StringStringValueOps$ extends StringValueOps[String] {
     def getParentKey(v: String): Option[String] = Some(v.substring(0,v.length-1))
     def createValueFromKey(k: String): Option[String] = Some(k)
   }
@@ -31,7 +31,7 @@ class ParentSpec extends FlatSpec with Matchers {
   }
   it should "work correctly for UnvaluedBinaryTree" in {
     import UnvaluedBinaryTree._
-    implicit object IntStringKeyOps extends StringKeyOps[Int] {
+    implicit object IntStringValueOps$ extends StringValueOps[Int] {
       def getParentKey(v: Int): Option[String] = Some((v/10).toString)
       def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
     }

@@ -3,7 +3,7 @@ package com.phasmid.laScala.fp
 /**
   * Type class trait to define something that has a key.
   *
-  * TODO replace this with references to KeyOps
+  * TODO replace this with references to ValueOps
   *
   * TODO try to generalize this so that return value implements Ordering, rather than being any particular type like String.
   *
