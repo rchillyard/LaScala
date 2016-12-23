@@ -108,6 +108,23 @@ sealed trait Tree[+A] extends Node[A] {
     }
 
   /**
+    * Non tail-recursive method to find a Node in a tree by its key
+    *
+    * @param k  the key
+    * @param vo (implicit) ValueOps
+    * @tparam K the key type
+    * @tparam B the value type
+    * @return optionally the node found
+    */
+  def findByParentKey[K, B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
+    find { n: Node[B] =>
+      n.get match {
+        case Some(v) => k == vo.getKeyAsParent(v)
+        case None => false
+      }
+    }
+
+  /**
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
     *
     * @param node           a node
@@ -124,10 +141,14 @@ sealed trait Tree[+A] extends Node[A] {
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
           val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
-          if (allowRecursion)
-            addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
-          else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
-            throw TreeException("logic error")
+          bo match {
+            case Some(b) =>
+              if (allowRecursion)
+                addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
+              else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
+                throw TreeException(s"logic error: recursion beyond root after no parent found for $t")
+            case _ => throw TreeException(s"logic error: cannot get value for new parent of node $node")
+          }
       }
 
     case None => throw TreeException("cannot add node without value")
@@ -471,6 +492,13 @@ trait Branch[+A] extends Tree[A] {
 trait IndexedNode[A] extends Node[A] with TreeIndex
 
 /**
+  * Trait which combines the IndexedNode and Tree traits
+  *
+  * @tparam A the underlying type of this Branch
+  */
+trait IndexedTree[A] extends IndexedNode[A] with Tree[A]
+
+/**
   * Trait which defines behavior of something which can be rendered as a String
   */
 trait Renderable {
@@ -542,6 +570,14 @@ trait ValueOps[K, V] extends Ordering[V] {
   def getKeyFromValue(v: V): K
 
   /**
+    * Extract the key from a value v
+    *
+    * @param v the value whose key we require
+    * @return the key
+    */
+  def getKeyAsParent(v: V): K
+
+  /**
     * If such a thing is defined for this type of value, get the parent key
     *
     * @param v the value whose parent key we desire
@@ -560,6 +596,8 @@ trait ValueOps[K, V] extends Ordering[V] {
 }
 
 trait StringValueOps[V] extends ValueOps[String, V] {
+  def getKeyAsParent(v: V): String = v.toString
+
   def getKeyFromValue(v: V): String = v.toString
 
   def getParentKey(v: V): Option[String]
@@ -667,7 +705,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     case _ => s"""${Renderable.prefix(indent)}$value [$lIndex:$rIndex]"""
   }
 
-  override def toString = s"""L("$value")"""
+  override def toString = s"""L("$value")""" + (map2(lIndex, rIndex)(_ + ":" + _).getOrElse(""))
 
   /**
     * Method to add the given node to this node specifically
@@ -679,38 +717,6 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 }
 
-///**
-//  * Case class for an indexed leaf with key
-//  *
-//  * NOTE: the + method does not share the same types as the class itself
-//  *
-//  * CONSIDER eliminating this class as it does not seem to be used
-//  *
-//  * @param lIndex the (optional) index to the left of the leaf
-//  * @param rIndex the (optional) index to the right of the leaf
-//  * @param value the leaf value
-//  * @param vo the (implicit) ValueOps
-//  * @tparam K the key type
-//  * @tparam A the underlying type of this Leaf
-//  */
-//case class IndexedLeafWithKey[K,A](lIndex: Option[Long], rIndex: Option[Long], value: A)(implicit vo: ValueOps[K,A]) extends AbstractLeaf[A](value) with IndexedNode[A] {
-//  override def depth: Int = 1
-//
-//  override def toString = s"""L("$value")"""
-//
-//  def key: K = vo.getKeyFromValue(value)
-//
-//  /**
-//    *
-//    * @param node the node to add
-//    * @param vo2 the (implicit) ValueOps for this method
-//    * @tparam L the key type for this method
-//    * @tparam B the underlying type of the new node (and the resulting tree)
-//    * @return the resulting tree
-//    */
-//  def +[L, B >: A : TreeBuilder](node: Node[B])(implicit vo2: ValueOps[L, B]): Node[B] = ??? // TODO implement me
-//}
-
 /**
   * A mutable (temporary) tree used as a preliminary to building an MPTT index
   *
@@ -720,7 +726,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   * @param children the children of this node
   * @tparam A the underlying type of this Branch
   */
-case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedNode[A] {
+case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedTree[A] {
   def get: Option[A] = value
 }
 
@@ -933,17 +939,19 @@ object Tree {
     */
   def createIndexedTree[K, A](node: Node[A], index: Int = 0)(implicit vo: ValueOps[K, A]): IndexedNode[A] = {
     @tailrec
-    def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = work._2 match {
-      case Nil => r
-      case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + 2 * h.size, t))
+    def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = {
+      work._2 match {
+        case Nil => r
+        // TODO this looks totally wrong!!
+        case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + 2 * h.size, t))
+      }
     }
 
     node match {
-      case Leaf(x) => IndexedLeaf[A](Some(index + 1), Some(index + 2), x)
-      //      case Leaf(x) => IndexedLeafWithKey[K,A](Some(index+1), Some(index + 2), x)
+      case Leaf(x) => IndexedLeaf[A](Some(index), Some(index + 1), x)
       case Branch(ao, ans) =>
         val rIndex = index + 1 + 2 * (ans map (_.size) sum)
-        MutableGenericIndexedTree(Some(index), Some(rIndex), ao, inner(Nil, (index, ans)))
+        MutableGenericIndexedTree(Some(index), Some(rIndex), ao, inner(Nil, (index + 1, ans)))
       case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[A]] // CHECK this is OK
       case _ => throw TreeException(s"can't created IndexedTree from $node")
     }
@@ -966,8 +974,8 @@ object GeneralTree {
 
     // CONSIDER, for a generic getParent, using getParentKey from HasParent and then look it up via findByKey
   }
-
   implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String] {
+    // CONSIDER moving the intelligence from here into a ValueOps object
     def getParent(tree: Tree[String], t: String): Option[Node[String]] = tree.find(t.substring(0, t.length - 1))
   }
 
@@ -993,7 +1001,7 @@ object UnvaluedBinaryTree {
           val l = ns.head
           val r = ns(1)
           val x = ns(2)
-          assert(AbstractBinaryTree.isOrdered(l, r), "logic error: l,r are not properly ordered")
+          assert(AbstractBinaryTree.isOrdered(l, r), s"logic error: $l and $r are not properly ordered")
           if (AbstractBinaryTree.isOrdered(x, l)) buildTree(None, Seq(x, buildTree(l, r)))
           else buildTree(None, Seq(l, buildTree(r, x)))
         case _ => throw TreeException(s"buildTree with value: $maybeValue and children: $children")
@@ -1004,7 +1012,7 @@ object UnvaluedBinaryTree {
     def buildTree(x: Node[A], y: Node[A]): Tree[A] = {
       // XXX if x,y are ordered correctly (or overlapping) we create n1, n2 in same order, otherwise we flip the order
       val (n1, n2) = if (AbstractBinaryTree.isOrdered(x, y)) (x, y) else (y, x)
-      assert(AbstractBinaryTree.isOrdered(n1, n2), "logic error")
+      assert(AbstractBinaryTree.isOrdered(n1, n2), s"logic error: $n1 and $n2 are not properly ordered")
       n1 match {
         case UnvaluedBinaryTree(l, r) =>
           val pair =

@@ -95,14 +95,14 @@ class AccountRecordTest extends FlatSpec with Matchers {
     case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
     }
-    checkTreeFromResource(TestDetailsMiniSample, 9, 4, 5, 9, 9)
+    checkTreeFromResource(TestDetailsMiniSample, 9, 3, 5, 9, 9)
   }
   // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
-  ignore should "work for sampleTree.txt" in {
+  it should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
-    checkTreeFromResource(TestDetailsSample, 113, 4, 64, 113, 113)
+    checkTreeFromResource(TestDetailsSample, 113, 3, 64, 113, 113)
   }
 
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) =
@@ -111,10 +111,8 @@ class AccountRecordTest extends FlatSpec with Matchers {
       val aso = AccountRecordTest.readAccountData(tester)
       val checks = Spy.noSpy(AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso))
       checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
-
       checks match {
         case Success((_,_,_,_,_,_,tree,mptt)) =>
-//          println(mptt)
           val nodes: Seq[Node[AccountRecord]] = Spy.noSpy(tree.nodeIterator().toList)
           val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
           val trues = for (n <- branchNodes; v <- n.get) yield Spy.noSpy(tree.includesValue(v))
@@ -154,7 +152,14 @@ object AccountRecordTest {
 
   trait AccountRecordValueOps extends StringValueOps[AccountRecord] {
     def getParentKey(v: AccountRecord): Option[String] = Some(v.parent)
+
+    override def getKeyAsParent(v: AccountRecord): String = v.account
+
     def createValueFromKey(k: String): Option[AccountRecord] = Some(AccountRecord(k,AccountDate(1900,1,1),"root"))
+  }
+
+  implicit object AccountRecordValueOps$ extends AccountRecordValueOps {
+    override def getKeyFromValue(v: AccountRecord): String = v.key
   }
 
   def readAccountData(tester: AbstractTestDetails): Option[Seq[AccountRecord]] = {
@@ -168,9 +173,6 @@ object AccountRecordTest {
   }
 
   def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int,Int,Int,Int,Int,Option[Node[AccountRecord]],Tree[AccountRecord],MPTT[AccountRecord])] = {
-    implicit object AccountRecordValueOps$ extends AccountRecordValueOps {
-      override def getKeyFromValue(v: AccountRecord): String = v.key
-    }
     aso match {
       case Some(as) =>
         createAccountRecordTree(as) match {
@@ -198,17 +200,12 @@ object AccountRecordTest {
   }
 
   private def createAccountRecordTree(as: Seq[AccountRecord]) = {
-    implicit object AccountRecordKeyOps extends AccountRecordValueOps {
-      override def compare(x: AccountRecord, y: AccountRecord): Int = x.key.compare(y.key)
-      override def getKeyFromValue(v: AccountRecord): String = v.parent
-    }
     implicit object GeneralKVTreeBuilderAccountRecord extends GeneralKVTreeBuilder[String,AccountRecord]
 
     ParentChildTree.populateParentChildTree(as)
   }
 
   def doBenchmark(tree: Tree[AccountRecord], mptt: MPTT[AccountRecord]): Unit = {
-    import AccountRecord._
     val nodes = tree.iterator().toList
     val snodes = nodes.sorted
     val pairs = nodes zip snodes

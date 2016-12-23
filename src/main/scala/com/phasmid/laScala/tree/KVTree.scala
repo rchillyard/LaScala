@@ -90,7 +90,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
   // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
-    for (k <- vo.getParentKey(a); n <- tree.findByKey(k)(vo)) yield n
+    for (k <- vo.getParentKey(a); n <- tree.findByParentKey(k)(vo)) yield n
 
   /**
     * Build a new tree, given a value and child nodes
