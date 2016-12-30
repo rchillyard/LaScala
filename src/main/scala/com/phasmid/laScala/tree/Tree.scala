@@ -2,7 +2,7 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.Spy
+import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.tree.AbstractBinaryTree.isOverlap
 
 import scala.annotation.tailrec
@@ -245,7 +245,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => n.get.contains(b) })
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => FP.contains(n.get,b) })
 
   /**
     *
@@ -619,7 +619,7 @@ trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
 
   def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
     case b@Branch(_, _) => (b like y).toBoolean(false)
-    case AbstractLeaf(a) => y.get contains a
+    case AbstractLeaf(a) => FP.contains(y.get,a)
     case _ => x == y
   }
 }
@@ -968,7 +968,7 @@ object GeneralTree {
 
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
       case b@Branch(_, _) => (b like y).toBoolean(false)
-      case AbstractLeaf(a) => y.get contains a
+      case AbstractLeaf(a) => FP.contains(y.get,a)
       case _ => x == y
     }
 

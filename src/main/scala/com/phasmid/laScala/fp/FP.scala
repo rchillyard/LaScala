@@ -19,6 +19,14 @@ import scala.util.control.NonFatal
   */
 object FP {
 
+  /**
+    * @param ox the given Option
+    * @param x the value we want to compare with ox
+    * @tparam X the underlying type
+    * @return true if ox is Some(x)
+    */
+  def contains[X](ox: Option[X], x: X): Boolean = FP_Cross.contains(ox,x)
+
   def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
 
   /**
@@ -291,7 +299,7 @@ object FP {
   def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
 
   /**
-    * The map2 function. You already know this one!
+    * The map2 function.
     *
     * @param t1y parameter 1 wrapped in Try
     * @param t2y parameter 2 wrapped in Try
@@ -375,10 +383,10 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
+    FP_Cross.map2lazy(ty1,ty2)(f)(g,default)
 
   /**
-    * TODO unit test
+    * NOTE: not available with 2.10
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *
@@ -394,7 +402,7 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case _: java.util.NoSuchElementException => default }
+    FP_Cross.map3lazy(ty1,ty2,ty3)(f)(g,default)
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]

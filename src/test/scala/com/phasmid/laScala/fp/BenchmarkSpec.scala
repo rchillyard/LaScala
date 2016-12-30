@@ -16,6 +16,6 @@ class BenchmarkSpec extends FlatSpec with Matchers {
     val nanos = 10000.times(Factorial.factorial(40))
 //    val end = System.currentTimeMillis()
     // NOTE: this might need to be varied according to the speed of the machine, etc.
-    nanos.toDouble shouldBe 10.0+-2
+    nanos.toDouble shouldBe 10.0+-3
   }
 }

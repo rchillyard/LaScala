@@ -178,7 +178,8 @@ abstract class BasePredicate[T](name: String) extends Predicate[T] {
   * @tparam T the underlying type of the Predicate
   */
 case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
+  // TODO for 2.10 we must use map2, but in 2.11, we can use map2lazy
+  def apply(t: T): Try[Boolean] = map2(p1(t), p2(t))(_ && _)
 
 
   /**
@@ -202,7 +203,8 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
   * @tparam T the underlying type of the Predicate
   */
 case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
+  // TODO for 2.10 we must use map2, but in 2.11, we can use map2lazy
+  def apply(t: T): Try[Boolean] = map2(p1(t), p2(t))(_ || _)
 
   /**
     * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential

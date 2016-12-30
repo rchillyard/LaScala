@@ -54,10 +54,10 @@ object MPTTEntry {
 object MPTT {
   def apply[T](x: IndexedNode[T])(implicit vo: ValueOps[String, T]): MPTT[T] = {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
-      //      case IndexedLeafWithKey(lo, ro, v) => for (l <- lo; r <- ro) yield MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r)
       case EmptyWithIndex => None
       case IndexedNode(n, l, r) => n.get match {
-        case Some(v) => Some(MPTTEntry.apply(vo.getKeyFromValue(v), v)(l, r))
+        // XXX: the extra annotation [T] and explicit reference to vo in the following is only necessary when compiling against 2.10
+        case Some(v) => Some(MPTTEntry.apply[T](vo.getKeyFromValue(v), v)(l, r)(vo))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")

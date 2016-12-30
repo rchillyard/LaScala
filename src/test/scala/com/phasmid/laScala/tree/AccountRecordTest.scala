@@ -119,29 +119,30 @@ class AccountRecordTest extends FlatSpec with Matchers {
           val allTrue = trues.forall(_ == true)
           allTrue shouldBe true
           val values = Spy.noSpy(tree.iterator().toList)
-          val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, mptt.contains(x.key, y.key).contains(tree.includes(x, y))))
+          val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key),tree.includes(x, y))))
           Spy.log(s"checking for disagreement between tree and MPTT:")
           val badResults = results filter (!_._3)
-          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
-          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
-          Spy.noSpy((badResults take 10) foreach (show _).tupled)
-          results find (!_._3) match {
-            case Some(r) =>
-              val index = results indexWhere (!_._3)
-              if (index>=0) Spy.log(s"failed on $index-th element out of ${results.size}")
-              val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
-              logger.info(message)
-              val (x,y, _) = results(index)
-              val subtree = tree.find(x)
-              val node = tree.find(y)
-              logger.info(s"this is the (first) failure case: $subtree includes $node " + tree.includes(subtree, node))
-//              val ok = values==values.sorted
-//              Spy.log(s"ok: $ok")
-//              (values.sorted take 25) foreach println
-//              (values take 25) foreach println
-//              assert(index == -1,"there are inconsistencies between tree and MPTT")
-            case _ =>
-          }
+          // XXX: The following part of the test only works with Scala 2.11
+//          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
+//          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
+//          Spy.noSpy((badResults take 10) foreach (show _).tupled)
+//          results find (!_._3) match {
+//            case Some(r) =>
+//              val index = results indexWhere (!_._3)
+//              if (index>=0) Spy.log(s"failed on $index-th element out of ${results.size}")
+//              val message = s"the following did not agree: ${r._1.key} and ${r._2.key}. tree: ${tree.includes(r._1, r._2)}; mptt: ${mptt.contains(r._1.key, r._2.key)}"
+//              logger.info(message)
+//              val (x,y, _) = results(index)
+//              val subtree = tree.find(x)
+//              val node = tree.find(y)
+//              logger.info(s"this is the (first) failure case: $subtree includes $node " + tree.includes(subtree, node))
+////              val ok = values==values.sorted
+////              Spy.log(s"ok: $ok")
+////              (values.sorted take 25) foreach println
+////              (values take 25) foreach println
+////              assert(index == -1,"there are inconsistencies between tree and MPTT")
+//            case _ =>
+//          }
           Spy.noSpy(AccountRecordTest.doBenchmark(tree,mptt))
         case _ => fail(s"checks did not come back as expected: $checks")
       }

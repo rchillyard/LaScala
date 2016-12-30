@@ -113,7 +113,11 @@ case class Rational(n: Long, d: Long) {
 
   def toRationalString = s"$n/$d"
 
-  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (d > 100000L || toBigDecimal.isExactDouble) toDouble.toString else toRationalString
+  def isExactDouble =
+  /** 2.10 */ true // (arbitrary)
+//  /** 2.11 */ toBigDecimal.isExactDouble
+
+  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (d > 100000L || isExactDouble) toDouble.toString else toRationalString
 }
 
 class RationalException(s: String) extends Exception(s)

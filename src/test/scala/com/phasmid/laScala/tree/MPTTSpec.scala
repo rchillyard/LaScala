@@ -1,6 +1,6 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.Spy
+import com.phasmid.laScala.fp.{FP, Spy}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.io.Source
@@ -104,7 +104,7 @@ class MPTTSpec extends FlatSpec with Matchers {
 
     val nodes = tree.nodeIterator().filter(_.isLeaf).toList
     println(nodes)
-    val flatland = nodes.find(_.get.contains("flatland"))
+    val flatland = nodes.find(x => FP.contains(x.get,"flatland"))
     flatland should matchPattern { case Some(_) => }
     flatland match {
       case Some(node) => node.includesValue("flatland") shouldBe true
