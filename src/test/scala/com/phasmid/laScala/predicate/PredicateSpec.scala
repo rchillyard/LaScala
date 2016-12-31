@@ -195,7 +195,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p() should matchPattern { case Success(false) => }
   }
   it should "work with function" in {
-    val p = Never :| { s: Any => Success(true) }
+    val p = Never :| { _: Any => Success(true) }
     p() should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {
@@ -234,7 +234,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = Func(func1) :^| func2
+    val _ = Func(func1) :^| func2
     // XXX: fails for 2.10
 //    p(3) should matchPattern { case Success(true) => }
 //    s.toString shouldBe "func1 evaluated. "
@@ -286,7 +286,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       s.append("func2 evaluated. ")
       x < 10
     }
-    val p = func1 _ |^: Func(func2)
+    val _ = func1 _ |^: Func(func2)
     // XXX: works only with 2.11
 //    p(3) should matchPattern { case Success(true) => }
 //    s.toString shouldBe "func1 evaluated. "

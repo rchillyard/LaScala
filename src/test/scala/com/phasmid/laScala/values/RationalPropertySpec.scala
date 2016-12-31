@@ -12,11 +12,11 @@ import org.scalacheck.Prop.forAll
   */
 class RationalPropertySpec extends Properties("String") {
 
-  import Rational.RationalHelper
 
   property("RationalFromString") = forAll { (a: Int, b: Int) =>
+    import Rational.RationalHelper
     val rat = r"$a/$b"
-    (rat*b).toInt == a
+    b==0 || (rat*b).toLong == a
   }
 
 }

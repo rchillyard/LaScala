@@ -79,37 +79,37 @@ class MPTTSpec extends FlatSpec with Matchers {
     mptt.contains("3","3") should matchPattern { case Some(true) => }
     mptt.contains("3","4") should matchPattern { case Some(false) => }
   }
-    behavior of "real-life UnvaluedBinaryTree"
-  it should "build correctly" in {
-    val uo = Option(getClass.getResource("flatland.txt"))
-    uo should matchPattern { case Some(_) => }
-    val so = uo map {_.openStream}
-    val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
-    import scala.language.postfixOps
-    val z: Seq[String] = wso match {
-      case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
-      case _ => Seq[String]()
-    }
-    import UnvaluedBinaryTree._
-    trait OrderingValueString extends Ordering[String] {
-      def compare(x: String, y: String): Int = x.compareTo(y)
-    }
-    val tree = Spy.noSpy(Tree.populateOrderedTree(z))
-    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
-    mptt.index.size shouldBe 176
-
-    println(mptt)
-
-    println(mptt.index.keySet)
-
-    val nodes = tree.nodeIterator().filter(_.isLeaf).toList
-    println(nodes)
-    val flatland = nodes.find(x => FP.contains(x.get,"flatland"))
-    flatland should matchPattern { case Some(_) => }
-    flatland match {
-      case Some(node) => node.includesValue("flatland") shouldBe true
-      case _ => fail("logic")
-    }
+//    behavior of "real-life UnvaluedBinaryTree"
+//  it should "build correctly" in {
+//    val uo = Option(getClass.getResource("flatland.txt"))
+//    uo should matchPattern { case Some(_) => }
+//    val so = uo map {_.openStream}
+//    val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
+//    import scala.language.postfixOps
+//    val z: Seq[String] = wso match {
+//      case Some(ws) => ws map {_.toLowerCase} filterNot {_.isEmpty} distinct
+//      case _ => Seq[String]()
+//    }
+//    import UnvaluedBinaryTree._
+//    trait OrderingValueString extends Ordering[String] {
+//      def compare(x: String, y: String): Int = x.compareTo(y)
+//    }
+//    val tree = Spy.noSpy(Tree.populateOrderedTree(z))
+//    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
+//    mptt.index.size shouldBe 176
+//
+//    println(mptt)
+//
+//    println(mptt.index.keySet)
+//
+//    val nodes = tree.nodeIterator().filter(_.isLeaf).toList
+//    println(nodes)
+//    val flatland = nodes.find(x => FP.contains(x.get,"flatland"))
+//    flatland should matchPattern { case Some(_) => }
+//    flatland match {
+//      case Some(node) => node.includesValue("flatland") shouldBe true
+//      case _ => fail("logic")
+//    }
 
     // NOTE: the logic that follows here doesn't make any sense for an UnvaluedBinaryTree -- it might make sense for a BinaryTree
 //    // First we do it the slow way
@@ -136,7 +136,7 @@ class MPTTSpec extends FlatSpec with Matchers {
 //    println((x zip xSorted))
 //    val r = (x zip xSorted) find (check)
 //    r shouldBe None
-  }
+//  }
 
   def testMpttLookup(mPTT: MPTT[String], x: String, y: String): Boolean = x.contains(y) == (x.compareTo(y)<1)
 }

@@ -113,9 +113,7 @@ case class Rational(n: Long, d: Long) {
 
   def toRationalString = s"$n/$d"
 
-  def isExactDouble =
-  /** 2.10 */ true // (arbitrary)
-//  /** 2.11 */ toBigDecimal.isExactDouble
+  def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
 
   override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (d > 100000L || isExactDouble) toDouble.toString else toRationalString
 }

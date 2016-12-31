@@ -142,7 +142,7 @@ sealed trait Tree[+A] extends Node[A] {
         case None =>
           val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
           bo match {
-            case Some(b) =>
+            case Some(_) =>
               if (allowRecursion)
                 addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
               else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
@@ -705,7 +705,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     case _ => s"""${Renderable.prefix(indent)}$value [$lIndex:$rIndex]"""
   }
 
-  override def toString = s"""L("$value")""" + (map2(lIndex, rIndex)(_ + ":" + _).getOrElse(""))
+  override def toString: String = s"""L("$value")""" + map2(lIndex, rIndex)(_ + ":" + _).getOrElse("")
 
   /**
     * Method to add the given node to this node specifically
@@ -714,7 +714,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // FIXME implement me
 }
 
 /**
@@ -827,9 +827,9 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   */
 abstract class Punctuation(x: String) extends Node[Nothing] {
 
-  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
+  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // FIXME implement me
 
-  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ???
+  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ??? // FIXME
 
   def includes[B >: Nothing](node: Node[B]): Boolean = false
 

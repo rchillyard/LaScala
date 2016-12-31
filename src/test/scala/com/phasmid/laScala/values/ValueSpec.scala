@@ -214,7 +214,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val w: Any = "k"
     val vy = Value.tryValue(w)
     val xoy: Try[Option[Double]] = for (vs <- vy) yield vs.asValuable[Double]
-    xoy should matchPattern { case Success(xos) => }
+    xoy should matchPattern { case Success(_) => }
     inside(xoy) {
       case Success(xo) =>
         xo should matchPattern { case None => }

@@ -6,7 +6,7 @@ import org.scalatest.{FlatSpec, Matchers}
   * Created by scalaprof on 8/5/16.
   */
 class SpySpec extends FlatSpec with Matchers {
-  implicit val logger = Spy.getLogger(getClass)
+  private implicit val logger = Spy.getLogger(getClass)
 
   behavior of "Spy.spy"
   it should "work with implicit (logger) spy func" in {

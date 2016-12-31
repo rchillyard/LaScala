@@ -9,7 +9,7 @@ import scala.language.postfixOps
   */
 class RandomStateSpec extends FlatSpec with Matchers {
 
-  private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
+//  private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
 
   private def mean(xs: Seq[Double]) = xs.sum / xs.length
 
@@ -17,7 +17,7 @@ class RandomStateSpec extends FlatSpec with Matchers {
   // generic methods like sum and mean. But for now, this is what we've got.
   def sumU(xs: Seq[UniformDouble]): Double = xs.foldLeft(0.0)((a, x) => x + a)
 
-  def meanU(xs: Seq[UniformDouble]) = sumU(xs) / xs.length
+  private def meanU(xs: Seq[UniformDouble]) = sumU(xs) / xs.length
 
   "RandomState(0L)" should "match case RandomState(4804307197456638271)" in {
     val r: RandomState[Long] = RandomState(0L)

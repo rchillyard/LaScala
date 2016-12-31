@@ -44,7 +44,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val isZero = Func[Int]({
       _ == 0
     })
-    val p: Rule[Int] = new BoundPredicate(0, isZero)
+    val _: Rule[Int] = new BoundPredicate(0, isZero)
     assert(true)
     // XXX Ignore the rest
     //    val q: Rule[Double] = p transform (_.toDouble, _.toDouble)

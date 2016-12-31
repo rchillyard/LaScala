@@ -179,9 +179,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     def sum(x: Int, y: Int) = x + y
 
     implicit val continue: Int => Boolean = _ => true
-    // NOTE: map2lazy is only available with 2.11
-//    map2lazy(one, two)(sum) should matchPattern { case Success(3) => }
-//    map2lazy(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
+    // NOTE: map2lazy is only available with 2.11 but it's implemented as map2 otherwise
+    map2lazy(one, two)(sum) should matchPattern { case Success(3) => }
+    map2lazy(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
   "map3" should "succeed" in {
@@ -201,9 +201,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     def sum(x: Int, y: Int, z: Int) = x + y + z
 
     implicit val continue: Int => Boolean = _ => true
-    // NOTE: map3lazy is only available with 2.11
-//    map3lazy(one, two, three)(sum) should matchPattern { case Success(6) => }
-//    map3lazy(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
+    // NOTE: map3lazy is only available with 2.11, but it's implemented as map3 otherwise
+    map3lazy(one, two, three)(sum) should matchPattern { case Success(6) => }
+    map3lazy(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
   "asFuture" should "succeed" in {
@@ -288,7 +288,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val p6 = Try(20)
       val p7 = Try(28)
 
-      val test = FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews(_, _, _, _, _, _, _))
+      val test = FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
 
       test.get should matchPattern{
         case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) =>
@@ -303,7 +303,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val p5 = Try(18)
     val p6 = Try(20)
     val p7 = Try(28)
-    FP.map7(p1, p2, p3, p4, p5, p6, p7)(new Reviews(_, _, _, _, _, _, _)) should matchPattern{
+    FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern{
       case Failure(_) =>
     }
   }
@@ -427,7 +427,7 @@ case class Principal(name: Name, facebookLikes: Int) {
 case class Name(first: String, middle: Option[String], last: String, suffix: Option[String]) {
   override def toString: String = {
     case class Result(r: StringBuffer) {
-      def append(s: String): Unit = r.append(" " + s);
+      def append(s: String): Unit = r.append(" " + s)
 
       override def toString: String = r.toString
     }

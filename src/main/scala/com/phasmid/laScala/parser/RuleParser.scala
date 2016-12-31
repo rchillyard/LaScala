@@ -172,7 +172,7 @@ class RuleParser extends JavaTokenParsers {
 
   private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
-  private val lesserOp = regex("""<|<=""".r)
+//  private val lesserOp = regex("""<|<=""".r)
   private val identifier = regex("""\w+""".r)
   private val identifierWithPeriods = regex("""[\w\.]+""".r)
   private val doubleQuote = """"""".r
@@ -180,7 +180,7 @@ class RuleParser extends JavaTokenParsers {
   abstract class ExprFactor extends Expression
 
   case class Expr(t: ExprTerm, ts: List[String ~ ExprTerm]) extends Expression {
-    def toRPN = {
+    def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
       def shunt(xs: List[String], et: String ~ ExprTerm): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
@@ -189,13 +189,13 @@ class RuleParser extends JavaTokenParsers {
       rpn ++ stack.elems.reverse
     }
 
-    def asString = ts.foldLeft(t.toString)(_ + _.toString)
+    def asString: String = ts.foldLeft(t.toString)(_ + _.toString)
 
     def asQuotedString: Option[String] = if (ts.isEmpty) t.asQuotedString else None
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
-    def toRPN = {
+    def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
       def shunt(xs: List[String], et: String ~ ExprFactor): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
@@ -204,7 +204,7 @@ class RuleParser extends JavaTokenParsers {
       rpn ++ stack.elems.reverse
     }
 
-    def asString = fs.foldLeft(f.toString)(_ + _.toString)
+    def asString: String = fs.foldLeft(f.toString)(_ + _.toString)
 
     def asQuotedString: Option[String] = if (fs.isEmpty) f.asQuotedString else None
   }
@@ -256,7 +256,7 @@ class RuleParser extends JavaTokenParsers {
     * @param e the expression inside the parentheses
     */
   case class ExprParentheses(e: Expr) extends ExprFactor {
-    def toRPN = e.toRPN
+    def toRPN: List[String] = e.toRPN
 
     def asString: String = s"($e)"
 

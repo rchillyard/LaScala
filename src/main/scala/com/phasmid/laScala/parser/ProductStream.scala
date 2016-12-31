@@ -392,7 +392,7 @@ object CsvParser {
     * The lax parser is essentially the same as the defaultParser.
     * However, if it cannot match on of those patterns, it will succeed, returning the string as is.
     */
-  private val laxParser = defaultParser :^ (s => s)
+//  private val laxParser = defaultParser :^ (s => s)
   private val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
   private val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
   // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats
@@ -401,8 +401,8 @@ object CsvParser {
   // ISO 8601
   private val dateISO =
     """(?m)^(0[1-9]|1\d|2[0-8]|29(?=-\d\d-(?!1[01345789]00|2[1235679]00)\d\d(?:[02468][048]|[13579][26]))|30(?!-02)|31(?=-0[13578]|-1[02]))-(0[1-9]|1[0-2])-([12]\d{3}) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$""".r
-  private val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
-  private val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
+//  private val date4 = """(?m)^\d{4}-(((0[13578]|1[02])-(0[1-9]|[12]\d|3[0-1]))|(02-(0[1-9]|[12]\d))|((0[469]|11)-(0[1-9]|[12]\d|30)))$""".r
+//  private val date5 = """(^(((\d\d)(([02468][048])|([13579][26]))-02-29)|(((\d\d)(\d\d)))-((((0\d)|(1[0-2]))-((0\d)|(1\d)|(2[0-8])))|((((0[13578])|(1[02]))-31)|(((0[1,3-9])|(1[0-2]))-(29|30)))))\s(([01]\d|2[0-3]):([0-5]\d):([0-5]\d))$)""".r
   private val date6 = """(?mi)^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$""".r
   private val date7 = """^(\d{1,2}-\w{3}-\d{2})$""".r
 
@@ -419,10 +419,10 @@ object CsvParser {
     }, Failure(new Exception(s""""$s" cannot be parsed as date""")))
   }
 
-  val quoted = """\"([^"]*)\"""".r
-  val whole = """(\d+)""".r
-  val floating = """-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
-  val truth = """(?i)^([ty]|true|yes)$""".r
-  val untruth = """(?i)^([fn]|false|no)$""".r
+  private val quoted = """\"([^"]*)\"""".r
+  private val whole = """(\d+)""".r
+  private val floating = """-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?[fFdD]?""".r
+  private val truth = """(?i)^([ty]|true|yes)$""".r
+  private val untruth = """(?i)^([fn]|false|no)$""".r
 }
 

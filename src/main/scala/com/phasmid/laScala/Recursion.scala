@@ -57,7 +57,7 @@ object Recursion {
     * @return   a value of R.
     */
   final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], r: R): R =
-    countRecurse[T, S, R, Int]((p, t) => f(t), g, h, q)(ts, 0, r)
+    countRecurse[T, S, R, Int]((_, t) => f(t), g, h, q)(ts, 0, r)
 
   /**
     * Generic tail-recursive method with counting.

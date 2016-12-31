@@ -22,7 +22,7 @@ object FP_Cross {
     /**
       * Method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
       *
-      * NOTE: not implemented for 2.10
+      * NOTE: this implementation (for 2.10) simply invokes the non-optimized version of map2
       *
       * @param ty1     a Try[T] value
       * @param ty2     a Try[T] value passed as call-by-name
@@ -33,12 +33,11 @@ object FP_Cross {
       * @tparam U the result type
       * @return a Try[U]
       */
-    def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] = ???
+    def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+      FP.map2(ty1,ty2)(f)
 
   /**
     * Method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
-    *
-    * NOTE: not implemented for 2.10
     *
     * @param ty1     a Try[T] value
     * @param ty2     a Try[T] value passed as call-by-name
@@ -51,5 +50,6 @@ object FP_Cross {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] = ???
+  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+    FP.map3(ty1,ty2,ty3)(f)
 }

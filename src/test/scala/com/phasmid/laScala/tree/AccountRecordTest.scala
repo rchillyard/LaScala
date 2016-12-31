@@ -98,7 +98,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
     checkTreeFromResource(TestDetailsMiniSample, 9, 3, 5, 9, 9)
   }
   // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
-  it should "work for sampleTree.txt" in {
+  ignore should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
     }
@@ -114,15 +114,15 @@ class AccountRecordTest extends FlatSpec with Matchers {
       checks match {
         case Success((_,_,_,_,_,_,tree,mptt)) =>
           val nodes: Seq[Node[AccountRecord]] = Spy.noSpy(tree.nodeIterator().toList)
-          val (leafNodes,branchNodes) = nodes partition (_.isLeaf)
+          val (_,branchNodes) = nodes partition (_.isLeaf)
           val trues = for (n <- branchNodes; v <- n.get) yield Spy.noSpy(tree.includesValue(v))
           val allTrue = trues.forall(_ == true)
           allTrue shouldBe true
           val values = Spy.noSpy(tree.iterator().toList)
           val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key),tree.includes(x, y))))
           Spy.log(s"checking for disagreement between tree and MPTT:")
-          val badResults = results filter (!_._3)
           // XXX: The following part of the test only works with Scala 2.11
+//          val badResults = results filter (!_._3)
 //          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
 //          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
 //          Spy.noSpy((badResults take 10) foreach (show _).tupled)

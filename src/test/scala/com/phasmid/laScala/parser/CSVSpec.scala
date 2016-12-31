@@ -108,7 +108,9 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     }
   }
   "sample.csv" should "be (String,Int) stream using URI" in {
-    val iWts = CSV[(String, Int)](getClass.getResource("sample.csv").toURI).tuples
+    val sample = getClass.getResource("sample.csv")
+    sample should not be null
+    val iWts = CSV[(String, Int)](sample.toURI).tuples
     iWts.head match {
       case (q, y) => assert(q == "Sunday" && y == 1)
     }
@@ -142,6 +144,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")
+    url should not be null
     val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
@@ -162,6 +165,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   it should "yield maps from local URL" in {
     val url = getClass.getResource("quotes.csv")
+    url should not be null
     val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val xWmsy = csv.asMaps
     inside(xWmsy) {
