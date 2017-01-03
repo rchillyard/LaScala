@@ -230,4 +230,30 @@ class RationalSpec extends FlatSpec with Matchers {
     r"-1/-2147483648".signum shouldBe 1
     r"2147483647/0" shouldBe Rational.infinity
   }
+
+  behavior of "Rational as Fractional"
+
+  val f = implicitly[Fractional[Rational]]
+
+  it should "support zero" in {
+    f.zero shouldBe Rational.zero
+  }
+  it should "support one" in {
+    f.one shouldBe Rational.one
+  }
+  it should "support toInt" in {
+    f.fromInt(0) shouldBe Rational.zero
+    f.fromInt(1) shouldBe Rational.one
+    f.fromInt(-1) shouldBe Rational.one.negate
+  }
+  it should "support plus" in {
+    f.plus(Rational.one,Rational.one) shouldBe Rational(2)
+    f.plus(Rational.zero,Rational.one) shouldBe Rational.one
+    f.plus(Rational.zero,Rational.zero) shouldBe Rational.zero
+  }
+  it should "support times" in {
+    f.times(Rational.one,Rational.one) shouldBe Rational.one
+    f.times(Rational.one,Rational.zero) shouldBe Rational.zero
+    f.times(Rational.zero,Rational.zero) shouldBe Rational.zero
+  }
 }

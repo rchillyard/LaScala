@@ -125,7 +125,7 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
       }
       for (xWs <- FP.sequence(xWys.toSeq)) yield xWs.toMap
     }
-    FP.sequence(tuples map { t => m(t) })
+    FP.sequence(tuples map m)
   }
 }
 
@@ -138,15 +138,15 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
     * @param s the (row/line) String to be parsed
     * @return a Option[X]
     */
-  def stringToTuple(f: String => Try[Scalar])(s: String): Try[X] = stringToTryTuple(f)(s)
+  def stringToTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = stringToTryTuple(f, allowPartial)(s)
 
   protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
   protected def headerRow: String
 
   // CONSIDER inlining this method
-  private def stringToTryTuple(f: String => Try[Scalar])(s: String): Try[X] = {
-    def rowIsCompatible(ws: List[String]): Boolean = header.isEmpty || ws.size == header.size
+  private def stringToTryTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = {
+    def rowIsCompatible(ws: List[String]): Boolean = header.isEmpty || ws.size == header.size || allowPartial && ws.size<header.size
     for {
       ws <- parser.parseRow(s)
       // Note that the following will result in a Failure[NoSuchElementException] if the filter yields false
@@ -236,7 +236,9 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], o
     case Failure(t) => carper(s"failure: $t"); Seq[String]()
   })
 
-  def tuples: Stream[X] = for (t <- getStream map stringToTuple { x => Success(x) }; x <- t.toOption) yield x
+  def tuplesPartial(allowPartial: Boolean = false): Stream[X] = for (t <- getStream map stringToTuple( x => Success(x), allowPartial); x <- t.toOption) yield x
+
+  def tuples: Stream[X] = tuplesPartial()
 
   def getStream: Stream[String] = if (optionalHeader.isEmpty) input.tail else input
 
