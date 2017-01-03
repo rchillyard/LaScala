@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.math.BigDecimal
 
+
 /**
   * A simple Rational type for developers not depending on Spire or something like that.
   * This grew out of a class exercise so is not the last word in sophistication.
@@ -149,6 +150,8 @@ case class Rational(n: Long, d: Long) extends Ordered[Rational] {
     */
   def signum: Int = math.signum(n).toInt
 
+  def isNaN: Boolean = isZero && isInfinity
+
   def isWhole: Boolean = d == 1L
 
   def isZero: Boolean = n == 0L
@@ -172,8 +175,24 @@ object Rational {
 
   // Object methods required by the operators defined for Rational
 
+  /**
+    * Method to add two Rational objects together.
+    * The order of the parameters is immaterial.
+    *
+    * @param x one of the Rationals
+    * @param y the other Rational
+    * @return a new Rational which is the sum of x and y
+    */
   def plus(x: Rational, y: Rational): Rational = normalize(x.n * y.d + x.d * y.n, x.d * y.d)
 
+  /**
+    * Method to multiply two Rational objects together.
+    * The order of the parameters is immaterial.
+    *
+    * @param x one of the Rationals
+    * @param y the other Rational
+    * @return a new Rational which is the product of x and y
+    */
   def times(x: Rational, y: Rational): Rational = normalize(x.n * y.n, x.d * y.d)
 
   // Method required by the Ordered.compare method (above)
@@ -276,15 +295,14 @@ object Rational {
     */
   def apply(x: String): Rational = {
     val rRat = """^\s*(-?\d+)\s*(\/\s*(-?\d+)\s*)?$""".r
-    val rDec = """^-?(\d|(\d+,?\d+))*(\.\d+)?(e\d+)?$""".r
+    val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
-      // XXX I don't understand why we need this first line -- but it IS necessary
+      case rRat(n) => Rational(n.toLong)
+      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
       case rRat(n, _, null) => Rational(n.toLong)
       case rRat(n, _, d) => normalize(n.toLong, d.toLong)
-      case rRat(n) => Rational(n.toLong)
-      case rDec(w, _, f, null) => Rational(BigDecimal.apply(w + f))
-      // FIXME implement properly the case where the fourth component is "eN"
-      case rDec(w, _, f, e) => val b = BigDecimal.apply(w + f + e); Rational(b)
+      case rDec(s, w, _, f, null) => Rational(BigDecimal.apply(s + w + f))
+      case rDec(s, w, _, f, e) => Rational(BigDecimal.apply(s + w + f + e))
       case _ => throw new RationalException(s"invalid rational expression: $x")
     }
   }
@@ -304,7 +322,6 @@ object Rational {
         val f = math.signum(d)
         apply(f * n / g, f * d / g)
     }
-
   }
 
   /**
@@ -351,7 +368,7 @@ object Rational {
     */
   trait RationalIsFractional extends Fractional[Rational] {
 
-    //Members declared in scala.math.Numeric
+    // Members declared in scala.math.Numeric -- see super methods for scaladoc
 
     def plus(x: Rational, y: Rational): Rational = x + y
 

@@ -67,6 +67,9 @@ class RationalSpec extends FlatSpec with Matchers {
   it should "be one" in {
     Rational(1) shouldBe Rational.one
   }
+  it should "be one as a String" in {
+    Rational("1") shouldBe Rational.one
+  }
   it should "be positive" in {
     Rational.one.signum shouldBe 1
   }
@@ -214,8 +217,9 @@ class RationalSpec extends FlatSpec with Matchers {
     r should be(Rational(1, 10))
   }
   it should "work for 1.0e6" in {
-    val r = Rational("1.0e6")
-    r should be(Rational(10).power(6))
+    Rational("1.0e6") should be(Rational(10).power(6))
+    Rational("1.0E6") should be(Rational(10).power(6))
+    Rational("-1.0E6") should be(Rational(10).power(6).negate)
   }
   "sorting" should "work" in {
     val r = List(Rational(1, 2), Rational(2, 3), Rational(1, 3))
@@ -241,7 +245,7 @@ class RationalSpec extends FlatSpec with Matchers {
   it should "support one" in {
     f.one shouldBe Rational.one
   }
-  it should "support toInt" in {
+  it should "support fromInt" in {
     f.fromInt(0) shouldBe Rational.zero
     f.fromInt(1) shouldBe Rational.one
     f.fromInt(-1) shouldBe Rational.one.negate
@@ -255,5 +259,27 @@ class RationalSpec extends FlatSpec with Matchers {
     f.times(Rational.one,Rational.one) shouldBe Rational.one
     f.times(Rational.one,Rational.zero) shouldBe Rational.zero
     f.times(Rational.zero,Rational.zero) shouldBe Rational.zero
+//    an [RationalException] should be thrownBy f.times(Rational(Long.MaxValue),2)
+  }
+  it should "support div" in {
+    f.div(Rational.one,Rational.one) shouldBe Rational.one
+    f.div(Rational.one,Rational.zero) shouldBe Rational.infinity
+    f.div(Rational.zero,Rational.one) shouldBe Rational.zero
+    f.div(Rational.zero, Rational.zero).isNaN shouldBe true
+  }
+  it should "support compare" in {
+    f.compare(Rational.one,Rational.one) shouldBe 0
+    f.compare(Rational.one,Rational.zero) shouldBe 1
+    f.compare(Rational.zero,Rational.one) shouldBe -1
+    f.compare(Rational.zero, Rational.zero) shouldBe 0
+  }
+  it should "support toLong" in {
+    f.toLong(Rational.one) shouldBe 1L
+    an [RationalException] should be thrownBy f.toLong(Rational.half)
+  }
+  it should "support toInt" in {
+    f.toInt(Rational.one) shouldBe 1L
+    an [RationalException] should be thrownBy f.toInt(Rational.half)
+    an [RationalException] should be thrownBy f.toInt(Rational(Long.MaxValue))
   }
 }
