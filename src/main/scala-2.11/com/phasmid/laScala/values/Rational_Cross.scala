@@ -7,6 +7,6 @@ package com.phasmid.laScala.values
   */
 object Rational_Cross {
 
-  def isExactDouble(r: Rational): Boolean = r.toBigDecimal.isExactDouble
+  def isExactDouble[N : FiniteIntegral](r: Rational[N]): Boolean = r.toBigDecimal.isExactDouble
 
 }

@@ -99,16 +99,16 @@ object Orderable {
 
   implicit object OrderableDouble extends OrderableDouble
 
-  trait OrderableRational extends Orderable[Rational] {
-    def unit(x: Rational): Rational = x
+  trait OrderableRational extends Orderable[LongRational] {
+    def unit(x: LongRational): LongRational = x
 
     def fromString(s: String)(implicit pattern: String = "") = Try(Rational(s))
 
-    def viaLookup(k: String, f: String => Option[Rational]): Try[Rational] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
+    def viaLookup(k: String, f: String => Option[LongRational]): Try[LongRational] = optionToTry(f(k), new OrderableException(s"$k is not defined"))
 
-    def zero: Rational = Rational.zero
+    def zero: LongRational = Rational.zero
 
-    def compare(x: Rational, y: Rational): Int = x.compare(y)
+    def compare(x: LongRational, y: LongRational): Int = x.compare(y)
   }
 
   implicit object OrderableRational extends OrderableRational

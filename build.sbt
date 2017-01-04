@@ -2,7 +2,7 @@ organization := "com.phasmid"
 
 name := "lascala"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0"
 
 scalaVersion := "2.11.8"
 crossScalaVersions := Seq("2.10.6","2.11.8")

@@ -1,6 +1,7 @@
 package com.phasmid.laScala
 
 import scala.collection.generic.CanBuildFrom
+import scala.language.higherKinds
 
 /**
   * With appreciation to evan058 at StackOverflow
@@ -11,7 +12,7 @@ import scala.collection.generic.CanBuildFrom
   *
   * Created by scalaprof on 1/1/17.
   */
-object QuickSort {
+object Quicksort {
   def qsort[E, D[E] <: Seq[E]]
   (s: D[E])(c: (E, E) => Int)
   (implicit cbf: CanBuildFrom[D[E], E, D[E]]): D[E] =

@@ -202,9 +202,9 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class RationalScalar(x: Rational, source: Any) extends BaseRationalScalar(x, source)
+case class RationalScalar(x: LongRational, source: Any) extends BaseRationalScalar(x, source)
 
-abstract class BaseRationalScalar(x: Rational, source: Any) extends BaseScalar(x, source) {
+abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1, x2).toOption) yield y
 
   // TODO this also needs fixing like DoubleScalar
@@ -347,7 +347,7 @@ object DoubleScalar {
 }
 
 object RationalScalar {
-  def apply(x: Rational): RationalScalar = RationalScalar(x, x)
+  def apply(x: LongRational): RationalScalar = RationalScalar(x, x)
 }
 
 object StringScalar {
@@ -374,7 +374,7 @@ object Scalar {
 
   implicit def apply(x: Double): Scalar = DoubleScalar(x, x)
 
-  implicit def apply(x: Rational): Scalar = RationalScalar(x, x)
+  implicit def apply(x: LongRational): Scalar = RationalScalar(x, x)
 
   implicit def apply(x: String): Scalar = x match {
     case quoted(z) => QuotedStringScalar(z, x)
@@ -397,7 +397,7 @@ object Scalar {
     case b: Boolean => Try(apply(b))
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
-    case r: Rational => Try(apply(r))
+    case r: LongRational @unchecked => Try(apply(r))
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
     // XXX shouldn't really need the following...

@@ -11,11 +11,13 @@ import scala.language.postfixOps
   */
 class RationalSpec extends FlatSpec with Matchers {
 
+  import com.phasmid.laScala.values.FiniteIntegral.LongIsFiniteIntegral
+
   "0" should "be OK" in {
-    Rational(0)
+    Rational(0) should not be null
   }
   it should "use implicit conversion" in {
-    val r: Rational = 0
+    val r: Rational[Long] = 0
     r shouldBe Rational.zero
   }
   it should "be zero" in {
@@ -34,7 +36,7 @@ class RationalSpec extends FlatSpec with Matchers {
     Rational.zero.toBigDecimal shouldBe BigDecimal(0)
   }
   it should "equal r when added to r" in {
-    val r = Rational(22, 7) // we could choose anything here
+    val r = Rational[Long](22, 7) // we could choose anything here
     (Rational.zero + r) should be(r)
   }
   it should "equal infinity when r-interpolator has 0 denominator" in {
@@ -92,7 +94,7 @@ class RationalSpec extends FlatSpec with Matchers {
     Rational.one.toBigDecimal shouldBe BigDecimal(1)
   }
   it should "equal r when multiplied by r" in {
-    val r = Rational(22, 7) // we could choose anything here
+    val r = Rational[Long](22, 7) // we could choose anything here
     (Rational.one * r) should be (r)
   }
   it should "be -1 when negated" in {
@@ -104,6 +106,7 @@ class RationalSpec extends FlatSpec with Matchers {
   "power" should "work" in {
     val ten = Rational.ten
     ten.power(2) should equal(Rational(100))
+    import FiniteIntegral.LongIsFiniteIntegral
     ten.power(10) should equal(Rational(10000000000L))
   }
 
@@ -135,8 +138,8 @@ class RationalSpec extends FlatSpec with Matchers {
     (Rational.ten ^ 6) should be(Rational(1000000))
   }
   it should "barf when raised to 10th power" in {
-    val thrown = the[RationalException] thrownBy Rational.ten.power(10).toInt
-    thrown.getMessage should equal("10000000000 is too big for Int")
+    val thrown = the[FiniteIntegralException] thrownBy Rational.ten.power(10).toInt
+    thrown.getMessage should equal("10000000000 is out of range for class scala.Int$")
   }
 
   "2/3" should "be OK" in {
@@ -175,7 +178,7 @@ class RationalSpec extends FlatSpec with Matchers {
 //  }
 
   "2/4" should "not be OK" in {
-    val thrown = the[IllegalArgumentException] thrownBy Rational(2, 4)
+    val thrown = the[IllegalArgumentException] thrownBy new Rational(2, 4)
     thrown.getMessage should equal("requirement failed: Rational(2,4): arguments have common factor: 2")
   }
   it should "be OK via normalize" in {
@@ -237,7 +240,7 @@ class RationalSpec extends FlatSpec with Matchers {
 
   behavior of "Rational as Fractional"
 
-  val f = implicitly[Fractional[Rational]]
+  val f: Fractional[Rational[Long]] = implicitly[Fractional[Rational[Long]]]
 
   it should "support zero" in {
     f.zero shouldBe Rational.zero
@@ -275,11 +278,12 @@ class RationalSpec extends FlatSpec with Matchers {
   }
   it should "support toLong" in {
     f.toLong(Rational.one) shouldBe 1L
-    an [RationalException] should be thrownBy f.toLong(Rational.half)
+    val half: Rational[Long] = Rational.half
+    an [RationalException] should be thrownBy f.toLong(half)
   }
   it should "support toInt" in {
     f.toInt(Rational.one) shouldBe 1L
     an [RationalException] should be thrownBy f.toInt(Rational.half)
-    an [RationalException] should be thrownBy f.toInt(Rational(Long.MaxValue))
+    an [FiniteIntegralException] should be thrownBy f.toInt(Rational(Long.MaxValue))
   }
 }

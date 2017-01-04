@@ -90,7 +90,7 @@ case class DoubleValue(x: Double, source: Any) extends BaseDoubleScalar(x, sourc
   * @param x      the Double value
   * @param source the source (which could, conceivably, be a String)
   */
-case class RationalValue(x: Rational, source: Any) extends BaseRationalScalar(x, source) with Value
+case class RationalValue(x: LongRational, source: Any) extends BaseRationalScalar(x, source) with Value
 /**
   * Value which is natively a String. Such a value, providing it is formatted appropriately, can be converted to Int or
   * Double by invoking asValuable[Int] or asValuable[Double], respectively.
@@ -154,7 +154,7 @@ object DoubleValue {
 }
 
 object RationalValue {
-  def apply(x: Rational): RationalValue = RationalValue(x, x)
+  def apply(x: LongRational): RationalValue = RationalValue(x, x)
 }
 
 object StringValue {
@@ -185,7 +185,7 @@ object Value {
 
   implicit def apply(x: Double): Value = DoubleValue(x, x)
 
-  implicit def apply(x: Rational): Value = RationalValue(x, x)
+  implicit def apply(x: LongRational): Value = RationalValue(x, x)
 
   implicit def apply(x: String): Value = x match {
     case quoted(z) => QuotedStringValue(z, x)
@@ -211,7 +211,7 @@ object Value {
     case b: Boolean => Try(apply(b))
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
-    case r: Rational => Try(apply(r))
+    case r: LongRational @unchecked  => Try(apply(r))
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
     case xs: Seq[Any] => Try(apply(xs))

@@ -98,9 +98,11 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   "RationalValue" should "work" in {
     import Rational.RationalHelper
+    import FiniteIntegral.LongIsFiniteIntegral
     val x = Value(r"1/2")
-    x.source shouldBe Rational.half
-    x.asFractional[Rational] should matchPattern { case Some(Rational.half) => }
+    val half = Rational.half
+    x.source shouldBe half
+    x.asFractional[LongRational] should matchPattern { case Some(`half`) => }
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(0.5) => }
@@ -108,7 +110,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   it should "fail as a String" in {
     val x = Value("1/2")
     x.source shouldBe "1/2"
-    x.asFractional[Rational] should matchPattern { case None => }
+    x.asFractional[LongRational] should matchPattern { case None => }
   }
   it should "work implicitly" in {
     val x: Value = 1.0

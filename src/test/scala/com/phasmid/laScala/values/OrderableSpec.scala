@@ -28,7 +28,7 @@ class OrderableSpec extends FlatSpec with Matchers {
   }
   "1/2" should "result in 1/2" in {
     implicit val pattern = ""
-    val orderable = implicitly[Orderable[Rational]]
+    val orderable = implicitly[Orderable[LongRational]]
     val xt = orderable.fromString("1/2")
     xt should matchPattern { case Success(Rational(1, 2)) => }
     xt.get.compare(1) shouldBe -1

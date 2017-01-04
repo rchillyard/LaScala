@@ -6,7 +6,7 @@ import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.tree.AbstractBinaryTree.isOverlap
 
 import scala.annotation.tailrec
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 
 /**
   * Trait which models the tree-like aspects of a tree
@@ -827,9 +827,9 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   */
 abstract class Punctuation(x: String) extends Node[Nothing] {
 
-  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // FIXME implement me
+  def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 
-  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ??? // FIXME
+  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ??? // TODO implement me
 
   def includes[B >: Nothing](node: Node[B]): Boolean = false
 
