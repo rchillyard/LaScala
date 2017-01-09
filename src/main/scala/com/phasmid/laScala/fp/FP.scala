@@ -1,5 +1,6 @@
 package com.phasmid.laScala.fp
 
+import scala.collection.immutable.ListMap
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, postfixOps}
 import scala.util._
@@ -603,4 +604,13 @@ object FP {
   def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
   { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
 
+  /**
+    * Method to create an (immutable) Map from a sequence of tuples, such that order is preserved
+    *
+    * @param vKs a sequence of (K,V) tuples
+    * @tparam K the underlying "key" type
+    * @tparam V the underlying "value" type
+    * @return a ListMap[K,V]
+    */
+  def toMap[K,V](vKs: Seq[(K,V)]): Map[K,V] = ListMap(vKs:_*)
 }

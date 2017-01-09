@@ -143,6 +143,7 @@ class SpySpec extends FlatSpec with Matchers {
   }
   behavior of "Spy.log"
   it should "work with explicit spy func" in {
+    import Spy._
     Spy.spying = true
     var spyMessage: String = ""
     implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
