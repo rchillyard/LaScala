@@ -4,15 +4,25 @@ import java.io.PrintStream
 
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.concurrent.Future
 import scala.language.implicitConversions
+import scala.util.{Failure, Success}
 
 /**
   * This class and its related object provide a functional-programming style (if somewhat quick-and-dirty) spy feature for logging (or otherwise peeking at) the values of Scala
   * expressions.
   *
-  * While this mechanism (by default) logs values using SLF4J, it does so in a functional style. You do not have to break up your functional expressions to write logging statements.
+  * While this mechanism (by default) logs values using SLF4J, it does so in a functional style.
+  * You do not have to break up your functional expressions to write logging statements.
   *
-  * In order, to use it with an explicitly defined spyFunc, please see the way it's done in SpySpec.
+  * If you just want to slip in a quick invocation of Spy.spy, you will need to provide an implicit spyFunc.
+  * The proper simple way to do this is to declare a logger as follows:
+  * implicit val logger = Spy.getLogger(getClass)
+  *
+  * There's even an (improper) default logger based on the Spy class itself which you can use simply by adding this:
+  * import Spy._
+  *
+  * In order to use it with an explicitly defined spyFunc, please see the way it's done in SpySpec.
   *
   * By default, spying is turned on so, if you want to turn it off for a run, you must set spying to false.
   *
@@ -65,6 +75,25 @@ object Spy {
       else
         x match {
           case () => w
+          // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
+          // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
+          case s: Stream[_] => s"$w: [Stream showing at most 5 items] ${s.take(5).toList}"
+          // XXX: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
+          case Success(z) =>
+            val sb = new StringBuilder("")
+
+            implicit def spyFunc(s: String): Spy = Spy(sb.append(s"explicit spy: $s\n"))
+
+            spy(s"$w: Success", z, b)
+            sb.toString
+          // XXX: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
+          case Failure(t) => s"$w: failed with ${t.getLocalizedMessage}"
+          // XXX: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
+          case f: Future[_] =>
+            import scala.concurrent.ExecutionContext.Implicits.global
+            f.onComplete(spy("$w: Future", _, b))
+            s"$w: to be provided in the future"
+          // XXX: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
           case _ => s"$w: $x"
         }
       spyFunc(msg)
@@ -104,6 +133,11 @@ object Spy {
     * The standard prefix for spy messages: "spy: "
     */
   private val prefix = "spy: "
+
+  /**
+    * For really quick-and-dirty spying, you can use this default Logger simply by importing Spy._
+    */
+  implicit val defaultLogger: Logger = getLogger(getClass)
 
   /**
     * This is the default spy function

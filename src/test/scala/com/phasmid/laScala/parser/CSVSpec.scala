@@ -80,13 +80,22 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (x, y) => assert(x == 3.0 && y == 5.0)
     }
   }
-  it should "convert into maps properly" in {
+  it should "convert into maps properly (1)" in {
     val zWmsy = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).asMaps
     zWmsy should matchPattern { case Success(_) => }
     inside(zWmsy) {
       case Success(zWms) =>
         zWms.head should be(Map("x" -> IntScalar(3), "y" -> IntScalar(5)))
         zWms(1) should be(Map("x" -> IntScalar(8), "y" -> IntScalar(13)))
+    }
+  }
+  it should "convert into maps properly (2)" in {
+    val zWmsy = CSV[(Int, Int)](Stream("y,x", "3,5", "8,13")).asMaps
+    zWmsy should matchPattern { case Success(_) => }
+    inside(zWmsy) {
+      case Success(zWms) =>
+        zWms.head should be(Map("y" -> IntScalar(3), "x" -> IntScalar(5)))
+        zWms(1) should be(Map("y" -> IntScalar(8), "x" -> IntScalar(13)))
     }
   }
   """"3,5.0", "8,13.5"""" should "be (Int,Double) stream" in {
