@@ -33,7 +33,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render correctly" in {
     val x: Scalar = true
-    x.render shouldBe "true"
+    x.render() shouldBe "true"
     BooleanScalar.setDefaultFormat("%B")
     // TODO well, this is something of a mystery why this is failing.
 //    x.render shouldBe "TRUE"
@@ -51,7 +51,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render correctly" in {
     val x: Scalar = 1
-    x.render shouldBe "1"
+    x.render() shouldBe "1"
   }
   "StringScalar" should "be Some where string is numeric" in {
     val x = Scalar("1")
@@ -99,7 +99,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Scalar(""""1"""")
-    x.render shouldBe """"1""""
+    x.render() shouldBe """"1""""
     x.source shouldBe """"1""""
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
@@ -118,7 +118,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render correctly" in {
     val x: Scalar = 1.0
-    x.render shouldBe "1.000000"
+    x.render() shouldBe "1.000000"
     x.renderFormatted("%5.2f") shouldBe " 1.00"
   }
   "RationalScalar" should "work" in {
@@ -140,7 +140,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "render correctly" in {
     import Rational.RationalHelper
     val x: Scalar = r"1/2"
-    x.render shouldBe "0.5"
+    x.render() shouldBe "0.5"
     x.renderFormatted("%3.1f") shouldBe "0.5"
   }
   "DateScalar" should "work" in {
@@ -167,7 +167,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "render correctly" in {
     implicit val pattern = ""
     val x = DateScalar("2016-07-10")
-    x.render shouldBe "2016-07-10"
+    x.render() shouldBe "2016-07-10"
   }
   "attribute map" should "work" in {
     val m: Map[String, Scalar] = Map("k" -> Scalar("k"), "1" -> Scalar(1), "b" -> Scalar(true), "1.0" -> Scalar(1.0))

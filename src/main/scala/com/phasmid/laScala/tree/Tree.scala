@@ -462,19 +462,22 @@ trait Branch[+A] extends Tree[A] {
     r.toIterator
   }
 
+
   /**
     * Create a String which represents this Node and its subtree
     *
     * XXX not tail-recursive.
     * TODO make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
     *
-    * @return an appropriate String
+    * @param indent the number of tabs before output should start on a new line.
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    * @return a String.
     */
-  def render(indent: Int): String = {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
     val result = new StringBuilder
     val nodeVal = get match {
       case Some(a: Renderable) => a.render(indent)
-      case Some(a) => s"${Renderable.prefix(indent)}$a"
+      case Some(a) => s"${tab(indent)}$a"
       case _ => ""
     }
     result.append(s"$nodeVal\n")
@@ -497,18 +500,6 @@ trait IndexedNode[A] extends Node[A] with TreeIndex
   * @tparam A the underlying type of this Branch
   */
 trait IndexedTree[A] extends IndexedNode[A] with Tree[A]
-
-/**
-  * Trait which defines behavior of something which can be rendered as a String
-  */
-trait Renderable {
-  /**
-    * Create a String which represents this Renderable object in a manner that is convenient for showing a whole tree.
-    *
-    * @return an appropriate String
-    */
-  def render(indent: Int = 0): String
-}
 
 /**
   * Trait to define a method for building a tree from a Node.
@@ -700,9 +691,16 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex with IndexedNode[A] {
   override def depth: Int = 1
 
-  override def render(indent: Int): String = value match {
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @param indent the number of tabs before output should start on a new line.
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    * @return a String.
+    */
+  override def render(indent: Int)(implicit tab: (Int) => Prefix): String = value match {
     case renderable: Renderable => renderable.render(indent)
-    case _ => s"""${Renderable.prefix(indent)}$value [$lIndex:$rIndex]"""
+    case _ => s"""${tab(indent)}$value [$lIndex:$rIndex]"""
   }
 
   override def toString: String = s"""L("$value")""" + map2(lIndex, rIndex)(_ + ":" + _).getOrElse("")
@@ -775,9 +773,16 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 
   def includesValue[B >: A](b: B): Boolean = a == b
 
-  def render(indent: Int): String = a match {
+  /**
+    * Create a String which represents this Node and its subtree
+    *
+    * @param indent the number of tabs before output should start on a new line.
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    * @return a String.
+    */
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = a match {
     case renderable: Renderable => renderable.render(indent)
-    case _ => s"${Renderable.prefix(indent)}$a"
+    case _ => s"${tab(indent)}$a"
   }
 
   /**
@@ -817,7 +822,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
     *
     * @return an appropriate String
     */
-  def render(indent: Int) = s"${Renderable.prefix(indent)}ø"
+  def render(indent: Int)(implicit tab: (Int) => Prefix) = s"${tab(indent)}ø"
 }
 
 /**
@@ -843,7 +848,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 
   def get: Option[Nothing] = None
 
-  def render(indent: Int): String = x
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = x
 
   def depth: Int = 0
 }
@@ -853,10 +858,6 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   * There should be no need for a GeneralTree to reference an Empty but it might happen.
   */
 case object Empty extends AbstractEmpty
-
-object Renderable {
-  def prefix(indent: Int): String = "  " * indent
-}
 
 object AbstractLeaf {
   def unapply[A](t: Node[A]): Option[A] = t match {

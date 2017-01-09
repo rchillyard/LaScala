@@ -3,6 +3,7 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import com.phasmid.laScala.{Prefix, Renderable}
 import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
@@ -35,7 +36,7 @@ import scala.util._
   * Created by scalaprof on 8/4/16.
   *
   */
-trait Scalar {
+trait Scalar extends Renderable {
   // TODO seal this again once Value is in this module
 
   /**
@@ -101,9 +102,11 @@ trait Scalar {
     * Method to show this Scalar simply, obviously and elegantly, using render(String) with the value of defaultFormat.
     * If you're interested in the Scalar wrapper type, use toString.
     *
-    * @return a String representing the value which, typically, does not include the wrapper type.
+    * @param indent the number of tabs before output should start on a new line.
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    * @return a String.
     */
-  def render: String = renderFormatted(defaultFormat)
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent)+renderFormatted(defaultFormat)
 
   /**
     * Method to show this Scalar simply, obviously and elegantly.
@@ -144,7 +147,7 @@ abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) 
 
   override def asFractional[X: Fractional]: Option[X] = Some(implicitly[Fractional[X]].fromInt(x))
 
-  override def toString = s"IntScalar: $render"
+  override def toString = s"IntScalar: ${render()}"
 
   override def defaultFormat: String = IntScalar.getDefaultFormat
 }
@@ -190,7 +193,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
     Some(x.asInstanceOf[X])
   }
 
-  override def toString = s"DoubleScalar: $render"
+  override def toString = s"DoubleScalar: ${render()}"
 
   override def defaultFormat: String = DoubleScalar.getDefaultFormat
 }
@@ -210,7 +213,7 @@ abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScal
   // TODO this also needs fixing like DoubleScalar
   override def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
 
-  override def toString = s"RationalScalar: $render"
+  override def toString = s"RationalScalar: ${render()}"
 
   override val defaultFormat = "%f"
 
@@ -237,7 +240,7 @@ abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, so
   // TODO this also needs fixing...
   override def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
 
-  override def toString = s"StringScalar: $render"
+  override def toString = s"StringScalar: ${render()}"
 
   def defaultFormat: String = null
 }
@@ -257,7 +260,7 @@ abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar
   // TODO create a concrete implicit object for OrderableString
   override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
 
-  override def toString = s"QuoteStringScalar: $render"
+  override def toString = s"QuoteStringScalar: ${render()}"
 
   def defaultFormat: String = null
 }
@@ -303,6 +306,7 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
   def asFractional[X: Fractional]: Option[X] = None
 
   def get: Any = value
+
 
   override def toString: String = getClass.getSimpleName + get.toString
 
