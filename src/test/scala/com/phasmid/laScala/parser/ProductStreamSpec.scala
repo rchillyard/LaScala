@@ -12,7 +12,7 @@ class ProductStreamSpec extends FlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
     val stream = Stream(Tuple1("Hello"), Tuple1("World!"))
     val c = ConcreteProductStream[Tuple1[String]](Header(Seq("word")),stream)
-    c.header shouldBe List("word")
+    c.header shouldBe Header(List("word"),false)
     val wts = c.tuples
     wts.size shouldBe 2
     wts.head match {
