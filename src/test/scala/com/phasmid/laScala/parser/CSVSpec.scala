@@ -18,7 +18,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   val defaultParser = CsvParser()
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
-    c.header shouldBe List("x")
+    c.header shouldBe Header(List("x"),false)
     val wts = c.tuples
     wts.head match {
       case Tuple1(s) => assert(s == "Hello")
@@ -154,14 +154,14 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")
     url should not be null
-    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", 104.48, _, 12.18) => }
   }
   it should "work from URL stream" in {
     val url = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=AAPL&f=nl1d1r&e=.csv")
-    val csv = CSV.apply[(String, Double, LocalDate, Double)](url, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](url, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", _, _, _) => }
@@ -175,7 +175,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   it should "yield maps from local URL" in {
     val url = getClass.getResource("quotes.csv")
     url should not be null
-    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Some(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV.apply[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val xWmsy = csv.asMaps
     inside(xWmsy) {
       case Success(xWms) =>
