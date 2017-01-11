@@ -56,6 +56,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   "CsvParser.parseElem" should "parse 1 as 1" in (CsvParser.defaultParser("1") should matchPattern { case Success(IntScalar(1, _)) => })
   it should "parse 1.0 as 1.0" in (CsvParser.defaultParser("1.0") should matchPattern { case Success(DoubleScalar(1.0, _)) => })
+  it should "parse TRUE as true" in (CsvParser.defaultParser("TRUE") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse true as true" in (CsvParser.defaultParser("true") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse false as false" in (CsvParser.defaultParser("false") should matchPattern { case Success(BooleanScalar(false, _)) => })
   it should "parse yes as yes" in (CsvParser.defaultParser("yes") should matchPattern { case Success(BooleanScalar(true, _)) => })

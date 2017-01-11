@@ -27,6 +27,10 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
+  it should "work from String form" in {
+    val x = Scalar("true")
+    x.asBoolean should matchPattern { case Some(true) => }
+  }
   it should "work implicitly" in {
     val x: Scalar = true
     x shouldBe BooleanScalar(true)

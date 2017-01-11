@@ -561,7 +561,8 @@ trait ValueOps[K, V] extends Ordering[V] {
   def getKeyFromValue(v: V): K
 
   /**
-    * Extract the key from a value v
+    * Extract the key from a value v but from a parent's point of view.
+    * I.e. the value here should match the parent key of any children of this node.
     *
     * @param v the value whose key we require
     * @return the key

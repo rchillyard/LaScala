@@ -228,7 +228,9 @@ abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScal
   * @param x      the String value
   * @param source the source (normally a String)
   */
-case class StringScalar(x: String, source: Any) extends BaseStringScalar(x, source)
+case class StringScalar(x: String, source: Any) extends BaseStringScalar(x, source) {
+  override def asBoolean: Option[Boolean] = Try(x.toBoolean).toOption
+}
 
 abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption

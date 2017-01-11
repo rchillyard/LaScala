@@ -319,7 +319,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       }
 
       val aux = FP.invert2(a)
-
+      Try(aux(2)(0)) should matchPattern{
+        case Success("ab") =>
+      }
       Try(aux(0)(2)) should matchPattern{
         case Failure(_) =>
       }
