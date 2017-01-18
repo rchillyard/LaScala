@@ -104,6 +104,8 @@ object Spy {
   /**
     * This method is used in development/debug phase to "see" a string while returning Unit.
     *
+    * It is recommended simply to import Spy._ before invoking this method.
+    *
     * CONSIDER renaming this method as debug and providing warn, info, etc. versions
     *
     * @param w       a String to be used as the prefix of the resulting message

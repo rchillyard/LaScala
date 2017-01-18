@@ -27,6 +27,12 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
+  it should "result from explicit BooleanScalar(String)" in {
+    val x = BooleanScalar("TRUE")
+    x.source shouldBe "TRUE"
+    x.asBoolean should matchPattern { case Some(true) => }
+    x.asValuable[Int] should matchPattern { case Some(1) => }
+  }
   it should "work from String form" in {
     val x = Scalar("true")
     x.asBoolean should matchPattern { case Some(true) => }
@@ -109,9 +115,16 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
-  "DoubleScalar" should "work" in {
+  "DoubleScalar" should "result from Scalar(Double)" in {
     val x = Scalar(1.0)
     x.source shouldBe 1.0
+    x.asBoolean should matchPattern { case None => }
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case Some(1.0) => }
+  }
+  it should "result from explicit DoubleScalar(String)" in {
+    val x = DoubleScalar("1.0")
+    x.source shouldBe "1.0"
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }

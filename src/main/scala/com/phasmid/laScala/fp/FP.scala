@@ -455,17 +455,6 @@ object FP {
   def lift7[T1, T2, T3, T4, T5, T6, T7, R](f: (T1, T2, T3, T4, T5, T6, T7) => R): (Try[T1], Try[T2], Try[T3], Try[T4], Try[T5], Try[T6], Try[T7]) => Try[R] = map7(_, _, _, _, _, _, _)(f)
 
   /**
-    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
-    *
-    * @param f the function
-    * @tparam T1 the type of the first parameter
-    * @tparam T2 the type of the second parameter
-    * @tparam R  the result type
-    * @return a curried function which takes the second parameter first
-    */
-  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = { t2 => { t1 => f(t1)(t2) } }
-
-  /**
     * TODO unit test
     *
     * A true "lift" method which takes a function f (T=>U) and returns a Try[T]=>Try[T]
@@ -530,6 +519,16 @@ object FP {
       else optionToTry(result)
   }
 
+  /**
+    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the second parameter first
+    */
+  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = { t2 => { t1 => f(t1)(t2) } }
 
   /**
     * This method inverts the order of the first three parameters of a three-(or more-)parameter curried function.
@@ -603,6 +602,39 @@ object FP {
     */
   def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
   { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam T6 the sixth parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, T6, R](f: Tuple6[T1, T2, T3, T4, T5, T6] => R): (T1, T2, T3, T4, T5, T6) => R = {
+    (x1, x2, x3, x4, x5, x6) => f(Tuple6(x1, x2, x3, x4, x5, x6))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam T6 the sixth parameter type
+    * @tparam T7 the seventh parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, T6, T7, R](f: Tuple7[T1, T2, T3, T4, T5, T6, T7] => R): (T1, T2, T3, T4, T5, T6, T7) => R = {
+    (x1, x2, x3, x4, x5, x6, x7) => f(Tuple7(x1, x2, x3, x4, x5, x6, x7))
+  }
 
   /**
     * Method to create an (immutable) Map from a sequence of tuples, such that order is preserved

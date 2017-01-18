@@ -331,6 +331,7 @@ class ScalarException(s: String, t: scala.Throwable = null) extends Exception(s,
 
 object BooleanScalar {
   def apply(x: Boolean): BooleanScalar = BooleanScalar(x, x)
+  def apply(x: String): BooleanScalar = BooleanScalar(x.toBoolean, x)
   def setDefaultFormat(format: String) { defaultFormat = format; println(s"BooleanScalar defaultFormat is now $defaultFormat")}
   def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%b"
@@ -338,7 +339,7 @@ object BooleanScalar {
 
 object IntScalar {
   def apply(x: Int): IntScalar = IntScalar(x, x)
-
+  def apply(x: String): IntScalar = IntScalar(x.toInt, x)
   def setDefaultFormat(format: String): Unit = {defaultFormat = format}
   def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%d"
@@ -346,7 +347,7 @@ object IntScalar {
 
 object DoubleScalar {
   def apply(x: Double): DoubleScalar = DoubleScalar(x, x)
-
+  def apply(x: String): DoubleScalar = DoubleScalar(x.toDouble, x)
   def setDefaultFormat(format: String): Unit = {defaultFormat = format}
   def getDefaultFormat: String = defaultFormat
   var defaultFormat: String = "%f"
@@ -354,6 +355,7 @@ object DoubleScalar {
 
 object RationalScalar {
   def apply(x: LongRational): RationalScalar = RationalScalar(x, x)
+  def apply(x: String): RationalScalar = RationalScalar(x)
 }
 
 object StringScalar {
