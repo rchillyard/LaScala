@@ -14,28 +14,28 @@ import scala.util.Success
 class OrderableSpec extends FlatSpec with Matchers {
   "1" should "result in 1" in {
     implicit val pattern = ""
-    val orderable = implicitly[Orderable[Int]]
+    val orderable = Orderable[Int]
     val xt = orderable.fromString("1")
     xt should matchPattern { case Success(1) => }
     xt.get.compare(1) shouldBe 0
   }
   "1L" should "result in 1L" in {
     implicit val pattern = ""
-    val orderable = implicitly[Orderable[Long]]
+    val orderable = Orderable[Long]
     val xt = orderable.fromString("1")
     xt should matchPattern { case Success(1L) => }
     xt.get.compare(1L) shouldBe 0
   }
   "1/2" should "result in 1/2" in {
     implicit val pattern = ""
-    val orderable = implicitly[Orderable[LongRational]]
+    val orderable = Orderable[LongRational]
     val xt = orderable.fromString("1/2")
     xt should matchPattern { case Success(Rational(1, 2)) => }
     xt.get.compare(1) shouldBe -1
   }
   "0.5" should "result in 0.5" in {
     implicit val pattern = ""
-    val orderable = implicitly[Orderable[Double]]
+    val orderable = Orderable[Double]
     val xt = orderable.fromString("0.5")
     xt should matchPattern { case Success(0.5) => }
     xt.get.compare(1) shouldBe -1

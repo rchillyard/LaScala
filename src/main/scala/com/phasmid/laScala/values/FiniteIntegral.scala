@@ -3,6 +3,9 @@ package com.phasmid.laScala.values
 import scala.math.Numeric.{BigIntIsIntegral, IntIsIntegral, LongIsIntegral}
 
 /**
+  * This trait represents the concept of an integral value defined over a finite range.
+  * Real-life examples include Long, Integer, Short, etc.
+  *
   * Created by scalaprof on 1/3/17.
   */
 trait FiniteIntegral[N] extends Integral[N] {
@@ -45,6 +48,11 @@ trait FiniteIntegral[N] extends Integral[N] {
   def fromString(s: String): N = fromBigInt(BigInt(s))
 }
 
+/**
+  * This trait defines the behavior required by Numeric[N]
+  *
+  * @tparam N the underlying integral type, such as Int, Long, BigInt
+  */
 trait FiniteIntegralNumeric[N] extends FiniteIntegral[N] {
 
   /**
@@ -61,12 +69,14 @@ trait FiniteIntegralNumeric[N] extends FiniteIntegral[N] {
     * @param x an N
     * @param y another N
     * @return the product of x and y or an exception
-    *         @throws FiniteIntegralException
+    *         @throws FiniteIntegralException if x*y is out of range of N
     */
   override def times(x: N, y: N): N = fromBigInt(toBigInt(x) * toBigInt(y))
 }
 
 object FiniteIntegral {
+
+  def apply[N : FiniteIntegral]: FiniteIntegral[N] = implicitly[FiniteIntegral[N]]
 
   /**
     * Trait which enables Integral objects to be used in type classes where the

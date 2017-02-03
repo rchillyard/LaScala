@@ -5,4 +5,6 @@ package com.phasmid.laScala
   */
 package object fp {
 //  type Maybe = Option[Boolean]
+
+  type Parameter[T] = Either[T, ()=>T]
 }

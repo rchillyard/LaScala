@@ -22,7 +22,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   def d: N = denominator
 
-  private val i = implicitly[FiniteIntegral[N]]
+  private val i = FiniteIntegral[N]
 
   // Pre-conditions:
 
@@ -230,7 +230,7 @@ object Rational {
     * @param x the Long
     * @return the Rational corresponding to x
     */
-  def apply[N : FiniteIntegral](x: N): Rational[N] = new Rational[N](x, implicitly[FiniteIntegral[N]].one)
+  def apply[N : FiniteIntegral](x: N): Rational[N] = new Rational[N](x, FiniteIntegral[N].one)
 
   /**
     * Apply method to form a Rational from a BigDecimal
@@ -238,7 +238,7 @@ object Rational {
     * @return the Rational corresponding to x
     */
   def apply[N : FiniteIntegral](x: BigDecimal): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+    val i = FiniteIntegral[N]
     if (x.scale >= 0) {
       val e = BigDecimal.apply(10).pow(x.scale)
       Rational.normalize(i.fromLong((x * e).toLongExact), i.fromLong(e.longValue))
@@ -260,7 +260,7 @@ object Rational {
     * @return the Rational corresponding to x
     */
   def apply[N : FiniteIntegral](x: String): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+    val i = FiniteIntegral[N]
     val rRat = """^\s*(-?\d+)\s*(\/\s*(-?\d+)\s*)?$""".r
     val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
@@ -313,7 +313,7 @@ object Rational {
     * @return a new Rational[N] which is the sum of x and y
     */
   def plus[N : FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+    val i = FiniteIntegral[N]
     normalize(i.plus(i.times(x.n,y.d), i.times(x.d, y.n)), i.times(x.d, y.d))
   }
 
@@ -326,7 +326,7 @@ object Rational {
     * @return a new Rational[N] which is the product of x and y
     */
   def times[N : FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+    val i = FiniteIntegral[N]
     normalize(i.times(x.n, y.n), i.times(x.d, y.d))
   }
 
@@ -346,7 +346,7 @@ object Rational {
     * @return if x is whole and if x fits into the range of an Int, then the corresponding Int is returned;
     *         otherwise, we throw a FiniteIntegralException
     */
-  def toInt[N : FiniteIntegral](x: Rational[N]): Int = narrowWhole(x)(implicitly[FiniteIntegral[N]].toInt)
+  def toInt[N : FiniteIntegral](x: Rational[N]): Int = narrowWhole(x)(FiniteIntegral[N].toInt)
 
   /**
     * Method to convert a Rational (x) into a Long
@@ -354,14 +354,14 @@ object Rational {
     * @return if x is whole, then the corresponding Long is returned;
     *         otherwise, we throw a FiniteIntegralException
     */
-  def toLong[N : FiniteIntegral](x: Rational[N]): Long = narrowWhole(x)(implicitly[FiniteIntegral[N]].toLong)
+  def toLong[N : FiniteIntegral](x: Rational[N]): Long = narrowWhole(x)(FiniteIntegral[N].toLong)
 
   /**
     * Method to convert a Rational (x) into a BigInt
     * @param x the Rational to convert
     * @return if x is whole, then the corresponding BigInt is returned.
     */
-  def toBigInt[N : FiniteIntegral](x: Rational[N]): BigInt = narrowWhole(x)(implicitly[FiniteIntegral[N]].toBigInt)
+  def toBigInt[N : FiniteIntegral](x: Rational[N]): BigInt = narrowWhole(x)(FiniteIntegral[N].toBigInt)
 
   /**
     * Method to form normalized Rational[N] from the given numerator and denominator
@@ -370,7 +370,7 @@ object Rational {
     * @return a Rational[N] corresponding to n/d where n and d have no common factors
     */
   def normalize[N : FiniteIntegral](n: N, d: N)(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+    val i = FiniteIntegral[N]
     val g = absGcd(n, d)
     g match {
       case 0 =>
@@ -392,7 +392,7 @@ object Rational {
     * @param b the second non-negative FiniteIntegral value
     * @return their greatest common divisor
     */
-  @tailrec private def gcd[N : FiniteIntegral](a: N, b: N): N = if (b == 0) a else gcd(b, implicitly[FiniteIntegral[N]].rem(a,b))
+  @tailrec private def gcd[N : FiniteIntegral](a: N, b: N): N = if (b == 0) a else gcd(b, FiniteIntegral[N].rem(a,b))
 
   /**
     * Method to determine the greatest common divisor of a and b, where a and b may be signed
@@ -417,12 +417,12 @@ object Rational {
     * @param a the Long value
     * @return the absolute value of a
     */
-  private def integralAbs[N : FiniteIntegral](a: N) = implicitly[FiniteIntegral[N]].abs(a)
+  private def integralAbs[N : FiniteIntegral](a: N) = FiniteIntegral[N].abs(a)
 
   // Utilities
 
-  private def cf[N : FiniteIntegral](x: N, y: N): Int = implicitly[FiniteIntegral[N]].compare(x,y)
-  private def cf[N : FiniteIntegral](x: N, y: Int): Int = cf(x,implicitly[FiniteIntegral[N]].fromInt(y))
+  private def cf[N : FiniteIntegral](x: N, y: N): Int = FiniteIntegral[N].compare(x,y)
+  private def cf[N : FiniteIntegral](x: N, y: Int): Int = cf(x,FiniteIntegral[N].fromInt(y))
   private def is[N : FiniteIntegral](x: N, y: N): Boolean = cf(x,y)==0
   private def is[N : FiniteIntegral](x: N, y: Int): Boolean = cf(x,y)==0
 
@@ -434,7 +434,7 @@ object Rational {
     * @param x an Int
     * @return a Rational with the same value as x
     */
-  implicit def intToRational[N : FiniteIntegral](x: Int): Rational[N] = apply(implicitly[FiniteIntegral[N]].fromInt(x))
+  implicit def intToRational[N : FiniteIntegral](x: Int): Rational[N] = apply(FiniteIntegral[N].fromInt(x))
 
   /**
     * Implicit conversion method from Long=>Rational[N].
@@ -442,7 +442,7 @@ object Rational {
     * @param x an Long
     * @return a Rational[N] with the same value as x
     */
-  implicit def longToRational[N : FiniteIntegral](x: Long): Rational[N] = apply(implicitly[FiniteIntegral[N]].fromLong(x))
+  implicit def longToRational[N : FiniteIntegral](x: Long): Rational[N] = apply(FiniteIntegral[N].fromLong(x))
 
   /**
     * Implicit conversion method from Double=>Rational[N].
@@ -482,7 +482,7 @@ object Rational {
 
   class RationalIsFractionalAndFiniteNumeric[N : FiniteIntegral] extends RationalIsFractional[N] {
 
-    private val i = implicitly[FiniteIntegral[N]]
+    private val i = FiniteIntegral[N]
 
     def fromInt(x: Int): Rational[N] = Rational[N](i.fromInt(x))
 

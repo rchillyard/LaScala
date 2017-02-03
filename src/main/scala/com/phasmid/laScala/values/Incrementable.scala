@@ -25,6 +25,7 @@ trait Incrementable[X] extends Orderable[X] {
 }
 
 object Incrementable {
+  def apply[X: Incrementable]: Incrementable[X] = implicitly[Incrementable[X]]
 
   trait IncrementableInt extends Orderable.OrderableInt with Incrementable[Int] {
     def increment(x: Int, y: Int = 1, by: String = ""): Try[Int] = by match {

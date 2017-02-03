@@ -143,7 +143,7 @@ trait ScalarMaker extends (Any => Try[Scalar]) {
 case class IntScalar(x: Int, source: Any) extends BaseIntScalar(x, source)
 
 abstract class BaseIntScalar(x: Int, source: Any) extends BaseScalar(x, source) {
-  override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(x).toOption
+  override def asValuable[X: Valuable]: Option[X] = Valuable[X].fromInt(x).toOption
 
   override def asFractional[X: Fractional]: Option[X] = Some(implicitly[Fractional[X]].fromInt(x))
 
@@ -164,7 +164,7 @@ case class BooleanScalar(x: Boolean, source: Any) extends BaseBooleanScalar(x, s
 abstract class BaseBooleanScalar(x: Boolean, source: Any) extends BaseScalar(x, source) {
   override def asBoolean: Option[Boolean] = Some(x)
 
-  override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromInt(if (x) 1 else 0).toOption
+  override def asValuable[X: Valuable]: Option[X] = Valuable[X].fromInt(if (x) 1 else 0).toOption
 
   override def toString = s"BooleanScalar: $source"
 
@@ -184,7 +184,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
   // XXX this gives us the effect we want -- conversion to Double but not, e.g. Int.
   // However, it is not elegant.
   // We really should try to convert a Double to an Int, for example, and test there is no information loss.
-  override def asValuable[X: Valuable]: Option[X] = Try(implicitly[Valuable[X]].unit(x.asInstanceOf[X])).toOption
+  override def asValuable[X: Valuable]: Option[X] = Try(Valuable[X].unit(x.asInstanceOf[X])).toOption
 
   override def asFractional[X: Fractional]: Option[X] = {
     // FIXME this needs fixing
@@ -208,7 +208,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
 case class RationalScalar(x: LongRational, source: Any) extends BaseRationalScalar(x, source)
 
 abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScalar(x, source) {
-  override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- implicitly[Valuable[X]].div(x1, x2).toOption) yield y
+  override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- Valuable[X].div(x1, x2).toOption) yield y
 
   // TODO this also needs fixing like DoubleScalar
   override def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
@@ -233,11 +233,11 @@ case class StringScalar(x: String, source: Any) extends BaseStringScalar(x, sour
 }
 
 abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
-  override def asValuable[X: Valuable]: Option[X] = implicitly[Valuable[X]].fromString(x)("").toOption
+  override def asValuable[X: Valuable]: Option[X] = Valuable[X].fromString(x)("").toOption
 
-  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = implicitly[Orderable[X]].fromString(x)(pattern).toOption
+  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Orderable[X].fromString(x)(pattern).toOption
 
-  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = implicitly[Incrementable[X]].fromString(x)(pattern).toOption
+  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Incrementable[X].fromString(x)(pattern).toOption
 
   // TODO this also needs fixing...
   override def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
@@ -260,9 +260,9 @@ case class QuotedStringScalar(x: String, source: Any) extends BaseQuotedStringSc
   */
 abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
   // TODO create a concrete implicit object for OrderableString
-  override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
+  override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(Orderable[X].unit(x.asInstanceOf[X])).toOption
 
-  override def toString = s"QuoteStringScalar: ${render()}"
+  override def toString = s"QuotedStringScalar: ${render()}"
 
   def defaultFormat: String = null
 }
@@ -279,9 +279,9 @@ case class DateScalar(x: LocalDate, source: Any) extends BaseDateScalar(x, sourc
 
 abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, source) {
   // CONSIDER returning None here, because a Date value is inherently Incrementable
-  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(implicitly[Orderable[X]].unit(x.asInstanceOf[X])).toOption
+  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Try(Orderable[X].unit(x.asInstanceOf[X])).toOption
 
-  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Try(implicitly[Incrementable[X]].unit(x.asInstanceOf[X])).toOption
+  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Try(Incrementable[X].unit(x.asInstanceOf[X])).toOption
 
   override def toString: String = source.toString
 
@@ -375,6 +375,8 @@ object DateScalar {
 }
 
 object Scalar {
+
+  def unapply(x: Scalar) = Some(x.get)
 
   implicit def apply(x: Boolean): Scalar = BooleanScalar(x)
 

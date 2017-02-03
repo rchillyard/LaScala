@@ -68,7 +68,7 @@ trait Versionable[V] {
 }
 
 abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V] {
-  private val incrementable = implicitly[Incrementable[V]]
+  private val incrementable = Incrementable[V]
 
   def next: Try[Version[V]] = for (l <- nextVersion) yield build(l,subversion)
 

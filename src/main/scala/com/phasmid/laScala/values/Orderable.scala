@@ -56,6 +56,7 @@ trait Orderable[X] extends Ordering[X] {
 }
 
 object Orderable {
+  def apply[X : Orderable]: Orderable[X] = implicitly[Orderable[X]]
 
   trait OrderableInt extends Orderable[Int] {
     def unit(x: Int): Int = x

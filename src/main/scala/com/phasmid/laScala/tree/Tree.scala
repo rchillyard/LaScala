@@ -48,7 +48,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = implicitly[TreeBuilder[B]].buildTree(get, children :+ node)
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = TreeBuilder.apply[B].buildTree(get, children :+ node)
 
   /**
     * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
@@ -68,7 +68,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): Tree[B] = :+(implicitly[TreeBuilder[B]].buildLeaf(b))
+  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): Tree[B] = :+(TreeBuilder.apply[B].buildLeaf(b))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
@@ -134,13 +134,13 @@ sealed trait Tree[+A] extends Node[A] {
     */
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(t) =>
-      val tb = implicitly[TreeBuilder[B]]
+      val tb = TreeBuilder[B]
       val no = tb.getParent(this, t)
       no match {
         // NOTE: we should always get a match when this is a binary tree
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
+          val bo = Spy.spy(s"addNode: $node\n  to tree: $this\n  with bo=",for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
           bo match {
             case Some(_) =>
               if (allowRecursion)
@@ -387,7 +387,7 @@ sealed trait Node[+A] extends Renderable {
       else
         t match {
           // CHECK that t is OK as buildTree previously used get as first parameter
-          case Branch(a, ns) => implicitly[TreeBuilder[B]].buildTree(a, replaceChildrenNodes(x, y)(f)(ns))
+          case Branch(a, ns) => TreeBuilder[B].buildTree(a, replaceChildrenNodes(x, y)(f)(ns))
           case _ => t
         }
     }
@@ -646,7 +646,7 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = implicitly[TreeBuilder[B]].buildTree(get, Seq(node))
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = TreeBuilder[B].buildTree(get, Seq(node))
 }
 
 /**
@@ -799,7 +799,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
     case Some(_) =>
       // CHECK all of this
       val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
-      addNode(implicitly[TreeBuilder[B]].buildTree(bo, Seq(node)), allowRecursion)
+      addNode(TreeBuilder[B].buildTree(bo, Seq(node)), allowRecursion)
 
     case None => throw TreeException("cannot add node without value")
   }
@@ -860,6 +860,10 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   */
 case object Empty extends AbstractEmpty
 
+object TreeBuilder {
+  def apply[A : TreeBuilder]: TreeBuilder[A] = implicitly[TreeBuilder[A]]
+}
+
 object AbstractLeaf {
   def unapply[A](t: Node[A]): Option[A] = t match {
     case Leaf(x) => Some(x)
@@ -897,7 +901,7 @@ object Tree {
   // TODO implement this like for general tree (below)
 
   /**
-    * Method to populate an ordered tree. Actually, we can remove the Ordering context bound
+    * Method to populate an ordered tree.
     *
     * @param values the values of the nodes to put in the tree
     * @param vo     the (implicit) ValueOps
@@ -908,7 +912,7 @@ object Tree {
   def populateOrderedTree[K, A: TreeBuilder](values: Seq[A])(implicit vo: ValueOps[K, A]): Tree[A] = {
     values match {
       case h :: t =>
-        var result: Tree[A] = implicitly[TreeBuilder[A]].buildTree(Some(h), Seq())
+        var result: Tree[A] = TreeBuilder[A].buildTree(Some(h), Seq())
         for (w <- t) {
           result = result :+ Leaf(w)
         }
@@ -923,7 +927,7 @@ object Tree {
       case h :: t => inner(result :+ Leaf(h), t)
     }
 
-    inner(implicitly[TreeBuilder[A]].buildTree(root, Seq()), values)
+    inner(TreeBuilder[A].buildTree(root, Seq()), values)
   }
 
   def join(xo: Option[String], yo: Option[String]): Option[String] = {
@@ -1101,29 +1105,53 @@ object UnvaluedBinaryTree {
 object BinaryTree {
   // TODO implement this properly, given that there are values in BinaryTree
   // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
-  implicit def treeBuilder[A: Ordering](n1: Node[A], n2: Node[A]): Tree[A] = n1 match {
-    case BinaryTree(v, l, r) =>
-      val pair =
-        if (AbstractBinaryTree.isOverlap(n2, l))
-          (treeBuilder(l, n2), r) // type 1
-        else if (AbstractBinaryTree.isOverlap(n2, r))
-          (l, treeBuilder(r, n2)) // type 2
-        else {
-          if (AbstractBinaryTree.isOrdered(l, n2))
-            if (AbstractBinaryTree.isOrdered(n2, r))
-              (BinaryTree(v, l, n2), r) // type 3
-            else
-              (n1, n2) // type 4
-          else
-            (n2, n1) // type 5
-        }
-      apply(v, pair._1, pair._2)
-    case Leaf(a) => treeBuilder(BinaryTree(a, Empty, Empty), n2)
-    case Empty => treeBuilder(n2, Empty) // CHECK this is OK
-    case _ => throw TreeException(s"treeBuilder not implemented for $n1")
+
+  abstract class BinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {
+    /**
+      * Build a new tree, given a value and child nodes
+      *
+      * @param maybeValue the (optional) value which the new tree will have at its root
+      * @param children   the the children of the node
+      * @return a tree the (optional) value at the root and children as the immediate descendants
+      */
+    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
+      require(maybeValue.isDefined, "value must be defined for BinaryTree")
+      require(children.size == 2, "children must define exactly two nodes")
+      BinaryTree(maybeValue.get, children.head, children.tail.head)
+    }
+
+    /**
+      * Build a new leaf, given a value
+      *
+      * @param a the value for the leaf
+      * @return a node which is a leaf node
+      */
+    def buildLeaf(a: A): Node[A] = BinaryTree(a, Empty, Empty)
+
+    /**
+      * Get a node from an existing tree to which a new node with value a can be attached
+      *
+      * @param tree the tree whence we want to find the (potential) parent of a new node with value a
+      * @param a    the value of the new node
+      * @return the Node to which the new node will be attached (if such a node exists). Note that this might be a leaf
+      */
+    def getParent(tree: Tree[A], a: A): Option[Node[A]] = ???
+
+    /**
+      * This method determines if the two given nodes are structurally the same
+      *
+      * @param x node x
+      * @param y node y
+      * @return true if they are the same
+      */
+    def nodesAlike(x: Node[A], y: Node[A]): Boolean = ???
+
   }
 
-  implicit def leafBuilder[A](a: A): Node[A] = Leaf[A](a)
+  implicit object BinaryTreeBuilderInt extends BinaryTreeBuilder[Int]
+
+  implicit object BinaryTreeBuilderString extends BinaryTreeBuilder[String]
+
 }
 
 object AbstractBinaryTree {

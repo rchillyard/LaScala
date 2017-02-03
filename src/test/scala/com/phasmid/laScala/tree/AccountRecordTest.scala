@@ -242,7 +242,7 @@ object ParentChildTree {
     */
   def populateParentChildTree[V](values: Seq[V])(implicit treeBuilder: TreeBuilder[V], vo: ValueOps[String,V]): Try[Tree[V]] =
   {
-    val ty = Try(implicitly[TreeBuilder[V]].buildTree(vo.createValueFromKey("root"), Seq()).asInstanceOf[KVTree[String,V]])
+    val ty = Try(TreeBuilder[V].buildTree(vo.createValueFromKey("root"), Seq()).asInstanceOf[KVTree[String,V]])
       @tailrec
       def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {
         case Nil => result

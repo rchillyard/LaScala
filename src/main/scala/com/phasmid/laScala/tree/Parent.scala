@@ -20,6 +20,7 @@ trait Parent[T] {
 
 object Parent {
 
+  def apply[T : Parent]: Parent[T] = implicitly[Parent[T]]
   /**
     * Generic tail-recursive tree-traversal method.
     *
@@ -35,7 +36,7 @@ object Parent {
     */
   final def traverse[P: Parent, S, R](f: P => S, g: (R, S) => R, q: R => Boolean = { _: R => false })(ts: Seq[P], r: R): R = {
     // NOTE that p itself does not and MUST not form part of the result of function h
-    val h = { (ps: Seq[P], p: P) => implicitly[Parent[P]].children(p).toList ++ ps }
+    val h = { (ps: Seq[P], p: P) => Parent[P].children(p).toList ++ ps }
     Recursion.recurse(f, g, h, q)(ts, r)
   }
 }

@@ -140,6 +140,12 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(0)
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
   }
+  ignore should "work correctly for BinaryTree" in {
+    import BinaryTree._
+    val tree = BinaryTree(1, Leaf(0), Leaf(2)) :+ Leaf(3)
+    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
+  }
+
   behavior of ":+(value)"
 
   it should "work correctly for GeneralTree" in {

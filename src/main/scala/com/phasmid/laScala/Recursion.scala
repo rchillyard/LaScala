@@ -23,7 +23,7 @@ trait Counter[X] extends Orderable[X] {
 }
 
 object Counter {
-
+  def apply[A : Counter]: Counter[A] = implicitly[Counter[A]]
   trait IntCounter extends Orderable.OrderableInt with Counter[Int] {
     def increment(x: Int): Int = x + 1
   }
@@ -77,7 +77,7 @@ object Recursion {
     * @return   a value of R.
     */
   final def countRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], c: C, r: R): R =
-    genericCountRecurse(f, g, h, { _c: C => implicitly[Counter[C]].increment(_c) }, q)(ts, c, r)
+    genericCountRecurse(f, g, h, { _c: C => Counter[C].increment(_c) }, q)(ts, c, r)
 
   /**
     * Generic tail-recursive method with counting.

@@ -556,6 +556,35 @@ object FP {
   def invert4[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): T4 => T3 => T2 => T1 => R = { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4) } } } }
 
   /**
+    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam T5 the type of the fifth parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the fourth parameter first, then the third, etc.
+    */
+  def invert5[T1, T2, T3, T4, T5, R](f: T1 => T2 => T3 => T4 => T5 => R): T5 => T4 => T3 => T2 => T1 => R = { t5 => { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4)(t5) } } } } }
+
+  /**
+    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam T5 the type of the fifth parameter
+    * @tparam T6 the type of the sixth parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the fourth parameter first, then the third, etc.
+    */
+  def invert6[T1, T2, T3, T4, T5, T6, R](f: T1 => T2 => T3 => T4 => T5 => T6 => R): T6 => T5 => T4 => T3 => T2 => T1 => R = { t6 => { t5 => { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4)(t5)(t6) } } } } } }
+
+  /**
     * This method uncurries the first two parameters of a three- (or more-)
     * parameter curried function.
     * The result is a (curried) function whose first parameter is a tuple of the first two parameters of f;
@@ -604,6 +633,60 @@ object FP {
   { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
 
   /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, R](f: ((T1, T2)) => R): (T1, T2) => R = {
+    (x1, x2) => f(Tuple2(x1, x2))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, R](f: ((T1, T2, T3)) => R): (T1, T2, T3) => R = {
+    (x1, x2, x3) => f(Tuple3(x1, x2, x3))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, R](f: ((T1, T2, T3, T4)) => R): (T1, T2, T3, T4) => R = {
+    (x1, x2, x3, x4) => f(Tuple4(x1, x2, x3, x4))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam R the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, R](f: ((T1, T2, T3, T4, T5)) => R): (T1, T2, T3, T4, T5) => R = {
+    (x1, x2, x3, x4, x5) => f(Tuple5(x1, x2, x3, x4, x5))
+  }
+
+  /**
     * This method (and the following similar methods) are missing from Function
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
@@ -615,7 +698,7 @@ object FP {
     * @tparam R the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
-  def untupled[T1, T2, T3, T4, T5, T6, R](f: Tuple6[T1, T2, T3, T4, T5, T6] => R): (T1, T2, T3, T4, T5, T6) => R = {
+  def untupled[T1, T2, T3, T4, T5, T6, R](f: ((T1, T2, T3, T4, T5, T6)) => R): (T1, T2, T3, T4, T5, T6) => R = {
     (x1, x2, x3, x4, x5, x6) => f(Tuple6(x1, x2, x3, x4, x5, x6))
   }
 
@@ -632,7 +715,7 @@ object FP {
     * @tparam R the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
-  def untupled[T1, T2, T3, T4, T5, T6, T7, R](f: Tuple7[T1, T2, T3, T4, T5, T6, T7] => R): (T1, T2, T3, T4, T5, T6, T7) => R = {
+  def untupled[T1, T2, T3, T4, T5, T6, T7, R](f: ((T1, T2, T3, T4, T5, T6, T7)) => R): (T1, T2, T3, T4, T5, T6, T7) => R = {
     (x1, x2, x3, x4, x5, x6, x7) => f(Tuple7(x1, x2, x3, x4, x5, x6, x7))
   }
 
