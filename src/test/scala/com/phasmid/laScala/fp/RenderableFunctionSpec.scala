@@ -74,6 +74,16 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     FunctionString("""f("z")""",2).arity shouldBe 2
   }
 
+  it should "calculate arity correctly for function" in {
+    val f = FunctionString("f",1)
+    f.arity shouldBe 1
+    val g = FunctionString("g", 1)
+    g.arity shouldBe 1
+    val h = g.partiallyApplyFunction(f)
+    println(s"h: $h")
+    h.arity shouldBe 1
+  }
+
   it should "partiallyApply correctly with index 0" in {
     FunctionString("f", 1).partiallyApply("x").toString shouldBe """f("x")"""
     FunctionString("f",2).partiallyApply("x").toString shouldBe """f("x")(b?)"""
@@ -84,6 +94,15 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     FunctionString("f",2).partiallyApply("x",1).toString shouldBe """f(a?)("x")"""
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 0).partiallyApply("x", 1)
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 1).partiallyApply("x", 1)
+  }
+
+  it should "partiallyApplyFunction correctly" in {
+    // TODO understand why this is a bit flaky
+    val f = FunctionString("f",1)
+    val g = FunctionString("g", 1)
+    val h = g.partiallyApplyFunction(f)
+    h.arity shouldBe 1
+    h.toString shouldBe """g(f(a?))"""
   }
 
   behavior of "RenderableFunction.apply"
@@ -105,7 +124,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   }
 
   it should "yield Hello with arity 3" in {
-    // XXX Not sure why we have to set this here
+    // XXX Not sure why we have to set this here, but we do.
     BooleanScalar.setDefaultFormat("%b")
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 

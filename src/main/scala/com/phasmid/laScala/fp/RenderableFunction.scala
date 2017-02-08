@@ -11,9 +11,8 @@ import com.phasmid.laScala.{Prefix, Renderable}
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scala.reflect.ClassTag
+import scala.util.Either.RightProjection
 import scala.util._
-
-import Spy._
 
 /**
   * A representation of a function call.
@@ -60,26 +59,18 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
             case Left(s) => // T
               inner1(r.partiallyApply(s), t)
             case Right(f) => // RenderableFunction[T]
-              println(s"attempting to evaluate $f for $r with available parameters: $t")
-//              if (f.arity >t.size)
-//                throw RenderableFunctionException(s"insufficient parameters (${t.size}) for $f")
-//              else {
                 val (x,y) = t splitAt f.arity
                 f.applyParameters(x) match {
                   case Success(g: RenderableFunction[T]) =>
-                    println(s"result of ($f).applyParameters($x) is g: $g")
                     if (g.arity==0) {
-                      println(s"arity of g == 0; applying untupled to give ${g.untupled()}")
                       inner1(r.partiallyApply(g.untupled()), y)
                     }
                     else {
                       assert(y.isEmpty,"y empty")
-                        println(s"arity of g: ${g.arity}; passing g to inner1 and thus to result")
                         inner1(r.partiallyApplyFunction(g), Nil)
                       }
                   case Failure(e) => throw e
                 }
-//               }
           }
       }
 
@@ -118,12 +109,16 @@ case class FreeParam(p: Char) {
   override def toString: String = p.toString + FreeParam.query
 }
 
-case class Param(p: Either[String, FreeParam]) {
-  def isFree: Boolean = p.isRight
+case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
+  def isBound: Boolean = p.isLeft
+  def right = p.right.get
+  def isFree: Boolean = !isBound && right.isLeft
+  def isFunction: Boolean = !isBound && right.isRight
 
   override def toString: String = "(" + (p match {
     case Left(s) => s
-    case Right(_p) => _p.toString
+    case Right(Left(_p)) => _p.toString
+    case Right(Right(f)) => f.toString
   }) + ")"
 }
 
@@ -145,16 +140,33 @@ case class FunctionString(f: String, ps: List[Param]) {
       case _: String => s""""$t""""
       case _ => s"$t"
     })
-    Spy.log(s"partiallyApply: $t to $f has resulted in $w bound at index $index")
     FunctionString(f, bind(index, w))
   }
   else throw RenderableFunctionException("FunctionString.partiallyApply cannot apply where arity <= 0")
 
-  def arity: Int = free size
+  def partiallyApplyFunction(w: FunctionString, index: Int = 0) = if (arity > index) {
+    FunctionString(f, bind(index, w))
+  }
+  else throw RenderableFunctionException("FunctionString.partiallyApply cannot apply where arity <= 0")
+
+  def arity: Int = {
+    def inner(r: Int, _ps: List[Param]): Int = _ps match {
+      case Nil => r
+      case h :: t =>
+          h match {
+        case Param(Left(_)) => inner(r, t)
+        case Param(Right(Left(_))) => inner(r + 1, t)
+        case Param(Right(Right(f))) => inner(r, f.ps ++ t)
+      }
+    }
+    inner(0, ps)
+  }
 
   private def free = ps filter (_.isFree)
 
-  def bind(index: Int, w: String): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(w))
+  def bind(index: Int, w: String): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Left(w)))
+
+  def bind(index: Int, w: FunctionString): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Right(w)))
 
   /**
     * Method to bind some String values to free variables in this FunctionString.
@@ -163,15 +175,17 @@ case class FunctionString(f: String, ps: List[Param]) {
     * @return a sequence of Param values where each param is a copy of the corresponding value in ps (the "original"), *unless*
     *         BOTH the original is free AND the optional String is Some(_)
     */
-  def bind(wos: List[Option[String]]): List[Param] = {
-    @tailrec def inner(result: List[Param], _ps: List[Param], _ws: List[Option[String]]): List[Param] = _ps match {
+  def bind(wos: List[Option[Either[String,FunctionString]]]): List[Param] = {
+    @tailrec def inner(result: List[Param], _ps: List[Param], _ws: List[Option[Either[String,FunctionString]]]): List[Param] = _ps match {
       case Nil => result
       case p :: __ps => p match {
         case Param(Left(_)) => inner(result :+ p, __ps, _ws)
-        case Param(Right(_)) => _ws match {
+          // TODO merge the code in the following two cases
+        case Param(Right(Left(_))) => _ws match {
           case Nil => inner(result :+ p, __ps, _ws)
           case None :: __ws => inner(result :+ p, __ps, __ws)
-          case Some(s) :: __ws => inner(result :+ Param(s"""$s"""), __ps, __ws)
+          case Some(Left(s)) :: __ws => inner(result :+ Param(s"""$s"""), __ps, __ws)
+          case Some(Right(f)) :: __ws => inner(result :+ Param(f), __ps, __ws)
         }
       }
     }
@@ -183,7 +197,9 @@ case class FunctionString(f: String, ps: List[Param]) {
 object Param {
   def apply(s: String): Param = Param(Left(s))
 
-  def apply(p: FreeParam): Param = Param(Right(p))
+  def apply(p: FreeParam): Param = Param(Right(Left(p)))
+
+  def apply(f: FunctionString): Param = Param(Right(Right(f)))
 }
 
 object FreeParam {
@@ -294,39 +310,15 @@ object RenderableFunction {
       case 1 =>
         val f1: Tuple1[T] => R = f
         val g1: Tuple1[S] => T = g.func
-        val g2 = RenderableFunction.asFunctionType { x: Tuple1[S] => f1(Tuple1(g1(Tuple1(x._1)))) }
-        RenderableFunction(g.arity, g2, g.w)
-//      case 2 =>
-//        val f2 = Function.untupled[T, T, R](f)
-//        val g1 = RenderableFunction.asFunctionType { x: Tuple1[T] => f2.curried(t)(x._1) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g1, s)
-//      case 3 =>
-//        val f3 = Function.untupled[T, T, T, R](f)
-//        val g2 = RenderableFunction.asFunctionType { x: (T, T) => f3.curried(t)(x._1)(x._2) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g2, s)
-//      case 4 =>
-//        val f4 = Function.untupled[T, T, T, T, R](f)
-//        val g3 = RenderableFunction.asFunctionType { x: (T, T, T) => f4.curried(t)(x._1)(x._2)(x._3) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g3, s)
-//      case 5 =>
-//        val f5 = Function.untupled[T, T, T, T, T, R](f)
-//        val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g4, s)
-//      case 6 =>
-//        val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-//        val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g5, s)
-//      case 7 =>
-//        val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-//        val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-//        val s = w.partiallyApply(t)
-//        RenderableFunction(n - 1, g6, s)
-      case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
+        val h = RenderableFunction.asFunctionType { x: Tuple1[S] => f1(Tuple1(g1(Tuple1(x._1)))) }
+        RenderableFunction(g.arity, h, w.partiallyApplyFunction(g.w))
+      case 2 =>
+        val f1: Tuple1[T] => R = f
+        val g2 = Function.untupled[S, S, T](g.func)
+        val h = RenderableFunction.asFunctionType { x: Tuple2[S,S] => f1(Tuple1(g2.curried(x._1)(x._2))) }
+        RenderableFunction(g.arity, h, w.partiallyApplyFunction(g.w))
+      // TODO implement up to case 7
+      case _ => throw RenderableFunctionException(s"partiallyApplyFunction: functions with arity $n are not supported")
     }
   }
 
