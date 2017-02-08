@@ -1,3 +1,8 @@
+/*
+ * LaScala
+ * Copyright (c) 2017. Phasmid Software
+ */
+
 package com.phasmid.laScala.fp
 
 import scala.collection.immutable.ListMap
@@ -11,6 +16,8 @@ import scala.util.control.NonFatal
   * We could probably get these from ScalaZ but I'd rather have no dependencies.
   *
   * TODO flesh out the unit tests (coverage is low).
+  *
+  * TODO replace as an output type with type based on CanBuildFrom
   *
   * CONSIDER replace Seq with Iterator in signatures
   *
@@ -49,6 +56,7 @@ object FP {
     * @param ec   the execution context
     * @tparam X the underlying type
     * @return a sequence of X values wrapped in Future
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def flatten[X](xsfs: Seq[Future[Seq[X]]])(implicit ec: ExecutionContext): Future[Seq[X]] = Future.sequence(xsfs) map {
     _ flatten
@@ -62,6 +70,7 @@ object FP {
     * @param executor the executor to use
     * @tparam X the underlying type
     * @return a Future\[Seq\[X\]\]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def flattenRecover[X](esf: Future[Seq[Either[Throwable, Seq[X]]]], f: => Throwable => Unit)(implicit executor: ExecutionContext): Future[Seq[X]] = {
     def filter(uses: Seq[Either[Throwable, Seq[X]]]): Seq[X] = {
@@ -96,11 +105,33 @@ object FP {
       case Failure(e) => Left(e)
     }
 
+  /**
+    * Transform a Future[X] into a Future of Either[Throwable,X]
+    * @param xf a Future[X]
+    * @param executor an execution context
+    * @tparam X the underlying type
+    * @return a Future of Either[Throwable, X]
+    */
   def sequence[X](xf: Future[X])(implicit executor: ExecutionContext): Future[Either[Throwable, X]] =
     xf transform( { s => Right(s) }, { f => f }) recoverWith { case f => Future(Left(f)) }
 
+  /**
+    *
+    * @param xfs a sequence of Future[X]
+    * @param executor an execution context
+    * @tparam X the underlying type
+    * @return a Seq of Future of Either[Throwable, X]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
+    */
   def sequence[X](xfs: Seq[Future[X]])(implicit executor: ExecutionContext): Seq[Future[Either[Throwable, X]]] = for (xf <- xfs) yield sequence(xf)
 
+  /**
+    *
+    * @param xys a sequence of Try[X]
+    * @tparam X the underlying type
+    * @return a Try of Seq[X]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
+    */
   def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xys) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
@@ -122,6 +153,7 @@ object FP {
     * @param xos a sequence of Option[X] values
     * @tparam X the underlying type
     * @return a sequence of X values wrapped in Option
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = (Option(Seq[X]()) /: xos) {
     (xso, xo) => for (xs <- xso; x <- xo) yield xs :+ x
@@ -143,6 +175,7 @@ object FP {
     * @param t   the Throwable to replace the nonfatal throwable already reported.
     * @tparam X the underlying type of the tries
     * @return xys essentially unchanged though with the side-effect of having written any non-fatal exceptions to the console and all non-fatal failures replaced by Failure(t)
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def recoverWith[X](xys: Seq[Try[X]], t: Throwable = new java.util.NoSuchElementException): Seq[Try[X]] = xys map (xy => xy.recoverWith({ case NonFatal(x) => System.err.println(x.getLocalizedMessage); Failure(t) }))
 
