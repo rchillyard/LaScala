@@ -11,7 +11,6 @@ import com.phasmid.laScala.{Prefix, Renderable}
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scala.reflect.ClassTag
-import scala.util.Either.RightProjection
 import scala.util._
 
 /**
@@ -105,13 +104,14 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + w.toString
 }
 
-case class FreeParam(p: Char) {
-  override def toString: String = p.toString + FreeParam.query
+case class FreeParam(s: String) {
+  override def toString: String = s + FreeParam.query
 }
 
 case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
-  def isBound: Boolean = p.isLeft
-  def right = p.right.get
+  private def isBound = p.isLeft
+
+  private def right = p.right.get
   def isFree: Boolean = !isBound && right.isLeft
   def isFunction: Boolean = !isBound && right.isRight
 
@@ -144,7 +144,7 @@ case class FunctionString(f: String, ps: List[Param]) {
   }
   else throw RenderableFunctionException("FunctionString.partiallyApply cannot apply where arity <= 0")
 
-  def partiallyApplyFunction(w: FunctionString, index: Int = 0) = if (arity > index) {
+  def partiallyApplyFunction(w: FunctionString, index: Int = 0): FunctionString = if (arity > index) {
     FunctionString(f, bind(index, w))
   }
   else throw RenderableFunctionException("FunctionString.partiallyApply cannot apply where arity <= 0")
@@ -156,13 +156,11 @@ case class FunctionString(f: String, ps: List[Param]) {
           h match {
         case Param(Left(_)) => inner(r, t)
         case Param(Right(Left(_))) => inner(r + 1, t)
-        case Param(Right(Right(f))) => inner(r, f.ps ++ t)
+        case Param(Right(Right(g))) => inner(r, g.ps ++ t)
       }
     }
     inner(0, ps)
   }
-
-  private def free = ps filter (_.isFree)
 
   def bind(index: Int, w: String): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Left(w)))
 
@@ -185,7 +183,7 @@ case class FunctionString(f: String, ps: List[Param]) {
           case Nil => inner(result :+ p, __ps, _ws)
           case None :: __ws => inner(result :+ p, __ps, __ws)
           case Some(Left(s)) :: __ws => inner(result :+ Param(s"""$s"""), __ps, __ws)
-          case Some(Right(f)) :: __ws => inner(result :+ Param(f), __ps, __ws)
+          case Some(Right(g)) :: __ws => inner(result :+ Param(g), __ps, __ws)
         }
       }
     }
@@ -203,6 +201,8 @@ object Param {
 }
 
 object FreeParam {
+  def apply(c: Char): FreeParam = apply(c.toString)
+
   private val query = """?"""
 }
 
@@ -211,7 +211,9 @@ object FunctionString {
 
   def stream(list: List[Char]): Stream[FreeParam] = Stream.cons(FreeParam(list.head), stream(list.tail))
 
-  def apply(f: String, n: Int): FunctionString = new FunctionString(f, stream(params) take n map (Param(_)) toList)
+  def apply(f: String, n: Int): FunctionString = FunctionString(f, stream(params) take n map (Param(_)) toList)
+
+  def custom(f: String, cs: List[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
 }
 
 /**
@@ -315,7 +317,7 @@ object RenderableFunction {
       case 2 =>
         val f1: Tuple1[T] => R = f
         val g2 = Function.untupled[S, S, T](g.func)
-        val h = RenderableFunction.asFunctionType { x: Tuple2[S,S] => f1(Tuple1(g2.curried(x._1)(x._2))) }
+        val h = RenderableFunction.asFunctionType { x: (S, S) => f1(Tuple1(g2.curried(x._1)(x._2))) }
         RenderableFunction(g.arity, h, w.partiallyApplyFunction(g.w))
       // TODO implement up to case 7
       case _ => throw RenderableFunctionException(s"partiallyApplyFunction: functions with arity $n are not supported")

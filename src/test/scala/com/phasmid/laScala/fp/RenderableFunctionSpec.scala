@@ -62,6 +62,11 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     FunctionString("f",26).toString shouldBe "f(a?)(b?)(c?)(d?)(e?)(f?)(g?)(h?)(i?)(j?)(k?)(l?)(m?)(n?)(o?)(p?)(q?)(r?)(s?)(t?)(u?)(v?)(w?)(x?)(y?)(z?)"
   }
 
+  it should "use custom parameter names" in {
+    FunctionString.custom("f", List("x")).toString shouldBe "f(x?)"
+    FunctionString.custom("f", List("x", "mean")).toString shouldBe "f(x?)(mean?)"
+  }
+
   it should "calculate arity correctly" in {
     FunctionString("f",0).arity shouldBe 0
     FunctionString("f",1).arity shouldBe 1
