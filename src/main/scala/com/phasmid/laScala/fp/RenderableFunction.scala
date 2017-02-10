@@ -24,21 +24,26 @@ import scala.util._
   * @param w     a human-readable representation of the function
   * @tparam R the ultimate return type of this RenderableFunction
   */
-case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionString) extends (Product => R) with Renderable {
+case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionString)(implicit rc: ClassTag[R]) extends (Product => Try[R]) with Renderable {
 
+  require(func != null, s"func is null")
+  require(w != null, s"w is null")
   require(w.arity == arity, s"arity $arity is not consistent with $w")
 
-  override def apply(p: Product): R =
-    if (arity == p.productArity) func.apply(p)
-    else throw RenderableFunctionException(s"cannot apply RenderableFunction: ($this) to a Product of arity ${p.productArity}: $p")
+  implicit private val logger = Spy.getLogger(getClass)
+  Spy.log(s"created $this with return type: $rc")
+
+  def apply(p: Product): Try[R] =
+    if (arity == p.productArity) Try(func.apply(p))
+    else Failure(RenderableFunctionException(s"cannot apply RenderableFunction: ($this) to a Product of arity ${p.productArity}: $p"))
 
   /**
-    * If arity=0, we can rewrite this as a function of Unit=>R
+    * Method to call this RenderableFunction by name only, that's to say without any parameters.
+    * If this is a 0-arity function, then Success(r) will be returned. Otherwise, you will get a failure.
     *
-    * @return a function which takes no parameters
+    * @return
     */
-  def untupled: (() => R) = if (arity == 0) { () => func(Tuple0) } else
-    throw RenderableFunctionException(s"untupled only applies when arity=0")
+  def callByName(): Try[R] = apply(Tuple0)
 
   /**
     * Method which will take the given RenderableFunction and apply all of the Scalar terms that were parsed,
@@ -48,37 +53,48 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
     * @tparam T the underlying type of the parameters
     * @return a new RenderableFunction (wrapped in Try), whose single input parameter is the Tuple0
     */
-  def applyParameters[T](xs: List[Parameter[T]]): Try[RenderableFunction[R]] = {
+  def applyParameters[T](xs: List[Parameter[T]])(implicit tc: ClassTag[T]): Try[RenderableFunction[R]] = {
     @tailrec
-    def inner1(r: RenderableFunction[R], work: List[Parameter[T]]): RenderableFunction[R] =
+    def inner1(r: RenderableFunction[R], work: List[Parameter[T]]): Try[RenderableFunction[R]] =
       work match {
-        case Nil => r
+        case Nil => Success(r)
         case h :: t =>
           h match {
             case Left(s) => // T
-              inner1(r.partiallyApply(s), t)
+              // CONSIDER combine common code
+              r.partiallyApply(s) match {
+                case Success(z) => inner1(z, t)
+                case Failure(e) => Failure(e)
+              }
             case Right(f) => // RenderableFunction[T]
                 val (x,y) = t splitAt f.arity
                 f.applyParameters(x) match {
                   case Success(g: RenderableFunction[T]) =>
-                    if (g.arity==0) {
-                      inner1(r.partiallyApply(g.untupled()), y)
+                    if (g.arity == 0)
+                      (for (p <- g.callByName(); q <- r.partiallyApply(p)) yield q)
+                      match {
+                        case Success(z) => inner1(z, y)
+                        case Failure(e) => Failure(e)
                     }
                     else {
+                      // CONSIDER do we need this assertion?
                       assert(y.isEmpty,"y empty")
-                        inner1(r.partiallyApplyFunction(g), Nil)
+                      r.partiallyApplyFunction[Any, T](g) match {
+                        case Success(z) => inner1(z, Nil)
+                        case Failure(e) => Failure(e)
                       }
-                  case Failure(e) => throw e
+                      }
+                  case Failure(e) => Failure(e)
                 }
           }
       }
 
-    Try(inner1(this, xs))
+    inner1(this, xs)
   }
 
-  def partiallyApply[T](t: T): RenderableFunction[R] = RenderableFunction.partiallyApply(arity, func, t, w)
+  def partiallyApply[T](t: T)(implicit tc: ClassTag[T]): Try[RenderableFunction[R]] = RenderableFunction.partiallyApply(arity, func, t, w)
 
-  def partiallyApplyFunction[T](f: RenderableFunction[T]): RenderableFunction[R] = RenderableFunction.partiallyApplyFunction(arity, func, w, f)
+  def partiallyApplyFunction[S, T](f: RenderableFunction[T])(implicit sc: ClassTag[S], tc: ClassTag[T]): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction[S, T, R](arity, func, w, f)
 
   override def toString = s"RenderableFunction: arity: $arity, func: $w"
 
@@ -220,93 +236,114 @@ object FunctionString {
   * Companion object to RenderableFunction
   */
 object RenderableFunction {
-  def apply[R](arity: Int, func: (Product) => R, w: String): RenderableFunction[R] = RenderableFunction(arity, func, FunctionString(w, arity))
+  // TODO use assert
+  def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
 
-  def apply[T, R](f: T => R, w: String): RenderableFunction[R] = apply(1, asTupledFunctionType(f), w)
+  def apply[R](arity: Int, func: (Product) => R, w: String)(implicit rc: ClassTag[R]): RenderableFunction[R] = RenderableFunction(arity, func, FunctionString(w, arity))
 
-  def apply[T, R](f: (T, T) => R, w: String): RenderableFunction[R] = apply(2, asTupledFunctionType(f), w)
+  def apply[T, R](f: T => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = {
+    println(s"apply(T=>R,String): T: $tc, R: $rc")
+    asserting(f != null && w != null, "f or w is null",
+      apply(1, asTupledFunctionType(f), w)
+    )
+  }
 
-  def apply[T, R](f: (T, T, T) => R, w: String): RenderableFunction[R] = apply(3, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(2, asTupledFunctionType(f), w)
+  )
 
-  def apply[T, R](f: (T, T, T, T) => R, w: String): RenderableFunction[R] = apply(4, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(3, asTupledFunctionType(f), w)
+  )
 
-  def apply[T, R](f: (T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(5, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(4, asTupledFunctionType(f), w)
+  )
 
-  def apply[T, R](f: (T, T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(6, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T, T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(5, asTupledFunctionType(f), w)
+  )
 
-  def apply[T, R](f: (T, T, T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(7, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T, T, T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(6, asTupledFunctionType(f), w)
+  )
 
-  def apply[T, R](f: (T, T, T, T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(8, asTupledFunctionType(f), w)
+  def apply[T, R](f: (T, T, T, T, T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(7, asTupledFunctionType(f), w)
+  )
 
-  def asFunctionType[R](f: Function[_, R]): Product => R = cast[Product => R](f)
+  def apply[T, R](f: (T, T, T, T, T, T, T, T) => R, w: String)(implicit tc: ClassTag[T], rc: ClassTag[R]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(8, asTupledFunctionType(f), w)
+  )
 
-  def asTupledFunctionType[T, R](f: T => R): Product => R = asFunctionType[R]({ x: Tuple1[T] => f(x._1) })
+  def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
 
-  def asTupledFunctionType[T, R](f: (T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: T => R)(implicit tc: ClassTag[T], rc: ClassTag[R]): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ x: Tuple1[T] => f(x._1) }))
 
-  def asTupledFunctionType[T, R](f: (T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def asTupledFunctionType[T, R](f: (T, T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def asTupledFunctionType[T, R](f: (T, T, T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T, T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T, T, T) => R): Product => R = asFunctionType[R](f.tupled)
+  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  def untupled[T, R](f: Tuple1[T] => R): T => R = { x => f(Tuple1(x)) }
+  def asTupledFunctionType[T, R](f: (T, T, T, T, T, T, T, T) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
-  private def cast[R](x: Any)(implicit z: ClassTag[R]): R = x match {
+  def untupled[T, R](f: Tuple1[T] => R): T => R = asserting(f != null, "f is null", { x => f(Tuple1(x)) })
+
+  private def cast[R](x: Any)(implicit rc: ClassTag[R]): R = x match {
     case r: R => r
 
-    case _ => throw new ClassCastException(s"x: $x of type ${x.getClass} cannot be cast to type $z")
+    case _ => throw new ClassCastException(s"x: $x of type ${x.getClass} cannot be cast to type $rc")
   }
 
-  private def partiallyApply[T, R](n: Int, f: (Product) => R, t: T, w: FunctionString) = {
-    n match {
-      case 0 => throw RenderableFunctionException("cannot partially apply a RenderableFunction of arity 0")
-      case 1 =>
-        val f1: Tuple1[T] => R = f
-        val g0 = { _: Product => f1(Tuple1(t)) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g0, s)
-      case 2 =>
-        val f2 = Function.untupled[T, T, R](f)
-        val g1 = RenderableFunction.asFunctionType { x: Tuple1[T] => f2.curried(t)(x._1) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g1, s)
-      case 3 =>
-        val f3 = Function.untupled[T, T, T, R](f)
-        val g2 = RenderableFunction.asFunctionType { x: (T, T) => f3.curried(t)(x._1)(x._2) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g2, s)
-      case 4 =>
-        val f4 = Function.untupled[T, T, T, T, R](f)
-        val g3 = RenderableFunction.asFunctionType { x: (T, T, T) => f4.curried(t)(x._1)(x._2)(x._3) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g3, s)
-      case 5 =>
-        val f5 = Function.untupled[T, T, T, T, T, R](f)
-        val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g4, s)
-      case 6 =>
-        val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-        val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g5, s)
-      case 7 =>
-        val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-        val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-        val s = w.partiallyApply(t)
-        RenderableFunction(n - 1, g6, s)
-      case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
-    }
+  private def partiallyApply[T, R](n: Int, f: (Product) => R, t: T, w: FunctionString)(implicit tc: ClassTag[T], rc: ClassTag[R]) = Try(n match {
+    case 0 => throw RenderableFunctionException("cannot partially apply a RenderableFunction of arity 0")
+    case 1 =>
+      val f1: Tuple1[T] => R = f
+      val g0 = { _: Product => f1(Tuple1(t)) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g0, s)
+    case 2 =>
+      val f2 = Function.untupled[T, T, R](f)
+      val g1 = RenderableFunction.asFunctionType { x: Tuple1[T] => f2.curried(t)(x._1) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g1, s)
+    case 3 =>
+      val f3 = Function.untupled[T, T, T, R](f)
+      val g2 = RenderableFunction.asFunctionType { x: (T, T) => f3.curried(t)(x._1)(x._2) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g2, s)
+    case 4 =>
+      val f4 = Function.untupled[T, T, T, T, R](f)
+      val g3 = RenderableFunction.asFunctionType { x: (T, T, T) => f4.curried(t)(x._1)(x._2)(x._3) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g3, s)
+    case 5 =>
+      val f5 = Function.untupled[T, T, T, T, T, R](f)
+      val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g4, s)
+    case 6 =>
+      val f6 = FP.untupled[T, T, T, T, T, T, R](f)
+      val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g5, s)
+    case 7 =>
+      val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
+      val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+      val s = w.partiallyApply(t)
+      RenderableFunction(n - 1, g6, s)
+    case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
   }
+  )
 
-  private def partiallyApplyFunction[S, T, R](n: Int, f: (Product) => R, w: FunctionString, g: RenderableFunction[T]): RenderableFunction[R] = {
+  private def partiallyApplyFunction[S, T, R](n: Int, f: (Product) => R, w: FunctionString, g: RenderableFunction[T])(implicit sc: ClassTag[S], tc: ClassTag[T], rc: ClassTag[R]) = Try(
     g.arity match {
       case 0 => throw RenderableFunctionException("cannot partially apply a RenderableFunction with g having arity 0")
       case 1 =>
@@ -322,9 +359,9 @@ object RenderableFunction {
       // TODO implement up to case 7
       case _ => throw RenderableFunctionException(s"partiallyApplyFunction: functions with arity $n are not supported")
     }
-  }
+  )
 
-  private def invert[T, R](n: Int, arity: Int, f: (Product) => R, w: FunctionString) = {
+  private def invert[T, R](n: Int, arity: Int, f: (Product) => R, w: FunctionString)(implicit tc: ClassTag[T], rc: ClassTag[R]) = {
     if (arity < 2 || n > arity)
       throw RenderableFunctionException(s"can't invert $n parameters of a RenderableFunction of arity $arity")
     else
@@ -390,4 +427,6 @@ object RenderableFunction {
   * @param s the message
   */
 case class RenderableFunctionException(s: String) extends Exception(s)
+
+case class AssertingError(w: String) extends Exception(w)
 
