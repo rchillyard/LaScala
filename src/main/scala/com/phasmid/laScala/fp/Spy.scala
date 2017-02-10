@@ -55,6 +55,8 @@ object Spy {
     *
     * The caller MUST provide an implicit value in scope for a Logger (unless the spyFunc has been explicitly defined to use some other non-logging mechanism, such as calling getPrintlnSpyFunc).
     *
+    * NOTE that there will be times when you cannot use spy, for example when yielding the result of a tail-recursive method. You will need to use log then instead.
+    *
     * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
     *                Note that the message will only be evaluated if spying will actually occur, otherwise, since it is call-by-name, it will never be evaluated.
     * @param x       the value being spied on and which will be returned by this method.

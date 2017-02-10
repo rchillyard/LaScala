@@ -5,7 +5,7 @@
 
 package com.phasmid.laScala.fp
 
-import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
+import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.implicitConversions
@@ -137,6 +137,16 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val r = f(Tuple3(Scalar("Hello"), Scalar(1), Scalar(true)))
     val hello1true = "Hello:1:true"
     r should matchPattern { case Success(`hello1true`) => }
+  }
+
+  it should "handle function returning a Try" in {
+    val map = Map("x" -> "X")
+
+    def lookup(s: String): Try[String] = FP.optionToTry(map.get(s))
+
+    val f = RenderableFunction(lookup _, "lookup")
+    val r = f(Tuple1("x"))
+    r should matchPattern { case Success("X") => }
   }
 
   behavior of "RenderableFunction.partiallyApply"

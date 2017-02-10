@@ -33,9 +33,25 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
   implicit private val logger = Spy.getLogger(getClass)
   Spy.log(s"created $this with return type: $rc")
 
+  private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
+
+  /**
+    * Apply parameter p to this function.
+    *
+    * NOTE that if R is Try[S], then the result of apply will be R, not Try[R]
+    *
+    * @param p a Tuple
+    * @return an R wrapped in Try
+    */
   def apply(p: Product): Try[R] =
-    if (arity == p.productArity) Try(func.apply(p))
-    else Failure(RenderableFunctionException(s"cannot apply RenderableFunction: ($this) to a Product of arity ${p.productArity}: $p"))
+  // CONSIDER rewriting the logic here
+    if (arity == p.productArity)
+      if (returnIsTry)
+        func.apply(p).asInstanceOf[Try[R]]
+      else
+        Try(func.apply(p))
+    else
+      Failure(RenderableFunctionException(s"cannot apply RenderableFunction: ($this) to a Product of arity ${p.productArity}: $p"))
 
   /**
     * Method to call this RenderableFunction by name only, that's to say without any parameters.
@@ -73,7 +89,7 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
                     if (g.arity == 0)
                       (for (p <- g.callByName(); q <- r.partiallyApply(p)) yield q)
                       match {
-                        case Success(z) => inner1(z, y)
+                        case Success(z) => Spy.log(s"result of applying function $f($x) is $z"); inner1(z, y)
                         case Failure(e) => Failure(e)
                     }
                     else {
