@@ -245,7 +245,6 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     renderLimited(as) shouldBe "(1, 2...)"
   }
 
-
   behavior of "map2"
 
   it should """match Success(1234) for parse "12" to int and parse "34" to int,with (a:Int,b:Int) => a.toString()+b.toString()"""  in
@@ -254,12 +253,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val a2 = "34"
       val t1 = Try(a1.toInt)
       val t2 = Try(a2.toInt)
-
-      val test = FP.map2(t1, t2)((a: Int, b: Int) => a.toString + b.toString)
-
-      test should matchPattern {
-        case Success("1234") =>
-      }
+      val test = map2(t1, t2)((a: Int, b: Int) => a.toString + b.toString)
+      test should matchPattern { case Success("1234") => }
     }
 
   it should """fail for "", Int""" in{
@@ -267,12 +262,10 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val t1 = Try(Name("Robin",Some("C"),"Hillyard",Some("Ph.D")))
     val t2 = Try(24)
 
-    val test = FP.map2(t1,t2)(Principal.apply)
+    val test = map2(t1,t2)(Principal.apply)
 
     // TODO this was originally a Failure and I have broken that.
-    test should matchPattern{
-      case Success(_) =>
-    }
+    test should matchPattern{ case Success(_) => }
   }
 
 
@@ -287,12 +280,8 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
       val p5 = Try(18)
       val p6 = Try(20)
       val p7 = Try(28)
-
-      val test = FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
-
-      test.get should matchPattern{
-        case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) =>
-      }
+      val test = map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
+      test.get should matchPattern{ case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) => }
     }
 
   it should """fail with bad input""" in {
@@ -303,9 +292,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val p5 = Try(18)
     val p6 = Try(20)
     val p7 = Try(28)
-    FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern{
-      case Failure(_) =>
-    }
+    map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern{ case Failure(_) => }
   }
 
   behavior of "invert2"
@@ -313,52 +300,33 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   it should "work" in
     {
       val a:Int => Int => String = {a => b=> "abcde".substring(a, b)}
-
-      Try(a(0)(2)) should matchPattern{
-        case Success("ab") =>
-      }
-
-      val aux = FP.invert2(a)
-      Try(aux(2)(0)) should matchPattern{
-        case Success("ab") =>
-      }
-      Try(aux(0)(2)) should matchPattern{
-        case Failure(_) =>
-      }
+      Try(a(0)(2)) should matchPattern{ case Success("ab") => }
+      val aux = invert2(a)
+      Try(aux(2)(0)) should matchPattern{ case Success("ab") => }
+      Try(aux(0)(2)) should matchPattern{ case Failure(_) => }
     }
 
   behavior of "invert3"
 
   it should "work" in {
-
-    val a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
-
+    val a:Int => Int => Int => Int = { a => b => c => a*b+c}
     a(2)(3)(4) shouldBe 10
-
-    val aux = FP.invert3(a)
-
+    val aux = invert3(a)
     aux(2)(3)(4) shouldBe 14
   }
 
   behavior of "invert4"
 
   it should "work" in {
-
-    val a:Int => Int=> Int=> Int=>Int = {a => b=> c=> d=> a*b+c*d}
-
-    a(2)(3)(4)(5) shouldBe 26
-
-    val aux = FP.invert3(a)
-
-    aux(2)(3)(4)(5) shouldBe 22
+    val a: Int => Int => Int => Int => Int = { a => b => c => d => a * b + c % d }
+    a(2)(3)(4)(5) shouldBe 10
+    invert4(a)(2)(3)(4)(5) shouldBe 21
   }
 
   behavior of "uncurried2"
   it should "work" in{
-
-    def a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
-
-    def aux = FP.uncurried2(a)
+    def a:Int => Int => Int => Int = {a => b => c => a*b+c}
+    def aux = uncurried2(a)
     a.toString() shouldBe "<function1>"
     aux.toString() shouldBe "<function2>"
   }

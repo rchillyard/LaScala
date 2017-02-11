@@ -24,7 +24,7 @@ import scala.util._
   * @param w     a human-readable representation of the function
   * @tparam R the ultimate return type of this RenderableFunction
   */
-case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionString)(implicit rc: ClassTag[R]) extends (Product => Try[R]) with Renderable {
+case class RenderableFunction[+R](arity: Int, func: Product => R, w: FunctionString)(implicit rc: ClassTag[R]) extends (Product => Try[R]) with Renderable {
 
   require(func != null, s"func is null")
   require(w != null, s"w is null")
@@ -136,24 +136,6 @@ case class RenderableFunction[R](arity: Int, func: (Product) => R, w: FunctionSt
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + w.toString
 }
 
-case class FreeParam(s: String) {
-  override def toString: String = s + FreeParam.query
-}
-
-case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
-  private def isBound = p.isLeft
-
-  private def right = p.right.get
-  def isFree: Boolean = !isBound && right.isLeft
-  def isFunction: Boolean = !isBound && right.isRight
-
-  override def toString: String = "(" + (p match {
-    case Left(s) => s
-    case Right(Left(_p)) => _p.toString
-    case Right(Right(f)) => f.toString
-  }) + ")"
-}
-
 case class FunctionString(f: String, ps: List[Param]) {
   def invert(n: Int): FunctionString = {
     @tailrec def inner(r1: List[Param], r2: List[Param], i: Int, _ps: List[Param]): List[Param] = _ps match {
@@ -224,28 +206,24 @@ case class FunctionString(f: String, ps: List[Param]) {
   }
 }
 
-object Param {
-  def apply(s: String): Param = Param(Left(s))
+case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
+  private def isBound = p.isLeft
 
-  def apply(p: FreeParam): Param = Param(Right(Left(p)))
+  private def right = p.right.get
 
-  def apply(f: FunctionString): Param = Param(Right(Right(f)))
+  def isFree: Boolean = !isBound && right.isLeft
+
+  def isFunction: Boolean = !isBound && right.isRight
+
+  override def toString: String = "(" + (p match {
+    case Left(s) => s
+    case Right(Left(_p)) => _p.toString
+    case Right(Right(f)) => f.toString
+  }) + ")"
 }
 
-object FreeParam {
-  def apply(c: Char): FreeParam = apply(c.toString)
-
-  private val query = """?"""
-}
-
-object FunctionString {
-  private val params = "abcdefghijklmnopqrstuvwxyz".toList
-
-  def stream(list: List[Char]): Stream[FreeParam] = Stream.cons(FreeParam(list.head), stream(list.tail))
-
-  def apply(f: String, n: Int): FunctionString = FunctionString(f, stream(params) take n map (Param(_)) toList)
-
-  def custom(f: String, cs: List[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
+case class FreeParam(s: String) {
+  override def toString: String = s + FreeParam.query
 }
 
 /**
@@ -435,6 +413,30 @@ object RenderableFunction {
         case _ => throw RenderableFunctionException(s"invert with arity $arity is not supported")
       }
   }
+}
+
+object Param {
+  def apply(s: String): Param = Param(Left(s))
+
+  def apply(p: FreeParam): Param = Param(Right(Left(p)))
+
+  def apply(f: FunctionString): Param = Param(Right(Right(f)))
+}
+
+object FreeParam {
+  def apply(c: Char): FreeParam = apply(c.toString)
+
+  private val query = """?"""
+}
+
+object FunctionString {
+  private val params = "abcdefghijklmnopqrstuvwxyz".toList
+
+  def stream(list: List[Char]): Stream[FreeParam] = Stream.cons(FreeParam(list.head), stream(list.tail))
+
+  def apply(f: String, n: Int): FunctionString = FunctionString(f, stream(params) take n map (Param(_)) toList)
+
+  def custom(f: String, cs: List[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
 }
 
 /**

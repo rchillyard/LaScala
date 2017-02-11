@@ -9,11 +9,11 @@ import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
 /**
-  * This class and its related object provide a functional-programming style (if somewhat quick-and-dirty) spy feature for logging (or otherwise peeking at) the values of Scala
+  * This trait and its related object provide a functional-programming style (if somewhat quick-and-dirty) spy feature for logging (or otherwise peeking at) the values of Scala
   * expressions.
   *
   * While this mechanism (by default) logs values using SLF4J, it does so in a functional style.
-  * You do not have to break up your functional expressions to write logging statements.
+  * You do not have to break up your functional expressions to write logging statements (unless they are the recursive calls of a tail-recursive method).
   *
   * If you just want to slip in a quick invocation of Spy.spy, you will need to provide an implicit spyFunc.
   * The proper simple way to do this is to declare a logger as follows:
@@ -28,8 +28,11 @@ import scala.util.{Failure, Success}
   *
   * Created by scalaprof on 8/17/16.
   */
-class Spy
+trait Spy
 
+/**
+  * Companion object to Spy.
+  */
 object Spy {
 
   /**
@@ -39,7 +42,7 @@ object Spy {
     * @param x ignored
     * @return a new Spy instance
     */
-  def apply(x: Unit): Spy = new Spy()
+  def apply(x: Unit): Spy = new Spy() {}
 
   /**
     * This is the global setting for whether to invoke the spyFunc of each spy invocation. However, each invocation can also turn spying off for itself.
