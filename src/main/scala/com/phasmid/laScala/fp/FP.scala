@@ -271,9 +271,10 @@ object FP {
     * @return an X value wrapped as a Try
     */
   def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = {
-    val result = Try(xo.get)
-    if (t != null) result.recoverWith { case _: java.util.NoSuchElementException => Failure(t) }
-    else result
+    xo match {
+      case Some(x) => Success(x)
+      case None => if (t != null) Failure(t) else Failure(new java.util.NoSuchElementException)
+    }
   }
 
   /**
