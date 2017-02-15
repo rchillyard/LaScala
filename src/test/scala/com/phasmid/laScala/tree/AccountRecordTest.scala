@@ -91,7 +91,8 @@ class AccountRecordTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
 
-  it should "work for miniSampleTree.txt" in {
+  // NOTE: there is an identical unit test in the it branch (integration tests). This one is too slow to have in unit tests.
+  ignore should "work for miniSampleTree.txt" in {
     case object TestDetailsMiniSample extends AbstractTestDetails("miniSampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(2), ws(0), ws(1))
     }

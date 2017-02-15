@@ -113,6 +113,16 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     zip(none, two) should matchPattern { case None => }
     zip(one, none) should matchPattern { case None => }
   }
+
+  "zipADeeDooDah" should "succeed" in {
+    val as = List(1, 2, 3, 4, 5)
+    val bs = List("a", "b", "c")
+    zipADeeDooDah(as, bs) should matchPattern { case (List((1, "a"), (2, "b"), (3, "c")), List(4, 5), Nil) => }
+    zipADeeDooDah(bs, as) should matchPattern { case (List(("a", 1), ("b", 2), ("c", 3)), Nil, List(4, 5)) => }
+    zipADeeDooDah(as drop 3, bs) should matchPattern { case (List((4, "a"), (5, "b")), Nil, List("c")) => }
+    zipADeeDooDah(Nil, bs) should matchPattern { case (Nil, Nil, List("a", "b", "c")) => }
+    zipADeeDooDah(Nil, Nil) should matchPattern { case (Nil, Nil, Nil) => }
+  }
   "optionToTry" should "succeed for Map" in {
     val map = Map("a" -> "A", "b" -> "B")
     optionToTry(map.get("a")) should matchPattern { case Success("A") => }

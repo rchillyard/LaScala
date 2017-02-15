@@ -92,7 +92,7 @@ object Spy {
             spy(s"$w: Success", z, b)
             sb.toString
           // XXX: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
-          case Failure(t) => s"$w: failed with ${t.getLocalizedMessage}"
+          case Failure(t) => s"$w: Failure($t)"
           // XXX: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
           case f: Future[_] =>
             import scala.concurrent.ExecutionContext.Implicits.global

@@ -3,6 +3,7 @@ package com.phasmid.laScala.fp
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.Future
+import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
 /**
@@ -87,7 +88,8 @@ class SpySpec extends FlatSpec with Matchers {
     var spySpyMessage: String = ""
     def f(s: => String): String = {spySpyMessage = s; s}
     implicit def spyFunc(s: String): Spy = Spy( spyMessage += s"explicit spy: $s\n" )
-    val is = for (i <- 1 to 2) yield Spy.spy(f("i"),i,false)
+
+    val is = for (i <- 1 to 2) yield Spy.spy(f("i"), i, b = false)
     is shouldBe List(1,2)
     spyMessage shouldBe ""
     spySpyMessage shouldBe ""
@@ -119,7 +121,7 @@ class SpySpec extends FlatSpec with Matchers {
     implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"Hello: $s\n")
 
     Spy.spy("failure", Failure(new Exception("junk")))
-    spyMessage shouldBe "Hello: failure: failed with junk\n"
+    spyMessage shouldBe "Hello: failure: Failure(java.lang.Exception: junk)\n"
   }
   it should "work with a Future" in {
     implicit val logger = Spy.getLogger(getClass)

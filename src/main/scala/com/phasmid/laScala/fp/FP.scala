@@ -216,6 +216,21 @@ object FP {
   def zip[A, B](af: Future[A], bf: Future[B])(implicit ec: ExecutionContext): Future[(A, B)] = for (a <- af; b <- bf) yield (a, b)
 
   /**
+    * Method to zip two sequences together but in such a way that all elements are returned in one or other of the components of the result
+    *
+    * @param as a sequence of As
+    * @param bs a sequence of Bs
+    * @tparam A the underlying type of as
+    * @tparam B the underlying type of bs
+    * @return a Tuple3 which contains: the zip of as and bs; the remaining elements of as (if any); the remaining elements of bs (if any)
+    */
+  def zipADeeDooDah[A, B](as: Seq[A], bs: Seq[B]): (Seq[(A, B)], Seq[A], Seq[B]) = {
+    val (nas, nbs) = (as.size, bs.size)
+    val n = math.min(nas, nbs)
+    ((as take n) zip (bs take n), as drop n, bs drop n)
+  }
+
+  /**
     * TODO unit test
     *
     * @param f a function which transforms an X into a Y

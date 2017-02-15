@@ -33,6 +33,11 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asBoolean should matchPattern { case Some(true) => }
     x.asValuable[Int] should matchPattern { case Some(1) => }
   }
+  it should "result from explicit StringScalar(String)" in {
+    val x = StringScalar("true")
+    x.source shouldBe "true"
+    x.asBoolean should matchPattern { case Some(true) => }
+  }
   it should "work from String form" in {
     val x = Scalar("true")
     x.asBoolean should matchPattern { case Some(true) => }
@@ -139,8 +144,8 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.renderFormatted("%5.2f") shouldBe " 1.00"
   }
   "RationalScalar" should "work" in {
-    import Rational.RationalHelper
     import FiniteIntegral.LongIsFiniteIntegral
+    import Rational.RationalHelper
     val x = Scalar(r"1/2")
     val half = Rational.half
     x.source shouldBe half

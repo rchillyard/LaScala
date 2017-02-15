@@ -14,10 +14,38 @@ import scala.util._
 /**
   * Created by scalaprof on 10/19/16.
   */
-class RenderableFunctionSpec extends FlatSpec with Matchers {
+class ClosureSpec extends FlatSpec with Matchers {
 
   val s2s: Scalar => Option[String] = { s => Option(s.render()) }
   val s2b: Scalar => Option[Boolean] = { s => s.asBoolean }
+
+  behavior of "Closure"
+  it should "apply for a simple closure" in {
+    val name = "isHello"
+    val f = RenderableFunction({ s: String => s == "Hello" }, name)
+    val c = Closure(f, Left("Hello"))
+    c.arity shouldBe 0
+    c() shouldBe Success(true)
+  }
+
+  it should "implement bind" in {
+    val name = "isHello"
+    val f = RenderableFunction({ s: String => s == "Hello" }, name)
+    val c1 = Closure(f)
+    c1.arity shouldBe 1
+    val c2 = c1.bind(Left("Hello"))
+    c2.arity shouldBe 0
+    c2() shouldBe Success(true)
+  }
+
+  it should "throw exception where there is no parameter" in {
+    val name = "isHello"
+    val f = RenderableFunction({ s: String => s == "Hello" }, name)
+    val c = Closure(f)
+    c.arity shouldBe 1
+    c() should matchPattern { case Failure(_) => }
+    an[RenderableFunctionException] should be thrownBy c().get
+  }
 
   behavior of "RenderableFunction.apply"
 
@@ -261,7 +289,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def show(s1: String) = s1
 
     val f = RenderableFunction(show _, "render")
-    val gy = f.applyParameters(List[Parameter[String]](Right(lookup),Left("pi")))
+    val closure = Closure(lookup, Left("pi"))
+    val gy = f.applyParameters(List[Parameter[String]](Right(closure)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success("3.1415927")
@@ -274,7 +303,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def show(s1: String) = s1.toDouble
 
     val f = RenderableFunction(show _, "render")
-    val gy = f.applyParameters(List[Parameter[String]](Right(lookup),Left("pi")))
+    val closure = Closure(lookup, Left("pi"))
+    val gy = f.applyParameters(List[Parameter[String]](Right(closure)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success(3.1415927)
@@ -288,7 +318,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
     val f = RenderableFunction(show _, "render")
     println(s"f: $f")
-    val gy = f.applyParameters(List[Parameter[String]](Right(lookup),Left("pi")))
+    val gy = f.applyParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
     println(s"gy: $gy")
     gy should matchPattern { case Failure(_: NoSuchElementException) => }
   }
@@ -316,12 +346,11 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val g__1 = g__1y.get
     println(s"g__1: $g__1")
     g__1.arity shouldBe 1
-    val fg_2y = f_1.applyParameters(List[Parameter[Any]](Right(g__1.asInstanceOf[RenderableFunction[Any]])))
+    val fg_2y = f_1.applyParameters(List[Parameter[Any]](Right(Closure(g__1, Left("x")))))
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     println(s"fg_2: $fg_2")
-    fg_2.arity shouldBe 1
-    fg_2(Tuple1("x")) shouldBe Success(false)
+    fg_2.callByName() shouldBe Success(false)
   }
 
   behavior of "RenderableFunction.untupled"
@@ -374,6 +403,38 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.arity shouldBe resultArity
     rf2y.get.callByName shouldBe Success("K:l")
+  }
+
+  behavior of "RenderableFunction.varargs"
+
+  it should "handle varargs of cardinality 0" in {
+    val rf1 = RenderableFunction.varargs(0)
+    rf1.arity shouldBe 0
+    println(rf1)
+    val rf2y: Try[RenderableFunction[List[String]]] = rf1.applyParameters(List[Parameter[String]]())
+    rf2y should matchPattern { case Success(_) => }
+    println(rf2y.get)
+    rf2y.get.callByName shouldBe Success(List())
+  }
+
+  it should "handle varargs of cardinality 1" in {
+    val rf1 = RenderableFunction.varargs(1)
+    rf1.arity shouldBe 1
+    println(rf1)
+    val rf2y: Try[RenderableFunction[List[String]]] = rf1.applyParameters(List[Parameter[String]](Left("l")))
+    rf2y should matchPattern { case Success(_) => }
+    println(rf2y.get)
+    rf2y.get.callByName shouldBe Success(List("l"))
+  }
+
+  it should "handle varargs of cardinality 2" in {
+    val rf1 = RenderableFunction.varargs(2)
+    rf1.arity shouldBe 2
+    println(rf1)
+    val rf2y: Try[RenderableFunction[List[String]]] = rf1.applyParameters(List[Parameter[String]](Left("l"), Left("K")))
+    rf2y should matchPattern { case Success(_) => }
+    println(rf2y.get)
+    rf2y.get.callByName shouldBe Success(List("l", "K"))
   }
 
 }
