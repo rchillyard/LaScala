@@ -9,5 +9,5 @@ package com.phasmid.laScala
   * Created by scalaprof on 11/12/16.
   */
 package object fp {
-  type Parameter[T] = Either[T, Closure[T]]
+  type Parameter[T] = Either[T, Closure[_,T]]
 }

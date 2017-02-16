@@ -18,16 +18,17 @@ import scala.util._
   *
   * @param f  the function
   * @param ps the parameters, each of which may be a value or a Closure
+  * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[+R](f: RenderableFunction[R], ps: Parameter[_]*) extends (() => Try[R]) {
+case class Closure[T:ClassTag,+R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
 
   /**
     * Method to evaluate this closure. If the arity of this is not equal to zero, a Failure will result
     *
     * @return a Try[R]
     */
-  def apply(): Try[R] = for (g <- f.applyParameters[Any](ps.toList); h <- g.callByName()) yield h
+  def apply(): Try[R] = for (g <- f.applyParameters[T](ps.toList); h <- g.callByName()) yield h
 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
@@ -37,12 +38,14 @@ case class Closure[+R](f: RenderableFunction[R], ps: Parameter[_]*) extends (() 
     *          which is to say, if index is not specified, the new parameter will be appended to the list).
     * @return a new Closure with the same function but with the expanded list
     */
-  def bind(p: Parameter[_], i: Int = ps.size): Closure[R] = Closure(f, ps :+ p: _*)
+  def bind(p: Parameter[T], i: Int = ps.size): Closure[T,R] = Closure(f, ps :+ p: _*)
 
   /**
     * The arity of this Closure.
     */
   lazy val arity: Int = ps.foldLeft(f.arity)(_ + Closure.parameterArity(_))
+
+  override def toString(): String = s"Closure($f, $ps)"
 }
 
 /**
@@ -124,7 +127,7 @@ case class RenderableFunction[+R](arity: Int, func: Product => R, w: FunctionStr
               }
             case Right(f) => // Closure[T]
               (for (p <- f(); q <- r.partiallyApply(p)) yield q) match {
-                case Success(z) => inner1(z, Nil)
+                case Success(z) => inner1(z, t)
                 case Failure(e) => Failure(e)
               }
           }
@@ -255,7 +258,7 @@ case class FreeParam(s: String) {
   * Companion object to Closure
   */
 object Closure {
-  private def parameterArity(p: Parameter[Any]): Int = p match {
+  private def parameterArity[T](p: Parameter[T]): Int = p match {
     case Left(_) => -1
     case Right(c) => c.arity
   }
@@ -319,7 +322,7 @@ object RenderableFunction {
 
   private val mkList = "mkList"
 
-  def varargs[T](n: Int)(implicit tc: ClassTag[T]): RenderableFunction[List[T]] = n match {
+  def varargs[T](n: Int)(implicit tc: ClassTag[T]): RenderableFunction[Seq[T]] = n match {
     case 0 => apply(0, emptyList _, mkList)
     case 1 => apply({ t1: T => List[T](t1) }, mkList)
     case 2 => apply({ (t1: T, t2: T) => List[T](t1, t2) }, mkList)
