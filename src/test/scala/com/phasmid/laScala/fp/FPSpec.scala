@@ -114,14 +114,14 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     zip(one, none) should matchPattern { case None => }
   }
 
-  "zipADeeDooDah" should "succeed" in {
+  "zippy" should "succeed" in {
     val as = List(1, 2, 3, 4, 5)
     val bs = List("a", "b", "c")
-    zipADeeDooDah(as, bs) should matchPattern { case (List((1, "a"), (2, "b"), (3, "c")), List(4, 5), Nil) => }
-    zipADeeDooDah(bs, as) should matchPattern { case (List(("a", 1), ("b", 2), ("c", 3)), Nil, List(4, 5)) => }
-    zipADeeDooDah(as drop 3, bs) should matchPattern { case (List((4, "a"), (5, "b")), Nil, List("c")) => }
-    zipADeeDooDah(Nil, bs) should matchPattern { case (Nil, Nil, List("a", "b", "c")) => }
-    zipADeeDooDah(Nil, Nil) should matchPattern { case (Nil, Nil, Nil) => }
+    zippy(as, bs) should matchPattern { case (Stream((1, "a"), (2, "b"), (3, "c")), Stream(4, 5), Nil) => }
+    zippy(bs, as) should matchPattern { case (Stream(("a", 1), ("b", 2), ("c", 3)), Nil, Stream(4, 5)) => }
+    zippy(as drop 3, bs) should matchPattern { case (Stream((4, "a"), (5, "b")), Nil, Stream("c")) => }
+    zippy(Nil, bs) should matchPattern { case (Nil, Nil, Stream("a", "b", "c")) => }
+    zippy(Nil, Nil) should matchPattern { case (Nil, Nil, Nil) => }
   }
   "optionToTry" should "succeed for Map" in {
     val map = Map("a" -> "A", "b" -> "B")

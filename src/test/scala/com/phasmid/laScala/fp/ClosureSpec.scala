@@ -405,7 +405,29 @@ class ClosureSpec extends FlatSpec with Matchers {
     rf2y.get.callByName shouldBe Success("K:l")
   }
 
+  behavior of "createVarArgsClosure"
+
+  it should "handle varargs of cardinality 0" in {
+    val c = Closure.createVarArgsClosure()
+    c.arity shouldBe 0
+    c() shouldBe Success(Seq())
+  }
+
+  it should "handle varargs of cardinality 1" in {
+    val c = Closure.createVarArgsClosure("l")
+    c.arity shouldBe 0
+    c() shouldBe Success(Seq("l"))
+  }
+
+  it should "handle varargs of cardinality 2" in {
+    val c = Closure.createVarArgsClosure("l", "K")
+    c.arity shouldBe 0
+    c() shouldBe Success(Seq("l", "K"))
+  }
+
   behavior of "RenderableFunction.varargs"
+
+  // NOTE that this is essentially a repeat of the tests immediately above.
 
   it should "handle varargs of cardinality 0" in {
     val rf1 = RenderableFunction.varargs(0)

@@ -28,7 +28,14 @@ case class Closure[T:ClassTag,+R](f: RenderableFunction[R], ps: Parameter[T]*) e
     *
     * @return a Try[R]
     */
-  def apply(): Try[R] = for (g <- f.applyParameters[T](ps.toList); h <- g.callByName()) yield h
+  def apply(): Try[R] = for (g <- partiallyApply; h <- g.f.callByName()) yield h
+
+  /**
+    * Method to partially apply this closure.
+    *
+    * @return a Closure[R] wrapped in Try. The ps parameter of the result will be empty.
+    */
+  def partiallyApply: Try[Closure[T, R]] = for (g <- f.applyParameters[T](ps.toList)) yield Closure(g)
 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
@@ -140,7 +147,12 @@ case class RenderableFunction[+R](arity: Int, func: Product => R, w: FunctionStr
 
   def partiallyApplyFunction[S, T](f: RenderableFunction[T])(implicit sc: ClassTag[S], tc: ClassTag[T]): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction[S, T, R](arity, func, w, f)
 
-  override def toString = s"RenderableFunction: arity: $arity, func: $w"
+  /**
+    * NOTE that we don't show the function itself because it gives us no additional information
+    *
+    * @return a String representing this object
+    */
+  override def toString = s"RenderableFunction($arity, $w)"
 
   /**
     * Invert the first n parameter positions of this RenderableFunction
@@ -262,6 +274,15 @@ object Closure {
     case Left(_) => -1
     case Right(c) => c.arity
   }
+
+  /**
+    * Factory method to create a VarArgs Closure
+    *
+    * @param ts the varargs parameters
+    * @tparam T the underlying type
+    * @return a Closure resulting in Seq[T]
+    */
+  def createVarArgsClosure[T](ts: T*)(implicit tc: ClassTag[T]): Closure[T, Seq[T]] = apply(RenderableFunction.varargs(ts.size), ts map (Left(_)):_*)
 }
 
 /**
