@@ -72,9 +72,6 @@ case class RenderableFunction[+R](arity: Int, func: Product => R, w: FunctionStr
   require(w != null, s"w is null")
   require(w.arity == arity, s"arity $arity is not consistent with $w")
 
-  implicit private val logger = Spy.getLogger(getClass)
-  Spy.log(s"created $this with return type: $rc")
-
   private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
 
   /**
