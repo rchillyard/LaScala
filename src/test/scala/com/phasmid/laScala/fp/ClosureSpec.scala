@@ -341,12 +341,12 @@ class ClosureSpec extends FlatSpec with Matchers {
     println(s"g_2: $g_2")
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
-    val g__1y = g_2i.applyParameters(List[Parameter[Any]](Left(List("x", "y", "z"))))
+    val g__1y = g_2i.applyParameters(List[Parameter[List[String]]](Left(List("x", "y", "z"))))
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
     println(s"g__1: $g__1")
     g__1.arity shouldBe 1
-    val fg_2y = f_1.applyParameters(List[Parameter[Any]](Right(Closure(g__1, Left("x")))))
+    val fg_2y = f_1.applyParameters(List[Parameter[Boolean]](Right(Closure(g__1, Left("x")))))
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     println(s"fg_2: $fg_2")
@@ -430,20 +430,20 @@ class ClosureSpec extends FlatSpec with Matchers {
   // NOTE that this is essentially a repeat of the tests immediately above.
 
   it should "handle varargs of cardinality 0" in {
-    val rf1 = RenderableFunction.varargs(0)
+    val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs(0)
     rf1.arity shouldBe 0
     println(rf1)
-    val rf2y: Try[RenderableFunction[Seq[String]]] = rf1.applyParameters(List[Parameter[String]]())
+    val rf2y = rf1.applyParameters[String](List[Parameter[String]]())
     rf2y should matchPattern { case Success(_) => }
     println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List())
   }
 
   it should "handle varargs of cardinality 1" in {
-    val rf1 = RenderableFunction.varargs(1)
+    val rf1: RenderableFunction[Seq[Seq[String]]] = RenderableFunction.varargs(1)
     rf1.arity shouldBe 1
     println(rf1)
-    val rf2y: Try[RenderableFunction[Seq[String]]] = rf1.applyParameters(List[Parameter[String]](Left("l")))
+    val rf2y = rf1.applyParameters[String](List[Parameter[String]](Left("l")))
     rf2y should matchPattern { case Success(_) => }
     println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List("l"))
@@ -453,7 +453,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     val rf1 = RenderableFunction.varargs(2)
     rf1.arity shouldBe 2
     println(rf1)
-    val rf2y: Try[RenderableFunction[Seq[String]]] = rf1.applyParameters(List[Parameter[String]](Left("l"), Left("K")))
+    val rf2y = rf1.applyParameters(List[Parameter[String]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
     println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List("l", "K"))
