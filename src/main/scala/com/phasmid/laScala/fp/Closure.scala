@@ -7,6 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
+import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
@@ -64,7 +65,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
   * @param arity the number of input parameters that are required to fully apply the given function (func)
   * @param func  the function itself
   * @param w     a human-readable representation of the function
-  * @tparam R the ultimate return type of this RenderableFunction
+  * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
 case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: FunctionString) extends (Product => Try[R]) with Renderable {
 
@@ -100,7 +101,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     * @param t a T
     * @return the result of invoking apply(Tuple1(t))
     */
-  def apply[T](t: T): Try[R] = apply(Tuple1(t))
+  def apply[T](t: T): Try[R] = Closure.logDebug(s"$this.apply($t)", apply(Tuple1(t)))
 
   /**
     * Method to call this RenderableFunction by name only, that's to say without any parameters.
@@ -108,7 +109,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     *
     * @return
     */
-  def callByName(): Try[R] = apply(Tuple0)
+  def callByName(): Try[R] = Closure.logDebug(s"$this.callByName", apply(Tuple0))
 
   /**
     * Method which will take the given RenderableFunction and apply all of the Scalar terms that were parsed,
@@ -118,7 +119,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     * @tparam T the underlying type of the parameters
     * @return a new RenderableFunction (wrapped in Try), whose single input parameter is the Tuple0
     */
-  def applyParameters[T](xs: List[Parameter[T]]): Try[RenderableFunction[R]] = {
+  def applyParameters[T](xs: Seq[Parameter[T]]): Try[RenderableFunction[R]] = {
     @tailrec
     def inner1(r: RenderableFunction[R], work: List[Parameter[T]]): Try[RenderableFunction[R]] =
       work match {
@@ -139,7 +140,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
           }
       }
 
-    inner1(this, xs)
+    inner1(this, xs.toList)
   }
 
   def partiallyApply[T](t: T): Try[RenderableFunction[R]] = RenderableFunction.partiallyApply(arity, func, t, w)
@@ -175,15 +176,15 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + w.toString
 }
 
-case class FunctionString(f: String, ps: List[Param]) {
+case class FunctionString(f: String, ps: Seq[Param]) {
   def invert(n: Int): FunctionString = {
-    @tailrec def inner(r1: List[Param], r2: List[Param], i: Int, _ps: List[Param]): List[Param] = _ps match {
+    @tailrec def inner(r1: List[Param], r2: List[Param], i: Int, _ps: List[Param]): Seq[Param] = _ps match {
       case Nil => r1 ++ r2
       case h :: t => if (i < n) inner(h +: r1, r2, i + 1, t)
       else inner(r1, r2 :+ h, i + 1, t)
     }
 
-    FunctionString(f, inner(Nil, Nil, 0, ps))
+    FunctionString(f, inner(Nil, Nil, 0, ps.toList))
   }
 
   override def toString: String = f + ps.mkString("", "", "")
@@ -209,15 +210,16 @@ case class FunctionString(f: String, ps: List[Param]) {
           h match {
         case Param(Left(_)) => inner(r, t)
         case Param(Right(Left(_))) => inner(r + 1, t)
-        case Param(Right(Right(g))) => inner(r, g.ps ++ t)
+        case Param(Right(Right(g))) => inner(r, g.ps.toList ++ t)
       }
     }
-    inner(0, ps)
+
+    inner(0, ps.toList)
   }
 
-  def bind(index: Int, w: String): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Left(w)))
+  def bind(index: Int, w: String): Seq[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Left(w)))
 
-  def bind(index: Int, w: FunctionString): List[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Right(w)))
+  def bind(index: Int, w: FunctionString): Seq[Param] = bind(Iterator.continually(None).take(index).toList :+ Some(Right(w)))
 
   /**
     * Method to bind some String values to free variables in this FunctionString.
@@ -226,8 +228,8 @@ case class FunctionString(f: String, ps: List[Param]) {
     * @return a sequence of Param values where each param is a copy of the corresponding value in ps (the "original"), *unless*
     *         BOTH the original is free AND the optional String is Some(_)
     */
-  def bind(wos: List[Option[Either[String,FunctionString]]]): List[Param] = {
-    @tailrec def inner(result: List[Param], _ps: List[Param], _ws: List[Option[Either[String,FunctionString]]]): List[Param] = _ps match {
+  def bind(wos: Seq[Option[Either[String, FunctionString]]]): Seq[Param] = {
+    @tailrec def inner(result: List[Param], _ps: List[Param], _ws: List[Option[Either[String, FunctionString]]]): Seq[Param] = _ps match {
       case Nil => result
       case p :: __ps => p match {
         case Param(Left(_)) => inner(result :+ p, __ps, _ws)
@@ -241,7 +243,7 @@ case class FunctionString(f: String, ps: List[Param]) {
       }
     }
 
-    inner(Nil, ps, wos)
+    inner(Nil, ps.toList, wos.toList)
   }
 }
 
@@ -269,6 +271,13 @@ case class FreeParam(s: String) {
   * Companion object to Closure
   */
 object Closure {
+  val logger = LoggerFactory.getLogger(getClass)
+
+  def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
+    case Success(r) => logger.debug(s"$w: $r"); ry
+    case Failure(x) => logger.debug(s"$w: failed: $x"); ry
+  }
+
   private def parameterArity[T](p: Parameter[T]): Int = p match {
     case Left(_) => -1
     case Right(c) => c.arity
@@ -293,6 +302,15 @@ object RenderableFunction {
 
   def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String): RenderableFunction[R] = RenderableFunction(arity, func, FunctionString(w, arity))
 
+  /**
+    * The following apply functions are in pairs: one with FunctionString and one with just String as the second parameter.
+    *
+    * @param f a function of some mix of T resulting in R
+    * @param w a String or a FunctionString
+    * @tparam T the parameter type
+    * @tparam R the result type
+    * @return a new RenderableFunction
+    */
   def apply[T, R: ClassTag](f: T => R, w: FunctionString): RenderableFunction[R] = {
     asserting(f != null && w != null, "f or w is null",
       apply(1, asTupledFunctionType(f), w)
@@ -301,53 +319,53 @@ object RenderableFunction {
 
   def apply[T, R: ClassTag](f: T => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 1))
 
-  def apply[T, R: ClassTag](f: (T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(2, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 2))
+  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 2))
 
-  def apply[T, R: ClassTag](f: (T, T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(3, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 3))
+  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 3))
 
-  def apply[T, R: ClassTag](f: (T, T, T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(4, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T, T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 4))
+  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 4))
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(5, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 5))
+  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 5))
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(6, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 6))
+  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 6))
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T, T, T) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: FunctionString): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(7, asTupledFunctionType(f), w)
   )
 
-  def apply[T, R: ClassTag](f: (T, T, T, T, T, T, T) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 7))
+  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String): RenderableFunction[R] = apply(f, FunctionString(w, 7))
 
-  private def emptyList[T](p: Product) = List[T]()
+  private def emptyList[T](p: Product) = Seq[T]()
 
   private val mkList = "mkList"
 
   def varargs[T](n: Int): RenderableFunction[Seq[T]] = n match {
     case 0 => apply(0, emptyList _, mkList)
-    case 1 => apply({ t1: T => List[T](t1) }, mkList)
-    case 2 => apply({ (t1: T, t2: T) => List[T](t1, t2) }, mkList)
-    case 3 => apply({ (t1: T, t2: T, t3: T) => List[T](t1, t2, t3) }, mkList)
-    case 4 => apply({ (t1: T, t2: T, t3: T, t4: T) => List[T](t1, t2, t3, t4) }, mkList)
-    case 5 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T) => List[T](t1, t2, t3, t4, t5) }, mkList)
+    case 1 => apply({ t1: T => Seq[T](t1) }, mkList)
+    case 2 => apply({ (t1: T, t2: T) => Seq[T](t1, t2) }, mkList)
+    case 3 => apply({ (t1: T, t2: T, t3: T) => Seq[T](t1, t2, t3) }, mkList)
+    case 4 => apply({ (t1: T, t2: T, t3: T, t4: T) => Seq[T](t1, t2, t3, t4) }, mkList)
+    case 5 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T) => Seq[T](t1, t2, t3, t4, t5) }, mkList)
     case _ => throw RenderableFunctionException(s"varargs of $n is not implemented")
   }
 
@@ -514,11 +532,11 @@ object FreeParam {
 object FunctionString {
   private val params = "abcdefghijklmnopqrstuvwxyz".toList
 
-  def stream(list: List[Char]): Stream[FreeParam] = Stream.cons(FreeParam(list.head), stream(list.tail))
+  def stream(xs: Seq[Char]): Stream[FreeParam] = Stream.cons(FreeParam(xs.head), stream(xs.tail))
 
   def apply(f: String, n: Int): FunctionString = FunctionString(f, stream(params) take n map (Param(_)) toList)
 
-  def custom(f: String, cs: List[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
+  def custom(f: String, cs: Seq[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
 }
 
 /**
