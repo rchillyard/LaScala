@@ -29,11 +29,11 @@ object FP {
 
   /**
     * @param ox the given Option
-    * @param x the value we want to compare with ox
+    * @param x  the value we want to compare with ox
     * @tparam X the underlying type
     * @return true if ox is Some(x)
     */
-  def contains[X](ox: Option[X], x: X): Boolean = FP_Cross.contains(ox,x)
+  def contains[X](ox: Option[X], x: X): Boolean = FP_Cross.contains(ox, x)
 
   def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
 
@@ -107,7 +107,8 @@ object FP {
 
   /**
     * Transform a Future[X] into a Future of Either[Throwable,X]
-    * @param xf a Future[X]
+    *
+    * @param xf       a Future[X]
     * @param executor an execution context
     * @tparam X the underlying type
     * @return a Future of Either[Throwable, X]
@@ -117,7 +118,7 @@ object FP {
 
   /**
     *
-    * @param xfs a sequence of Future[X]
+    * @param xfs      a sequence of Future[X]
     * @param executor an execution context
     * @tparam X the underlying type
     * @return a Seq of Future of Either[Throwable, X]
@@ -360,10 +361,10 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map2[T1, T2, R](t1y: Try[T1], t2y: Try[T2])(f: (T1, T2) => R): Try[R] =
-  for {
-    t1 <- t1y
-    t2 <- t2y
-  } yield f(t1, t2)
+    for {
+      t1 <- t1y
+      t2 <- t2y
+    } yield f(t1, t2)
 
   /**
     * The map3 function. Much like map2
@@ -379,10 +380,10 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map3[T1, T2, T3, R](t1y: Option[T1], t2y: Option[T2], t3y: Option[T3])(f: (T1, T2, T3) => R): Option[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-  } yield f(t1, t2, t3)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+    } yield f(t1, t2, t3)
 
   /**
     * The map3 function. Much like map2
@@ -398,23 +399,23 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map3[T1, T2, T3, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3])(f: (T1, T2, T3) => R): Try[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-  } yield f(t1, t2, t3)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+    } yield f(t1, t2, t3)
 
   /**
     * You get the idea...
     */
   def map7[T1, T2, T3, T4, T5, T6, T7, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3], t4y: Try[T4], t5y: Try[T5], t6y: Try[T6], t7y: Try[T7])(f: (T1, T2, T3, T4, T5, T6, T7) => R): Try[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-       t4 <- t4y
-       t5 <- t5y
-       t6 <- t6y
-       t7 <- t7y
-  } yield f(t1, t2, t3, t4, t5, t6, t7)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+         t4 <- t4y
+         t5 <- t5y
+         t6 <- t6y
+         t7 <- t7y
+    } yield f(t1, t2, t3, t4, t5, t6, t7)
 
   /**
     * TODO unit test
@@ -433,7 +434,7 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map2lazy(ty1,ty2)(f)(g,default)
+    FP_Cross.map2lazy(ty1, ty2)(f)(g, default)
 
   /**
     * NOTE: not available with 2.10
@@ -452,7 +453,7 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map3lazy(ty1,ty2,ty3)(f)(g,default)
+    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(g, default)
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
@@ -678,15 +679,15 @@ object FP {
     * @tparam R  the result type of function f
     * @return a (curried) function of type (T1,T2,T3)=>T4=>R
     */
-  def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
-  { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
+  def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R = { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
 
   /**
     * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, R](f: ((T1, T2)) => R): (T1, T2) => R = {
@@ -695,11 +696,12 @@ object FP {
 
   /**
     * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
     * @tparam T3 the third parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, T3, R](f: ((T1, T2, T3)) => R): (T1, T2, T3) => R = {
@@ -708,12 +710,13 @@ object FP {
 
   /**
     * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
     * @tparam T3 the third parameter type
     * @tparam T4 the fourth parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, T3, T4, R](f: ((T1, T2, T3, T4)) => R): (T1, T2, T3, T4) => R = {
@@ -722,13 +725,14 @@ object FP {
 
   /**
     * This method (and the following similar methods) are missing from Function
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
     * @tparam T3 the third parameter type
     * @tparam T4 the fourth parameter type
     * @tparam T5 the fifth parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, T3, T4, T5, R](f: ((T1, T2, T3, T4, T5)) => R): (T1, T2, T3, T4, T5) => R = {
@@ -737,6 +741,7 @@ object FP {
 
   /**
     * This method (and the following similar methods) are missing from Function
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
@@ -744,7 +749,7 @@ object FP {
     * @tparam T4 the fourth parameter type
     * @tparam T5 the fifth parameter type
     * @tparam T6 the sixth parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, T3, T4, T5, T6, R](f: ((T1, T2, T3, T4, T5, T6)) => R): (T1, T2, T3, T4, T5, T6) => R = {
@@ -753,6 +758,7 @@ object FP {
 
   /**
     * This method (and the following similar methods) are missing from Function
+    *
     * @param f the function to be untupled
     * @tparam T1 the first parameter type
     * @tparam T2 the second parameter type
@@ -761,7 +767,7 @@ object FP {
     * @tparam T5 the fifth parameter type
     * @tparam T6 the sixth parameter type
     * @tparam T7 the seventh parameter type
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a function which takes the parameters separately (as part of a parameter set)
     */
   def untupled[T1, T2, T3, T4, T5, T6, T7, R](f: ((T1, T2, T3, T4, T5, T6, T7)) => R): (T1, T2, T3, T4, T5, T6, T7) => R = {
@@ -776,5 +782,5 @@ object FP {
     * @tparam V the underlying "value" type
     * @return a ListMap[K,V]
     */
-  def toMap[K,V](vKs: Seq[(K,V)]): Map[K,V] = ListMap(vKs:_*)
+  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
 }

@@ -14,6 +14,7 @@ trait HasKey[V] {
 
   /**
     * Get the key for value v as a String
+    *
     * @param v a value
     * @return the "key" for that value
     */
@@ -21,6 +22,7 @@ trait HasKey[V] {
 
   /**
     * The inverse of getKey. This allows us to form a value from a String
+    *
     * @param w the key corresponding to the desired value
     * @return the value
     */

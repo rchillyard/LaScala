@@ -77,7 +77,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     */
   def nodesAlike(x: Node[V], y: Node[V]): Boolean = x match {
     case b@Branch(_, _) => (b like y).toBoolean(false)
-  case AbstractLeaf(a) => FP.contains(y.get,a)
+    case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
 

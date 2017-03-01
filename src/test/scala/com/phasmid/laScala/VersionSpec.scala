@@ -13,7 +13,7 @@ class VersionSpec extends FlatSpec with Matchers with Inside {
     val vo = LongVersion.parse("1.1")
     vo should matchPattern { case Some(_) => }
     val v = vo.get
-    v.toSeq shouldBe Seq(1L,1L)
+    v.toSeq shouldBe Seq(1L, 1L)
     v.toString shouldBe "1.1"
     v.get shouldBe 1L
     v.subversion.get.get shouldBe 1L

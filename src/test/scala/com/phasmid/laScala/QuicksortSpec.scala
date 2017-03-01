@@ -10,7 +10,7 @@ class QuicksortSpec extends FlatSpec with Matchers {
   behavior of "qsort"
   it should "yield appropriate values and type" in {
     val l = List(1, -10, 12, 2)
-    val cf = (a: Int, b:Int) => if (a == b) 0 else if (a > b) 1 else -1
+    val cf = (a: Int, b: Int) => if (a == b) 0 else if (a > b) 1 else -1
     val lSorted = Quicksort.qsort(l)(cf)
     lSorted should matchPattern { case _: List[_] => }
     lSorted.head shouldBe -10

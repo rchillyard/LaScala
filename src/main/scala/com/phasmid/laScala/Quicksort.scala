@@ -15,12 +15,10 @@ import scala.language.higherKinds
 object Quicksort {
   def qsort[E, D[E] <: Seq[E]]
   (s: D[E])(c: (E, E) => Int)
-  (implicit cbf: CanBuildFrom[D[E], E, D[E]]): D[E] =
-  {
+  (implicit cbf: CanBuildFrom[D[E], E, D[E]]): D[E] = {
     if (s.size <= 1)
       s
-    else
-    {
+    else {
       val pivot = s(s.size / 2)
       // XXX Don't know why this shows a compiler error. There is no error.
       (qsort(s.filter((x: E) => c(x, pivot) < 0))(c) ++ s.filter((x: E) => c(x, pivot) == 0) ++ qsort(s.filter((x: E) => c(x, pivot) > 0))(c)).to[D]

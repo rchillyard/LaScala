@@ -14,7 +14,7 @@ import scala.util.{Failure, Try}
   *
   * The simplest and best way to set up an extended trial is as follows:
   *
-  *   function1 ^: function2 ... functionN ^: None
+  * function1 ^: function2 ... functionN ^: None
   *
   * This has the advantage that when no match is made on a given input, the final Failure will make that clear...
   * and will include the String representation of that failing input.
@@ -43,7 +43,7 @@ object Trial {
     * @tparam T the underlying type of the resulting Try
     * @return a terminator trial which always fails
     */
-  def none[V, T](f: Any=>Throwable): Trial[V, T] = Trial.apply(v => Failure(f(v)))
+  def none[V, T](f: Any => Throwable): Trial[V, T] = Trial.apply(v => Failure(f(v)))
 
   /**
     * The following method creates a null trial which can be used at the start or end
@@ -54,7 +54,7 @@ object Trial {
     * @tparam T the underlying type of the resulting Try
     * @return a terminator trial which always fails
     */
-  def none[V, T]: Trial[V, T] = none({v => new NoMatchingTrialException(v.toString)})
+  def none[V, T]: Trial[V, T] = none({ v => new NoMatchingTrialException(v.toString) })
 
   def lift[V, T](f: V => T): Trial[V, T] = Trial(Lift(f))
 }

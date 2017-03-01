@@ -124,7 +124,7 @@ trait Valuable[X] extends Orderable[X] {
 }
 
 object Valuable {
-  def apply[X : Valuable]: Valuable[X] = implicitly[Valuable[X]]
+  def apply[X: Valuable]: Valuable[X] = implicitly[Valuable[X]]
 
   trait ValuableDouble extends OrderableDouble with Valuable[Double] {
     def plus(x: Double, y: Double) = Try(x + y)

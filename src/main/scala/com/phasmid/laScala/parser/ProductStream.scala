@@ -6,7 +6,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.Trial
-import com.phasmid.laScala.fp.{FP, Spy}
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.values.{DateScalar, Scalar, Tuples}
 
 // For now, until we can convert to Java8 datetimes
@@ -99,7 +99,7 @@ trait ProductStream[X <: Product] {
 }
 
 case class Header(columns: Seq[String], allowPartial: Boolean = false) {
-  def isValidRow(size: Int): Boolean = columns.isEmpty || size == columns.size || allowPartial && size<=columns.size
+  def isValidRow(size: Int): Boolean = columns.isEmpty || size == columns.size || allowPartial && size <= columns.size
 }
 
 object ProductStream {
@@ -150,7 +150,7 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
   def getHeader(givenHeader: Header): Header =
     if (givenHeader.columns.isEmpty)
       wsy match {
-        case Success(x) => Header(x,givenHeader.allowPartial)
+        case Success(x) => Header(x, givenHeader.allowPartial)
         case Failure(t) => carper(s"failure: $t"); givenHeader
       }
     else
@@ -170,6 +170,7 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
   // CONSIDER inlining this method
   private def stringToTryTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isValidRow(ws.size)
+
     for {
       ws <- parser.parseRow(s)
       // Note that the following will result in a Failure[NoSuchElementException] if the filter yields false
@@ -198,7 +199,7 @@ case class ConcreteProductStream[X <: Product](header: Header, tuples: Stream[X]
   */
 case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHeader: Header) extends TupleStreamBase[X](parser, input) {
 
-  def header = getHeader(givenHeader)
+  def header: Header = getHeader(givenHeader)
 
   protected def headerRow: String = if (givenHeader.columns.isEmpty) input.head else ""
 
@@ -241,9 +242,9 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHead
   */
 case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], givenHeader: Header, allowPartial: Boolean = false) extends TupleStreamBase[X](parser, input) {
 
-  def header = getHeader(givenHeader)
+  def header: Header = getHeader(givenHeader)
 
-  def tuplesPartial(allowPartial: Boolean = false): Stream[X] = for (t <- getStream map stringToTuple( x => Success(x), allowPartial); x <- t.toOption) yield x
+  def tuplesPartial(allowPartial: Boolean = false): Stream[X] = for (t <- getStream map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
 
   def tuples: Stream[X] = tuplesPartial()
 
@@ -428,6 +429,7 @@ object CsvParser {
         case h :: t => loop(t, Try(new DateScalar(LocalDate.parse(s, h), s)))
       }
     }
+
     loop(dfs map {
       DateTimeFormatter.ofPattern
     }, Failure(new Exception(s""""$s" cannot be parsed as date""")))

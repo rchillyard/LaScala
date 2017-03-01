@@ -69,9 +69,10 @@ class TrialSpec extends FlatSpec with Matchers with Inside {
     trialIntString("10") should matchPattern { case Success(10) => }
   }
   it should "be composable using :^ (3)" in {
-    val toInt = { x: Any => x match {
-      case x: String => x.toInt
-    }
+    val toInt = { x: Any =>
+      x match {
+        case x: String => x.toInt
+      }
     }
     val toDouble: PartialFunction[Any, Any] = {
       case x: String => x.toDouble
@@ -142,7 +143,9 @@ class TrialSpec extends FlatSpec with Matchers with Inside {
   }
   ":|" should "keep the Failures correctly" in {
     def failure1(x: String): Try[String] = Failure(new Exception("1"))
+
     def failure2(x: String): Try[String] = Failure(new Exception("2"))
+
     val r = Trial(failure1) :| Trial(failure2)
     val r1 = r("")
     r1 should matchPattern { case Failure(_) => }
@@ -152,6 +155,7 @@ class TrialSpec extends FlatSpec with Matchers with Inside {
   }
   "|:" should "keep the Failures correctly" in {
     def failure1(x: String): Try[String] = Failure(new Exception("1"))
+
     def failure2(x: String): Try[String] = Failure(new Exception("2"))
 
     // XXX we actually need the place-holders here

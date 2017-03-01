@@ -60,18 +60,18 @@ object Spy {
     *
     * NOTE that there will be times when you cannot use spy, for example when yielding the result of a tail-recursive method. You will need to use log then instead.
     *
-    * @param message a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
-    *                Note that the message will only be evaluated if spying will actually occur, otherwise, since it is call-by-name, it will never be evaluated.
-    * @param x       the value being spied on and which will be returned by this method.
-    * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true). However, note that this is intended only for the situation
-    *                where the default spyFunc is being used. If a logging spyFunc is used, then logging should be turned on/off at the class level via the
-    *                logging configuration file.
-    * @param spyFunc (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true.
+    * @param message       a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
+    *                      Note that the message will only be evaluated if spying will actually occur, otherwise, since it is call-by-name, it will never be evaluated.
+    * @param x             the value being spied on and which will be returned by this method.
+    * @param b             if true AND if spying is true, the spyFunc will be called (defaults to true). However, note that this is intended only for the situation
+    *                      where the default spyFunc is being used. If a logging spyFunc is used, then logging should be turned on/off at the class level via the
+    *                      logging configuration file.
+    * @param spyFunc       (implicit) the function to be called (as a side-effect) with a String based on w and x IFF b && spying are true.
     * @param isEnabledFunc (implicit) the function to be called to determine if spying is enabled -- by default this will be based on the (implicit) logger.
     * @tparam X the type of the value.
     * @return the value of x.
     */
-  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean): X = {
+  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): X = {
     if (b && spying && isEnabledFunc(mySpy)) {
       lazy val w = message
       val brackets = "{}"
@@ -118,7 +118,7 @@ object Spy {
     * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
     * @return the value of x
     */
-  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy=>Boolean) {spy(w, (), b); ()}
+  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean) {spy(w, (), b); ()}
 
   /**
     * This method can be used if you have an expression you would like to be evaluated WITHOUT any spying going on.
@@ -151,7 +151,7 @@ object Spy {
     *
     * @param s the message to be output when spying
     */
-  implicit def spyFunc(s: String)(implicit logger: Logger): Spy =  Spy(logger.debug(prefix+s))
+  implicit def spyFunc(s: String)(implicit logger: Logger): Spy = Spy(logger.debug(prefix + s))
 
   /**
     * This is the default isEnabled function
@@ -160,7 +160,7 @@ object Spy {
     * Note that it is necessary that this method takes a Spy, in the same way that the spyFunc must return a Spy --
     * so that the implicits can be found.
     *
-    * @param x an instance of Spy
+    * @param x      an instance of Spy
     * @param logger an (implicit) logger
     * @return true if the logger is debugEnabled
     */
@@ -181,7 +181,7 @@ object Spy {
     * @param ps the PrintStream to use (defaults to System.out).
     * @return a spy function
     */
-  def getPrintlnSpyFunc(ps: PrintStream = System.out): String=>Spy = {s => Spy(ps.println(prefix+s))}
+  def getPrintlnSpyFunc(ps: PrintStream = System.out): String => Spy = { s => Spy(ps.println(prefix + s)) }
 
   private val mySpy = apply(())
 }

@@ -89,6 +89,7 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
   */
 case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
+
   // XXX: this is somewhat experimental
   override def toString: String = if (b) "always" else "never"
 }
@@ -172,7 +173,7 @@ class RuleParser extends JavaTokenParsers {
 
   private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
   // TODO implement this...
-//  private val lesserOp = regex("""<|<=""".r)
+  //  private val lesserOp = regex("""<|<=""".r)
   private val identifier = regex("""\w+""".r)
   private val identifierWithPeriods = regex("""[\w\.]+""".r)
   private val doubleQuote = """"""".r
@@ -182,9 +183,11 @@ class RuleParser extends JavaTokenParsers {
   case class Expr(t: ExprTerm, ts: List[String ~ ExprTerm]) extends Expression {
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
+
       def shunt(xs: List[String], et: String ~ ExprTerm): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
+
       val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }
@@ -197,9 +200,11 @@ class RuleParser extends JavaTokenParsers {
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
+
       def shunt(xs: List[String], et: String ~ ExprFactor): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
+
       val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }

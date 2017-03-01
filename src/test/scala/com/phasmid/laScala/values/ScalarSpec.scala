@@ -51,7 +51,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.render() shouldBe "true"
     BooleanScalar.setDefaultFormat("%B")
     // TODO well, this is something of a mystery why this is failing.
-//    x.render shouldBe "TRUE"
+    //    x.render shouldBe "TRUE"
   }
   "IntScalar" should "work" in {
     val x = Scalar(1)

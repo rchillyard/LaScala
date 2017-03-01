@@ -18,7 +18,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   val defaultParser = CsvParser()
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
-    c.header shouldBe Header(List("x"),false)
+    c.header shouldBe Header(List("x"))
     val wts = c.tuples
     wts.head match {
       case Tuple1(s) => assert(s == "Hello")
@@ -40,13 +40,13 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   it should "have column x of type String" in {
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
     // XXX: this works only with 2.11
-//    c column "x" match {
-//      case Some(xs) =>
-//        xs.take(2).toList.size should be(2)
-//        xs.head shouldBe "Hello"
-//        xs(1) shouldBe "World!"
-//      case _ => fail("no column projected")
-//    }
+    //    c column "x" match {
+    //      case Some(xs) =>
+    //        xs.take(2).toList.size should be(2)
+    //        xs.head shouldBe "Hello"
+    //        xs(1) shouldBe "World!"
+    //      case _ => fail("no column projected")
+    //    }
   }
   """"3,5", "8,13"""" should "be (Int,Int) stream" in {
     val iIts = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).tuples
@@ -59,13 +59,13 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   it should "have column y of type Int" in {
     // NOTE: this only works with Scala 2.11
-//    CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")) column "y" match {
-//      case Some(ys) =>
-//        ys.take(2).toList.size should be(2)
-//        ys.head shouldBe 5
-//        ys(1) shouldBe 13
-//      case _ => fail("no column projected")
-//    }
+    //    CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")) column "y" match {
+    //      case Some(ys) =>
+    //        ys.take(2).toList.size should be(2)
+    //        ys.head shouldBe 5
+    //        ys(1) shouldBe 13
+    //      case _ => fail("no column projected")
+    //    }
   }
   it should "convert to map properly" in {
     val c = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13"))
@@ -127,7 +127,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (q, y) => assert(q == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe("TGIF, Bruh", 8)
   }
   ignore should "be (String,Int) stream" in {
     val iWts = CSV[(String, Int)](new FileInputStream(new File("src/test/scala/com/phasmid/laScala/parser/sample.csv"))).tuples
@@ -138,7 +138,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (x, y) => assert(x == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe("TGIF, Bruh", 8)
   }
   ignore should "be (String,Int) stream using File" in {
     val iWts = CSV[(String, Int)](new File("sample.csv")).tuples
@@ -149,7 +149,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
       case (x, y) => assert(x == "Monday" && y == 2)
     }
     iWts.size should be(8)
-    (iWts take 8).toList(7) shouldBe ("TGIF, Bruh", 8)
+    (iWts take 8).toList(7) shouldBe("TGIF, Bruh", 8)
   }
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")
@@ -165,9 +165,9 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", _, _, _) => }
-    inside (x.head) {
+    inside(x.head) {
       case (_, _, ltd, per) =>
-        assert (per > 8 && per < 20)
+        assert(per > 8 && per < 20)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         assert(ltd.isAfter(LocalDate.parse("2016-08-02", formatter)))
     }
@@ -182,7 +182,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
         xWms.size shouldBe 1
         inside(xWms.head) {
           case m: Map[String, Scalar] =>
-        m.size shouldBe 4
+            m.size shouldBe 4
             m("name") should matchPattern { case StringScalar("Apple Inc.", _) => }
         }
     }

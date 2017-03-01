@@ -24,21 +24,21 @@ trait Maybe extends (() => Option[Boolean]) {
     */
   def :||(m: => Maybe): Kleenean = Kleenean.or(apply, m())
 
-//  /**
-//    * Left-associative conjunctive operator with an Option[Boolean]
-//    *
-//    * @param x other Maybe value
-//    * @return a Maybe value with is the Kleenean logical AND of this and x
-//    */
-//  def :&&(x: => Option[Boolean]) = Kleenean.and(x, apply)
+  //  /**
+  //    * Left-associative conjunctive operator with an Option[Boolean]
+  //    *
+  //    * @param x other Maybe value
+  //    * @return a Maybe value with is the Kleenean logical AND of this and x
+  //    */
+  //  def :&&(x: => Option[Boolean]) = Kleenean.and(x, apply)
 
-//  /**
-//    * Left-associative disjunctive operator with an Option[Boolean]
-//    *
-//    * @param x other Maybe value
-//    * @return a Maybe value with is the Kleenean logical OR of this and x
-//    */
-//  def :||(x: => Option[Boolean]) = Kleenean.or(x, apply)
+  //  /**
+  //    * Left-associative disjunctive operator with an Option[Boolean]
+  //    *
+  //    * @param x other Maybe value
+  //    * @return a Maybe value with is the Kleenean logical OR of this and x
+  //    */
+  //  def :||(x: => Option[Boolean]) = Kleenean.or(x, apply)
 
   /**
     * Right-associative conjunctive operator with an Option[Boolean]
@@ -90,6 +90,7 @@ trait Maybe extends (() => Option[Boolean]) {
 
   /**
     * Method to convert this Maybe into a Boolean
+    *
     * @param default the value to use if this is None
     * @return a Boolean corresponding to either the existing Boolean or else the given default.
     */
@@ -98,6 +99,7 @@ trait Maybe extends (() => Option[Boolean]) {
   /**
     * Method to convert this Maybe into an integer corresponding
     * to the return value of compareTo
+    *
     * @return either 1 (true), 0 (maybe), or -1 (false)
     */
   def toInt: Int = apply() match {
@@ -108,6 +110,7 @@ trait Maybe extends (() => Option[Boolean]) {
 
   /**
     * Method to deny (invert, negate, ...) this Maybe
+    *
     * @return Some(!x) if exists, else return None
     */
   def deny = Kleenean(apply() map (!_))
@@ -159,12 +162,12 @@ object Kleenean {
 
   def apply(x: Int): Maybe = x match {
     case 0 => Kleenean(None)
-    case _ => Kleenean(x>0)
+    case _ => Kleenean(x > 0)
   }
 
   def apply(): Maybe = Kleenean(None)
 
   def and(x: Option[Boolean], y: => Option[Boolean]): Kleenean = Kleenean(Maybe.and(x, y))
 
-  def or(x: Option[Boolean], y: => Option[Boolean]): Kleenean = Kleenean(Maybe.or(x,y))
+  def or(x: Option[Boolean], y: => Option[Boolean]): Kleenean = Kleenean(Maybe.or(x, y))
 }

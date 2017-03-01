@@ -17,12 +17,12 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   "term" should """parse "x",y """ in {
     val s = """"x",y"""
-    defaultParser.parse(defaultParser.term,s) should matchPattern { case defaultParser.Success(""""x"""",_) => }
+    defaultParser.parse(defaultParser.term, s) should matchPattern { case defaultParser.Success(""""x"""", _) => }
     // we ignore the ,y part
   }
   "row" should """parse "x",y """ in {
     val s = """"x",y"""
-    defaultParser.parseAll(defaultParser.row,s) should matchPattern { case defaultParser.Success(List(""""x"""","y"),_) => }
+    defaultParser.parseAll(defaultParser.row, s) should matchPattern { case defaultParser.Success(List(""""x"""", "y"), _) => }
   }
   "CsvParser()" should """parse "x" as Success(List("x"))""" in {
     defaultParser.parseRow(""""x"""") should matchPattern { case scala.util.Success(List(""""x"""")) => }
@@ -71,7 +71,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   }
   it should """parse 12-Aug-16 as datetime""" in {
     val pattern = "dd-MMM-yy"
-        val formatter = DateTimeFormatter.ofPattern(pattern)
+    val formatter = DateTimeFormatter.ofPattern(pattern)
     formatter.parse("12-Aug-16")
 
     val dt = CsvParser.defaultParser("12-Aug-16")
@@ -101,12 +101,13 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   }
   "content of quotes.csv" should "work" in {
     def parser(s: String): Try[Scalar] = CsvParser.defaultParser(s)
+
     val row = """"Apple Inc.",104.48,"8/2/2016",12.18"""
     val xy: Try[(String, Double, LocalDate, Double)] = for {
       ws <- defaultParser.parseRow(row)
       x <- TupleStream.seqToTuple[(String, Double, LocalDate, Double)](ws)(parser)
     } yield x
-    xy should matchPattern { case Success(("Apple Inc.",104.48,_,12.18)) => }
+    xy should matchPattern { case Success(("Apple Inc.", 104.48, _, 12.18)) => }
   }
   """dateParser""" should "recognize 2016-03-15" in {
     val dp = CsvParser.dateParser

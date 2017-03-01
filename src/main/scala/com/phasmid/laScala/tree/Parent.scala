@@ -20,7 +20,8 @@ trait Parent[T] {
 
 object Parent {
 
-  def apply[T : Parent]: Parent[T] = implicitly[Parent[T]]
+  def apply[T: Parent]: Parent[T] = implicitly[Parent[T]]
+
   /**
     * Generic tail-recursive tree-traversal method.
     *

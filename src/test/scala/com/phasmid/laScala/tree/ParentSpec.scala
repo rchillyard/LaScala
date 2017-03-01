@@ -1,10 +1,5 @@
 package com.phasmid.laScala.tree
 
-import org.scalatest.{FlatSpec, Matchers}
-
-import scala.io.Source
-import scala.util.Try
-
 /**
   * XXX: this will only compile with 2.11
   * Created by scalaprof on 10/19/16.

@@ -95,7 +95,7 @@ trait SmartLogger {
   def milestoneFormatter(name: String)(values: Any*): String = {
     val sb = new StringBuilder(s"Milestone $name")
     if (values.size > 1)
-      sb.append((values map { _.toString }).mkString(": ", ", ", ""))
+      sb.append((values map (_.toString)).mkString(": ", ", ", ""))
     else if (values.size == 1)
       sb.append(": " + values.head)
     sb.toString

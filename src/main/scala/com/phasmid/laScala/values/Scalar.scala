@@ -3,10 +3,10 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.{Prefix, Renderable}
 import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
+import com.phasmid.laScala.{Prefix, Renderable}
 
 import scala.language.implicitConversions
 import scala.util._
@@ -106,7 +106,7 @@ trait Scalar extends Renderable {
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     * @return a String.
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent)+renderFormatted(defaultFormat)
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + renderFormatted(defaultFormat)
 
   /**
     * Method to show this Scalar simply, obviously and elegantly.
@@ -246,6 +246,7 @@ abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, so
 
   def defaultFormat: String = null
 }
+
 /**
   * Scalar which is natively a String. Such a value cannot be converted to Int or
   * Double by invoking asValuable.
@@ -331,30 +332,43 @@ class ScalarException(s: String, t: scala.Throwable = null) extends Exception(s,
 
 object BooleanScalar {
   def apply(x: Boolean): BooleanScalar = BooleanScalar(x, x)
+
   def apply(x: String): BooleanScalar = BooleanScalar(x.toBoolean, x)
-  def setDefaultFormat(format: String) { defaultFormat = format; println(s"BooleanScalar defaultFormat is now $defaultFormat")}
+
+  def setDefaultFormat(format: String) {defaultFormat = format; println(s"BooleanScalar defaultFormat is now $defaultFormat")}
+
   def getDefaultFormat: String = defaultFormat
+
   var defaultFormat: String = "%b"
 }
 
 object IntScalar {
   def apply(x: Int): IntScalar = IntScalar(x, x)
+
   def apply(x: String): IntScalar = IntScalar(x.toInt, x)
+
   def setDefaultFormat(format: String): Unit = {defaultFormat = format}
+
   def getDefaultFormat: String = defaultFormat
+
   var defaultFormat: String = "%d"
 }
 
 object DoubleScalar {
   def apply(x: Double): DoubleScalar = DoubleScalar(x, x)
+
   def apply(x: String): DoubleScalar = DoubleScalar(x.toDouble, x)
+
   def setDefaultFormat(format: String): Unit = {defaultFormat = format}
+
   def getDefaultFormat: String = defaultFormat
+
   var defaultFormat: String = "%f"
 }
 
 object RationalScalar {
   def apply(x: LongRational): RationalScalar = RationalScalar(x, x)
+
   def apply(x: String): RationalScalar = RationalScalar(x)
 }
 
@@ -407,7 +421,7 @@ object Scalar {
     case b: Boolean => Try(apply(b))
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
-    case r: LongRational @unchecked => Try(apply(r))
+    case r: LongRational@unchecked => Try(apply(r))
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
     // XXX shouldn't really need the following...

@@ -1,9 +1,7 @@
 package com.phasmid.laScala.fp
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, postfixOps}
 import scala.util._
-import scala.util.control.NonFatal
 
 /**
   * This is an 2.11-specific appendix to FP
@@ -14,7 +12,7 @@ object FP_Cross {
 
   /**
     * @param ox the given Option
-    * @param x the value we want to compare with ox
+    * @param x  the value we want to compare with ox
     * @tparam X the underlying type
     * @return true if ox is Some(x)
     */
@@ -35,7 +33,7 @@ object FP_Cross {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
+    (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   /**
     * TODO unit test
@@ -54,5 +52,5 @@ object FP_Cross {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-  (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case _: java.util.NoSuchElementException => default }
+    (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case _: java.util.NoSuchElementException => default }
 }

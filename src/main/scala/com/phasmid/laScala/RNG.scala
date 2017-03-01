@@ -91,7 +91,7 @@ case class LongRNG(n: Long) extends RNG_Java[Long](n, identity) {
   def buildNew(n: Long) = LongRNG(n)
 }
 
-case class DoubleRNG(n: Long) extends RNG_Java[Double](n, { _.toDouble / Long.MaxValue }) {
+case class DoubleRNG(n: Long) extends RNG_Java[Double](n, (_.toDouble / Long.MaxValue )) {
   def buildNew(n: Long) = DoubleRNG(n)
 
   override def toString = s"DoubleRNG: $n->$apply"

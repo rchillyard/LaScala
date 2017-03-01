@@ -46,7 +46,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     *          which is to say, if index is not specified, the new parameter will be appended to the list).
     * @return a new Closure with the same function but with the expanded list
     */
-  def bind(p: Parameter[T], i: Int = ps.size): Closure[T,R] = Closure(f, ps :+ p: _*)
+  def bind(p: Parameter[T], i: Int = ps.size): Closure[T, R] = Closure(f, ps :+ p: _*)
 
   /**
     * The arity of this Closure.
@@ -207,11 +207,11 @@ case class FunctionString(f: String, ps: Seq[Param]) {
     def inner(r: Int, _ps: List[Param]): Int = _ps match {
       case Nil => r
       case h :: t =>
-          h match {
-        case Param(Left(_)) => inner(r, t)
-        case Param(Right(Left(_))) => inner(r + 1, t)
-        case Param(Right(Right(g))) => inner(r, g.ps.toList ++ t)
-      }
+        h match {
+          case Param(Left(_)) => inner(r, t)
+          case Param(Right(Left(_))) => inner(r + 1, t)
+          case Param(Right(Right(g))) => inner(r, g.ps.toList ++ t)
+        }
     }
 
     inner(0, ps.toList)
@@ -233,7 +233,7 @@ case class FunctionString(f: String, ps: Seq[Param]) {
       case Nil => result
       case p :: __ps => p match {
         case Param(Left(_)) => inner(result :+ p, __ps, _ws)
-          // TODO merge the code in the following two cases
+        // TODO merge the code in the following two cases
         case Param(Right(Left(_))) => _ws match {
           case Nil => inner(result :+ p, __ps, _ws)
           case None :: __ws => inner(result :+ p, __ps, __ws)
@@ -271,7 +271,7 @@ case class FreeParam(s: String) {
   * Companion object to Closure
   */
 object Closure {
-  val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
     case Success(r) => logger.debug(s"$w: $r"); ry

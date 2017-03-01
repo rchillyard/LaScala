@@ -140,7 +140,7 @@ sealed trait Tree[+A] extends Node[A] {
         // NOTE: we should always get a match when this is a binary tree
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = Spy.spy(s"addNode: $node\n  to tree: $this\n  with bo=",for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
+          val bo = Spy.spy(s"addNode: $node\n  to tree: $this\n  with bo=", for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
           bo match {
             case Some(_) =>
               if (allowRecursion)
@@ -245,7 +245,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => FP.contains(n.get,b) })
+  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => FP.contains(n.get, b) })
 
   /**
     *
@@ -611,7 +611,7 @@ trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
 
   def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
     case b@Branch(_, _) => (b like y).toBoolean(false)
-    case AbstractLeaf(a) => FP.contains(y.get,a)
+    case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
 }
@@ -861,7 +861,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 case object Empty extends AbstractEmpty
 
 object TreeBuilder {
-  def apply[A : TreeBuilder]: TreeBuilder[A] = implicitly[TreeBuilder[A]]
+  def apply[A: TreeBuilder]: TreeBuilder[A] = implicitly[TreeBuilder[A]]
 }
 
 object AbstractLeaf {
@@ -974,12 +974,13 @@ object GeneralTree {
 
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
       case b@Branch(_, _) => (b like y).toBoolean(false)
-      case AbstractLeaf(a) => FP.contains(y.get,a)
+      case AbstractLeaf(a) => FP.contains(y.get, a)
       case _ => x == y
     }
 
     // CONSIDER, for a generic getParent, using getParentKey from HasParent and then look it up via findByKey
   }
+
   implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String] {
     // CONSIDER moving the intelligence from here into a ValueOps object
     def getParent(tree: Tree[String], t: String): Option[Node[String]] = tree.find(t.substring(0, t.length - 1))
@@ -1103,6 +1104,7 @@ object UnvaluedBinaryTree {
 }
 
 object BinaryTree {
+
   // TODO implement this properly, given that there are values in BinaryTree
   // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
 

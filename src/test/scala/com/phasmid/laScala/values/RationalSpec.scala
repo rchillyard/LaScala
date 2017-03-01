@@ -95,7 +95,7 @@ class RationalSpec extends FlatSpec with Matchers {
   }
   it should "equal r when multiplied by r" in {
     val r = Rational[Long](22, 7) // we could choose anything here
-    (Rational.one * r) should be (r)
+    (Rational.one * r) should be(r)
   }
   it should "be -1 when negated" in {
     val r = Rational.one
@@ -171,11 +171,11 @@ class RationalSpec extends FlatSpec with Matchers {
     (Rational(2, 3) ^ 2) should be(Rational(4, 9))
   }
   // XXX: this fails with 2.10
-//  it should "barf when toInt invoked" in {
-//    an[RationalException] should be thrownBy Rational(2, 3).toInt
-//    val thrown = the[Exception] thrownBy Rational(2, 3).toInt
-//    thrown.getMessage should equal("2/3 is not Whole")
-//  }
+  //  it should "barf when toInt invoked" in {
+  //    an[RationalException] should be thrownBy Rational(2, 3).toInt
+  //    val thrown = the[Exception] thrownBy Rational(2, 3).toInt
+  //    thrown.getMessage should equal("2/3 is not Whole")
+  //  }
 
   "2/4" should "not be OK" in {
     val thrown = the[IllegalArgumentException] thrownBy new Rational(2, 4)
@@ -206,10 +206,10 @@ class RationalSpec extends FlatSpec with Matchers {
     r.toString() should be("0.5")
   }
   // XXX: this fails with Scala 2.10
-//  it should "be rational when not exact: 2/3" in {
-//    val r = Rational(2, 3)
-//    r.toString() should be("2/3")
-//  }
+  //  it should "be rational when not exact: 2/3" in {
+  //    val r = Rational(2, 3)
+  //    r.toString() should be("2/3")
+  //  }
   it should "be decimal when not exact: pi" in {
     val pi = Rational(BigDecimal(math.Pi))
     pi.toString() should be("3.141592653589793")
@@ -254,36 +254,36 @@ class RationalSpec extends FlatSpec with Matchers {
     f.fromInt(-1) shouldBe Rational.one.negate
   }
   it should "support plus" in {
-    f.plus(Rational.one,Rational.one) shouldBe Rational(2)
-    f.plus(Rational.zero,Rational.one) shouldBe Rational.one
-    f.plus(Rational.zero,Rational.zero) shouldBe Rational.zero
+    f.plus(Rational.one, Rational.one) shouldBe Rational(2)
+    f.plus(Rational.zero, Rational.one) shouldBe Rational.one
+    f.plus(Rational.zero, Rational.zero) shouldBe Rational.zero
   }
   it should "support times" in {
-    f.times(Rational.one,Rational.one) shouldBe Rational.one
-    f.times(Rational.one,Rational.zero) shouldBe Rational.zero
-    f.times(Rational.zero,Rational.zero) shouldBe Rational.zero
-//    an [RationalException] should be thrownBy f.times(Rational(Long.MaxValue),2)
+    f.times(Rational.one, Rational.one) shouldBe Rational.one
+    f.times(Rational.one, Rational.zero) shouldBe Rational.zero
+    f.times(Rational.zero, Rational.zero) shouldBe Rational.zero
+    //    an [RationalException] should be thrownBy f.times(Rational(Long.MaxValue),2)
   }
   it should "support div" in {
-    f.div(Rational.one,Rational.one) shouldBe Rational.one
-    f.div(Rational.one,Rational.zero) shouldBe Rational.infinity
-    f.div(Rational.zero,Rational.one) shouldBe Rational.zero
+    f.div(Rational.one, Rational.one) shouldBe Rational.one
+    f.div(Rational.one, Rational.zero) shouldBe Rational.infinity
+    f.div(Rational.zero, Rational.one) shouldBe Rational.zero
     f.div(Rational.zero, Rational.zero).isNaN shouldBe true
   }
   it should "support compare" in {
-    f.compare(Rational.one,Rational.one) shouldBe 0
-    f.compare(Rational.one,Rational.zero) shouldBe 1
-    f.compare(Rational.zero,Rational.one) shouldBe -1
+    f.compare(Rational.one, Rational.one) shouldBe 0
+    f.compare(Rational.one, Rational.zero) shouldBe 1
+    f.compare(Rational.zero, Rational.one) shouldBe -1
     f.compare(Rational.zero, Rational.zero) shouldBe 0
   }
   it should "support toLong" in {
     f.toLong(Rational.one) shouldBe 1L
     val half: Rational[Long] = Rational.half
-    an [RationalException] should be thrownBy f.toLong(half)
+    an[RationalException] should be thrownBy f.toLong(half)
   }
   it should "support toInt" in {
     f.toInt(Rational.one) shouldBe 1L
-    an [RationalException] should be thrownBy f.toInt(Rational.half)
-    an [FiniteIntegralException] should be thrownBy f.toInt(Rational(Long.MaxValue))
+    an[RationalException] should be thrownBy f.toInt(Rational.half)
+    an[FiniteIntegralException] should be thrownBy f.toInt(Rational(Long.MaxValue))
   }
 }

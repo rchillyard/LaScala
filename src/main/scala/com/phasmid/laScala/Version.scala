@@ -31,6 +31,7 @@ trait Version[V] extends Ordering[V] with Versionable[V] {
       case None => vs
       case Some(z) => inner(z, get +: vs)
     }
+
     inner(this, Seq(get))
   }
 
@@ -47,7 +48,7 @@ trait Version[V] extends Ordering[V] with Versionable[V] {
   /**
     * This method is required to build a Version object from the given V tag and an optional subversion.
     *
-    * @param v the tag for this version
+    * @param v          the tag for this version
     * @param subversion optional subversion
     * @return a new Version object
     */
@@ -56,6 +57,7 @@ trait Version[V] extends Ordering[V] with Versionable[V] {
 
 /**
   * This trait models something that is versionable, that is to say has a method next which returns a Try[Versionable[V]...
+  *
   * @tparam V the underlying type of this Versionable
   */
 trait Versionable[V] {
@@ -67,22 +69,22 @@ trait Versionable[V] {
   def next: Try[Versionable[V]]
 }
 
-abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V] {
+abstract class IncrementableVersion[V: Incrementable](tag: V) extends Version[V] {
   private val incrementable = Incrementable[V]
 
-  def next: Try[Version[V]] = for (l <- nextVersion) yield build(l,subversion)
+  def next: Try[Version[V]] = for (l <- nextVersion) yield build(l, subversion)
 
   def withSubversion(v: => V): Try[Version[V]] = subversion match {
-    case None => Try(build(tag,Some(build(v,None))))
+    case None => Try(build(tag, Some(build(v, None))))
     case _ => Failure(VersionException(s"version $this already has subversion"))
   }
 
   def compare(x: V, y: V): Int = {
     val cf = incrementable.compare(x, y)
-    if (cf!=0) cf
+    if (cf != 0) cf
     else subversion match {
       case None => cf
-      case Some(z) => incrementable.compare(z.get,y)
+      case Some(z) => incrementable.compare(z.get, y)
     }
   }
 
@@ -94,16 +96,19 @@ abstract class IncrementableVersion[V : Incrementable](tag: V) extends Version[V
 }
 
 case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends IncrementableVersion[Long](tag) {
-  def build(v: Long, subversion: Option[Version[Long]]): Version[Long] = new LongVersion(v,subversion)
+  def build(v: Long, subversion: Option[Version[Long]]): Version[Long] = new LongVersion(v, subversion)
 }
 
 object LongVersion {
-  def apply(tag: Long): Version[Long] = apply(tag,None)
-  def parse(s: String): Option[Version[Long]] = Version.parse(s,{_.toLong},LongVersion.apply)
+  def apply(tag: Long): Version[Long] = apply(tag, None)
+
+  def parse(s: String): Option[Version[Long]] = Version.parse(s, {
+    _.toLong
+  }, LongVersion.apply)
 }
 
 object Version {
-  def parse[V](s: String, f: String=>V, g: V=>Version[V]): Option[Version[V]] = {
+  def parse[V](s: String, f: String => V, g: V => Version[V]): Option[Version[V]] = {
     def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {
       case h :: t => inner(t,
         vo match {
@@ -112,7 +117,8 @@ object Version {
         })
       case Nil => vo
     }
-    inner(s.split("""\.""").toList,None)
+
+    inner(s.split("""\.""").toList, None)
   }
 }
 

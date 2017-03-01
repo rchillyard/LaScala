@@ -21,7 +21,9 @@ class RPNSpec extends FlatSpec with Matchers {
   }
   it should "evaluate $K correctly" in {
     val lookupTable = Map[String, Int]("K" -> 1000)
+
     implicit def lookup(s: String): Option[Int] = lookupTable.get(s)
+
     val rpn = RPN[Int](List("$K"))
     rpn.evaluate should matchPattern { case Success(1000) => }
   }
@@ -64,7 +66,9 @@ class RPNSpec extends FlatSpec with Matchers {
     // ... I believe it's because there are really two implicit values passed in to the RPN.apply method and if
     // ... we define one, we must define the other.
     val lookupTable = Map[String, Int]()
+
     implicit def lookup(s: String): Option[Int] = lookupTable.get(s)
+
     val rpn: RPN[Int] = RPN[Int]("5 1 2 + 4 * + 3 -")
     rpn.evaluate should matchPattern { case Success(14) => }
   }
@@ -85,7 +89,9 @@ class RPNSpec extends FlatSpec with Matchers {
   }
   it should "evaluate $x correctly" in {
     val lookupTable = Map[String, Int]("x" -> 10)
+
     implicit def lookup(s: String): Option[Int] = lookupTable.get(s)
+
     val rpn: RPN[Int] = RPN[Int]("$x")
     rpn.evaluate should matchPattern { case Success(10) => }
   }
@@ -105,15 +111,17 @@ class RPNSpec extends FlatSpec with Matchers {
   it should "evaluate 1B as 1000000000" in {
     val parser = new RuleParser()
     val et = parser.parseExpression("1B")
+
     implicit def lookup(s: String): Option[Int] = None
+
     val xt = for (e <- et; r = e.toRPN; x <- RPN(r).evaluate) yield x
     xt should matchPattern { case Success(1000000000) => }
   }
   it should """evaluate "sharpeRatio"""" in {
     val parser = new RuleParser()
     val et = parser.parseExpression("$sharpeRatio")
-    val properties = Map[String,Double]("sharpeRatio"->1.0)
-    implicit val lookup: String=>Option[Double] = properties.get
+    val properties = Map[String, Double]("sharpeRatio" -> 1.0)
+    implicit val lookup: String => Option[Double] = properties.get
     val xt: Try[Double] = for (e <- et; r = e.toRPN; x <- RPN[Double](r).evaluate) yield x
     xt should matchPattern { case Success(1.0) => }
   }

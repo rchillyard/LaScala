@@ -3,10 +3,12 @@ package com.phasmid.laScala.fp
 /**
   * Created by scalaprof on 8/22/16.
   */
-trait Lazy[T] extends (()=>T)  {
+trait Lazy[T] extends (() => T) {
   def unit[U](x: => U): Lazy[U]
-  def map[U](f: T=>U): Lazy[U] = flatMap(t => unit(f(t)))
-  def flatMap[U](f: T=>Lazy[U]): Lazy[U]
+
+  def map[U](f: T => U): Lazy[U] = flatMap(t => unit(f(t)))
+
+  def flatMap[U](f: T => Lazy[U]): Lazy[U]
 }
 
 

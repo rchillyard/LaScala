@@ -12,11 +12,12 @@ import scala.util.Try
 class KVTreeSpec extends FlatSpec with Matchers {
 
   implicit object IntStringValueOps$ extends StringValueOps[Int] {
-    def getParentKey(t: Int): Option[String] = (for (i <- Try(t/10); s = i.toString) yield s).toOption
+    def getParentKey(t: Int): Option[String] = (for (i <- Try(t / 10); s = i.toString) yield s).toOption
+
     def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
   }
 
-  implicit object GeneralKVTreeBuilderStringInt extends GeneralKVTreeBuilder[String,Int]
+  implicit object GeneralKVTreeBuilderStringInt extends GeneralKVTreeBuilder[String, Int]
 
   behavior of "nodeIterator"
 
@@ -75,7 +76,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   behavior of "includes"
   it should "work for GeneralKVTree" in {
-    val tree = GeneralKVTree[String,Int](Some(1), Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree[String, Int](Some(1), Seq(Leaf(2), Leaf(3)))
     tree.includesValue(1) shouldBe true
     tree.includesValue(2) shouldBe true
     tree.includesValue(3) shouldBe true
@@ -85,7 +86,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   behavior of "find"
   it should "work for GeneralKVTree" in {
-    val tree = GeneralKVTree[String,Int](Some(1), Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree[String, Int](Some(1), Seq(Leaf(2), Leaf(3)))
     tree.find(1) should matchPattern { case Some(GeneralKVTree(Some(1), Seq(Leaf(2), Leaf(3)))) => }
     tree.find(2) should matchPattern { case Some(Leaf(2)) => }
     tree.find(3) should matchPattern { case Some(Leaf(3)) => }
@@ -123,13 +124,14 @@ class KVTreeSpec extends FlatSpec with Matchers {
     val eveningGowns = "Evening Gowns"
     val jackets = "Jackets"
     val slacks = "Slacks"
-    val racks = Map(mens->clothing, womens->clothing, dresses->womens, blouses->womens, skirts->womens, suits->mens, sunDresses->dresses, eveningGowns->dresses, slacks->suits, jackets->suits)
+    val racks = Map(mens -> clothing, womens -> clothing, dresses -> womens, blouses -> womens, skirts -> womens, suits -> mens, sunDresses -> dresses, eveningGowns -> dresses, slacks -> suits, jackets -> suits)
     implicit object ClothingValueOps extends StringValueOps[String] {
       def getParentKey(v: String): Option[String] = racks.get(v)
+
       def createValueFromKey(k: String): Option[String] = Some(k)
     }
-    implicit object GeneralKVTreeBuilderString extends GeneralKVTreeBuilder[String,String]
-    def add(t: GeneralKVTree[String,String], s: String): GeneralKVTree[String,String] = (t :+ s).asInstanceOf[GeneralKVTree[String,String]]
+    implicit object GeneralKVTreeBuilderString extends GeneralKVTreeBuilder[String, String]
+    def add(t: GeneralKVTree[String, String], s: String): GeneralKVTree[String, String] = (t :+ s).asInstanceOf[GeneralKVTree[String, String]]
 
     val root = GeneralKVTree(Some(clothing), Nil)
     val tree = List(mens, womens, dresses, skirts, blouses, suits, eveningGowns, sunDresses, slacks, jackets).foldLeft(root)(add)

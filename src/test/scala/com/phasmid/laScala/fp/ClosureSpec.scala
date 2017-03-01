@@ -31,7 +31,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "implement bind" in {
     val name = "isHello"
     val f = RenderableFunction({ s: String => s == "Hello" }, name)
-    val c1 = Closure[String,Boolean](f)
+    val c1 = Closure[String, Boolean](f)
     c1.arity shouldBe 1
     val c2 = c1.bind(Left("Hello"))
     c2.arity shouldBe 0
@@ -84,10 +84,10 @@ class ClosureSpec extends FlatSpec with Matchers {
   behavior of "FunctionString"
 
   it should "add n parameters" in {
-    FunctionString("f",0).toString shouldBe "f"
-    FunctionString("f",1).toString shouldBe "f(a?)"
-    FunctionString("f",2).toString shouldBe "f(a?)(b?)"
-    FunctionString("f",26).toString shouldBe "f(a?)(b?)(c?)(d?)(e?)(f?)(g?)(h?)(i?)(j?)(k?)(l?)(m?)(n?)(o?)(p?)(q?)(r?)(s?)(t?)(u?)(v?)(w?)(x?)(y?)(z?)"
+    FunctionString("f", 0).toString shouldBe "f"
+    FunctionString("f", 1).toString shouldBe "f(a?)"
+    FunctionString("f", 2).toString shouldBe "f(a?)(b?)"
+    FunctionString("f", 26).toString shouldBe "f(a?)(b?)(c?)(d?)(e?)(f?)(g?)(h?)(i?)(j?)(k?)(l?)(m?)(n?)(o?)(p?)(q?)(r?)(s?)(t?)(u?)(v?)(w?)(x?)(y?)(z?)"
   }
 
   it should "use custom parameter names" in {
@@ -96,19 +96,19 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "calculate arity correctly" in {
-    FunctionString("f",0).arity shouldBe 0
-    FunctionString("f",1).arity shouldBe 1
-    FunctionString("f",2).arity shouldBe 2
-    FunctionString("f(1)",0).arity shouldBe 0
-    FunctionString("f(true)",1).arity shouldBe 1
-    FunctionString("f(3.1415927)",2).arity shouldBe 2
-    FunctionString("""f("x")""",0).arity shouldBe 0
-    FunctionString("""f("y")""",1).arity shouldBe 1
-    FunctionString("""f("z")""",2).arity shouldBe 2
+    FunctionString("f", 0).arity shouldBe 0
+    FunctionString("f", 1).arity shouldBe 1
+    FunctionString("f", 2).arity shouldBe 2
+    FunctionString("f(1)", 0).arity shouldBe 0
+    FunctionString("f(true)", 1).arity shouldBe 1
+    FunctionString("f(3.1415927)", 2).arity shouldBe 2
+    FunctionString("""f("x")""", 0).arity shouldBe 0
+    FunctionString("""f("y")""", 1).arity shouldBe 1
+    FunctionString("""f("z")""", 2).arity shouldBe 2
   }
 
   it should "calculate arity correctly for function" in {
-    val f = FunctionString("f",1)
+    val f = FunctionString("f", 1)
     f.arity shouldBe 1
     val g = FunctionString("g", 1)
     g.arity shouldBe 1
@@ -119,19 +119,19 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "partiallyApply correctly with index 0" in {
     FunctionString("f", 1).partiallyApply("x").toString shouldBe """f("x")"""
-    FunctionString("f",2).partiallyApply("x").toString shouldBe """f("x")(b?)"""
+    FunctionString("f", 2).partiallyApply("x").toString shouldBe """f("x")(b?)"""
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 0).partiallyApply("x")
   }
 
   it should "partiallyApply correctly with index 1" in {
-    FunctionString("f",2).partiallyApply("x",1).toString shouldBe """f(a?)("x")"""
+    FunctionString("f", 2).partiallyApply("x", 1).toString shouldBe """f(a?)("x")"""
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 0).partiallyApply("x", 1)
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 1).partiallyApply("x", 1)
   }
 
   it should "partiallyApplyFunction correctly" in {
     // TODO understand why this is a bit flaky
-    val f = FunctionString("f",1)
+    val f = FunctionString("f", 1)
     val g = FunctionString("g", 1)
     val h = g.partiallyApplyFunction(f)
     h.arity shouldBe 1
@@ -159,6 +159,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "yield Hello with arity 3" in {
     // XXX Not sure why we have to set this here, but we do.
     BooleanScalar.setDefaultFormat("%b")
+
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
     val f = RenderableFunction(render _, "render")
@@ -283,8 +284,8 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "handle a function (1)" in {
-    val map = Map("pi"->"3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s)}, "lookup")
+    val map = Map("pi" -> "3.1415927")
+    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup")
 
     def show(s1: String) = s1
 
@@ -297,8 +298,8 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "handle a function (2)" in {
-    val map = Map("pi"->"3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s)}, "lookup")
+    val map = Map("pi" -> "3.1415927")
+    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup")
 
     def show(s1: String) = s1.toDouble
 
@@ -311,8 +312,8 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "handle a function that throws an exception" in {
-    val map = Map("PI"->"3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s)}, "lookup")
+    val map = Map("PI" -> "3.1415927")
+    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup")
 
     def show(s1: String) = s1
 
@@ -334,10 +335,12 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "deal with NOT IN" in {
-    val f_1: RenderableFunction[Boolean] = RenderableFunction({b: Boolean => println(s"call NOT $b"); !b}, "NOT")
+    val f_1: RenderableFunction[Boolean] = RenderableFunction({ b: Boolean => println(s"call NOT $b"); !b }, "NOT")
     println(s"f_1: $f_1")
     f_1.arity shouldBe 1
-    val g_2: RenderableFunction[Boolean] = RenderableFunction((p0: String, p1: List[String]) => {println(s"$p0 IN $p1"); p1 contains p0}, "IN")
+    val g_2: RenderableFunction[Boolean] = RenderableFunction((p0: String, p1: List[String]) => {
+      println(s"$p0 IN $p1"); p1 contains p0
+    }, "IN")
     println(s"g_2: $g_2")
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
@@ -395,6 +398,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle the two-param version of render" in {
     val resultArity = 0
+
     def render(s1: String, s2: String) = s"$s1:$s2"
 
     val rf1 = RenderableFunction(render _, "render")

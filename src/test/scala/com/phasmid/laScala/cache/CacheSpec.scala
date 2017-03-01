@@ -1,7 +1,7 @@
 package com.phasmid.laScala.cache
 
 import akka.event.LoggingAdapter
-import com.phasmid.laScala.fp.{FP, SmartLogger}
+import com.phasmid.laScala.fp.FP
 import org.scalatest._
 import org.scalatest.concurrent._
 
@@ -58,11 +58,14 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val mockLoggingAdapter = new MockLoggingAdapter
     mockLoggingAdapter.debugCount shouldBe 0
     mockLoggingAdapter.warningCount shouldBe 0
+
     implicit def carper(s: String): Unit = mockLoggingAdapter.warning(s)
+
     def evaluate(k: String): Option[Int] = {
       mockLoggingAdapter.debug(s"evaluating $k")
       Try(k.toInt).toOption
     }
+
     val cache = BasicFulfillingCache[String, Int](evaluate)
     mockLoggingAdapter.warningCount shouldBe 0
     cache.get("1") should matchPattern { case Some(1) => }
@@ -83,11 +86,14 @@ class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val mockLoggingAdapter = new MockLoggingAdapter
     mockLoggingAdapter.debugCount shouldBe 0
     mockLoggingAdapter.warningCount shouldBe 0
+
     implicit def carper(s: String): Unit = mockLoggingAdapter.warning(s)
+
     def evaluate(k: String): Try[Int] = {
       mockLoggingAdapter.debug(s"evaluating $k")
       Try(k.toInt)
     }
+
     val cache = NonExpiringCache[String, Int](evaluate)
     mockLoggingAdapter.warningCount shouldBe 0
     cache.get("1") should matchPattern { case Success(1) => }

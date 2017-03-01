@@ -97,8 +97,8 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x shouldBe DoubleValue(1.0)
   }
   "RationalValue" should "work" in {
-    import Rational.RationalHelper
     import FiniteIntegral.LongIsFiniteIntegral
+    import Rational.RationalHelper
     val x = Value(r"1/2")
     val half = Rational.half
     x.source shouldBe half
