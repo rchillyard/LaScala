@@ -37,7 +37,7 @@ class SmartLoggerSpec extends FlatSpec with Matchers {
     val errorLogger = new ElephantLogger
     val logger = SmartLoggerBasic(regularLogger.log, { (s, x) => errorLogger.log(s"Error in $s: ${x.getLocalizedMessage}") })
     an[SmartLoggerException] should be thrownBy
-      logger("xToInt") ("x".toInt)
+      logger("xToInt")("x".toInt)
     errorLogger.get shouldBe "Error in xToInt: For input string: \"x\"\n"
   }
   it should "work in context" in {

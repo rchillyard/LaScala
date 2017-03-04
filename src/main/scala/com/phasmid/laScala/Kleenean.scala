@@ -24,22 +24,6 @@ trait Maybe extends (() => Option[Boolean]) {
     */
   def :||(m: => Maybe): Kleenean = Kleenean.or(apply, m())
 
-  //  /**
-  //    * Left-associative conjunctive operator with an Option[Boolean]
-  //    *
-  //    * @param x other Maybe value
-  //    * @return a Maybe value with is the Kleenean logical AND of this and x
-  //    */
-  //  def :&&(x: => Option[Boolean]) = Kleenean.and(x, apply)
-
-  //  /**
-  //    * Left-associative disjunctive operator with an Option[Boolean]
-  //    *
-  //    * @param x other Maybe value
-  //    * @return a Maybe value with is the Kleenean logical OR of this and x
-  //    */
-  //  def :||(x: => Option[Boolean]) = Kleenean.or(x, apply)
-
   /**
     * Right-associative conjunctive operator with an Option[Boolean]
     *

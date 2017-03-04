@@ -403,6 +403,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M], override val initia
     def doUpdate(v: V): M[V] = {
       self.put(k, v); wrapper.unit(v)
     }
+
     get(k) match {
       case Some(v) => wrapper.unit(v)
       case None => wrapper.flatMap[V](f(k), doUpdate)
