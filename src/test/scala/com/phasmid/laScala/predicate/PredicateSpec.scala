@@ -179,6 +179,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p("six") should matchPattern { case Success(false) => }
   }
   "Always" should "be true" in {
+    // TODO Figure out why we get a warning here and fix it!
     val p = Always
     p() should matchPattern { case Success(true) => }
   }
@@ -271,6 +272,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       x < 10
     }
 
+    // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val p = func1 _ &^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "

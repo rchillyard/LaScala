@@ -30,7 +30,6 @@ case class Args(args: List[Any]) extends (() => Try[(Any, Args)]) {
 
 object Args extends App {
 
-  override def main(args: Array[String]): Unit = {
     val x = Args(args.toList)
 
     def inner(as: Args, cs: List[Class[_]], result: List[Any]): List[Any] = {
@@ -51,7 +50,6 @@ object Args extends App {
     println(s"$a @ ${a.getClass}")
     println(s"$b @ ${b.getClass}")
     println(s"$c @ ${c.getClass}")
-  }
 
   def apply(seq: Any*): Args = apply(seq.toList)
 }

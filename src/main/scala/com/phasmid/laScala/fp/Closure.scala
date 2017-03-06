@@ -7,7 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
@@ -23,6 +23,7 @@ import scala.util._
   * @tparam R the result type of the closure
   */
 case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
+  implicit val logger: Logger = Spy.getLogger(getClass)
 
   /**
     * Method to evaluate this closure. If the arity of this is not equal to zero, a Failure will result
@@ -37,7 +38,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     * @param evaluateAll (defaults to false) if this is true, then we force all parameters to be evaluated, even if they are call-by-name
     * @return a Closure[R] wrapped in Try. The ps parameter of the result will be empty.
     */
-  def partiallyApply(evaluateAll: Boolean = false): Try[Closure[T, R]] = for ((g: RenderableFunction[R], xs: Seq[Closure[Any, T]]) <- f.applyParameters[T](ps.toList, evaluateAll); z = xs map (Right(_))) yield Closure[T, R](g, z: _*)
+  def partiallyApply(evaluateAll: Boolean = false): Try[Closure[T, R]] = for ((g: RenderableFunction[R], xs) <- f.applyParameters[T](ps.toList, evaluateAll); z = xs map (Right(_))) yield Closure[T, R](g, z: _*)
 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
@@ -75,7 +76,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
   require(w != null, s"w is null")
   require(w.arity == arity, s"arity $arity is not consistent with $w")
 
-  type ApplyParametersResult[T] = (RenderableFunction[R], Seq[Closure[Any, T]])
+  type ApplyParametersResult[T] = (RenderableFunction[R], Seq[Closure[_, T]])
 
   // NOTE: this line requires R to support ClassTag
   private val rc = implicitly[ClassTag[R]]
@@ -93,7 +94,11 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
   // CONSIDER rewriting the logic here
     if (arity == p.productArity)
       if (returnIsTry)
-        func.apply(p).asInstanceOf[Try[R]]
+        Try(func.apply(p)) match {
+          case Success(r: Try[R]) => r
+          case Failure(x) => Failure(x)
+          case _ => Failure(RenderableFunctionException(s"apply($p): logic error"))
+        }
       else
         Try(func.apply(p))
     else
@@ -125,14 +130,14 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     * @tparam T the underlying type of the parameters
     * @return a new RenderableFunction (wrapped in Try), whose single input parameter is the Tuple0
     */
-  def applyAllParameters[T](xs: Seq[Parameter[T]]): Try[RenderableFunction[R]] = {
+  def applyAllParameters[T](xs: Seq[Parameter[T]]): Try[RenderableFunction[R]] = Closure.logDebug(s"$this.applyAllParameters",
     applyParameters(xs, evaluateAll = true) match {
       case Success((f, fs)) =>
         if (fs.isEmpty) Success(f)
         else Failure(RenderableFunctionException(s"parameters included at least one call-by-name closure: ${fs.head}"))
       case Failure(x) => Failure(x)
     }
-  }
+  )
 
   /**
     * Method which will take the given RenderableFunction and apply the given parameters terms,
@@ -145,18 +150,30 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     * @return an ApplyParametersResult[T] (wrapped in Try)
     */
   def applyParameters[T](xs: Seq[Parameter[T]], evaluateAll: Boolean): Try[ApplyParametersResult[T]] = {
+    implicit val logger = Spy.getLogger(getClass)
+
     @tailrec
     def inner1(r: ApplyParametersResult[T], work: Seq[Parameter[T]]): ApplyParametersResult[T] =
       work match {
         case Nil => r
         case h :: t =>
-          val _r = h match {
-            case Left(s) => applyParameter(r._1.partiallyApply(s), r._2)
+          Try(h match {
+            case Left(s) =>
+              applyParameter(r._1.partiallyApply(s), r._2)
             case Right(f) =>
-              if (f.f.ae || evaluateAll) applyParameter(for (p <- f(); q <- r._1.partiallyApply(p)) yield q, r._2)
-              else (r._1, r._2 :+ f.asInstanceOf[Closure[Any, T]])
+              if (evaluateAll) applyParameter(for (p <- f.apply(); q <- r._1.partiallyApply(p)) yield q, r._2)
+              else if (f.f.ae) (for (p <- f.partiallyApply()) yield p) match {
+                case Success(c) =>
+                  if (c.arity == 0) applyParameter(r._1.partiallyApply(c()), r._2)
+                  else (r._1, r._2 :+ c)
+                case Failure(x) => throw x
+              }
+              else (r._1, r._2 :+ f)
           }
-          inner1(_r, t)
+          ) match {
+            case Success(rr) => inner1(rr, t)
+            case Failure(x) => throw x
+          }
       }
 
     Try(inner1((this, Nil), xs))
@@ -171,7 +188,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     *
     * @return a String representing this object
     */
-  override def toString = s"RenderableFunction($arity, $w)"
+  override def toString = s"RenderableFunction($arity, $evaluationStyle $w)"
 
   /**
     * Invert the first n parameter positions of this RenderableFunction
@@ -194,11 +211,12 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: Product => R, w: Fu
     */
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + w.toString
 
-  private def applyParameter[T](fy: Try[RenderableFunction[R]], ps: Seq[Closure[Any, T]]) = fy match {
+  private def applyParameter[T](fy: Try[RenderableFunction[R]], ps: Seq[Closure[_, T]]) = fy match {
     case Success(f) => (f, ps)
     case Failure(e) => throw e
   }
 
+  private def evaluationStyle = if (ae) "" else "=>"
 }
 
 case class FunctionString(f: String, ps: Seq[Param]) {
@@ -296,7 +314,7 @@ case class FreeParam(s: String) {
   * Companion object to Closure
   */
 object Closure {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private implicit val logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
     case Success(r) => logger.debug(s"$w: $r"); ry
@@ -322,6 +340,7 @@ object Closure {
   * Companion object to RenderableFunction
   */
 object RenderableFunction {
+
   // TODO use assert
   def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
 

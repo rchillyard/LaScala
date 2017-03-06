@@ -9,7 +9,7 @@ import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.language.implicitConversions
-import scala.util._
+import scala.util.{Left, _}
 
 /**
   * Created by scalaprof on 10/19/16.
@@ -462,5 +462,58 @@ class ClosureSpec extends FlatSpec with Matchers {
     println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List("l", "K"))
   }
+
+  behavior of "Closure with lookup"
+  it should "work for fourStringFunction" in {
+    case class Converter[R](f: Scalar => Option[R], name: String) extends (Scalar => Option[R]) {
+      def apply(s: Scalar): Option[R] = f.apply(s)
+
+      override def toString: String = name
+    }
+
+    def mapLookup(m: => Map[String, String]): String => Try[String] = { s => FP.optionToTry(m.get(s)) }
+
+    val function = "fourStringFunction"
+    val sArg1 = "p1"
+    val sArg2 = "p2"
+    val sArg3 = "p3"
+    val sArg4 = "p4"
+    val col1 = "c1"
+    val col2 = "c2"
+    val val1 = "v1"
+    val val2 = "v2"
+    val val3 = "v3"
+    val val4 = "v4"
+    val variables = Map(col1 -> val1, col2 -> val2)
+    implicit val lookup: String => Try[String] = mapLookup(variables)
+
+    def getValStdJoin(arg1: String, arg2: String, arg3: String, arg4: String): String = s"$function($sArg1: $arg1, $sArg2: $arg2, $sArg3: $arg3, $sArg4: $arg4)"
+
+    def concat(p1: String): String = p1
+
+    val wGetValStdJoin = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
+    val fGetValStdJoin = RenderableFunction(getValStdJoin _, wGetValStdJoin, ae = true)
+    val wConcat = FunctionString.custom("concat", Seq("x"))
+    val fConcat = RenderableFunction(concat _, wConcat, ae = true)
+    // NOTE: that we have to cast the renderable function because internally it always replaces Try[Try[R]] with Try[R]
+    val fLookup = RenderableFunction(lookup, "lookup", ae = false).asInstanceOf[RenderableFunction[String]]
+    val p1 = Left(col1)
+    val closureLookup1 = Closure[String, String](fLookup, p1)
+    val p3 = Right(closureLookup1)
+    val p2 = Left(col2)
+    val closureLookup2 = Closure[String, String](fLookup, p2)
+    val closureConcat = Closure[String, String](fConcat, p3)
+    val p4 = Right(closureConcat)
+    val p5 = Right(closureLookup2)
+    val p6 = Left(val3)
+    val p7 = Left(val4)
+    val c = Closure[String, String](fGetValStdJoin, p4, p5, p6, p7)
+    val dy = for (d <- c.partiallyApply()) yield d
+    for (d <- dy) yield d.apply() match {
+      case Success(s) => s shouldBe "key: " + val1 + ", " + sArg2 + ": " + val2
+      case Failure(x) => fail(x)
+    }
+  }
+
 
 }
