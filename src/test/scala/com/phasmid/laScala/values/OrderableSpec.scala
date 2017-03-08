@@ -81,7 +81,7 @@ class OrderableSpec extends FlatSpec with Matchers {
     val dt = OrderableLocalDate.fromString("01/01/2016")
     dt should matchPattern { case Success(_) => }
   }
-  "01/01/2016" should "result in LocalDate using via" in {
+  it should "result in LocalDate using via" in {
     val dt = LocalDate of(2016, 2, 1)
     val m: Map[String, LocalDate] = Map("k" -> dt)
     implicit val pattern = "MM/dd/uuuu"
@@ -98,5 +98,33 @@ class OrderableSpec extends FlatSpec with Matchers {
     val dt1 = LocalDate of(2016, 2, 1)
     val dt2 = LocalDate of(2016, 2, 1)
     OrderableLocalDate compare(dt1, dt2) shouldBe 0
+  }
+  "parse" should "transform 1 into orderable 1" in {
+    implicit val pattern = ""
+    val xy = Orderable.parse[Int]("1")
+    xy should matchPattern { case Success(1) => }
+  }
+  it should """transform "Hello" into orderable "Hello"""" in {
+    implicit val pattern = ""
+    val xy = Orderable.parse[String]("Hello")
+    xy should matchPattern { case Success("Hello") => }
+  }
+
+  "comparison" should "work" in {
+    val x: Any = "1"
+    val y: Any = "2"
+    Orderable.comparison("gt", x, y) should matchPattern { case Success(false) => }
+    Orderable.comparison("lt", x, y) should matchPattern { case Success(true) => }
+    Orderable.comparison("eq", x, y) should matchPattern { case Success(false) => }
+    Orderable.comparison("eq", x, "1") should matchPattern { case Success(true) => }
+    Orderable.comparison("eq", x, 1) should matchPattern { case Success(true) => }
+    Orderable.comparison("eq", 1, x) should matchPattern { case Success(true) => }
+    Orderable.comparison("eq", 1, 1) should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", 9, 10) should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", 9, "10") should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", "9", 10) should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", "9", "10") should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(true) => }
+    Orderable.comparison("lt", "Aardvark", "Abracadabra") should matchPattern { case Success(true) => }
   }
 }

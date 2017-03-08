@@ -3,9 +3,11 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import com.phasmid.laScala.Trial
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.fp.FP._
 
-import scala.util.{Success, Try}
+import scala.util._
 
 /**
   * Type class Orderable.
@@ -57,6 +59,42 @@ trait Orderable[X] extends Ordering[X] {
 
 object Orderable {
   def apply[X: Orderable]: Orderable[X] = implicitly[Orderable[X]]
+
+  /**
+    * Method to convert a String into an Orderable
+    *
+    * @param x       a String
+    * @param pattern (implicit) the pattern (template) of the String, for example, when parsing a date string, do we put year, month or day first?
+    * @return a Try[X]
+    */
+  def parse[X: Orderable](x: String)(implicit pattern: String): Try[X] = implicitly[Orderable[X]].fromString(x)
+
+  def comparison(op: String, x: Any, y: Any): Try[Boolean] = {
+    (x,y) match {
+      case (i: Int, j: Int) => comparisonTyped[Int](op,Success(i),Success(j))(OrderableInt)
+      case (i: LocalDate, j: LocalDate) => comparisonTyped[LocalDate](op,Success(i),Success(j))(OrderableLocalDate)
+      case (i: Int, j: String) =>
+        comparisonTyped[Int](op,Success(i),Try(j.toInt))(OrderableInt)
+      case (i: String, j: Int) =>
+        comparisonTyped[Int](op,Try(i.toInt),Success(j))(OrderableInt)
+      case (i: String, j: String) =>
+        // CONSIDER dates in the following
+        comparisonTyped[Int](op,Try(i.toInt),Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
+    }
+  }
+
+  def comparisonTyped[X : Orderable](op: String, x: Try[X], y: Try[X]): Try[Boolean] = {
+    val orderable = implicitly[Orderable[X]]
+    val cfy = op match {
+        case "lt" => Success(orderable.lt _)
+        case "le" => Success(orderable.lteq _)
+        case "eq" => Success(orderable.equiv _)
+        case "ge" => Success(orderable.gteq _)
+        case "gt" => Success(orderable.gt _)
+        case _ => Failure(new OrderableException(s"cannot compare using op: $op (not supported)"))
+      }
+    for (cf <- cfy; b <- FP.map2(x,y)(cf)) yield b
+  }
 
   trait OrderableInt extends Orderable[Int] {
     def unit(x: Int): Int = x
