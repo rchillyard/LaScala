@@ -19,7 +19,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   behavior of "Closure"
   it should "apply for a simple closure" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, true)
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f, Left("Hello"))
     c.arity shouldBe 0
     c() shouldBe Success(true)
@@ -27,7 +27,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "implement bind" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, true)
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c1 = Closure[String, Boolean](f)
     c1.arity shouldBe 1
     val c2 = c1.bind(Left("Hello"))
@@ -37,7 +37,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "throw exception where there is no parameter" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, true)
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f)
     c.arity shouldBe 1
     c() should matchPattern { case Failure(_) => }
@@ -49,7 +49,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "apply a 1-arity function" in {
     val name = "isHello"
     val arity = 1
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, true)
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
     f.func(Tuple1("Hello")) shouldBe true
@@ -62,7 +62,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
     def render(s1: String, s2: String) = s1 + ":" + s2
 
-    val f = RenderableFunction(render _, name, ae = true)
+    val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
     f.func(("Hello", "Goodbye")) shouldBe "Hello:Goodbye"
@@ -70,11 +70,59 @@ class ClosureSpec extends FlatSpec with Matchers {
     an[ClassCastException] should be thrownBy f.func(Tuple1("Hello"))
   }
 
+  it should "work with partiallyApply (1)" in {
+    val name = "render"
+
+    def render(s1: String, s2: String) = s1 + ":" + s2
+
+    val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
+    val g1y: Try[RenderableFunction[String]] = f.partiallyApply("Hello")
+    (for (g1 <- g1y) yield g1.arity) should matchPattern { case Success(1) => }
+    val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("Goodbye")) yield h
+    (for (g2 <- g2y) yield g2.arity) should matchPattern { case Success(0) => }
+    (for (g2 <- g2y; r <- g2.callByName()) yield r) should matchPattern { case Success("Hello:Goodbye") => }
+  }
+
+  it should "work with partiallyApply (2)" in {
+    val name = "and"
+    def and(x: Boolean, y: => Boolean) = x && y
+
+    val f = RenderableFunction(and _, name, Seq(false, true))
+    val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply(true)
+    val g2y: Try[RenderableFunction[Boolean]] = for (g <- g1y; h <- g.partiallyApply(false)) yield h
+    val by: Try[Boolean] = for (g2 <- g2y; b <- g2.callByName()) yield b
+    by should matchPattern { case Success(false) => }
+  }
+
+  it should "work with partiallyApply (3)" in {
+    val name = "and"
+
+    def and(x: String, y: => String) = x.toBoolean && y.toBoolean
+
+    val f = RenderableFunction(and _, name, Seq(false, true))
+    val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply("true")
+    val g2y: Try[RenderableFunction[Boolean]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
+    val by: Try[Boolean] = for (g2 <- g2y; b <- g2.callByName()) yield b
+    by should matchPattern { case Success(false) => }
+  }
+
+  it should "work with partiallyApply (4)" in {
+    val name = "and"
+
+    def and(x: String, y: => String) = (x.toBoolean && y.toBoolean).toString
+
+    val f = RenderableFunction(and _, name, Seq(false, true))
+    val g1y: Try[RenderableFunction[String]] = f.partiallyApply("true")
+    val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
+    val by: Try[String] = for (g2 <- g2y; b <- g2.callByName()) yield b
+    by should matchPattern { case Success("false") => }
+  }
+
   behavior of "render"
 
   it should "give function string with tabs" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, true)
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     f.render(1) shouldBe s"  $name(a?)"
   }
 
@@ -110,7 +158,6 @@ class ClosureSpec extends FlatSpec with Matchers {
     val g = FunctionString("g", 1)
     g.arity shouldBe 1
     val h = g.partiallyApplyFunction(f)
-    println(s"h: $h")
     h.arity shouldBe 1
   }
 
@@ -140,7 +187,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "yield Hello with arity 1" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
     val r = f(Tuple1("Hello"))
     r should matchPattern { case Success(true) => }
   }
@@ -148,7 +195,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "yield Hello with arity 2" in {
     def render(s1: Scalar, s2: Scalar) = s1.render() + ":" + s2.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val r = f(Tuple2(Scalar("Hello"), Scalar(1)))
     r should matchPattern { case Success("Hello:1") => }
   }
@@ -159,7 +206,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val r = f(Tuple3(Scalar("Hello"), Scalar(1), Scalar(true)))
     val hello1true = "Hello:1:true"
     r should matchPattern { case Success(`hello1true`) => }
@@ -170,7 +217,8 @@ class ClosureSpec extends FlatSpec with Matchers {
 
     def lookup(s: String): Try[String] = FP.optionToTry(map.get(s))
 
-    val f = RenderableFunction(lookup _, "lookup", ae = false)
+    // TODO this should use a call-by-name parameter
+    val f = RenderableFunction(lookup _, "lookup", RenderableFunction.callByValue(1))
     val r = f(Tuple1("x"))
     r should matchPattern { case Success("X") => }
   }
@@ -180,7 +228,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 1 to 0" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 0
@@ -189,7 +237,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 2 to 1" in {
     def render(s1: Scalar, s2: Scalar) = s1.render() + ":" + s2.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 1
@@ -198,7 +246,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 3 to 2" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 2
@@ -207,7 +255,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 4 to 3" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 3
@@ -226,7 +274,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 1 to 0 (1)" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -235,7 +283,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 1 to 0 (2)" in {
     def render(s: String) = s
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("K")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -245,7 +293,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 2 to 0 (a)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("k"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -255,7 +303,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 2 to 0 (b)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("K"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -265,7 +313,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 3 to 2" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 2
@@ -274,7 +322,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "reduce arity 4 to 3" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
 
-    val f = RenderableFunction(render _, "render", ae = true)
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
     val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 3
@@ -282,11 +330,14 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle a function (1)" in {
     val map = Map("pi" -> "3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup", false)
+
+    def fLookup(s: => String): String = map(s)
+
+    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
 
     def show(s1: String) = s1
 
-    val f = RenderableFunction(show _, "render", ae = true)
+    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val c1 = Closure(lookup, Left("pi"))
     val c2 = Closure(f, Right(c1))
     val c3y = c2.partiallyApply()
@@ -297,11 +348,14 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle a function (2)" in {
     val map = Map("pi" -> "3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup", false)
+
+    def fLookup(s: => String): String = map(s)
+
+    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
 
     def show(s1: String) = s1.toDouble
 
-    val f = RenderableFunction(show _, "render", ae = true)
+    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val c1 = Closure(lookup, Left("pi"))
     val c2 = Closure(f, Right(c1))
     val c3y = c2.partiallyApply()
@@ -312,21 +366,22 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle a function that throws an exception" in {
     val map = Map("PI" -> "3.1415927")
-    val lookup: RenderableFunction[String] = RenderableFunction({ s: String => map(s) }, "lookup", false)
+
+    def fLookup(s: => String): String = map(s)
+
+    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
 
     def show(s1: String) = s1
 
-    val f = RenderableFunction(show _, "render", ae = true)
-    println(s"f: $f")
+    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val cy = f.applyAllParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
-    println(s"cy: $cy")
     cy should matchPattern { case Failure(_: NoSuchElementException) => }
   }
 
   it should "deal with not" in {
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
-    val f = RenderableFunction(fNot _, "not", ae = true)
+    val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
     val gy = f.applyAllParameters(List[Parameter[Boolean]](Left(true)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -334,25 +389,21 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "deal with NOT IN" in {
-    val f_1: RenderableFunction[Boolean] = RenderableFunction({ b: Boolean => println(s"call NOT $b"); !b }, "NOT", true)
-    println(s"f_1: $f_1")
+    val f_1: RenderableFunction[Boolean] = RenderableFunction({ b: Boolean => println(s"call NOT $b"); !b }, "NOT", RenderableFunction.callByValue(1))
     f_1.arity shouldBe 1
     val g_2: RenderableFunction[Boolean] = RenderableFunction((p0: String, p1: List[String]) => {
       println(s"$p0 IN $p1")
       p1 contains p0
-    }, "IN", ae = true)
-    println(s"g_2: $g_2")
+    }, "IN", RenderableFunction.callByValue(2))
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
     val g__1y = g_2i.applyAllParameters(List[Parameter[List[String]]](Left(List("x", "y", "z"))))
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
-    println(s"g__1: $g__1")
     g__1.arity shouldBe 1
     val fg_2y = f_1.applyAllParameters(List[Parameter[Boolean]](Right(Closure(g__1, Left("x")))))
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
-    println(s"fg_2: $fg_2")
     fg_2.callByName() shouldBe Success(false)
   }
 
@@ -361,10 +412,10 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "yield the same hashCode" in {
     def render(s: String) = s
 
-    val rf1y = RenderableFunction(render _, "render", ae = true).applyAllParameters(List(Left("k")))
+    val rf1y = RenderableFunction(render _, "render", RenderableFunction.callByValue(1)).applyAllParameters(List(Left("k")))
     rf1y should matchPattern { case Success(_) => }
     val hash1 = rf1y.get.callByName().get.hashCode
-    val rf2y = RenderableFunction(render _, "render", ae = true).applyAllParameters(List(Left("k")))
+    val rf2y = RenderableFunction(render _, "render", RenderableFunction.callByValue(1)).applyAllParameters(List(Left("k")))
     rf2y should matchPattern { case Success(_) => }
     val hash2 = rf2y.get.callByName().get.hashCode
     hash1 shouldEqual hash2
@@ -396,12 +447,24 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   behavior of "RenderableFunction.invert"
 
+  it should "perform the invert properly" in {
+    val resultArity = 0
+
+    def render(s1: String, s2: => String) = s"$s1:$s2"
+
+    val rf1 = RenderableFunction(render _, "render", Seq(false, true))
+    val rf1i = rf1.invert(2)
+    val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
+    rf2y should matchPattern { case Success(_) => }
+    rf2y.get.arity shouldBe resultArity
+  }
+
   it should "handle the two-param version of render" in {
     val resultArity = 0
 
     def render(s1: String, s2: String) = s"$s1:$s2"
 
-    val rf1 = RenderableFunction(render _, "render", ae = true)
+    val rf1 = RenderableFunction(render _, "render", Seq(false, false))
     val rf1i = rf1.invert(2)
     val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
@@ -436,32 +499,42 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "handle varargs of cardinality 0" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs(0)
     rf1.arity shouldBe 0
-    println(rf1)
     val rf2y = rf1.applyAllParameters[String](List[Parameter[String]]())
     rf2y should matchPattern { case Success(_) => }
-    println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List())
   }
 
   it should "handle varargs of cardinality 1" in {
     val rf1: RenderableFunction[Seq[Seq[String]]] = RenderableFunction.varargs(1)
     rf1.arity shouldBe 1
-    println(rf1)
     val rf2y = rf1.applyAllParameters[String](List[Parameter[String]](Left("l")))
     rf2y should matchPattern { case Success(_) => }
-    println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List("l"))
   }
 
   it should "handle varargs of cardinality 2" in {
     val rf1 = RenderableFunction.varargs(2)
     rf1.arity shouldBe 2
-    println(rf1)
     val rf2y = rf1.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
-    println(rf2y.get)
     rf2y.get.callByName shouldBe Success(List("l", "K"))
   }
+
+  behavior of "boolean expression"
+  it should """evaluate to true with true & true""" in {
+    def fAnd(p1: Boolean, p2: => Boolean): Boolean = {
+      println(s"function(arg1: $p1, arg2: $p2)")
+      p1 && p2
+    }
+
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true), Left(true))
+    cAnd.apply() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
+  }
+
 
   behavior of "Closure with lookup"
   it should "work for fourStringFunction" in {
@@ -487,16 +560,16 @@ class ClosureSpec extends FlatSpec with Matchers {
     val variables = Map(col1 -> val1, col2 -> val2)
     implicit val lookup: String => Try[String] = mapLookup(variables)
 
-    def getValStdJoin(arg1: String, arg2: String, arg3: String, arg4: String): String = s"$function($sArg1: $arg1, $sArg2: $arg2, $sArg3: $arg3, $sArg4: $arg4)"
+    def fourStringFunction(arg1: String, arg2: String, arg3: String, arg4: String): String = s"$function($sArg1: $arg1, $sArg2: $arg2, $sArg3: $arg3, $sArg4: $arg4)"
 
     def concat(p1: String): String = p1
 
-    val wGetValStdJoin = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
-    val fGetValStdJoin = RenderableFunction(getValStdJoin _, wGetValStdJoin, ae = true)
+    val wFunction = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
+    val fFunction: RenderableFunction[String] = RenderableFunction(fourStringFunction _, wFunction, RenderableFunction.callByValue(4))
     val wConcat = FunctionString.custom("concat", Seq("x"))
-    val fConcat = RenderableFunction(concat _, wConcat, ae = true)
-    // NOTE: that we have to cast the renderable function because internally it always replaces Try[Try[R]] with Try[R]
-    val fLookup = RenderableFunction(lookup, "lookup", ae = false).asInstanceOf[RenderableFunction[String]]
+    val fConcat = RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1))
+    // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
+    val fLookup = RenderableFunction(lookup, "lookup", Seq(true)).asInstanceOf[RenderableFunction[String]]
     val p1 = Left(col1)
     val closureLookup1 = Closure[String, String](fLookup, p1)
     val p3 = Right(closureLookup1)
@@ -507,7 +580,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     val p5 = Right(closureLookup2)
     val p6 = Left(val3)
     val p7 = Left(val4)
-    val c = Closure[String, String](fGetValStdJoin, p4, p5, p6, p7)
+    val c = Closure[String, String](fFunction, p4, p5, p6, p7)
     val dy = for (d <- c.partiallyApply()) yield d
     for (d <- dy) yield d.apply() match {
       case Success(s) => s shouldBe "key: " + val1 + ", " + sArg2 + ": " + val2
