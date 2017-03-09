@@ -274,8 +274,8 @@ case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
   }) + ")"
 }
 
-case class FreeParam(s: String) {
-  override def toString: String = s + FreeParam.query
+case class FreeParam(s: String, cbn: Boolean) {
+  override def toString: String = FP.which(cbn)("=>", "") + s + FreeParam.query
 }
 
 /**
@@ -286,7 +286,7 @@ object RenderableFunction {
   // TODO use assert
   def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
 
-  def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = RenderableFunction(arity, func, FunctionString(w, arity), cbn)
+  def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = RenderableFunction(arity, func, FunctionString(w, arity, cbn), cbn)
 
   /**
     * The following apply functions are in pairs: one with FunctionString and one with just String as the second parameter.
@@ -303,43 +303,43 @@ object RenderableFunction {
     )
   }
 
-  def apply[T, R: ClassTag](f: T => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1), cbn)
+  def apply[T, R: ClassTag](f: T => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1, cbn), cbn)
 
   def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(2, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 2), cbn)
+  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 2, cbn), cbn)
 
   def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(3, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 3), cbn)
+  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 3, cbn), cbn)
 
   def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(4, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 4), cbn)
+  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 4, cbn), cbn)
 
   def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(5, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 5), cbn)
+  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 5, cbn), cbn)
 
   def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(6, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 6), cbn)
+  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 6, cbn), cbn)
 
   def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(7, asTupledFunctionType(f), w, cbn)
   )
 
-  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7), cbn)
+  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn)
 
   private def emptyList[T](p: Product) = Seq[T]()
 
@@ -506,7 +506,6 @@ object RenderableFunction {
       }
     }
   }
-
 }
 
 object Param {
@@ -518,7 +517,9 @@ object Param {
 }
 
 object FreeParam {
-  def apply(c: Char): FreeParam = apply(c.toString)
+  def apply(x: (Char, Boolean)): FreeParam = apply(x._1.toString, x._2)
+
+  def apply(c: Char): FreeParam = apply(c.toString, cbn = false)
 
   private val query = """?"""
 }
@@ -526,11 +527,14 @@ object FreeParam {
 object FunctionString {
   private val params = "abcdefghijklmnopqrstuvwxyz".toList
 
-  def stream(xs: Seq[Char]): Stream[FreeParam] = Stream.cons(FreeParam(xs.head), stream(xs.tail))
+  private def stream(xs: Seq[(Char, Boolean)]): Stream[FreeParam] = xs match {
+    case h :: t => Stream.cons(FreeParam(h), stream(t))
+    case Nil => Stream.empty
+  }
 
-  def apply(f: String, n: Int): FunctionString = FunctionString(f, stream(params) take n map (Param(_)) toList)
+  def apply(f: String, n: Int, cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, stream(params zip cbn) take n map (Param(_)) toList)
 
-  def custom(f: String, cs: Seq[String]): FunctionString = FunctionString(f, cs map (s => Param(FreeParam(s))))
+  def custom(f: String, cs: Seq[String], cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, (cs zip cbn) map { case (s, b) => Param(FreeParam(s, b)) })
 }
 
 /**

@@ -783,4 +783,15 @@ object FP {
     * @return a ListMap[K,V]
     */
   def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
+
+  /**
+    * Method to select an element from a tuple according to a Boolean value.
+    * You may invoke this method either as which(b)(x,y) or which (b)((x,y))
+    *
+    * @param b a boolean
+    * @param t a tuple
+    * @tparam T the underlying type
+    * @return the first element of the tuple if b is true, else the second element
+    */
+  def which[T](b: Boolean)(t: (T, T)): T = if (b) t._1 else t._2
 }
