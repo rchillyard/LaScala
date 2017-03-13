@@ -1,3 +1,8 @@
+/*
+ * LaScala
+ * Copyright (c) 2016, 2017. Phasmid Software
+ */
+
 package com.phasmid.laScala.values
 
 import java.time.LocalDate
@@ -106,7 +111,7 @@ trait Scalar extends Renderable {
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     * @return a String.
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + renderFormatted(defaultFormat)
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = renderFormatted(defaultFormat)
 
   /**
     * Method to show this Scalar simply, obviously and elegantly.

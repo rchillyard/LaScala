@@ -88,7 +88,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
     val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
     val g1y: Try[RenderableFunction[String]] = f.partiallyApply("Hello")
-    (for (g1 <- g1y) yield g1.arity) should matchPattern { case Success(1) => }
+    for (g1 <- g1y) yield g1.arity should matchPattern { case Success(1) => }
     val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("Goodbye")) yield h
     (for (g2 <- g2y) yield g2.arity) should matchPattern { case Success(0) => }
     (for (g2 <- g2y; r <- g2.callByName()) yield r) should matchPattern { case Success("Hello:Goodbye") => }
@@ -134,7 +134,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   it should "give function string with tabs" in {
     val name = "isHello"
     val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
-    f.render(1) shouldBe s"  $name(a?)"
+    f.render(1) shouldBe s"$name(a?)"
   }
 
   behavior of "FunctionString"
@@ -490,4 +490,5 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
+
 }

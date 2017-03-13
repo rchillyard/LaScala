@@ -171,7 +171,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, func: (Product) => R, w: 
     * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
     *         which is then followed by some human-legible part of *this*.
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = tab(indent) + w.toString
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = w.toString
 
   private def applyParameter[T](fy: Try[RenderableFunction[R]], ps: Seq[Closure[_, T]]) = fy match {
     case Success(f) => (f, ps)

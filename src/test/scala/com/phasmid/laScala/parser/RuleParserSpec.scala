@@ -113,9 +113,10 @@ class RuleParserSpec extends FlatSpec with Matchers {
     val expected = Disjunction(List(Conjunction(List(Condition("x", BooleanPredicateExpr(">", parser.Expr(parser.ExprTerm(parser.Number("1", "1"), List()), List()))), Parentheses(Disjunction(List(Conjunction(List(Condition("x", BooleanPredicateExpr("<", parser.Expr(parser.ExprTerm(parser.Number("3", "1"), List()), List()))))), Conjunction(List(Condition("x", BooleanPredicateExpr("=", parser.Expr(parser.ExprTerm(parser.Number("99", "1"), List()), List()))))))))))))
     r.get should matchPattern { case `expected` => }
   }
-  it should """parse x>1 & (x<3 | x=99) using parseRule""" in {
+  val expr = "x>1 & (x<3 | x=99)"
+  "rule" should "parse " + expr + " using parseRule" in {
     val parser = new RuleParser()
-    parser.parseRule("x>1 & (x<3 | x=99)") should matchPattern { case scala.util.Success(_) => }
+    parser.parseRule(expr) should matchPattern { case scala.util.Success(_) => }
   }
   it should """parse "strikePrice > 95% * $basePrice & strikePrice < 105% * $basePrice & sharpeRatio > 0.4 & EV < $EBITDA*13"""" in {
     val parser = new RuleParser()

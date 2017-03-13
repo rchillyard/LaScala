@@ -22,7 +22,7 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "render"
   it should "work for leaf" in {
     Leaf(42).render() shouldBe "42"
-    Leaf(42).render(1) shouldBe "  42"
+    Leaf(42).render(1) shouldBe "42"
   }
   it should "work for GeneralTree" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
@@ -344,7 +344,7 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.includesValue(1) shouldBe true
     tree.depth shouldBe 3
-    tree.render() shouldBe "\n\n    1\n    3\n\n    5\n    6"
+    tree.render() shouldBe "\n  \n    1\n    3\n  \n    5\n    6"
   }
 
   behavior of "createIndexedTree"

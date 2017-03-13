@@ -1,3 +1,8 @@
+/*
+ * LaScala
+ * Copyright (c) 2016, 2017. Phasmid Software
+ */
+
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
@@ -473,16 +478,19 @@ trait Branch[+A] extends Tree[A] {
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     * @return a String.
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
+  def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
     val result = new StringBuilder
     val nodeVal = get match {
       case Some(a: Renderable) => a.render(indent)
-      case Some(a) => s"${tab(indent)}$a"
+      case Some(a) => s"$a"
       case _ => ""
     }
-    result.append(s"$nodeVal\n")
+
+    def nl(): String = "\n" + tab(indent + 1)
+
+    result.append(s"$nodeVal${nl()}")
     val expansion = for (x <- children) yield x.render(indent + 1)
-    result.append(expansion mkString "\n")
+    result.append(expansion mkString nl())
     result.toString
   }
 }
@@ -783,7 +791,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
     */
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = a match {
     case renderable: Renderable => renderable.render(indent)
-    case _ => s"${tab(indent)}$a"
+    case _ => s"$a"
   }
 
   /**
@@ -823,7 +831,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
     *
     * @return an appropriate String
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix) = s"${tab(indent)}ø"
+  def render(indent: Int)(implicit tab: (Int) => Prefix) = s"ø"
 }
 
 /**

@@ -23,6 +23,12 @@ utility libraries:
 
 ## Revision History
 
+Version 1.0.1 is almost ready to be fixed. It has the following enhancements/fixes:
+* updates/fixes to the Renderable trait and classes which support more general Renderables,
+such as Traversable, Option, Try, Either -- these are available via implicits;
+* a pair of traits called RenderableFunction and Closure -- these are used to enhance the ability
+to debug complex systems of functions (which are otherwise more or less opaque);
+
 As of Jan 4th 2017, version 1.0.0 has been fixed (no more 1.0.0-SNAPSHOT).
 Future revisions will be via a Development Branch and Pull Request.
 
