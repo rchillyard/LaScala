@@ -8,6 +8,7 @@ package com.phasmid.laScala.fp
 import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar}
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.collection.mutable
 import scala.language.implicitConversions
 import scala.util.{Left, _}
 
@@ -52,7 +53,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def lookup(s: String): Try[String] = FP.optionToTry(map.get(s))
 
     // TODO this should use a call-by-name parameter
-    val f = RenderableFunction(lookup _, "lookup", RenderableFunction.callByValue(1))
+    val f = RenderableFunction(lookup _, "lookup", RenderableFunction.callByName(1))
     val r = f(Tuple1("x"))
     r should matchPattern { case Success("X") => }
   }
@@ -305,7 +306,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   }
 
   it should "handle a function (1)" in {
-    val map = Map("pi" -> "3.1415927")
+    // First we give a bad value of pi
+    val map = mutable.HashMap("pi" -> "22/7")
 
     def fLookup(s: => String): String = map(s)
 
@@ -319,7 +321,9 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val c3y = c2.partiallyApply()
     c3y should matchPattern { case Success(_) => }
     c3y.get.arity shouldBe 1
-    c3y.get.apply() shouldBe Success("3.1415927")
+    // At this point, c3y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c3y.get
+    map.put("pi", "3.1415927")
+    c3y.get() shouldBe Success("3.1415927")
   }
 
   it should "handle a function (2)" in {
@@ -337,7 +341,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val c3y = c2.partiallyApply()
     c3y should matchPattern { case Success(_) => }
     c3y.get.arity shouldBe 1
-    c3y.get.apply() shouldBe Success(3.1415927)
+    c3y.get() shouldBe Success(3.1415927)
   }
 
   it should "handle a function that throws an exception" in {
@@ -485,7 +489,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))
-    cAnd.apply() match {
+    cAnd() match {
       case Success(b) => println(s"result: $b"); succeed
       case Failure(x) => fail(x.getLocalizedMessage)
     }

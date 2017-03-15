@@ -345,6 +345,8 @@ object RenderableFunction {
 
   private val mkList = "mkList"
 
+  def callByName(n: Int): Seq[Boolean] = Stream.continually(true) take n
+
   def callByValue(n: Int): Seq[Boolean] = Stream.continually(false) take n
 
   def varargs[T](n: Int): RenderableFunction[Seq[T]] = n match {
