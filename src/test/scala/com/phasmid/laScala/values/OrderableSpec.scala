@@ -12,6 +12,11 @@ import scala.util.Success
   * @author scalaprof
   */
 class OrderableSpec extends FlatSpec with Matchers {
+  private val lt = "lt"
+  private val gt = "gt"
+  private val eq = "eq"
+  private val ne = "ne"
+  private val ge = "ge"
   "1" should "result in 1" in {
     implicit val pattern = ""
     val orderable = Orderable[Int]
@@ -110,21 +115,42 @@ class OrderableSpec extends FlatSpec with Matchers {
     xy should matchPattern { case Success("Hello") => }
   }
 
-  "comparison" should "work" in {
-    val x: Any = "1"
-    val y: Any = "2"
-    Orderable.comparison("gt", x, y) should matchPattern { case Success(false) => }
-    Orderable.comparison("lt", x, y) should matchPattern { case Success(true) => }
-    Orderable.comparison("eq", x, y) should matchPattern { case Success(false) => }
-    Orderable.comparison("eq", x, "1") should matchPattern { case Success(true) => }
-    Orderable.comparison("eq", x, 1) should matchPattern { case Success(true) => }
-    Orderable.comparison("eq", 1, x) should matchPattern { case Success(true) => }
-    Orderable.comparison("eq", 1, 1) should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", 9, 10) should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", 9, "10") should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", "9", 10) should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", "9", "10") should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(true) => }
-    Orderable.comparison("lt", "Aardvark", "Abracadabra") should matchPattern { case Success(true) => }
+  behavior of "comparison"
+  val x: Any = "1"
+  val y: Any = "2"
+  val z: Any = "2"
+  it should "evaluate " + gt + " correctly" in {
+    Orderable.comparison(gt, x, y) should matchPattern { case Success(false) => }
+    Orderable.comparison(gt, LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(false) => }
+    Orderable.comparison(gt, "Aardvark", "Abracadabra") should matchPattern { case Success(false) => }
+  }
+  it should "evaluate lt correctly" in {
+    Orderable.comparison(lt, x, y) should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, 9, 10) should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, 9, "10") should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, "9", 10) should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, "9", "10") should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, "Aardvark", "Abracadabra") should matchPattern { case Success(true) => }
+  }
+  it should "evaluate " + eq + " correctly" in {
+    Orderable.comparison(eq, x, y) should matchPattern { case Success(false) => }
+    Orderable.comparison(eq, x, "1") should matchPattern { case Success(true) => }
+    Orderable.comparison(eq, x, 1) should matchPattern { case Success(true) => }
+    Orderable.comparison(eq, 1, x) should matchPattern { case Success(true) => }
+    Orderable.comparison(eq, 1, 1) should matchPattern { case Success(true) => }
+  }
+  it should "evaluate " + ne + " correctly" in {
+    Orderable.comparison(ne, x, y) should matchPattern { case Success(true) => }
+    Orderable.comparison(ne, x, "1") should matchPattern { case Success(false) => }
+    Orderable.comparison(ne, x, 1) should matchPattern { case Success(false) => }
+    Orderable.comparison(ne, 1, x) should matchPattern { case Success(false) => }
+    Orderable.comparison(ne, 1, 1) should matchPattern { case Success(false) => }
+  }
+  it should "evaluate " + ge + " correctly" in {
+    Orderable.comparison(ge, x, y) should matchPattern { case Success(false) => }
+    Orderable.comparison(ge, z, y) should matchPattern { case Success(true) => }
+    Orderable.comparison(ge, z, x) should matchPattern { case Success(true) => }
+    Orderable.comparison(ge, x, "1") should matchPattern { case Success(true) => }
   }
 }

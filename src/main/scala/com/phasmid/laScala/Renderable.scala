@@ -22,12 +22,12 @@ trait Renderable {
   /**
     * Method to render this object in a human-legible manner.
     *
-    * @param indent the number of "tabs" before output should start on a new line.
+    * @param indent the number of "tabs" before output should start (when writing on a new line).
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
     *               like on an old typewriter where the spacing is non-uniform.
     * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
-    *         which is then followed by some human-legible part of *this*.
+    *         which is then followed by some human-legible rendition of *this*.
     */
   def render(indent: Int = 0)(implicit tab: Int => Prefix): String
 }
