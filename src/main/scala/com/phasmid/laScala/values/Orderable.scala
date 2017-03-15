@@ -3,7 +3,6 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.Trial
 import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.fp.FP._
 
@@ -85,10 +84,13 @@ object Orderable {
 
   def comparisonTyped[X : Orderable](op: String, x: Try[X], y: Try[X]): Try[Boolean] = {
     val orderable = implicitly[Orderable[X]]
+
+    def notEqual(x: X, y: X): Boolean = !orderable.equiv(x, y)
     val cfy = op match {
         case "lt" => Success(orderable.lt _)
         case "le" => Success(orderable.lteq _)
         case "eq" => Success(orderable.equiv _)
+        case "ne" => Success(notEqual _)
         case "ge" => Success(orderable.gteq _)
         case "gt" => Success(orderable.gt _)
         case _ => Failure(new OrderableException(s"cannot compare using op: $op (not supported)"))
