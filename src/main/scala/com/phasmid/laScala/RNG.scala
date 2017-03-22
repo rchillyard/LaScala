@@ -126,11 +126,9 @@ object RNG {
 
   def rngs[A](ar: RNG[A]): SRNG[A] = Stream.cons(ar, rngs(ar.next))
 
-  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map {
-    _.apply()
-  }
+  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map ( _() )
 
-  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x.apply()._1, x.apply()._2) }
+  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x()._1, x()._2) }
 }
 
 object LongRNG {

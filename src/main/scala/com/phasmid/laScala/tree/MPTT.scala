@@ -57,7 +57,7 @@ object MPTT {
       case EmptyWithIndex => None
       case IndexedNode(n, l, r) => n.get match {
         // XXX: the extra annotation [T] and explicit reference to vo in the following is only necessary when compiling against 2.10
-        case Some(v) => Some(MPTTEntry.apply[T](vo.getKeyFromValue(v), v)(l, r)(vo))
+        case Some(v) => Some(MPTTEntry[T](vo.getKeyFromValue(v), v)(l, r)(vo))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")

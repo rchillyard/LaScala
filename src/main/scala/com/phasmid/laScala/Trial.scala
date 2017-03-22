@@ -43,7 +43,7 @@ object Trial {
     * @tparam T the underlying type of the resulting Try
     * @return a terminator trial which always fails
     */
-  def none[V, T](f: Any => Throwable): Trial[V, T] = Trial.apply(v => Failure(f(v)))
+  def none[V, T](f: Any => Throwable): Trial[V, T] = Trial(v => Failure(f(v)))
 
   /**
     * The following method creates a null trial which can be used at the start or end

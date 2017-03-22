@@ -213,7 +213,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Scalar] = Scalar.sequence(dates)
     val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
-    variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
+    variables("x").get shouldBe LocalDate.of(2016, 7, 13)
   }
   "tryScalar" should "work when given Any" in {
     val w: Any = "k"

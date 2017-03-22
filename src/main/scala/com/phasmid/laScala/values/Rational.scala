@@ -262,7 +262,7 @@ object Rational {
   def apply[N: FiniteIntegral](x: BigDecimal): Rational[N] = {
     val i = FiniteIntegral[N]
     if (x.scale >= 0) {
-      val e = BigDecimal.apply(10).pow(x.scale)
+      val e = BigDecimal(10).pow(x.scale)
       Rational.normalize(i.fromLong((x * e).toLongExact), i.fromLong(e.longValue))
     }
     else
@@ -293,8 +293,8 @@ object Rational {
       case rRat(n, _, null) => apply(i.fromString(n))
       // XXX we need to watch out for NotNumber exceptions
       case rRat(n, _, d) => Rational.normalize[N](i.fromString(n), i.fromString(d))
-      case rDec(s, w, _, f, null) => Rational(BigDecimal.apply(s + w + f))
-      case rDec(s, w, _, f, e) => Rational(BigDecimal.apply(s + w + f + e))
+      case rDec(s, w, _, f, null) => Rational(BigDecimal(s + w + f))
+      case rDec(s, w, _, f, e) => Rational(BigDecimal(s + w + f + e))
       case _ => throw new RationalException(s"invalid rational expression: $x")
     }
   }

@@ -53,7 +53,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = TreeBuilder.apply[B].buildTree(get, children :+ node)
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = TreeBuilder[B].buildTree(get, children :+ node)
 
   /**
     * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
@@ -73,7 +73,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): Tree[B] = :+(TreeBuilder.apply[B].buildLeaf(b))
+  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): Tree[B] = :+(TreeBuilder[B].buildLeaf(b))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+

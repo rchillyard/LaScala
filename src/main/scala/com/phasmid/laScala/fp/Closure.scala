@@ -20,12 +20,16 @@ import scala.util._
   */
 case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
 
+  implicit val logger = Spy.getLogger(getClass)
+
   /**
     * Method to evaluate this closure. If the arity of this is not equal to zero, a Failure will result
     *
     * @return a Try[R]
     */
-  def apply(): Try[R] = for (g <- partiallyApply(true); h <- g.f.callByName()) yield h
+  def apply(): Try[R] = if (arity==0)
+    for (g <- Spy.spy("g",partiallyApply(false)); h <- Spy.spy("h",g.f.callByName())) yield h
+  else Failure(RenderableFunctionException(s"cannot evaluate this closure (with arity $arity): $this"))
 
   /**
     * Method to partially apply this closure.
@@ -33,7 +37,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     * @param evaluateAll (defaults to false) if this is true, then we force all parameters to be evaluated, even if they are call-by-name
     * @return a Closure[R] wrapped in Try. The ps parameter of the result will be empty.
     */
-  def partiallyApply(evaluateAll: Boolean = false): Try[Closure[T, R]] = for ((g: RenderableFunction[R], xs) <- f.applyParameters[T](ps.toList, evaluateAll); z = xs map (Right(_))) yield Closure[T, R](g, z: _*)
+  def partiallyApply(evaluateAll: Boolean = false): Try[Closure[T, R]] = for (g: RenderableFunction[R] <- Spy.spy("f.applyParameters",f.applyParameters[T](ps.toList, evaluateAll))) yield Closure[T, R](g)
 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
@@ -68,7 +72,7 @@ object Closure {
 
   private def parameterArity[T](p: Parameter[T]): Int = p match {
     case Left(_) => -1
-    case Right(c) => c.arity
+    case Right(c) => c.arity-1
   }
 
   /**

@@ -89,7 +89,7 @@ trait ProductStream[X <: Product] {
     * @param i get the ith row as a tuple
     * @return Some(tuple) if i is valid, else None
     */
-  def get(i: Int): Option[X] = if (i >= 0 && i < asList.size) Some(asList.apply(i)) else None
+  def get(i: Int): Option[X] = if (i >= 0 && i < asList.size) Some(asList(i)) else None
 
   /**
     * @return a Try of a Stream of Maps, each map corresponding to a row, such that the keys are the column names (from the header)

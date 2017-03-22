@@ -64,8 +64,8 @@ class PredicateSpec extends FlatSpec with Matchers {
     val q: Predicate[Int] = p map {
       _.toInt
     }
-    q.apply(2) should matchPattern { case Success(false) => }
-    q.apply(4) should matchPattern { case Success(true) => }
+    q(2) should matchPattern { case Success(false) => }
+    q(4) should matchPattern { case Success(true) => }
   }
   it should "be named ok" in {
     val p: Predicate[String] = GT("3")
@@ -80,15 +80,15 @@ class PredicateSpec extends FlatSpec with Matchers {
     val q: Predicate[Int] = p map {
       variables.apply
     }
-    q.apply(2) should matchPattern { case Success(false) => }
-    q.apply(4) should matchPattern { case Success(true) => }
+    q(2) should matchPattern { case Success(false) => }
+    q(4) should matchPattern { case Success(true) => }
   }
   it should "work with a scale factor" in {
     val p: Predicate[Int] = GT(3)
     //    val variables: Map[String, Int] = Map("x" -> 3)
     val q: Predicate[Int] = p map { x => 2 * x }
-    q.apply(4) should matchPattern { case Success(false) => }
-    q.apply(8) should matchPattern { case Success(true) => }
+    q(4) should matchPattern { case Success(false) => }
+    q(8) should matchPattern { case Success(true) => }
   }
   "x > $z" should "be parsed" in {
     //    val variables: Map[String, Int] = Map("x" -> 2, "y" -> 4, "z" -> 3)

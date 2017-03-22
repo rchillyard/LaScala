@@ -5,7 +5,7 @@
 
 package com.phasmid.laScala.fp
 
-import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar}
+import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable
@@ -18,6 +18,14 @@ import scala.util.{Left, _}
 class RenderableFunctionSpec extends FlatSpec with Matchers {
 
   behavior of "RenderableFunction"
+
+  it should "yield true with arity 0" in {
+    def render() = true
+
+    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(0))
+    val r = f(Tuple0)
+    r should matchPattern { case Success(true) => }
+  }
 
   it should "yield Hello with arity 1" in {
     def render(s: String) = s == "Hello"
@@ -320,10 +328,15 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val c2 = Closure(f, Right(c1))
     val c3y = c2.partiallyApply()
     c3y should matchPattern { case Success(_) => }
-    c3y.get.arity shouldBe 1
-    // At this point, c3y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c3y.get
+    println(s"c3: ${c3y.get}")
+    c3y.get.arity shouldBe 0
+    val c4y = for (c3 <- c3y; c4 <- c3.partiallyApply()) yield c4
+    println(s"c4: ${c4y.get}")
+    c4y.get.arity shouldBe 0
+
+    // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get
     map.put("pi", "3.1415927")
-    c3y.get() shouldBe Success("3.1415927")
+    c4y.get() shouldBe Success("3.1415927")
   }
 
   it should "handle a function (2)" in {
@@ -340,11 +353,26 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val c2 = Closure(f, Right(c1))
     val c3y = c2.partiallyApply()
     c3y should matchPattern { case Success(_) => }
-    c3y.get.arity shouldBe 1
+    c3y.get.arity shouldBe 0
     c3y.get() shouldBe Success(3.1415927)
   }
 
-  it should "handle a function that throws an exception" in {
+  it should "handle a function that throws an exception (1)" in {
+    val map = Map("PI" -> "3.1415927")
+
+    def fLookup(s: => String): String = map(s)
+
+    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
+
+    def show(s1: String) = s1
+
+    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
+    val cy = f.partiallyApply(Right(Closure(lookup, Left("pi"))))
+    val ry = for (c <- cy; r <- c()) yield r
+    ry should matchPattern { case Failure(_: NoSuchElementException) => }
+  }
+
+  ignore should "handle a function that throws an exception 2)" in {
     val map = Map("PI" -> "3.1415927")
 
     def fLookup(s: => String): String = map(s)
@@ -355,13 +383,14 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val cy = f.applyAllParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
-    cy should matchPattern { case Failure(_: NoSuchElementException) => }
+    cy should matchPattern { case Failure(_: RenderableFunctionException) => }
   }
 
   it should "deal with not" in {
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
     val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
+    // TODO applyAllParameters should be deprecated
     val gy = f.applyAllParameters(List[Parameter[Boolean]](Left(true)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
