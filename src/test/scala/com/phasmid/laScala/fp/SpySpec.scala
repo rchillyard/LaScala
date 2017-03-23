@@ -43,6 +43,17 @@ class SpySpec extends FlatSpec with Matchers {
     is shouldBe List(1, 2)
     spyMessage shouldBe "explicit spy: i: 1\nexplicit spy: i: 2\n"
   }
+  it should "work with explicit spy func when exception is thrown" in {
+    import Spy._
+    Spy.spying = true
+    var spyMessage: String = ""
+
+    implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"explicit spy: $s\n")
+
+    try Spy.spy("division by zero", 1 / 0)
+    catch { case _: Exception => }
+    spyMessage shouldBe "explicit spy: division by zero: <<Exception thrown: / by zero>>\n"
+  }
   it should "work with explicit custom println spy func" in {
     import Spy._
     implicit def spyFunc(s: String): Spy = Spy(println(s))
@@ -124,7 +135,7 @@ class SpySpec extends FlatSpec with Matchers {
     implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"Hello: $s\n")
 
     Spy.spy("success", Success(1))
-    spyMessage shouldBe "Hello: explicit spy: success: Success: 1\n\n"
+    spyMessage shouldBe "Hello: success: explicit spy: Success: 1\n\n"
   }
   it should "work with a failure" in {
     implicit val logger = Spy.getLogger(getClass)
@@ -166,6 +177,6 @@ class SpySpec extends FlatSpec with Matchers {
     implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"explicit spy: $s\n")
 
     Spy.log("my log message")
-    spyMessage shouldBe "explicit spy: my log message\n"
+    spyMessage shouldBe "explicit spy: my log message: ()\n"
   }
 }

@@ -76,8 +76,6 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
     val dt = CsvParser.defaultParser("12-Aug-16")
     dt should matchPattern { case Success(_: DateScalar) => }
-    println(dt.get.render())
-    println(DateScalar(2016, 8, 12))
     dt.get shouldBe DateScalar(2016, 8, 12)
   }
 

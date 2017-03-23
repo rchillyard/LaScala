@@ -42,7 +42,7 @@ class MPTTSpec extends FlatSpec with Matchers {
     val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
     val indexedTree = Tree.createIndexedTree(tree)
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
-    for (i <- mptt.index) println(s"${i._2}")
+    //    for (i <- mptt.index) println(s"${i._2}")
     mptt.contains("0", "0") should matchPattern { case Some(true) => }
     mptt.contains("0", "1") should matchPattern { case Some(true) => }
     mptt.contains("0", "11") should matchPattern { case Some(true) => }

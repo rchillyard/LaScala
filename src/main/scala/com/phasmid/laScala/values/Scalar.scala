@@ -8,7 +8,7 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
 import com.phasmid.laScala.{Prefix, Renderable}
@@ -336,11 +336,14 @@ abstract class BaseScalar(value: Any, source: Any) extends Scalar {
 class ScalarException(s: String, t: scala.Throwable = null) extends Exception(s, t)
 
 object BooleanScalar {
+
+  import Spy._
+
   def apply(x: Boolean): BooleanScalar = BooleanScalar(x, x)
 
   def apply(x: String): BooleanScalar = BooleanScalar(x.toBoolean, x)
 
-  def setDefaultFormat(format: String) {defaultFormat = format; println(s"BooleanScalar defaultFormat is now $defaultFormat")}
+  def setDefaultFormat(format: String) {defaultFormat = format; Spy.log(s"BooleanScalar defaultFormat is now $defaultFormat")}
 
   def getDefaultFormat: String = defaultFormat
 

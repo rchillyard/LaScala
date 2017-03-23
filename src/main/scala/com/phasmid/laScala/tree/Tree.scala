@@ -331,7 +331,7 @@ sealed trait Node[+A] extends Renderable {
     case AbstractLeaf(_) => true
     case Empty => true
     case Branch(_, _) => false
-    case _ => println(s"isLeaf fell through with $this"); false
+    case _ => Spy.log(s"isLeaf fell through with $this"); false
   }
 
   /**

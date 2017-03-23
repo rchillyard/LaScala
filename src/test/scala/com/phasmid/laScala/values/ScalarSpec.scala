@@ -96,8 +96,8 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "work with month names" in {
     implicit val pattern = "dd-MMM-yy"
     val formatter = DateTimeFormatter.ofPattern(pattern)
+    // TODO something with this
     val gloriousTwelfth = formatter.parse("12-Aug-16")
-    println(gloriousTwelfth)
     val x = DateScalar("12-Aug-16")
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }

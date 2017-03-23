@@ -10,6 +10,8 @@ crossScalaVersions := Seq("2.10.6","2.11.8")
 val scalaModules = "org.scala-lang.modules"
 val scalaModulesVersion = "1.0.4"
 
+val typesafeGroup = "com.typesafe"
+val configVersion = "1.3.1"
 // NOTE: Akka is used only for testing this package.
 val akkaGroup = "com.typesafe.akka"
 lazy val akkaVersion = SettingKey[String]("akkaVersion")
@@ -35,6 +37,7 @@ libraryDependencies ++= (scalaBinaryVersion.value match {
   })
 
 libraryDependencies ++= Seq(
+  typesafeGroup % "config" % configVersion,
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
   // TODO merge date/time code so as to use Java8 instead of Joda-time
   "codes.reactive" %% "scala-time" % "0.4.0",

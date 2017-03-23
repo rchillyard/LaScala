@@ -8,7 +8,6 @@ import org.scalatest.{FlatSpec, Matchers}
 class TupleStreamSpec extends FlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via TupleStream" in {
     val tupleStream = TupleStream[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
-    println(tupleStream)
     val wts = tupleStream.tuples
     wts.head match {
       case Tuple1(s) => assert(s == "Hello")

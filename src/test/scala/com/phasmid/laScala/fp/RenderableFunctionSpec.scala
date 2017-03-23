@@ -146,6 +146,18 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     f.render(1) shouldBe s"$name(a?)"
   }
 
+  behavior of "Param"
+  it should "bind correctly" in {
+    val f = FunctionString("f", 1)
+    val p = f.ps.head
+    p.bind("x") shouldBe Param("x")
+    val g = FunctionString("g", 2)
+    val p1 = g.ps.head
+    val p2 = g.ps.tail.head
+    p1.bind("x") shouldBe Param("x")
+    p2.bind("y") shouldBe Param("y")
+  }
+
   behavior of "FunctionString"
 
   it should "add n parameters" in {
@@ -187,6 +199,21 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     h.arity shouldBe 1
   }
 
+  it should "bind correctly" in {
+    val f = FunctionString("f", 1)
+    f.bind(0, "x") shouldBe Seq(Param("x"))
+    val g = FunctionString("g", 2)
+    g.bind(0, "x") shouldBe Seq(Param("x"), Param(FreeParam('b')))
+    g.bind(1, "y") shouldBe Seq(Param(FreeParam('a')), Param("y"))
+  }
+
+  it should "partiallyApply correctly a two-param function" in {
+    val g = FunctionString("f", 2).partiallyApply("x").partiallyApply("y")
+    g.arity shouldBe 0
+    g.toString shouldBe """f("x")("y")"""
+  }
+
+
   it should "partiallyApply correctly with index 0" in {
     FunctionString("f", 1).partiallyApply("x").toString shouldBe """f("x")"""
     FunctionString("f", 2).partiallyApply("x").toString shouldBe """f("x")(b?)"""
@@ -196,7 +223,39 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   it should "partiallyApply correctly with index 1" in {
     FunctionString("f", 2).partiallyApply("x", 1).toString shouldBe """f(a?)("x")"""
     an[RenderableFunctionException] should be thrownBy FunctionString("f", 0).partiallyApply("x", 1)
-    an[RenderableFunctionException] should be thrownBy FunctionString("f", 1).partiallyApply("x", 1)
+    an[RenderableFunctionException] should be thrownBy FunctionString("f", 1).partiallyApply("x", 2)
+  }
+
+  it should "partiallyApply a function" in {
+    val w1 = FunctionString("f", 1)
+    val w2 = FunctionString("concat", 1, Seq(false))
+    val w3 = w1.partiallyApplyFunction(w2)
+    val w4 = w3.partiallyApply("x")
+    w4.toString shouldBe "f(concat(\"x\"))"
+    w1.arity shouldBe 1
+    w2.arity shouldBe 1
+    w3.arity shouldBe 1
+    w4.arity shouldBe 0
+  }
+
+  it should "partiallyApply a function (2)" in {
+    val w1 = FunctionString("f", 1)
+    val w2 = FunctionString("concat", 1, Seq(false))
+    val w3 = w1.partiallyApplyFunction(w2)
+    val w4 = w3.partiallyApply("x")
+    val w2a = w2.partiallyApply("x")
+    val w3a = w1.partiallyApplyFunction(w2a)
+    w2.toString shouldBe "concat(a?)"
+    w3.toString shouldBe "f(concat(a?))"
+    w4.toString shouldBe "f(concat(\"x\"))"
+    w2a.toString shouldBe "concat(\"x\")"
+    w3a.toString shouldBe "f(concat(\"x\"))"
+    w1.arity shouldBe 1
+    w2.arity shouldBe 1
+    w3.arity shouldBe 1
+    w4.arity shouldBe 0
+    w2a.arity shouldBe 0
+    w3a.arity shouldBe 0
   }
 
   it should "partiallyApplyFunction correctly" in {
@@ -260,7 +319,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s: String) = s == "Hello"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
   }
@@ -269,7 +328,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s: String) = s
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("K")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("K")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success("K")
@@ -279,7 +338,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("k"), Left("l")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("k"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success("k:l")
@@ -289,7 +348,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("K"), Left("l")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("K"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success("K:l")
@@ -299,7 +358,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 2
   }
@@ -308,7 +367,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
-    val gy = f.applyAllParameters(List[Parameter[String]](Left("k")))
+    val gy = f.applyParameters(List[Parameter[String]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 3
   }
@@ -328,10 +387,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     val c2 = Closure(f, Right(c1))
     val c3y = c2.partiallyApply()
     c3y should matchPattern { case Success(_) => }
-    println(s"c3: ${c3y.get}")
     c3y.get.arity shouldBe 0
     val c4y = for (c3 <- c3y; c4 <- c3.partiallyApply()) yield c4
-    println(s"c4: ${c4y.get}")
     c4y.get.arity shouldBe 0
 
     // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get
@@ -382,7 +439,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     def show(s1: String) = s1
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val cy = f.applyAllParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
+    val cy = f.applyParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
     cy should matchPattern { case Failure(_: RenderableFunctionException) => }
   }
 
@@ -391,7 +448,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
     val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
     // TODO applyAllParameters should be deprecated
-    val gy = f.applyAllParameters(List[Parameter[Boolean]](Left(true)))
+    val gy = f.applyParameters(List[Parameter[Boolean]](Left(true)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success(false)
@@ -406,28 +463,37 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
     }, "IN", RenderableFunction.callByValue(2))
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
-    val g__1y = g_2i.applyAllParameters(List[Parameter[List[String]]](Left(List("x", "y", "z"))))
+    val g__1y = g_2i.applyParameters(List[Parameter[List[String]]](Left(List("x", "y", "z"))))
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
     g__1.arity shouldBe 1
-    val fg_2y = f_1.applyAllParameters(List[Parameter[Boolean]](Right(Closure(g__1, Left("x")))))
+    val fg_2y = f_1.applyParameters(List[Parameter[Boolean]](Right(Closure(g__1, Left("x")))))
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     fg_2.callByName() shouldBe Success(false)
   }
 
-  behavior of "untupled"
+  behavior of "hashCode"
 
-  it should "yield the same hashCode" in {
+  it should "yield the same value for two simple functions" in {
     def render(s: String) = s
 
-    val rf1y = RenderableFunction(render _, "render", RenderableFunction.callByValue(1)).applyAllParameters(List(Left("k")))
+    val f1 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f2 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    f1.hashCode shouldEqual f2.hashCode
+    f1 shouldEqual f2
+  }
+  it should "yield the same value when partially applied" in {
+    def render(s: String) = s
+
+    val f1 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f2 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val rf1y: Try[RenderableFunction[String]] = f1.partiallyApply("k")
     rf1y should matchPattern { case Success(_) => }
-    val hash1 = rf1y.get.callByName().get.hashCode
-    val rf2y = RenderableFunction(render _, "render", RenderableFunction.callByValue(1)).applyAllParameters(List(Left("k")))
+    val rf2y: Try[RenderableFunction[String]] = f2.partiallyApply("k")
     rf2y should matchPattern { case Success(_) => }
-    val hash2 = rf2y.get.callByName().get.hashCode
-    hash1 shouldEqual hash2
+    rf1y.get.hashCode() shouldEqual rf2y.get.hashCode()
+    (rf1y.get == rf2y.get) shouldBe true
   }
 
   behavior of "FunctionString.invert"
@@ -456,30 +522,30 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
 
   behavior of "invert"
 
-  it should "perform the invert properly" in {
-    val resultArity = 0
+  //  it should "perform the invert properly" in {
+  //    val resultArity = 0
+  //
+  //    def render(s1: String, s2: => String) = s"$s1:$s2"
+  //
+  //    val rf1 = RenderableFunction(render _, "render", Seq(false, true))
+  //    val rf1i = rf1.invert(2)
+  //    val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
+  //    rf2y should matchPattern { case Success(_) => }
+  //    rf2y.get.arity shouldBe resultArity
+  //  }
 
-    def render(s1: String, s2: => String) = s"$s1:$s2"
-
-    val rf1 = RenderableFunction(render _, "render", Seq(false, true))
-    val rf1i = rf1.invert(2)
-    val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
-    rf2y should matchPattern { case Success(_) => }
-    rf2y.get.arity shouldBe resultArity
-  }
-
-  it should "handle the two-param version of render" in {
-    val resultArity = 0
-
-    def render(s1: String, s2: String) = s"$s1:$s2"
-
-    val rf1 = RenderableFunction(render _, "render", Seq(false, false))
-    val rf1i = rf1.invert(2)
-    val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
-    rf2y should matchPattern { case Success(_) => }
-    rf2y.get.arity shouldBe resultArity
-    rf2y.get.callByName shouldBe Success("K:l")
-  }
+  //  it should "handle the two-param version of render" in {
+  //    val resultArity = 0
+  //
+  //    def render(s1: String, s2: String) = s"$s1:$s2"
+  //
+  //    val rf1 = RenderableFunction(render _, "render", Seq(false, false))
+  //    val rf1i = rf1.invert(2)
+  //    val rf2y = rf1i.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
+  //    rf2y should matchPattern { case Success(_) => }
+  //    rf2y.get.arity shouldBe resultArity
+  //    rf2y.get.callByName shouldBe Success("K:l")
+  //  }
 
   behavior of "varargs"
 
@@ -488,7 +554,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   it should "handle varargs of cardinality 0" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs(0)
     rf1.arity shouldBe 0
-    val rf2y = rf1.applyAllParameters[String](List[Parameter[String]]())
+    val rf2y = rf1.applyParameters[String](List[Parameter[String]]())
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName shouldBe Success(List())
   }
@@ -496,7 +562,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   it should "handle varargs of cardinality 1" in {
     val rf1: RenderableFunction[Seq[Seq[String]]] = RenderableFunction.varargs(1)
     rf1.arity shouldBe 1
-    val rf2y = rf1.applyAllParameters[String](List[Parameter[String]](Left("l")))
+    val rf2y = rf1.applyParameters[String](List[Parameter[String]](Left("l")))
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName shouldBe Success(List("l"))
   }
@@ -504,17 +570,14 @@ class RenderableFunctionSpec extends FlatSpec with Matchers {
   it should "handle varargs of cardinality 2" in {
     val rf1 = RenderableFunction.varargs(2)
     rf1.arity shouldBe 2
-    val rf2y = rf1.applyAllParameters(List[Parameter[String]](Left("l"), Left("K")))
+    val rf2y = rf1.applyParameters(List[Parameter[String]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName shouldBe Success(List("l", "K"))
   }
 
   behavior of "boolean expression"
   it should """evaluate to true with true & true""" in {
-    def fAnd(p1: Boolean, p2: => Boolean): Boolean = {
-      println(s"function(arg1: $p1, arg2: $p2)")
-      p1 && p2
-    }
+    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
 
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))

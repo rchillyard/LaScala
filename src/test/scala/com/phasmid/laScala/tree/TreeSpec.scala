@@ -125,8 +125,6 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(3)
-    println(tree.iterator().toList)
-    println(UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4))).iterator().toList)
     tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), UnvaluedBinaryTree(Leaf(3), Leaf(4))))
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {

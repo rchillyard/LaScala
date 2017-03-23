@@ -2,11 +2,12 @@ package com.phasmid.laScala.fp
 
 import java.io.PrintStream
 
+import com.typesafe.config.ConfigFactory
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
   * This trait and its related object provide a functional-programming style (if somewhat quick-and-dirty) spy feature for logging (or otherwise peeking at) the values of Scala
@@ -44,11 +45,13 @@ object Spy {
     */
   def apply(x: Unit): Spy = new Spy() {}
 
+  lazy private val configuration = ConfigFactory.load()
+
   /**
     * This is the global setting for whether to invoke the spyFunc of each spy invocation. However, each invocation can also turn spying off for itself.
     * Normally it is true. Think of this as the red emergency button. Setting this to false turns all spying off everywhere.
     */
-  var spying: Boolean = true
+  var spying: Boolean = configuration.getBoolean("spying")
 
   /**
     * This method is used in development/debug phase to "see" the values of expressions
@@ -60,9 +63,11 @@ object Spy {
     *
     * NOTE that there will be times when you cannot use spy, for example when yielding the result of a tail-recursive method. You will need to use log then instead.
     *
-    * @param message       a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
+    * @param message       (call-by-name) a String to be used as the prefix of the resulting message OR as the whole string where "{}" will be substituted by the value.
     *                      Note that the message will only be evaluated if spying will actually occur, otherwise, since it is call-by-name, it will never be evaluated.
-    * @param x             the value being spied on and which will be returned by this method.
+    * @param x             (call-by-name) the value being spied on and which will be returned by this method; Note that since this is call-by-name, it is evaluated INSIDE
+    *                      the spy method. This allows the method to deal with exceptions in such a way that a message based on 'message'
+    *                      (and including the exception message rather than an actual X value, obviously) is logged as usual.
     * @param b             if true AND if spying is true, the spyFunc will be called (defaults to true). However, note that this is intended only for the situation
     *                      where the default spyFunc is being used. If a logging spyFunc is used, then logging should be turned on/off at the class level via the
     *                      logging configuration file.
@@ -71,40 +76,10 @@ object Spy {
     * @tparam X the type of the value.
     * @return the value of x.
     */
-  def spy[X](message: => String, x: X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): X = {
-    if (b && spying && isEnabledFunc(mySpy)) {
-      lazy val w = message
-      val brackets = "{}"
-      val msg = if (w contains brackets)
-        w.replace(brackets, s"$x")
-      else
-        x match {
-          case () => w
-          // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
-          // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
-          case s: Stream[_] => s"$w: [Stream showing at most 5 items] ${s.take(5).toList}"
-          // XXX: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
-          case Success(z) =>
-            val sb = new StringBuilder("")
-
-            // XXX what's all this about?
-            implicit def spyFunc(s: String): Spy = Spy(sb.append(s"explicit spy: $s\n"))
-
-            spy(s"$w: Success", z, b)
-            sb.toString
-          // XXX: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
-          case Failure(t) => s"$w: Failure($t)"
-          // XXX: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
-          case f: Future[_] =>
-            import scala.concurrent.ExecutionContext.Implicits.global
-            f.onComplete(spy("$w: Future", _, b))
-            s"$w: to be provided in the future"
-          // XXX: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
-          case _ => s"$w: $x"
-        }
-      spyFunc(msg)
-    }
-    x
+  def spy[X](message: => String, x: => X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): X = {
+    val xy = Try(x) // evaluate x inside Try
+    if (b && spying && isEnabledFunc(mySpy)) doSpy(message, xy, b, spyFunc) // if spying is turned on, log an appropriate message
+    xy.get // return the X value or throw the appropriate exception
   }
 
   /**
@@ -141,6 +116,11 @@ object Spy {
     * The standard prefix for spy messages: "spy: "
     */
   private val prefix = "spy: "
+
+  /**
+    * This is pattern which, if found in the message, will be substituted for
+    */
+  val brackets: String = "{}"
 
   /**
     * For really quick-and-dirty spying, you can use this default Logger simply by importing Spy._
@@ -183,6 +163,40 @@ object Spy {
     * @return a spy function
     */
   def getPrintlnSpyFunc(ps: PrintStream = System.out): String => Spy = { s => Spy(ps.println(prefix + s)) }
+
+  private def doSpy[X](message: String, xy: => Try[X], b: Boolean, spyFunc: (String) => Spy) = {
+    val w = xy match {
+      case Success(x) => formatMessage(x, b)
+      case Failure(t) => s"<<Exception thrown: ${t.getLocalizedMessage}>>"
+    }
+    val msg = if (message contains brackets) message else message + ": " + brackets
+    spyFunc(msg.replace(brackets, w))
+  }
+
+  private def formatMessage[X](x: X, b: Boolean): String = x match {
+    case () => "()"
+    // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
+    // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
+    case s: Stream[_] => s"[Stream showing at most 5 items] ${s.take(5).toList}"
+    // XXX: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
+    case Success(z) =>
+      val sb = new StringBuilder("")
+
+      // XXX what's all this about?
+      implicit def spyFunc(s: String): Spy = Spy(sb.append(s"explicit spy: $s\n"))
+
+      spy(s"Success", z, b)
+      sb.toString
+    // XXX: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
+    case Failure(t) => s"Failure($t)"
+    // XXX: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
+    case f: Future[_] =>
+      import scala.concurrent.ExecutionContext.Implicits.global
+      f.onComplete(spy("Future", _, b))
+      "to be provided in the future"
+    // XXX: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
+    case _ => x.toString
+  }
 
   private val mySpy = apply(())
 }

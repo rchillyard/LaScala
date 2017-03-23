@@ -100,7 +100,6 @@ class KVTreeSpec extends FlatSpec with Matchers {
     val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
     val tree2 = tree :+ 14
     val ns = tree2.iterator(false).toList
-    println(ns)
     ns.size shouldBe 5
     ns shouldBe List(0, 1, 14, 2, 3)
   }
