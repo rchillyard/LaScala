@@ -5,6 +5,7 @@
 
 package com.phasmid.laScala.fp
 
+import com.phasmid.laScala.fp.RenderableFunction.ParamClasses
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
 
@@ -25,7 +26,7 @@ import scala.util._
   * @param f     the function itself (this field is not considered in the hashCode and equals methods)
   * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
-case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: Seq[Boolean])(f: (Product) => R) extends (Product => Try[R]) with Renderable {
+case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable {
 
   implicit private val logger = Spy.getLogger(getClass)
 
@@ -34,7 +35,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   require(w.arity == arity, s"arity $arity is not consistent with $w")
   require(cbn.size == arity, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
 
-  type ApplyParametersResult[T] = (RenderableFunction[R], Seq[Closure[_, T]])
+  //  type ApplyParametersResult[T] = (RenderableFunction[R], Seq[Closure[_, T]])
 
   // NOTE: this line requires R to support ClassTag
   private val rc = implicitly[ClassTag[R]]
@@ -50,7 +51,9 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     */
   def apply(p: Product): Try[R] =
     if (arity == p.productArity) {
-      val ry = Spy.spy(s"$this.apply($p): ry",Try(func(p)))
+      val g: (Product) => R = func()
+      //      val ry = Spy.spy(s"$this.apply($p): ry",Try(g(p)))
+      val ry = Try(g(p))
       if (returnIsTry)
         ry match {
           case Success(r: Try[R]) => r
@@ -61,7 +64,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
         ry
     }
     else
-      Failure(RenderableFunctionException(s"cannot apply Product of arity ${p.productArity}: $p to RenderableFunction: ($this)"))
+      Failure(RenderableFunctionException(s"cannot apply Product of arity ${p.productArity}: $p to RenderableFunction with arity $arity: ($this)"))
 
   /**
     * Apply parameter p to this function.
@@ -82,72 +85,86 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   /**
     * Method to get the function that is the basis of this RenderableFunction
     *
+    * CONSIDER removing parentheses from definition
+    *
     * @return the function as a Product=>R
     */
-  def func: (Product) => R = f
+  def func(): (Product) => R = f
 
   /**
-    * Method which will take the given RenderableFunction and apply the given parameters terms,
-    * resulting in an ApplyParametersResult[T]. This type is a tuple of a RenderableFunction[R]
-    * and a Seq of Closure[T,R] which represent call-by-name closures that have yet to be applied.
+    * Method which will take this RenderableFunction and apply the given parameters, except that Closure parameters will themselves be partiallyApplied.
+    * The result is a RenderableFunction[R] wrapped in Try.
     *
-    * @param xs          the list of parameters
-    * @param evaluateAll if true then evaluate even call-by-name parameters
-    * @tparam T the underlying type of the parameters
-    * @return an ApplyParametersResult[T] (wrapped in Try)
+    * @param tps the list of parameters
+    * @return a RenderableFunction[R] (wrapped in Try)
     */
-  def applyParameters[T](xs: Seq[Parameter[T]], evaluateAll: Boolean = false): Try[RenderableFunction[R]] = {
-    def partiallApply(rfy: Try[RenderableFunction[R]], tp: Parameter[T]): Try[RenderableFunction[R]] = tp match {
+  def partiallyApplyParameters(tps: Seq[Parameter[_]]): Try[RenderableFunction[R]] = {
+    def partiallyApply(rfy: Try[RenderableFunction[R]], tp: Parameter[_], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
       case Left(t) =>
-        Spy.spy(s"left branch: $t: result", rfy flatMap (_.partiallyApply(t)))
+        Spy.spy(s"left branch: $t: result", rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]])))
       case Right(c) => // c: Closure[_,T]
-        val gy: Try[Closure[_, T]] = Spy.spy(s"right branch: $c: gy", c.partiallyApply())
-        Spy.spy(s"right branch: $c: result", for (g <- gy; if g.ps.isEmpty; f1 = Spy.spy("f1", g.f); rf <- rfy; f2 <- Spy.spy("f2", rf.partiallyApplyFunction({ () => f1.callByName().get }, f1.w))) yield f2)
+        val gy = Spy.spy(s"right branch: $c: gy", c.partiallyApply)
+        Spy.spy(s"right branch: $c: result", for (g <- gy; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h)
     }
 
     @tailrec
-    def inner1(rfy: Try[RenderableFunction[R]], work: Seq[Parameter[T]]): Try[RenderableFunction[R]] =
+    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Parameter[_], ClassTag[_])]): Try[RenderableFunction[R]] =
       work match {
         case Nil => rfy
-        case tp :: tps => inner1(partiallApply(rfy, tp), tps)
+        case (tp, c) :: _tps => inner(partiallyApply(rfy, tp, c), _tps)
       }
 
-    inner1(Try(this), xs)
+    inner(Try(this), tps zip cs)
+  }
+
+  def asFunction: () => R = {
+    () => Spy.spy(s"asFunction: $this", {
+        val f = func()(Tuple0)
+        f match {
+          case r: R => r
+          case f: Function[Unit, R] @unchecked => f(())
+          case _ => throw RenderableFunctionException(s"asFunction: f doesn't match either R or ()=>R: $f")
+        }
+      })
   }
 
   /**
-    * Method to partially apply this RenderableFunction, given the provided list of parameters, and resulting in a Closure
+    * Method to partially apply the value t to this RenderableFunction.
     *
-    * @param xs a varargs sequence of Parameter[T]
-    * @return a Closure[R] wrapped in Try.
+    * NOTE: that this method does not seem to need to do the match on x: it can actually simply call partiallyApplyT (or inline it)
+    *
+    * @param x a value which should yield a T
+    * @tparam T the underlying type
+    * @return RenderableFunction[R] wrapped in Try
     */
-  def partiallyApply[T](xs: Parameter[T]*): Try[Closure[T, R]] = for (g: RenderableFunction[R] <- applyParameters[T](xs.toList)) yield Closure[T, R](g)
+  def partiallyApply[T: ClassTag](x: Any): Try[RenderableFunction[R]] = x match {
+      case Success(t) =>
+        partiallyApplyT(t)(implicitly[ClassTag[T]])
+      case Failure(e) => Failure(e)
+      case t => partiallyApplyT(t)(implicitly[ClassTag[T]])
+    }
 
-  /**
-    * Method to partially apply the value t to this RenderableFunction
-    *
-    * @param t a T value
-    * @tparam T
-    * @return
-    */
-  def partiallyApply[T](t: T): Try[RenderableFunction[R]] = RenderableFunction.partiallyApply(arity, func, t, w.partiallyApply(t), cbn)
+  private def partiallyApplyT[T: ClassTag](t: Any) = if (implicitly[ClassTag[T]].runtimeClass.isAssignableFrom(classOf[() => _]))
+    Spy.spy(s"partiallyApply (NOT function)", RenderableFunction.partiallyApply(arity, func(), t, w.partiallyApply(t), cbn, cs))
+  else
+    Spy.spy(s"partiallyApply (value)", RenderableFunction.partiallyApply(arity, func(), t.asInstanceOf[T], w.partiallyApply(t), cbn, cs))
 
   /**
     * Method to partially apply the function f to this RenderableFunction
     *
-    * @param f
-    * @param z
-    * @tparam T
-    * @return
+    * @param f the function
+    * @param z the corresponding FunctionString
+    * @tparam T the return type of f
+    * @return a RenderableFunction[R] wrapped in Try
     */
-  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction(arity - 1, func, f, w.partiallyApplyFunction(z), cbn)
+  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction(arity - 1, func(), f, w.partiallyApplyFunction(z), cbn, cs)
 
   /**
     * NOTE that we don't show the function itself because it gives us little additional information (only the actual arity of the function)
     *
     * @return a String representing this object
     */
-  override def toString = s"RenderableFunction($arity, $evaluationStyle $w)"
+  override def toString = s"RenderableFunction[$cs,$rc]($arity, $evaluationStyle $w)"
 
   /**
     * Invert the first n parameter positions of this RenderableFunction
@@ -156,7 +173,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @tparam T the underling type of the parameters
     * @return a new RenderableFunction with the parameters inverted
     */
-  def invert[T](n: Int): RenderableFunction[R] = RenderableFunction.invert(n, arity, func, w, cbn)
+  def invert[T](n: Int): RenderableFunction[R] = RenderableFunction.invert(n, arity, func(), w, cbn, cs)
 
   /**
     * Method to render this object in a human-legible manner.
@@ -171,10 +188,17 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = w.toString
 
   /**
+    * CONSIDER in practice, the only real use for this, currently, is method evaluationStyle
     *
-    * @return if true (the default) then this function will be evaluated whenever applyParameters is invoked, otherwise, a new Closure based on this function and the parameter is created.
+    * @return if true, then this function can be eagerly evaluated.
     */
-  private def alwaysEvaluate = cbn.forall(!_)
+  def alwaysEvaluate: Boolean = cbn.forall(!_)
+
+  /**
+    * NOTE that this is never called
+    * @return true if all the cbn values are true (or if cbn is empty)
+    */
+  def isLazy: Boolean = cbn.forall(b => b)
 
   private def evaluationStyle = if (alwaysEvaluate) "" else "=>"
 }
@@ -280,7 +304,6 @@ case class FunctionString(f: String, ps: Seq[Param]) {
 
     Spy.spy("result of bind", inner(Nil, ps zipAll(wos, null, None)))
   }
-
 }
 
 case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
@@ -321,10 +344,12 @@ case class FreeParam(s: String, cbn: Boolean) {
   */
 object RenderableFunction {
 
+  type ParamClasses = Seq[ClassTag[_]]
+
   // CONSIDER using use assert instead
   def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
 
-  def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = RenderableFunction(arity, FunctionString(w, arity, cbn), cbn)(func)
+  def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String, cbn: Seq[Boolean], cs: ParamClasses): RenderableFunction[R] = RenderableFunction(arity, FunctionString(w, arity, cbn), cbn, cs)(func)
 
   /**
     * The following apply functions are in pairs: one with FunctionString and one with just String as the second parameter.
@@ -336,72 +361,86 @@ object RenderableFunction {
     */
   def apply[R: ClassTag](f: () => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = {
     asserting(f != null && w != null, "f or w is null",
-      apply(0, w, cbn)(asTupledFunctionType(f))
+      apply(0, w, cbn, Nil)(asTupledFunctionType(f))
     )
   }
 
   def apply[R: ClassTag](f: () => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1, cbn), cbn)
 
-  def apply[T, R: ClassTag](f: T => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = {
+  def apply[T: ClassTag, R: ClassTag](f: T => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = {
     asserting(f != null && w != null, "f or w is null",
-      apply(1, w, cbn)(asTupledFunctionType(f))
+      apply(1, w, cbn, Seq(implicitly[ClassTag[T]]))(asTupledFunctionType(f))
     )
   }
 
-  def apply[T, R: ClassTag](f: T => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1, cbn), cbn)
+  def apply[T: ClassTag, R: ClassTag](f: T => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1, cbn), cbn)
 
-  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(2, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, R: ClassTag](f: (T1, T2) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(2, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, R: ClassTag](f: (T1, T2) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 2, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, R: ClassTag](f: (T1, T2) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 2, cbn), cbn)
 
-  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(3, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, R: ClassTag](f: (T1, T2, T3) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(3, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, T3, R: ClassTag](f: (T1, T2, T3) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 3, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, R: ClassTag](f: (T1, T2, T3) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 3, cbn), cbn)
 
-  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(4, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, R: ClassTag](f: (T1, T2, T3, T4) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(4, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, T3, T4, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 4, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 4, cbn), cbn)
 
-  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(5, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(5, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, T3, T4, T5, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 5, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 5, cbn), cbn)
 
-  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(6, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(6, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, T3, T4, T5, T6, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 6, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 6, cbn), cbn)
 
-  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(7, w, cbn)(asTupledFunctionType(f))
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
+    apply(7, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1, T2, T3, T4, T5, T6, T7, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn)
 
-  private def emptyList[T](p: Product) = Seq[T]()
-
-  private val mkList = "mkList"
 
   def callByName(n: Int): Seq[Boolean] = Stream.continually(true) take n
 
   def callByValue(n: Int): Seq[Boolean] = Stream.continually(false) take n
 
-  def varargs[T](n: Int): RenderableFunction[Seq[T]] = n match {
-    case 0 => apply(0, emptyList, mkList, callByValue(n))
-    case 1 => apply({ t1: T => Seq[T](t1) }, mkList, callByValue(n))
-    case 2 => apply({ (t1: T, t2: T) => Seq[T](t1, t2) }, mkList, callByValue(n))
-    case 3 => apply({ (t1: T, t2: T, t3: T) => Seq[T](t1, t2, t3) }, mkList, callByValue(n))
-    case 4 => apply({ (t1: T, t2: T, t3: T, t4: T) => Seq[T](t1, t2, t3, t4) }, mkList, callByValue(n))
-    case 5 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T) => Seq[T](t1, t2, t3, t4, t5) }, mkList, callByValue(n))
-    case _ => throw RenderableFunctionException(s"varargs of $n is not implemented")
+  def varargs[T: ClassTag](n: Int): RenderableFunction[Seq[T]] = {
+    val mkList = "mkList"
+    val cbn = callByValue(n)
+    val cs: ParamClasses = Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n
+
+    def emptyList(p: Product) = Seq[T]()
+
+    n match {
+      case 0 => apply(0, emptyList, mkList, cbn, cs)
+      case 1 => apply({ t1: T => Seq[T](t1) }, mkList, cbn)
+      case 2 => apply({ (t1: T, t2: T) => Seq[T](t1, t2) }, mkList, cbn)
+      case 3 => apply({ (t1: T, t2: T, t3: T) => Seq[T](t1, t2, t3) }, mkList, cbn)
+      case 4 => apply({ (t1: T, t2: T, t3: T, t4: T) => Seq[T](t1, t2, t3, t4) }, mkList, cbn)
+      case 5 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T) => Seq[T](t1, t2, t3, t4, t5) }, mkList, cbn)
+      case _ => throw RenderableFunctionException(s"varargs of $n is not implemented")
+    }
+  }
+
+  import Spy._
+
+  def tupled[T1: ClassTag, R: ClassTag](f: T1 => R): Tuple1[T1] => R = {
+    case Tuple1(x1) => if (f.isInstanceOf[(T1) => R])
+      Spy.spy(s"tupled[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]]($f): ", f(x1))
+    else
+      throw RenderableFunctionException(s"$f is not a Function1[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]")
   }
 
   def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
@@ -432,7 +471,7 @@ object RenderableFunction {
     case _ => throw new ClassCastException(s"x: $x of type ${x.getClass} cannot be cast to type ${implicitly[ClassTag[R]]}")
   }
 
-  private def getPartialApplicationFunction[T, R: ClassTag](n: Int, f: (Product) => R, t: T, cbn: Boolean): (Product) => R =
+  private def getPartialApplicationFunction[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: T, cbn: Boolean): (Product) => R =
     if (cbn) getPartialApplicationFunction(n, f, { () => t }, false)
     else
       n match {
@@ -467,55 +506,68 @@ object RenderableFunction {
         case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
       }
 
-  private def getPartialApplicationFunctionCallByName[T, R: ClassTag](n: Int, f: (Product) => R, t: () => T): (Product) => R =
+  private def extract[T: ClassTag](x: Any): T = x match {
+    case Success(t: T) => t
+    case Failure(e) => throw e
+    case t: T => t
+    case _ => throw RenderableFunctionException(s"cannot extract a ${implicitly[ClassTag[T]]} value from $x")
+  }
+
+  private def getPartialApplicationFunctionCallByName[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: () => T): (Product) => R =
     n match {
       case 0 =>
         val f1: Tuple1[T] => R = f
-        val g0: (Product) => R = { _: Product => f1(Tuple1(t())) }
+        // TODO see why we have to call extract. It should never be necessary.
+        val g0: (Product) => R = { _: Product => f1(Tuple1(extract(t())(implicitly[ClassTag[T]]))) }
         g0
       case 1 =>
         val f2 = Function.untupled[T, Any, R](f)
-        val g1 = RenderableFunction.asFunctionType { x: Tuple1[_] => f2.curried(t())(x._1) }
+        val g1 = RenderableFunction.asFunctionType { x: Tuple1[_] => f2.curried(extract(t())(implicitly[ClassTag[T]]))(x._1) }
         g1
       case 2 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        val g2 = RenderableFunction.asFunctionType { x: (_, _) => f3.curried(t())(x._1)(x._2) }
+        val g2 = RenderableFunction.asFunctionType { x: (_, _) => f3.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2) }
         g2
       case 3 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        val g3 = RenderableFunction.asFunctionType { x: (_, _, _) => f4.curried(t())(x._1)(x._2)(x._3) }
+        val g3 = RenderableFunction.asFunctionType { x: (_, _, _) => f4.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3) }
         g3
       case 4 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
-        val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f5.curried(t())(x._1)(x._2)(x._3)(x._4) }
+        val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f5.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4) }
         g4
       case 5 =>
         val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-        val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f6.curried(t())(x._1)(x._2)(x._3)(x._4)(x._5) }
+        val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f6.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5) }
         g5
       case 6 =>
         val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-        val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t())(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+        val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f7.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
         g6
       case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
     }
 
-  private def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean]): Try[RenderableFunction[R]] = Try {
-    val g0 = getPartialApplicationFunction(n - 1, f, t, cbn.head)
+  private def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
+    val g0 = getPartialApplicationFunction(n - 1, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
     //    val s = w.partiallyApply(t)
-    RenderableFunction(n - 1, w, cbn.tail)(g0)
+    RenderableFunction(n - 1, w, cbn.tail, cs.tail)(g0)
   }
 
-  private def partiallyApplyFunction[T, R: ClassTag](n: Int, f: (Product) => R, tf: () => T, w: FunctionString, cbn: Seq[Boolean]): Try[RenderableFunction[R]] = Try {
-    val g0 = getPartialApplicationFunctionCallByName(n, f, tf)
-    RenderableFunction(n, w, cbn.tail)(g0)
+  private def partiallyApplyFunction[T, R: ClassTag](n: Int, f: (Product) => R, tf: () => T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
+    val g0 = if (cbn.head)
+      getPartialApplicationFunction(n, f, tf, cbn.head)(cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
+    else
+      getPartialApplicationFunctionCallByName(n, f, tf)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
+    RenderableFunction(n, w, cbn.tail, cs.tail)(g0)
   }
 
-  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: Seq[Boolean]) = {
+  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses) = {
     if (arity < 2 || n > arity)
       throw RenderableFunctionException(s"can't invert $n parameters of a RenderableFunction of arity $arity")
     else {
+      // TODO combine the logic here
       val cbni = ((cbn take (cbn.size - n)) :+ cbn(n - 1) :+ cbn(n - 2)) ++ (cbn drop n)
+      val csi = ((cs take (cs.size - n)) :+ cs(n - 1) :+ cs(n - 2)) ++ (cs drop n)
       arity match {
         case 2 =>
           val f2 = FP.untupled[T, T, R](f).curried
@@ -524,7 +576,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g2 = RenderableFunction.asFunctionType { x: (T, T) => f2i(x._1)(x._2) }
-          RenderableFunction(n, w.invert(n), cbni)(g2)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g2)
         case 3 =>
           val f3 = FP.untupled[T, T, T, R](f).curried
           val f3i = n match {
@@ -533,7 +585,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g3 = RenderableFunction.asFunctionType { x: (T, T, T) => f3i(x._1)(x._2)(x._3) }
-          RenderableFunction(n, w.invert(n), cbni)(g3)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g3)
         case 4 =>
           val f4 = FP.untupled[T, T, T, T, R](f).curried
           val f4i = n match {
@@ -543,7 +595,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g4 = RenderableFunction.asFunctionType { x: (T, T, T, T) => f4i(x._1)(x._2)(x._3)(x._4) }
-          RenderableFunction(n, w.invert(n), cbni)(g4)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g4)
         case 5 =>
           val f5 = FP.untupled[T, T, T, T, T, R](f).curried
           val f5ci = n match {
@@ -554,7 +606,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g5 = RenderableFunction.asFunctionType { x: (T, T, T, T, T) => f5ci(x._1)(x._2)(x._3)(x._4)(x._5) }
-          RenderableFunction(n, w.invert(n), cbni)(g5)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g5)
         case 6 =>
           val f6 = FP.untupled[T, T, T, T, T, T, R](f).curried
           val f6i = n match {
@@ -566,7 +618,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g6 = RenderableFunction.asFunctionType { x: (T, T, T, T, T, T) => f6i(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-          RenderableFunction(n, w.invert(n), cbni)(g6)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g6)
         case _ => throw RenderableFunctionException(s"invert with arity $arity is not supported")
       }
     }

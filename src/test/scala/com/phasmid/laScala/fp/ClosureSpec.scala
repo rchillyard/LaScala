@@ -18,6 +18,15 @@ import scala.util.{Left, _}
 class ClosureSpec extends FlatSpec with Matchers {
 
   behavior of "Closure"
+  it should "apply for a simple closure with no params" in {
+    val name = "Hello"
+    val f1: () => String = { () => "Hello" }
+    val f = RenderableFunction(f1, name, RenderableFunction.callByValue(0))
+    val c = Closure(f)
+    c.arity shouldBe 0
+    c() shouldBe Success("Hello")
+  }
+
   it should "apply for a simple closure" in {
     val name = "isHello"
     val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
@@ -26,11 +35,35 @@ class ClosureSpec extends FlatSpec with Matchers {
     c() shouldBe Success(true)
   }
 
+  it should "apply for a simple call-by-name closure" in {
+    val name = "isHello"
+
+    def isHello(s: => String): Boolean = s == "Hello"
+
+    val f = RenderableFunction(isHello _, name, RenderableFunction.callByName(1))
+    val c = Closure(f, Left("Hello"))
+    c.arity shouldBe 0
+    c() shouldBe Success(true)
+  }
+
   it should "apply for a closure where the parameter is itself a Closure" in {
     val getPi: Product => String = { _ => math.Pi.toString }
     val f1 = RenderableFunction({ s: String => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
+    val f2: RenderableFunction[String] = RenderableFunction(0, FunctionString("pi", Nil), Nil, Nil)(getPi)
+    val c1 = Closure(f2)
+    val c2 = Closure(f1, Right(c1))
+    c2.arity shouldBe 0
+    c2() shouldBe Success(false)
+  }
 
-    val f2: RenderableFunction[String] = RenderableFunction(0, FunctionString("pi", Seq[Param]()), Seq[Boolean]())(getPi)
+  it should "apply for a closure where the call-by-name parameter is itself a Closure" in {
+    //    val getPi: Product => String = { _: () => math.Pi.toString }
+    def getPi: String = math.Pi.toString
+
+    def isHello(s: => String): Boolean = s == "Hello"
+
+    val f1 = RenderableFunction(isHello _, "isHello", RenderableFunction.callByName(1))
+    val f2 = RenderableFunction(getPi _, "pi", Seq[Boolean]())
     val c1 = Closure(f2)
     val c2 = Closure(f1, Right(c1))
     c2.arity shouldBe 0
@@ -96,10 +129,10 @@ class ClosureSpec extends FlatSpec with Matchers {
     val closureLookup1: Closure[String, String] = Spy.spy("closureLookup",Closure[String, String](fLookup, p1))
     val p2: Either[String, Closure[String, String]] = Spy.spy("p2",Right(closureLookup1))
     val c: Closure[String, Int] = Spy.spy("c",Closure[String, Int](fFunction, p2))
-    val dy: Try[Closure[String, Int]] = Spy.spy("dy",for (d <- c.partiallyApply()) yield d)
+    val dy = Spy.spy("dy", for (d <- c.partiallyApply) yield d)
     // XXX: provide the variable values at the last moment
     variables.put(col1,val1)
-    (for (d <- dy; r <- d()) yield r) match {
+    (for (d <- dy; r <- d.callByName()) yield r) match {
       case Success(s) => s shouldBe 42
       case Failure(x) => fail(x)
     }
@@ -149,8 +182,8 @@ class ClosureSpec extends FlatSpec with Matchers {
     val p6 = Left(val3)
     val p7 = Left(val4)
     val c = Closure[String, String](fFunction, p4, p5, p6, p7)
-    val dy = for (d <- c.partiallyApply()) yield d
-    (for (d <- dy; r <- d()) yield r) match {
+    val dy: Try[RenderableFunction[String]] = for (d <- c partiallyApply) yield d
+    (for (d <- dy; r <- d.callByName()) yield r) match {
       case Success(s) => s shouldBe s"fourStringFunction($sArg1: $val1, $sArg2: $val2, $sArg3: $val3, $sArg4: $val4)"
       case Failure(x) => fail(x)
     }
@@ -200,11 +233,11 @@ class ClosureSpec extends FlatSpec with Matchers {
     val p6 = Spy.spy("p6",Left(val3))
     val p7 = Spy.spy("p7",Left(val4))
     val c = Spy.spy("c",Closure[String, String](fFunction, p4, p5, p6, p7))
-    val dy = Spy.spy("dy",for (d <- c.partiallyApply()) yield d)
+    val dy = Spy.spy("dy", for (d <- c partiallyApply) yield d)
     // XXX: provide the variable values at the last moment
     variables.put(col1,val1)
     variables.put(col2,val2)
-    (for (d <- dy; r <- d()) yield r) match {
+    (for (d <- dy; r <- d.callByName()) yield r) match {
       case Success(s) => s shouldBe s"fourStringFunction($sArg1: $val1, $sArg2: $val2, $sArg3: $val3, $sArg4: $val4)"
       case Failure(x) => fail(x)
     }
@@ -231,8 +264,8 @@ class ClosureSpec extends FlatSpec with Matchers {
     val c2 = Closure[String, Int](fFunction, p2)
     c1.hashCode() shouldBe c2.hashCode()
     (c1 == c2) shouldBe true
-    val dy1 = for (d <- c1.partiallyApply()) yield d
-    val dy2 = for (d <- c2.partiallyApply()) yield d
+    val dy1 = for (d <- c1 partiallyApply) yield d
+    val dy2 = for (d <- c2 partiallyApply) yield d
     dy1.get.hashCode() shouldBe dy2.get.hashCode()
   }
 }

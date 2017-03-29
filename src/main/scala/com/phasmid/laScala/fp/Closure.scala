@@ -7,7 +7,9 @@ package com.phasmid.laScala.fp
 
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.language.postfixOps
+import scala.reflect.ClassTag
 import scala.util._
 
 /**
@@ -20,7 +22,7 @@ import scala.util._
   */
 case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
 
-  implicit val logger = Spy.getLogger(getClass)
+  private implicit val logger = Spy.getLogger(getClass)
 
   /**
     * Method to evaluate this closure. If the arity of this is not equal to zero, a Failure will result
@@ -28,16 +30,24 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     * @return a Try[R]
     */
   def apply(): Try[R] = if (arity==0)
-    for (g <- Spy.spy("g",partiallyApply(false)); h <- Spy.spy("h",g.f.callByName())) yield h
+    for (g <- Spy.spy("g", partiallyApply); h <- Spy.spy("h", g.callByName())) yield h
   else Failure(RenderableFunctionException(s"cannot evaluate this closure (with arity $arity): $this"))
 
   /**
-    * Method to partially apply this closure.
+    * Method to partially apply this Closure, resulting in a RenderableFunction (i.e. a Closure without any parameters).
     *
-    * @param evaluateAll (defaults to false) if this is true, then we force all parameters to be evaluated, even if they are call-by-name
-    * @return a Closure[R] wrapped in Try. The ps parameter of the result will be empty.
+    * @return a RenderableFunction[R] wrapped in Try.
     */
-  def partiallyApply(evaluateAll: Boolean = false): Try[Closure[T, R]] = for (g: RenderableFunction[R] <- Spy.spy("f.applyParameters",f.applyParameters[T](ps.toList, evaluateAll))) yield Closure[T, R](g)
+  def partiallyApply: Try[RenderableFunction[R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Parameter[_]]])) yield g
+
+  /**
+    * Method to determine if this Closure is fully applied. That's to say we can invoke apply() without
+    * having to evaluate any of the parameters (they are all evaluated already).
+    *
+    * @return true if the arity is zero, the function f has no call-by-name parameters and if all of the
+    *         parameters for this Closure are themselves evaluated.
+    */
+  def isFullyApplied: Boolean = arity == 0 && f.alwaysEvaluate && Closure.isParameterSetEvaluated(ps)
 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
@@ -70,6 +80,23 @@ object Closure {
     case Failure(x) => logger.debug(s"$w: failed: $x"); ry
   }
 
+  private def isFullyApplied[T](tp: Parameter[T]): Boolean = tp match {
+    case Left(_) => true
+    case Right(c) => c.isFullyApplied
+  }
+
+  private def isParameterSetEvaluated[T](ps: Seq[Parameter[T]]): Boolean = {
+    @tailrec
+    def inner(r: Boolean, tps: Seq[Parameter[T]]): Boolean =
+      if (!r) false else
+        tps match {
+          case Nil => r
+          case tp :: _tps => inner(Closure.isFullyApplied(tp), _tps)
+        }
+
+    inner(r = true, ps)
+  }
+
   private def parameterArity[T](p: Parameter[T]): Int = p match {
     case Left(_) => -1
     case Right(c) => c.arity-1
@@ -82,6 +109,6 @@ object Closure {
     * @tparam T the underlying type
     * @return a Closure resulting in Seq[T]
     */
-  def createVarArgsClosure[T](ts: T*): Closure[T, Seq[T]] = apply(RenderableFunction.varargs(ts.size), ts map (Left(_)): _*)
+  def createVarArgsClosure[T: ClassTag](ts: T*): Closure[T, Seq[T]] = apply(RenderableFunction.varargs(ts.size), ts map (Left(_)): _*)
 }
 
