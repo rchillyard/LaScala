@@ -182,8 +182,7 @@ object Spy {
     case Success(z) =>
       val sb = new StringBuilder("")
 
-      // XXX what's all this about?
-      implicit def spyFunc(s: String): Spy = Spy(sb.append(s"explicit spy: $s\n"))
+      implicit def spyFunc(s: String): Spy = Spy(sb.append(s))
 
       spy(s"Success", z, b)
       sb.toString

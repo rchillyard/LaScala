@@ -135,7 +135,7 @@ class SpySpec extends FlatSpec with Matchers {
     implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"Hello: $s\n")
 
     Spy.spy("success", Success(1))
-    spyMessage shouldBe "Hello: success: explicit spy: Success: 1\n\n"
+    spyMessage shouldBe "Hello: success: Success: 1\n"
   }
   it should "work with a failure" in {
     implicit val logger = Spy.getLogger(getClass)

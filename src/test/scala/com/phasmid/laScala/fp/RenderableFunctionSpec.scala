@@ -72,8 +72,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
-    f.func()(Tuple1("Hello")) shouldBe true
-    an[ClassCastException] should be thrownBy f.func()("Hello")
+    f.func(Tuple1("Hello")) shouldBe true
+    an[ClassCastException] should be thrownBy f.func("Hello")
   }
 
   it should "apply a 2-arity function" in {
@@ -85,9 +85,9 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
-    f.func()(("Hello", "Goodbye")) shouldBe "Hello:Goodbye"
-    an[ClassCastException] should be thrownBy f.func()("Hello")
-    an[ClassCastException] should be thrownBy f.func()(Tuple1("Hello"))
+    f.func(("Hello", "Goodbye")) shouldBe "Hello:Goodbye"
+    an[ClassCastException] should be thrownBy f.func("Hello")
+    an[ClassCastException] should be thrownBy f.func(Tuple1("Hello"))
   }
 
   it should "work with partiallyApply (1)" in {

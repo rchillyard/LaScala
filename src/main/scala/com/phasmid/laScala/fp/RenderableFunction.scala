@@ -20,9 +20,10 @@ import scala.util._
   *
   * Created by scalaprof on 1/11/17.
   *
-  * @param arity the number of input parameters that are required to fully apply the given function (func)
+  * @param arity the number of input parameters that are required to fully apply the given function (f)
   * @param w     a human-readable representation of the function
   * @param cbn   a sequence of booleans, corresponding to each of the parameters of (untupled) func. If the boolean is true, then that parameter is call-by-name, i.e. a Function0[T] rather than a T.
+  * @param cs    a sequence of ClassTags corresponding to the parameters to be passed to f
   * @param f     the function itself (this field is not considered in the hashCode and equals methods)
   * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
@@ -35,24 +36,20 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   require(w.arity == arity, s"arity $arity is not consistent with $w")
   require(cbn.size == arity, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
 
-  //  type ApplyParametersResult[T] = (RenderableFunction[R], Seq[Closure[_, T]])
-
-  // NOTE: this line requires R to support ClassTag
   private val rc = implicitly[ClassTag[R]]
   private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
 
   /**
     * Apply parameter p to this function.
     *
-    * NOTE that if R is Try[S], then the result of apply will be R, not Try[R]
+    * NOTE: that if R is Try[S], then the result of apply will be R, not Try[R]
     *
     * @param p a Tuple
     * @return an R wrapped in Try
     */
   def apply(p: Product): Try[R] =
     if (arity == p.productArity) {
-      val g: (Product) => R = func()
-      //      val ry = Spy.spy(s"$this.apply($p): ry",Try(g(p)))
+      val g: (Product) => R = func
       val ry = Try(g(p))
       if (returnIsTry)
         ry match {
@@ -72,7 +69,8 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @param t a T
     * @return the result of invoking apply(Tuple1(t))
     */
-  def apply[T](t: T): Try[R] = Closure.logDebug(s"$this.apply($t)", apply(Tuple1(t)))
+  def apply[T](t: T): Try[R] = if (arity == 0) Spy.spy(s"$this.apply($t)", apply(Tuple1(t)))
+  else throw RenderableFunctionException(s"apply($t): arity is not one ($arity) for $this")
 
   /**
     * Method to call this RenderableFunction by name only, that's to say without any parameters.
@@ -80,16 +78,15 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     *
     * @return
     */
-  def callByName(): Try[R] = Closure.logDebug(s"$this.callByName", apply(Tuple0))
+  def callByName(): Try[R] = if (arity == 0) Spy.spy(s"$this.callByName", apply(Tuple0))
+  else throw RenderableFunctionException(s"callByName(): arity is not zero ($arity) for $this")
 
   /**
     * Method to get the function that is the basis of this RenderableFunction
     *
-    * CONSIDER removing parentheses from definition
-    *
     * @return the function as a Product=>R
     */
-  def func(): (Product) => R = f
+  def func: (Product) => R = f
 
   /**
     * Method which will take this RenderableFunction and apply the given parameters, except that Closure parameters will themselves be partiallyApplied.
@@ -99,55 +96,54 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @return a RenderableFunction[R] (wrapped in Try)
     */
   def partiallyApplyParameters(tps: Seq[Parameter[_]]): Try[RenderableFunction[R]] = {
-    def partiallyApply(rfy: Try[RenderableFunction[R]], tp: Parameter[_], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
+    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Parameter[_], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
       case Left(t) =>
-        Spy.spy(s"left branch: $t: result", rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]])))
-      case Right(c) => // c: Closure[_,T]
-        val gy = Spy.spy(s"right branch: $c: gy", c.partiallyApply)
-        Spy.spy(s"right branch: $c: result", for (g <- gy; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h)
+        Spy.spy(s"partiallyApplyParameter: Left($t)", rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]])))
+      case Right(c) => // c: Closure[_,_]
+        Spy.spy(s"partiallyApplyParameter: Right($c)", for (g <- c.partiallyApply; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h)
     }
 
     @tailrec
     def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Parameter[_], ClassTag[_])]): Try[RenderableFunction[R]] =
       work match {
         case Nil => rfy
-        case (tp, c) :: _tps => inner(partiallyApply(rfy, tp, c), _tps)
+        case (tp, c) :: _tps => inner(partiallyApplyParameter(rfy, tp, c), _tps)
       }
 
     inner(Try(this), tps zip cs)
   }
 
-  def asFunction: () => R = {
-    () => Spy.spy(s"asFunction: $this", {
-        val f = func()(Tuple0)
+  /**
+    * Convert this RenderableFunction into a pure, parameterless function.
+    *
+    * @return
+    */
+  def asFunction: () => R = if (arity == 0)
+    () => {
+      val f = func(Tuple0)
         f match {
           case r: R => r
           case f: Function[Unit, R] @unchecked => f(())
           case _ => throw RenderableFunctionException(s"asFunction: f doesn't match either R or ()=>R: $f")
         }
-      })
-  }
+    }
+  else throw RenderableFunctionException(s"asFunction: arity is not zero ($arity) for $this")
+
 
   /**
     * Method to partially apply the value t to this RenderableFunction.
+    * If t is actually a Function0[T], then we
     *
-    * NOTE: that this method does not seem to need to do the match on x: it can actually simply call partiallyApplyT (or inline it)
-    *
-    * @param x a value which should yield a T
-    * @tparam T the underlying type
+    * @param t a value which should yield a T
+    * @tparam T the desired type
     * @return RenderableFunction[R] wrapped in Try
     */
-  def partiallyApply[T: ClassTag](x: Any): Try[RenderableFunction[R]] = x match {
-      case Success(t) =>
-        partiallyApplyT(t)(implicitly[ClassTag[T]])
-      case Failure(e) => Failure(e)
-      case t => partiallyApplyT(t)(implicitly[ClassTag[T]])
-    }
-
-  private def partiallyApplyT[T: ClassTag](t: Any) = if (implicitly[ClassTag[T]].runtimeClass.isAssignableFrom(classOf[() => _]))
-    Spy.spy(s"partiallyApply (NOT function)", RenderableFunction.partiallyApply(arity, func(), t, w.partiallyApply(t), cbn, cs))
+  def partiallyApply[T: ClassTag](t: Any): Try[RenderableFunction[R]] = if (implicitly[ClassTag[T]].runtimeClass.isAssignableFrom(classOf[() => _]))
+  // CONSIDER using the following line (commented out) -- but note that it doesn't seem to work, even though it looks more logical
+  //    RenderableFunction.partiallyApplyFunction(arity, func, t.asInstanceOf[() => _], w.partiallyApply(t), cbn, cs)
+    RenderableFunction.partiallyApply(arity, func, t, w.partiallyApply(t), cbn, cs)
   else
-    Spy.spy(s"partiallyApply (value)", RenderableFunction.partiallyApply(arity, func(), t.asInstanceOf[T], w.partiallyApply(t), cbn, cs))
+    RenderableFunction.partiallyApply(arity, func, t.asInstanceOf[T], w.partiallyApply(t), cbn, cs)
 
   /**
     * Method to partially apply the function f to this RenderableFunction
@@ -157,9 +153,11 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @tparam T the return type of f
     * @return a RenderableFunction[R] wrapped in Try
     */
-  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction(arity - 1, func(), f, w.partiallyApplyFunction(z), cbn, cs)
+  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction(arity - 1, func, f, w.partiallyApplyFunction(z), cbn, cs)
 
   /**
+    * Method to form a String (for debugging purposes) from this RenderableFunction
+    *
     * NOTE that we don't show the function itself because it gives us little additional information (only the actual arity of the function)
     *
     * @return a String representing this object
@@ -173,7 +171,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @tparam T the underling type of the parameters
     * @return a new RenderableFunction with the parameters inverted
     */
-  def invert[T](n: Int): RenderableFunction[R] = RenderableFunction.invert(n, arity, func(), w, cbn, cs)
+  def invert[T](n: Int): RenderableFunction[R] = RenderableFunction.invert(n, arity, func, w, cbn, cs)
 
   /**
     * Method to render this object in a human-legible manner.
@@ -194,12 +192,6 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     */
   def alwaysEvaluate: Boolean = cbn.forall(!_)
 
-  /**
-    * NOTE that this is never called
-    * @return true if all the cbn values are true (or if cbn is empty)
-    */
-  def isLazy: Boolean = cbn.forall(b => b)
-
   private def evaluationStyle = if (alwaysEvaluate) "" else "=>"
 }
 
@@ -210,8 +202,6 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   * @param ps a sequence of Param objects (these represent bound or unbound parameters)
   */
 case class FunctionString(f: String, ps: Seq[Param]) {
-  implicit private val logger = Spy.getLogger(getClass)
-
   implicit def convertBooleanToInt(b: Boolean): Int = if (b) 1 else 0
 
   def invert(n: Int): FunctionString = {
@@ -236,7 +226,7 @@ case class FunctionString(f: String, ps: Seq[Param]) {
       }
       case _ => s"$t"
     })
-      Spy.spy(s"partiallyApply($t,$skip)", FunctionString(f, bind(bound + skip, w)))
+      FunctionString(f, bind(bound + skip, w))
     }
     else throw RenderableFunctionException(s"FunctionString.partiallyApply cannot apply $t at $skip to $this")
 
@@ -258,7 +248,7 @@ case class FunctionString(f: String, ps: Seq[Param]) {
         }
     }
 
-    Spy.spy(s"arity of $this", inner(0, ps))
+    inner(0, ps)
   }
 
   /**
@@ -271,12 +261,12 @@ case class FunctionString(f: String, ps: Seq[Param]) {
       case h :: t => inner(r + h.isBound, t)
     }
 
-    Spy.spy(s"bound of $this", inner(0, ps))
+    inner(0, ps)
   }
 
-  def bind(index: Int, w: String): Seq[Param] = Spy.spy(s"$this bind($index,$w)", bind(FunctionString.nones.take(index).toSeq :+ Some(Left(w))))
+  def bind(index: Int, w: String): Seq[Param] = bind(FunctionString.nones.take(index).toSeq :+ Some(Left(w)))
 
-  def bind(index: Int, w: FunctionString): Seq[Param] = Spy.spy(s"$this bind($index,$w)", bind(FunctionString.nones.take(index).toSeq :+ Some(Right(w))))
+  def bind(index: Int, w: FunctionString): Seq[Param] = bind(FunctionString.nones.take(index).toSeq :+ Some(Right(w)))
 
   /**
     * Method to bind some String values to free variables in this FunctionString.
@@ -289,7 +279,6 @@ case class FunctionString(f: String, ps: Seq[Param]) {
     require(wos.length <= ps.length, s"wos is too long (${wos.length}) for this FunctionString: $this")
 
     @tailrec def inner(result: Seq[Param], work: Seq[(Param, Option[Either[String, FunctionString]])]): Seq[Param] = {
-      Spy.spy(s"bind.inner($result, $work", ())
       work match {
         case Nil => result
         case h :: t =>
@@ -302,7 +291,7 @@ case class FunctionString(f: String, ps: Seq[Param]) {
       }
     }
 
-    Spy.spy("result of bind", inner(Nil, ps zipAll(wos, null, None)))
+    inner(Nil, ps zipAll(wos, null, None))
   }
 }
 
@@ -325,8 +314,6 @@ case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
   private def right = p.right.get
 
   def isFree: Boolean = !isBound && right.isLeft
-
-  //  private def isFunction: Boolean = !isBound && right.isRight
 
   override def toString: String = "(" + (p match {
     case Left(s) => s
@@ -465,7 +452,6 @@ object RenderableFunction {
 
   def untupled[T, R](f: Tuple1[T] => R): T => R = asserting(f != null, "f is null", { x => f(Tuple1(x)) })
 
-  // NOTE: This method requires R to support ClassTag
   private def cast[R: ClassTag](x: Any): R = x match {
     case r: R => r
     case _ => throw new ClassCastException(s"x: $x of type ${x.getClass} cannot be cast to type ${implicitly[ClassTag[R]]}")
@@ -506,6 +492,17 @@ object RenderableFunction {
         case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
       }
 
+  /**
+    * This method unwraps x if it is a Try[T] otherwise, it assumes x to be a T.
+    *
+    * XXX Exactly why we need this method -- when we already have apply(Product) to take care of this, I don't know.
+    * CONSIDER refactoring so that this method is not necessary.
+    *
+    * @param x a value of any type
+    * @tparam T the desired result type
+    * @return a value of type T
+    * @throws RenderableFunctionException if unable to properly for a T value from x
+    */
   private def extract[T: ClassTag](x: Any): T = x match {
     case Success(t: T) => t
     case Failure(e) => throw e
@@ -549,7 +546,6 @@ object RenderableFunction {
 
   private def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
     val g0 = getPartialApplicationFunction(n - 1, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
-    //    val s = w.partiallyApply(t)
     RenderableFunction(n - 1, w, cbn.tail, cs.tail)(g0)
   }
 
@@ -561,13 +557,14 @@ object RenderableFunction {
     RenderableFunction(n, w, cbn.tail, cs.tail)(g0)
   }
 
-  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses) = {
+  private def invert[X](n: Int, xs: Seq[X]): Seq[X] = ((xs take (xs.size - n)) :+ xs(n - 1) :+ xs(n - 2)) ++ (xs drop n)
+
+  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): RenderableFunction[R] = {
     if (arity < 2 || n > arity)
       throw RenderableFunctionException(s"can't invert $n parameters of a RenderableFunction of arity $arity")
     else {
-      // TODO combine the logic here
-      val cbni = ((cbn take (cbn.size - n)) :+ cbn(n - 1) :+ cbn(n - 2)) ++ (cbn drop n)
-      val csi = ((cs take (cs.size - n)) :+ cs(n - 1) :+ cs(n - 2)) ++ (cs drop n)
+      val cbni = invert(n, cbn)
+      val csi = invert(n, cs)
       arity match {
         case 2 =>
           val f2 = FP.untupled[T, T, R](f).curried
