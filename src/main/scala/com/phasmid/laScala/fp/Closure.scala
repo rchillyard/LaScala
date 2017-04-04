@@ -5,6 +5,7 @@
 
 package com.phasmid.laScala.fp
 
+import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -20,7 +21,7 @@ import scala.util._
   * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
+case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
 
   private implicit val logger = Spy.getLogger(getClass)
 
@@ -68,7 +69,13 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     */
   lazy val arity: Int = ps.foldLeft(f.arity)(_ + Closure.parameterArity(_))
 
-  override def toString(): String = s"Closure($f, $ps)"
+  override def toString(): String = render()
+
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
+    implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
+    val z = ps.render(indent)
+    s"Closure($f,"+z
+  }
 }
 
 

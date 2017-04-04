@@ -30,9 +30,15 @@ trait Renderable {
     *         which is then followed by some human-legible rendition of *this*.
     */
   def render(indent: Int = 0)(implicit tab: Int => Prefix): String
+
+  /**
+    * Method to insert an indented (tabbed) newline
+    * @return a string which is a suitable replacement for newline character
+    */
+  def nl(indent: Int)(implicit tab: Int => Prefix): String = "\n" + tab(indent)
 }
 
-case class RenderableTraversable(xs: Traversable[_]) extends Renderable {
+case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)") extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
     def addString(b: StringBuilder, start: String, sep: String, end: String): StringBuilder = {
       var first = true
@@ -53,7 +59,7 @@ case class RenderableTraversable(xs: Traversable[_]) extends Renderable {
       b
     }
 
-    addString(new StringBuilder, "(\n" + tab(indent + 1), ",\n" + tab(indent + 1), "\n" + tab(indent) + ")").toString()
+    addString(new StringBuilder, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2)).toString()
   }
 }
 

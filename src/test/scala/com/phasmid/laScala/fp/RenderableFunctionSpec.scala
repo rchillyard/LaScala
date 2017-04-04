@@ -5,11 +5,13 @@
 
 package com.phasmid.laScala.fp
 
+import com.phasmid.laScala.fp.RenderableFunction.getPartialApplicationFunction
 import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
 import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 import scala.util.{Left, _}
 
 /**
@@ -448,7 +450,6 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
     val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-    // TODO applyAllParameters should be deprecated
     val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
@@ -587,20 +588,122 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
+  it should """evaluate to true with true & (java) true""" in {
+    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
 
-  behavior of "private methods"
-  ignore should "work for partiallyApply" in {
-    //    val f = PrivateMethod[RenderableFunction[String]]('partiallyApply)
-    //    val z = RenderableFunction invokePrivate f(1, { p: Product => "Hello"}, 1, FunctionString("hello",1), Seq(false))
-
-    //    val z = RenderableFunction.partiallyApply(1, { p: Product => "Hello"}, 1, FunctionString("hello",1), Seq(false))
-    //    println(z)
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true))
+    cAnd() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
   }
-  ignore should "work for partiallyApplyMethod" in {
-    //    val f = PrivateMethod[RenderableFunction[String]]('partiallyApplyMethod)
-    //    val z = RenderableFunction invokePrivate f(1, { p: Product => "Hello"}, 1, FunctionString("hello",1), Seq(false))
+  it should """evaluate (using java Boolean parameter) to true with true & (java) true""" in {
+    def fAnd(p1: Boolean, p2: => java.lang.Boolean): Boolean = p1 && p2
 
-    //    val z = RenderableFunction.partiallyApplyFunction(1, { p: Product => "Hello"}, { () => 1 }, FunctionString("hello",1), Seq(false))
-    //    println(z)
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true), Left(true))
+    cAnd() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
+  }
+  it should """evaluate to java.lang.Boolean(true) with true & (java) true""" in {
+    def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
+
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true), Left(true))
+    cAnd() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
+  }
+
+  // TODO investigate why this doesn't work
+  ignore should """evaluate to java.lang.Boolean(true) with true & not (java) true""" in {
+    def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
+
+    val ifNot = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
+
+    def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
+
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
+    println(cAnd)
+    val g = cAnd.partiallyApply
+    println(s"g=$g")
+    cAnd() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
+  }
+
+  // TODO investigate why this doesn't work
+  ignore should """evaluate to true with true & not true""" in {
+    def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
+
+    val ifNot = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
+
+    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
+
+    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
+    println(cAnd)
+    val g = cAnd.partiallyApply
+    println(s"g=$g")
+    cAnd() match {
+      case Success(b) => println(s"result: $b"); succeed
+      case Failure(x) => fail(x.getLocalizedMessage)
+    }
+  }
+
+
+  behavior of "partiallyApply"
+  def testPartiallyApply1[T1: ClassTag, R: ClassTag](expected: R, t1: T1, f: Product=>R, w: String, cbn: Boolean*) = {
+    val arity = 1
+    require(cbn.length==arity)
+    val functionString = FunctionString(w, arity, cbn)
+    val classTags = Seq(implicitly[ClassTag[T1]])
+    assert(classTags.length==arity)
+//    val privateMethod = PrivateMethod[Try[RenderableFunction[R]]]('partiallyApply)
+//    val h = RenderableFunction invokePrivate privateMethod(arity, f, t1, functionString, cbn, classTags)
+//    println(h)
+    val g2y = RenderableFunction.partiallyApply[T1,R](arity, f, t1, functionString, cbn, classTags)
+    g2y should matchPattern { case Success(_) => }
+    g2y.get.arity shouldBe arity-1
+    println(g2y.get.callByName())
+    if (arity==1) g2y.get.callByName() should matchPattern { case Success(`expected`) => }
+  }
+  it should "work for partiallyApply1" in {
+    testPartiallyApply1[Int,String]("(42)", 42, p => p.toString, "toString", false)
+  }
+
+  behavior of "getPartialApplicationFunction"
+  def testGetPartialApplicationFunction1[T1: ClassTag](expected: String, t1: T1, f: Product=>String, cbn: Boolean) = {
+    val arity = 1
+//    val _g = PrivateMethod[Product=>String]('getPartialApplicationFunction)
+//    val h = RenderableFunction invokePrivate _g(arity, f, t1, cbn)
+//    h(Tuple0) shouldBe expected
+    val g = getPartialApplicationFunction(arity, f, t1, cbn)
+    g(Tuple0) shouldBe expected
+  }
+  def testGetPartialApplicationFunction2[T1: ClassTag](t1: T1, f: Product=>String, cbn: Boolean): Product=>String = {
+    val arity = 2
+//    val _g = PrivateMethod[Product=>String]('getPartialApplicationFunction)
+//    RenderableFunction invokePrivate _g(arity, f, t1, cbn)
+//    _g(arity, f, t1, cbn)
+    val g = getPartialApplicationFunction(arity, f, t1, cbn)
+    g
+  }
+  it should "work for partiallyApply1" in {
+    testGetPartialApplicationFunction1[Int]("(42)", 42, p => p.toString, false)
+  }
+  it should "work for partiallyApply2a" in {
+    val f = testGetPartialApplicationFunction2[Int](6, {case (x: Int, y: Int) => (x*y).toString}, false)
+    testGetPartialApplicationFunction1[Int]("42", 7, f, false)
+  }
+  it should "work for partiallyApply2b" in {
+    val f = testGetPartialApplicationFunction2[Int](7, {case (x: Int, y: Int) => (x-y).toString}, false)
+    testGetPartialApplicationFunction1[Int]("1", 6, f, false)
   }
 }
