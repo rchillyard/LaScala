@@ -417,6 +417,9 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     xfy.get.callByName() shouldBe Success(3.1415927)
   }
 
+  /**
+    * TODO figure out how to avoid using asInstanceOf in this and other unit tests
+    */
   it should "handle a function that throws an exception (1)" in {
     val map = Map("PI" -> "3.1415927")
 
@@ -427,7 +430,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     def show(s1: String) = s1
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val fy: Try[RenderableFunction[String]] = f.partiallyApplyParameters(Seq(Right(Closure(lookup, Left("pi")))))
+    val fy: Try[RenderableFunction[String]] = f.partiallyApplyParameters(Seq(Right(Closure(lookup, Left("pi")))).asInstanceOf[Seq[Parameter[_]]])
     val ry = for (g: RenderableFunction[String] <- fy; r <- g.callByName()) yield r
     ry should matchPattern { case Failure(_: NoSuchElementException) => }
   }
@@ -442,7 +445,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     def show(s1: String) = s1
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val cy = f.partiallyApplyParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))))
+    val cy = f.partiallyApplyParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))).asInstanceOf[Seq[Parameter[_]]])
     cy should matchPattern { case Failure(_: RenderableFunctionException) => }
   }
 
@@ -450,7 +453,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
     val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)))
+    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)).asInstanceOf[Seq[Parameter[_]]])
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName shouldBe Success(false)
@@ -465,11 +468,11 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     }, "IN", RenderableFunction.callByValue(2))
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
-    val g__1y = g_2i.partiallyApplyParameters(List[Parameter[List[String]]](Left(List("x", "y", "z"))))
+    val g__1y = g_2i.partiallyApplyParameters(Seq[Parameter[List[String]]](Left(List("x", "y", "z"))).asInstanceOf[Seq[Parameter[_]]])
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
     g__1.arity shouldBe 1
-    val fg_2y = f_1.partiallyApplyParameters(List[Parameter[Boolean]](Right(Closure(g__1, Left("x")))))
+    val fg_2y = f_1.partiallyApplyParameters(Seq[Parameter[Boolean]](Right(Closure(g__1, Left("x")))).asInstanceOf[Seq[Parameter[_]]])
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     fg_2.callByName() shouldBe Success(false)
@@ -655,6 +658,28 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     }
   }
 
+  behavior of "toScala"
+
+  it should "convert Integer" in {
+    val x = java.lang.Integer.valueOf(42)
+    val y = RenderableFunction.toScala[Int](x)
+    y shouldEqual 42
+    y.getClass shouldBe classOf[Int]
+  }
+
+  it should "convert Boolean" in {
+    val x = java.lang.Boolean.valueOf(true)
+    val y = RenderableFunction.toScala[Boolean](x)
+    y shouldEqual true
+    y.getClass shouldBe classOf[Boolean]
+  }
+
+  it should "convert Double" in {
+    val x = java.lang.Double.valueOf(math.Pi)
+    val y = RenderableFunction.toScala[Double](x)
+    y shouldEqual math.Pi
+    y.getClass shouldBe classOf[Double]
+  }
 
   behavior of "partiallyApply"
 

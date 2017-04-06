@@ -115,13 +115,9 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
       val f = func(Tuple0)
       f match {
         case r: R => r
-        case f: Function[Unit, _]@unchecked => RenderableFunction.toScala[R](f(()))
-        case x =>
-          val z = RenderableFunction.toScala[R](x)
-          val rx = implicitly[ClassTag[R]]
-          println(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
-          if (rx.runtimeClass.isAssignableFrom(z.getClass)) z.asInstanceOf[R]
-          else throw RenderableFunctionException(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
+        case g: Function[Unit, _]@unchecked => RenderableFunction.toScala[R](g(()))
+        // NOTE: this could result in the throwing of an exception
+        case x => RenderableFunction.toScala[R](x)
       }
     }
   else throw RenderableFunctionException(s"asFunction: arity is not zero ($arity) for $this")
@@ -326,9 +322,9 @@ case class FreeParam(s: String, cbn: Boolean) {
   */
 object RenderableFunction {
   def toScala[T: ClassTag](t: Any): T = (t match {
-    case q: java.lang.Boolean => q.booleanValue
-    case q: java.lang.Integer => q.intValue
-    case q: java.lang.Double => q.doubleValue
+    case q: java.lang.Boolean => Boolean.unbox(q)
+    case q: java.lang.Integer => Int.unbox(q)
+    case q: java.lang.Double => Double.unbox(q)
     case _ => t
   }).asInstanceOf[T]
 
@@ -476,7 +472,11 @@ object RenderableFunction {
     case Success(t: T) => t
     case Failure(e) => throw e
     case t: T => t
-    case _ => throw RenderableFunctionException(s"cannot extract a ${implicitly[ClassTag[T]]} value from $x")
+    case t =>
+      try RenderableFunction.toScala[T](t)
+      catch {
+        case z: Exception => throw RenderableFunctionException(s"cannot extract a ${implicitly[ClassTag[T]]} value from $x", z)
+      }
   }
 
   /**
@@ -679,7 +679,7 @@ object FunctionString {
   *
   * @param s the message
   */
-case class RenderableFunctionException(s: String) extends Exception(s)
+case class RenderableFunctionException(s: String, t: Throwable = null) extends Exception(s, t)
 
 case class AssertingError(w: String) extends Exception(w)
 
