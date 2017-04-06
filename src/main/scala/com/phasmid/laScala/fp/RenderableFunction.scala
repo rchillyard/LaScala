@@ -89,10 +89,10 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     */
   def partiallyApplyParameters(tps: Seq[Parameter[_]]): Try[RenderableFunction[R]] = {
     def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Parameter[_], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
-      case Left(t) =>
-        Spy.spy(s"partiallyApplyParameter: Left($t)", rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]])))
+      case Left(t) => // t: T
+        rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]]))
       case Right(c) => // c: Closure[_,_]
-        Spy.spy(s"partiallyApplyParameter: Right($c)", for (g <- c.partiallyApply; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h)
+        for (g <- c.partiallyApply; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h
     }
 
     @tailrec
@@ -113,16 +113,16 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   def asFunction: () => R = if (arity == 0)
     () => {
       val f = func(Tuple0)
-        f match {
-          case r: R => r
-          case f: Function[Unit, _] @unchecked => RenderableFunction.toScala[R](f(()))
-          case x =>
-            val z = RenderableFunction.toScala[R](x)
-            val rx = implicitly[ClassTag[R]]
-            println(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
-            if (rx.runtimeClass.isAssignableFrom(z.getClass)) z.asInstanceOf[R]
-            else throw RenderableFunctionException(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
-        }
+      f match {
+        case r: R => r
+        case f: Function[Unit, _]@unchecked => RenderableFunction.toScala[R](f(()))
+        case x =>
+          val z = RenderableFunction.toScala[R](x)
+          val rx = implicitly[ClassTag[R]]
+          println(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
+          if (rx.runtimeClass.isAssignableFrom(z.getClass)) z.asInstanceOf[R]
+          else throw RenderableFunctionException(s"asFunction: func(()), with type ${f.getClass.getName}, doesn't match either $rx or ()=>$rx: $f")
+      }
     }
   else throw RenderableFunctionException(s"asFunction: arity is not zero ($arity) for $this")
 
@@ -135,22 +135,20 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @return RenderableFunction[R] wrapped in Try
     */
   def partiallyApply[T: ClassTag](t: Any): Try[RenderableFunction[R]] =
-//    if (implicitly[ClassTag[T]].runtimeClass.isAssignableFrom(classOf[() => _]))
-//  // CONSIDER using the following line (commented out) -- but note that it doesn't seem to work, even though it looks more logical
-//      RenderableFunction.partiallyApplyFunction(arity, func, t.asInstanceOf[() => _], w.partiallyApply(t), cbn, cs)
-////    RenderableFunction.partiallyApply(arity+1, func, t, w.partiallyApply(t), cbn, cs)
-//  else
     RenderableFunction.partiallyApply(arity, func, t.asInstanceOf[T], w, cbn, cs)
 
   /**
-    * Method to partially apply the function f to this RenderableFunction
+    * Method to partially apply the function f to this RenderableFunction.
+    *
+    * CONSIDER inline this method
     *
     * @param f the function
     * @param z the corresponding FunctionString
     * @tparam T the return type of f
     * @return a RenderableFunction[R] wrapped in Try
     */
-  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] = RenderableFunction.partiallyApplyFunction(arity - 1, func, f, w.partiallyApplyFunction(z), cbn, cs)
+  def partiallyApplyFunction[T](f: () => T, z: FunctionString): Try[RenderableFunction[R]] =
+    RenderableFunction.partiallyApplyFunction(arity, func, f, w.partiallyApplyFunction(z), cbn, cs)
 
   /**
     * Method to form a String (for debugging purposes) from this RenderableFunction
@@ -216,13 +214,13 @@ case class FunctionString(f: String, ps: Seq[Param]) {
   def partiallyApply[T](t: => T, skip: Int = 0): FunctionString =
     if (skip < ps.length) {
       val quotedStringR = """\"([^\"]*)\"""".r
-    val w = java.util.regex.Matcher.quoteReplacement(t match {
-      case s: String => s match {
-        case quotedStringR(_) => s
-        case _ => s""""$t""""
-      }
-      case _ => s"$t"
-    })
+      val w = java.util.regex.Matcher.quoteReplacement(t match {
+        case s: String => s match {
+          case quotedStringR(_) => s
+          case _ => s""""$t""""
+        }
+        case _ => s"$t"
+      })
       FunctionString(f, bind(bound + skip, w))
     }
     else throw RenderableFunctionException(s"FunctionString.partiallyApply cannot apply $t at $skip to $this")
@@ -422,13 +420,10 @@ object RenderableFunction {
     }
   }
 
-  import Spy._
-
   def tupled[T1: ClassTag, R: ClassTag](f: T1 => R): Tuple1[T1] => R = {
-    case Tuple1(x1) => if (f.isInstanceOf[(T1) => R])
-      Spy.spy(s"tupled[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]]($f): ", f(x1))
-    else
-      throw RenderableFunctionException(s"$f is not a Function1[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]")
+    case Tuple1(x1) =>
+      if (f.isInstanceOf[(T1) => R]) f(x1)
+      else throw RenderableFunctionException(s"$f is not a Function1[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]")
   }
 
   def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
@@ -488,27 +483,27 @@ object RenderableFunction {
     * Used by partiallyApplyParameters in RenderableFunction class
     */
   /**private*/ def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
-    // FIXME this looks wrong!
     val g = getPartialApplicationFunction(n, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
     RenderableFunction(n-1, w.partiallyApply(t), cbn.tail, cs.tail)(g)
   }
 
+  /**
+    * Used by partiallyApplyParameters, via partiallyApplyFunction.
+    * Function f has
+    *
+    * @return RenderableFunction wrapped in Try
+    */
   private def partiallyApplyFunction[T, R: ClassTag](n: Int, f: (Product) => R, tf: () => T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
     val g = if (cbn.head)
-      getPartialApplicationFunction(n+1, f, tf, cbn.head)(cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
+      getPartialApplicationFunction(n, f, tf, cbn = false)(cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
     else
       getPartialApplicationFunctionCallByName(n, f, tf)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
-    RenderableFunction(n, w, cbn.tail, cs.tail)(g)
+    RenderableFunction(n - 1, w, cbn.tail, cs.tail)(g)
   }
-
-  /**
-    */
 
   /**
     * This method is used to partially apply a the given function (f), with the given parameter (t) and yield
     * a function with arity one less than that of f.
-    *
-    * XXX This is used by partiallyApply (via partiallyAppFunction and partiallyApplyParameter)
     *
     * @param n the arity of f
     * @param f the function to be partially applied
@@ -518,67 +513,65 @@ object RenderableFunction {
     * @tparam R the type of the result of invoking f
     * @return a function of arity n-1 which is the result of applying t to f
     */
-  /**private*/ def getPartialApplicationFunction[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: T, cbn: Boolean): (Product) => R =
-    if (cbn) getPartialApplicationFunction(n, f, { () => t }, false)
-    else
-      n match {
-        case 1 =>
-          val f1: Tuple1[T] => R = f
-          ;{ _: Product => f1(Tuple1(t)) }
-          // TODO use the following instead...
-//          asFunctionType{ _: Product => f(Tuple1(t)) }
-        case 2 =>
-          val f2 = Function.untupled[T, Any, R](f)
-          asFunctionType { x: Tuple1[_] => f2.curried(t)(x._1) }
-        case 3 =>
-          val f3 = Function.untupled[T, Any, Any, R](f)
-          asFunctionType { x: (_, _) => f3.curried(t)(x._1)(x._2) }
-        case 4 =>
-          val f4 = Function.untupled[T, Any, Any, Any, R](f)
-          asFunctionType { x: (_, _, _) => f4.curried(t)(x._1)(x._2)(x._3) }
-        case 5 =>
-          val f5 = Function.untupled[T, T, T, T, T, R](f)
-          asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
-        case 6 =>
-          val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-          asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
-        case 7 =>
-          val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-          asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-        case _ => throw RenderableFunctionException(s"cannot partially apply function of arity $n (not supported/implemented)")
-      }
+  // private
+  def getPartialApplicationFunction[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: T, cbn: Boolean): (Product) => R =
+  if (cbn) getPartialApplicationFunction(n, f, { () => t }, false)
+  else
+    n match {
+      case 1 =>
+        asFunctionType { _: Product => f(Tuple1(t)) }
+      case 2 =>
+        val f2 = Function.untupled[T, Any, R](f)
+        asFunctionType { x: Tuple1[_] => f2.curried(t)(x._1) }
+      case 3 =>
+        val f3 = Function.untupled[T, Any, Any, R](f)
+        asFunctionType { x: (_, _) => f3.curried(t)(x._1)(x._2) }
+      case 4 =>
+        val f4 = Function.untupled[T, Any, Any, Any, R](f)
+        asFunctionType { x: (_, _, _) => f4.curried(t)(x._1)(x._2)(x._3) }
+      case 5 =>
+        val f5 = Function.untupled[T, T, T, T, T, R](f)
+        asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
+      case 6 =>
+        val f6 = FP.untupled[T, T, T, T, T, T, R](f)
+        asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
+      case 7 =>
+        val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
+        asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+      case _ => throw RenderableFunctionException(s"cannot partially apply function of arity $n (not supported/implemented)")
+    }
 
   /**
     * Called by PartiallyApplyParameters (via class.partiallyApplyParameter and object.partiallyApplyFunction)
     */
   private def getPartialApplicationFunctionCallByName[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: () => T): (Product) => R =
     n match {
-      case 0 =>
+      case 1 =>
         val f1: Tuple1[T] => R = f
         // TODO see why we have to call extract. It should never be necessary.
         val g0: (Product) => R = { _: Product => f1(Tuple1(extract(t())(implicitly[ClassTag[T]]))) }
         g0
-      case 1 =>
+      case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
         val g1 = asFunctionType { x: Tuple1[_] => f2.curried(extract(t())(implicitly[ClassTag[T]]))(x._1) }
         g1
-      case 2 =>
+      case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
         val g2 = asFunctionType { x: (_, _) => f3.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2) }
         g2
-      case 3 =>
+      case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
         val g3 = asFunctionType { x: (_, _, _) => f4.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3) }
         g3
-      case 4 =>
+      case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
         val g4 = asFunctionType { x: (T, T, T, T) => f5.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4) }
         g4
-      case 5 =>
+      case 6 =>
         val f6 = FP.untupled[T, T, T, T, T, T, R](f)
         val g5 = asFunctionType { x: (T, T, T, T, T) => f6.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5) }
         g5
-      case 6 =>
+      case 7 =>
         val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
         val g6 = asFunctionType { x: (T, T, T, T, T, T) => f7.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
         g6
