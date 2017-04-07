@@ -61,7 +61,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
     * @param t a T
     * @return the result of invoking apply(Tuple1(t))
     */
-  def apply[T](t: T): Try[R] = if (arity == 0) Spy.spy(s"$this.apply($t)", apply(Tuple1(t)))
+  def apply[T](t: T): Try[R] = if (arity == 1) Spy.spy(s"$this.apply($t)", apply(Tuple1(t)))
   else throw RenderableFunctionException(s"apply($t): arity is not one ($arity) for $this")
 
   /**
@@ -92,7 +92,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
       case Left(t) => // t: T
         rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]]))
       case Right(c) => // c: Closure[_,_]
-        for (g <- c.partiallyApply; rf <- rfy; h <- rf.partiallyApplyFunction(g.asFunction, g.w)) yield h
+        for (g <- c.partiallyApply; f = g.f; rf <- rfy; h <- rf.partiallyApplyFunction(f.asFunction, f.w)) yield h
     }
 
     @tailrec

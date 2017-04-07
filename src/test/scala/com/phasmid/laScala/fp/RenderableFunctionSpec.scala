@@ -395,7 +395,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get
     map.put("pi", "3.1415927")
-    val wy = for (c3 <- c3y; c4 <- c3.callByName()) yield c4
+    val wy = for (c3 <- c3y; c4 <- c3()) yield c4
     wy shouldBe Success("3.1415927")
   }
 
@@ -411,10 +411,10 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val c1 = Closure(lookup, Left("pi"))
     val c2 = Closure(f, Right(c1))
-    val xfy: Try[RenderableFunction[Double]] = c2.partiallyApply
+    val xfy: Try[Closure[_, Double]] = c2.partiallyApply
     xfy should matchPattern { case Success(_) => }
     xfy.get.arity shouldBe 0
-    xfy.get.callByName() shouldBe Success(3.1415927)
+    xfy.get() shouldBe Success(3.1415927)
   }
 
   /**

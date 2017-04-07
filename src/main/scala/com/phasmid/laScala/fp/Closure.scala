@@ -30,8 +30,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     *
     * @return a Try[R]
     */
-  def apply(): Try[R] = if (arity==0)
-    for (g <- partiallyApply; h <- g.callByName()) yield h
+  def apply(): Try[R] = if (arity == 0) for (g <- partiallyApply; h <- g.f.callByName()) yield h
   else Failure(RenderableFunctionException(s"cannot evaluate this closure (with arity $arity): $this"))
 
   /**
@@ -39,7 +38,7 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
     *
     * @return a RenderableFunction[R] wrapped in Try.
     */
-  def partiallyApply: Try[RenderableFunction[R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Parameter[_]]])) yield g
+  def partiallyApply: Try[Closure[_, R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Parameter[_]]])) yield Closure(g)
 
   /**
     * Method to determine if this Closure is fully applied. That's to say we can invoke apply() without
@@ -73,11 +72,11 @@ case class Closure[T, R](f: RenderableFunction[R], ps: Parameter[T]*) extends ((
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
     implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
+
     val z = ps.render(indent)
-    s"Closure($f,"+z
+    s"Closure($f," + z
   }
 }
-
 
 
 /**
@@ -112,7 +111,7 @@ object Closure {
 
   private def parameterArity[T](p: Parameter[T]): Int = p match {
     case Left(_) => -1
-    case Right(c) => c.arity-1
+    case Right(c) => c.arity - 1
   }
 
   /**

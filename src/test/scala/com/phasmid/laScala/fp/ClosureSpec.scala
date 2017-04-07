@@ -134,7 +134,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     val dy = Spy.spy("dy", for (d <- c.partiallyApply) yield d)
     // XXX: provide the variable values at the last moment
     variables.put(col1,val1)
-    (for (d <- dy; r <- d.callByName()) yield r) match {
+    (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe 42
       case Failure(x) => fail(x)
     }
@@ -184,8 +184,8 @@ class ClosureSpec extends FlatSpec with Matchers {
     val p6 = Left(val3)
     val p7 = Left(val4)
     val c = Closure[String, String](fFunction, p4, p5, p6, p7)
-    val dy: Try[RenderableFunction[String]] = for (d <- c partiallyApply) yield d
-    (for (d <- dy; r <- d.callByName()) yield r) match {
+    val dy: Try[Closure[_, String]] = for (d <- c partiallyApply) yield d
+    (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe s"fourStringFunction($sArg1: $val1, $sArg2: $val2, $sArg3: $val3, $sArg4: $val4)"
       case Failure(x) => fail(x)
     }
@@ -239,7 +239,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     // XXX: provide the variable values at the last moment
     variables.put(col1,val1)
     variables.put(col2,val2)
-    (for (d <- dy; r <- d.callByName()) yield r) match {
+    (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe s"fourStringFunction($sArg1: $val1, $sArg2: $val2, $sArg3: $val3, $sArg4: $val4)"
       case Failure(x) => fail(x)
     }
