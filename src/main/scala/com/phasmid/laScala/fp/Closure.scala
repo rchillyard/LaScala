@@ -16,6 +16,8 @@ import scala.util._
 /**
   * This case class represents a "closure" on a renderable function (f) and a set of bound parameters (ps).
   *
+  * CONSIDER shouldn't R support ClassTag?
+  *
   * @param f  the (renderable) function
   * @param ps the parameters, each of which may be a value or a Closure
   * @tparam T the parameter type of the closure

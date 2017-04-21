@@ -26,7 +26,7 @@ import scala.util._
   * @param f     the function itself (this field is not considered in the hashCode and equals methods)
   * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
-case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable {
+case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable with Serializable {
 
   implicit private val logger = Spy.getLogger(getClass)
 
@@ -37,6 +37,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
 
   private val rc = implicitly[ClassTag[R]]
   private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
+
 
   /**
     * Apply parameter p to this function.

@@ -2,6 +2,7 @@ organization := "com.phasmid"
 
 name := "lascala"
 
+// NOTE: don't forget to change the value of LaScalaVersion
 version := "1.0.1-SNAPSHOT"
 
 scalaVersion := "2.11.8"

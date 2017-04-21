@@ -102,9 +102,7 @@ case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends Inc
 object LongVersion {
   def apply(tag: Long): Version[Long] = apply(tag, None)
 
-  def parse(s: String): Option[Version[Long]] = Version.parse(s, {
-    _.toLong
-  }, LongVersion.apply)
+  def parse(s: String): Option[Version[Long]] = Version.parse(s, (_.toLong), LongVersion.apply)
 }
 
 object Version {
