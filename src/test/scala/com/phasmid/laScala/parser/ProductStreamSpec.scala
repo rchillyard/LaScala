@@ -53,10 +53,10 @@ class ProductStreamSpec extends FlatSpec with Matchers {
   behavior of "TupleStream"
   it should "read taxonomy.txt correctly" in {
     val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), true))
-    //    for (t <- ps.input) println(t)
+    //    for (t <- ps.input) println(x)
     val header = ps.header
     val tuples = ps.tuplesPartial(true)
-    //    for (t <- tuples) println(t)
+    //    for (t <- tuples) println(x)
     import Spy._
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm)
     tsy.foreach(_.size shouldBe 15)

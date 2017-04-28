@@ -11,7 +11,6 @@ import scala.util._
 class FunctionalTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
-  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository.
   it should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))

@@ -42,7 +42,7 @@ import scala.util._
   *
   */
 trait Scalar extends Renderable {
-  // TODO seal this again once Value is in this module
+  // CONSIDER seal this again once Value is in this module
 
   /**
     * Method to get the wrapped value as an Any
@@ -192,7 +192,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
   override def asValuable[X: Valuable]: Option[X] = Try(Valuable[X].unit(x.asInstanceOf[X])).toOption
 
   override def asFractional[X: Fractional]: Option[X] = {
-    // FIXME this needs fixing
+    // CONSIDER this needs fixing
     //    val fractional = implicitly[Fractional[X]]
     //    Some(fractional.times(x.asInstanceOf[X], fractional.one))
     Some(x.asInstanceOf[X])
@@ -215,14 +215,14 @@ case class RationalScalar(x: LongRational, source: Any) extends BaseRationalScal
 abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScalar(x, source) {
   override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- Valuable[X].div(x1, x2).toOption) yield y
 
-  // TODO this also needs fixing like DoubleScalar
+  // CONSIDER this also needs fixing like DoubleScalar
   override def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
 
   override def toString = s"RationalScalar: ${render()}"
 
   override val defaultFormat = "%f"
 
-  // TODO we need to create a renderFormatted for Rational
+  // CONSIDER we need to create a renderFormatted for Rational
   override def renderFormatted(format: => String): String = x.toString
 }
 
@@ -244,7 +244,7 @@ abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, so
 
   override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Incrementable[X].fromString(x)(pattern).toOption
 
-  // TODO this also needs fixing...
+  // CONSIDER this also needs fixing...
   override def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
 
   override def toString = s"StringScalar: ${render()}"
@@ -262,10 +262,10 @@ abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, so
 case class QuotedStringScalar(x: String, source: Any) extends BaseQuotedStringScalar(x, source)
 
 /**
-  * TODO merge this and BaseStringScalar appropriately
+  * CONSIDER merge this and BaseStringScalar appropriately
   */
 abstract class BaseQuotedStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
-  // TODO create a concrete implicit object for OrderableString
+  // CONSIDER create a concrete implicit object for OrderableString
   override def asOrderable[X: Orderable](implicit pattern: String = ""): Option[X] = Try(Orderable[X].unit(x.asInstanceOf[X])).toOption
 
   override def toString = s"QuotedStringScalar: ${render()}"
@@ -445,7 +445,7 @@ object Scalar {
   /**
     * Transform a Map of Strings into a Map of corresponding Scalars.
     *
-    * XXX note that there is no native Scalar which is a Map.
+    * NOTE that there is no native Scalar which is a Map.
     *
     * @param kWm a map of Strings
     * @tparam K the key type

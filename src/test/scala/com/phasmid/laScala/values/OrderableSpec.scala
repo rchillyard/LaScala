@@ -69,7 +69,7 @@ class OrderableSpec extends FlatSpec with Matchers {
     val st = OrderableString.viaLookup("k", m get)
     st should matchPattern { case Success("v") => }
   }
-  // TODO we should move and modify the date-specific tests to IncrementableSpec
+  // CONSIDER we should move and modify the date-specific tests to IncrementableSpec
   "2016-01-01" should "result in OrderableDate" in {
     implicit val pattern = ""
     val dt = LocalDate of(2016, 2, 1)

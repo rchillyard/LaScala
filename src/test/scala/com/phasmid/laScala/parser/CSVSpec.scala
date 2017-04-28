@@ -39,7 +39,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   }
   it should "have column x of type String" in {
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
-    // XXX: this works only with 2.11
+    // NOTE: this works only with 2.11
     //    c column "x" match {
     //      case Some(xs) =>
     //        xs.take(2).toList.size should be(2)

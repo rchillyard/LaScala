@@ -1,3 +1,8 @@
+<!--
+  ~ LaScala
+  ~ Copyright (c) 2017. Phasmid Software
+  -->
+
 <!-- This is the file in which you set debug logging mode (assuming it is in the classpath). Otherwise set it in logback.xml -->
 <configuration debug="true">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -7,7 +12,7 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

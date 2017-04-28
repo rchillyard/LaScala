@@ -62,7 +62,7 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   it should "parse yes as yes" in (CsvParser.defaultParser("yes") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse no as false" in (CsvParser.defaultParser("no") should matchPattern { case Success(BooleanScalar(false, _)) => })
   it should "parse T as true" in (CsvParser.defaultParser("T") should matchPattern { case Success(BooleanScalar(true, _)) => })
-  // TODO why does this give StringScalar, not QuotedStringScalar
+  // CONSIDER why does this give StringScalar, not QuotedStringScalar
   it should """parse "1" as "1"""" in (CsvParser.defaultParser(""""1"""") should matchPattern { case Success(StringScalar("1", _)) => })
   it should """parse 2016-3-8 as datetime""" in {
     val dt = CsvParser.defaultParser("2016-3-8")

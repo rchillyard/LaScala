@@ -130,7 +130,7 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
       for (xWs <- FP.sequence(xWys.toSeq)) yield FP.toMap(xWs)
     }
 
-    // TODO this should be tuplesPartial
+    // NOTE this should be tuplesPartial
     FP.sequence(tuples map m)
   }
 }
@@ -142,8 +142,6 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
 
   /**
     * May print to the SysErr stream as a side-effect if wsy is a Failure
-    *
-    * CONSIDER merge/move this into TupleStreamBase
     *
     * @return the header for this object
     */

@@ -134,7 +134,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     optionToTry(map.get("a"), t) should matchPattern { case Success("A") => }
     optionToTry(map.get("x"), t) should matchPattern { case Failure(`t`) => }
   }
-  // TODO what does this have to do with lift?
+  // CONSIDER what does this have to do with lift?
   "lift" should "succeed" in {
     def double(x: Int) = 2 * x
 
@@ -190,7 +190,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // TODO need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here
   "map2lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
@@ -214,7 +214,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     map3(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // TODO need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here
   "map3lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
@@ -285,7 +285,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     val test = map2(t1, t2)(Principal.apply)
 
-    // TODO this was originally a Failure and I have broken that.
+    // NOTE: this was originally a Failure and I have broken that.
     test should matchPattern { case Success(_) => }
   }
 

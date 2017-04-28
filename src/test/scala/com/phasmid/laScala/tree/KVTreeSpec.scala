@@ -5,7 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.util.Try
 
 /**
-  * TODO there's a lot of redundant tests here -- clean them out
+  * CONSIDER there's a lot of redundant tests here -- clean them out
   *
   * Created by scalaprof on 10/19/16.
   */
@@ -95,7 +95,6 @@ class KVTreeSpec extends FlatSpec with Matchers {
   }
 
   behavior of ":+, findParent, createValueFromKey, etc."
-  // TODO this should work properly
   it should "work correctly for GeneralKVTree" in {
     val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
     val tree2 = tree :+ 14

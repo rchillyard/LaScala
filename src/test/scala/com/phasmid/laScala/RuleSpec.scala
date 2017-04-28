@@ -50,7 +50,7 @@ class RuleSpec extends FlatSpec with Matchers {
     //    val q: Rule[Double] = p transform (_.toDouble, _.toDouble)
     //    p() should matchPattern {case Success(true) => }
   }
-  // TODO figure out why this is being ignored
+  // CONSIDER why this is being ignored
   ignore should "work with lookup function" in {
     val vars = Map("x" -> 0)
     val p: Rule[String] = new BoundPredicate("x", Func[String](_ == "0"))

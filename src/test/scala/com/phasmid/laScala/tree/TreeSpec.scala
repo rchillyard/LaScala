@@ -228,7 +228,7 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree3 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(5), Leaf(6)))))
     val tree4 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
-    // TODO understand why this doesn't work. At appears to yield Some(true)
+    // CONSIDER understand why this doesn't work. At appears to yield Some(true)
     //    tree3.like(tree4) should matchPattern {case Kleenean(Some(true)) => }
   }
   it should "work for UnvaluedBinaryTree" in {
@@ -316,7 +316,7 @@ class TreeSpec extends FlatSpec with Matchers {
     }).toList shouldBe Seq(Leaf(1), Leaf(3), Leaf(5))
   }
 
-  // FIXME try to understand why this bit of code -- which hasn't actually changed -- suddenlty causes a weird compiler error
+  // TODO try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error
   //  it should "work correctly for unsorted Flatland tree" in {
   //    val uo = Option(getClass.getResource("flatland.txt"))
   //    uo should matchPattern { case Some(_) => }
@@ -372,7 +372,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   }
   /**
-    * TODO reimplement this using GeneralTree instead of GeneralKVTree.
+    * CONSIDER reimplement this using GeneralTree instead of GeneralKVTree.
     * XXX I think it whould work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
     *
     * This test is based on the description of the "nested set model" in Wikipedia: https://en.wikipedia.org/wiki/Nested_set_model

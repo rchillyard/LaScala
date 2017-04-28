@@ -1,7 +1,7 @@
 package com.phasmid.laScala.tree
 
 /**
-  * XXX: this will only compile with 2.11
+  * NOTE: this will only compile with 2.11
   * Created by scalaprof on 10/19/16.
   */
 //class ParentSpec extends FlatSpec with Matchers {
@@ -17,7 +17,7 @@ package com.phasmid.laScala.tree
 //    def createValueFromKey(k: String): Option[String] = Some(k)
 //  }
 //
-//  def f(t: Node[Int]): Option[Int] = t.get
+//  def f(t: Node[Int]): Option[Int] = x.get
 //  def g(ns: Seq[Int], io: Option[Int]): Seq[Int] = io match { case Some(i) => ns :+ i; case _ => ns}
 //
 //  it should "work correctly for GeneralTree" in {
@@ -50,9 +50,9 @@ package com.phasmid.laScala.tree
 //    import UnvaluedBinaryTree._
 //    val tree = Tree.populateOrderedTree(z)
 //    println(tree)
-//    def f(t: Node[String]): Option[String] = t.get
+//    def f(t: Node[String]): Option[String] = x.get
 //    def g(ns: Seq[String], wo: Option[String]): Seq[String] = wo match { case Some(i) => ns :+ i; case _ => ns}
-//    // TODO recreate this test
+//    // CONSIDER recreate this test
 ////    Parent.traverse(f,g)(List[Node[String]](tree),List[String]()).take(12) shouldBe List("i", "flatland", "world", "because", "hexagons", "not", "years", "a", "but", "freely", "higher", "make")
 //  }
 //  val flatLandTree = "a{{about}above{{actually}ago{{alas}all{{and}another{{anything}appear{{are}as{{at}back{{be}because{{become}becoming{{been}below{{bringing}but{{by}call{{can}ceased{{circle}clearer{{condition}contrary{{correct}could{{country}countrymen{{dare}demonstrate{{described}distinguish{{down}drawing{{edge}edges{{exactly}except{{eye}far{{few}figure{{figures}find{{fixed}flatland{{flatlander}freely{{from}gradually{{happy}hard{{has}have{{hexagons}higher{{i}imagine{{impossible}in{{inhabitants}instead{{into}is{{it}its{{kind}last{{leaning}least{{like}line{{lines}live{{look}lower{{luminous}make{{middle}mind{{more}move{{moving}much{{my}nature{{necessity}nor{{not}nothing{{notion}now{{of}on{{once}one{{only}opened{{or}other{{our}oval{{over}p{{paper}penny{{pentagons}perceive{{place}placed{{places}power{{pretty}privileged{{readers}remaining{{rising}said{{say}see{{shadows}sheet{{should}sight{{sinking}so{{solid}space{{speedily}squares{{straight}such{{suppose}surface{{table}tables{{that}the{{their}them{{then}there{{things}this{{thus}to{{triangles}universe{{upon}us{{vast}very{{view}views{{visible}was{{we}were{{what}when{{which}who{{will}with{{without}world{{years}you{{your}yourself}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"

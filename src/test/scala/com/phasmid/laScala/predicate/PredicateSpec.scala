@@ -179,7 +179,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p("six") should matchPattern { case Success(false) => }
   }
   "Always" should "be true" in {
-    // TODO Figure out why we get a warning here and fix it!
+    // CONSIDER Figure out why we get a warning here and fix it!
     val p = Always
     p() should matchPattern { case Success(true) => }
   }
@@ -219,7 +219,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
     p(-1) should matchPattern { case Success(false) => }
-    // XXX: this fails for 2.10
+    // NOTE: this fails for 2.10
     //    s.toString shouldBe "func1 evaluated. "
   }
   ":|" should "work with Predicate" in {
@@ -244,7 +244,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     }
 
     val _ = Func(func1) :^| func2
-    // XXX: fails for 2.10
+    // NOTE: fails for 2.10
     //    p(3) should matchPattern { case Success(true) => }
     //    s.toString shouldBe "func1 evaluated. "
     //    s.clear()
@@ -278,7 +278,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
     p(-1) should matchPattern { case Success(false) => }
-    // XXX: works only with 2.11
+    // NOTE: works only with 2.11
     //    s.toString shouldBe "func1 evaluated. "
   }
   "|:" should "work with Predicate" in {
@@ -302,8 +302,9 @@ class PredicateSpec extends FlatSpec with Matchers {
       x < 10
     }
 
+    // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val _ = func1 _ |^: Func(func2)
-    // XXX: works only with 2.11
+    // NOTE: works only with 2.11
     //    p(3) should matchPattern { case Success(true) => }
     //    s.toString shouldBe "func1 evaluated. "
     //    s.clear()

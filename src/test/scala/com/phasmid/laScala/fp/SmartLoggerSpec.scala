@@ -54,7 +54,7 @@ class SmartLoggerSpec extends FlatSpec with Matchers {
   it should "work in context with debug" in {
     val logger = LoggerFactory.getLogger(getClass)
     import SmartLoggerSlf4JDebug._
-    // XXX: note that nothing will show in the logs unless you redefine the level to be DEBUG
+    // NOTE that nothing will show in the logs unless you redefine the level to be DEBUG
     (for (i <- List("1", "2", "3")) yield logger("string conversion")(i.toInt)) shouldBe List(1, 2, 3)
   }
   it should "work with milestones" in {

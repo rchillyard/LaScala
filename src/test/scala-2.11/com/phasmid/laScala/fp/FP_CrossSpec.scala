@@ -12,7 +12,7 @@ import scala.util._
   */
 class FP_CrossSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
-  // TODO need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here
   // NOTE: map2lazy is only available with 2.11
   "map2lazy" should "succeed" in {
     val one = Success(1)

@@ -128,7 +128,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
         val values = Spy.noSpy(tree.iterator().toList)
         val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key), tree.includes(x, y))))
         Spy.log(s"checking for disagreement between tree and MPTT:")
-        // XXX: The following part of the test only works with Scala 2.11
+        // NOTE: The following part of the test only works with Scala 2.11
         //          val badResults = results filter (!_._3)
         //          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
         //          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}
@@ -176,7 +176,8 @@ object AccountRecordTest {
     val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
     val aoso = for (wss <- wsso) yield for (ws <- wss) yield tester.createAccountRecord(ws)
 
-    // CONSIDER Now, we flatten the options, resulting in None if there were any problems at all. May want to change the behavior of this later
+    // NOTE Now, we flatten the options, resulting in None if there were any problems at all.
+    // CONSIDER May want to change the behavior of this later
     (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 

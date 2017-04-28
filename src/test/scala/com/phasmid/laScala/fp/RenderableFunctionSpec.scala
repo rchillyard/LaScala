@@ -263,7 +263,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   }
 
   it should "partiallyApplyFunction correctly" in {
-    // TODO understand why this is a bit flaky
+    // CONSIDER understand why this is a bit flaky
     val f = FunctionString("f", 1)
     val g = FunctionString("g", 1)
     val h = g.partiallyApplyFunction(f)
@@ -418,7 +418,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   }
 
   /**
-    * TODO figure out how to avoid using asInstanceOf in this and other unit tests
+    * CONSIDER figure out how to avoid using asInstanceOf in this and other unit tests
     */
   it should "handle a function that throws an exception (1)" in {
     val map = Map("PI" -> "3.1415927")
@@ -573,11 +573,26 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   }
 
   it should "handle varargs of cardinality 2" in {
-    val rf1 = RenderableFunction.varargs(2)
+    val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](2)
     rf1.arity shouldBe 2
     val rf2y = rf1.partiallyApplyParameters(List[Parameter[_]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName shouldBe Success(List("l", "K"))
+  }
+
+  /**
+    * NOTE: this is the highest value of args we currently support.
+    * NOTE: there is a MUCH better way of handling varargs: use Closure.createVarArgsClosure
+    */
+  val args=7
+  it should "handle varargs of cardinality "+args.toString in {
+    val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](args)
+    rf1.arity shouldBe args
+    val values = (for (i <- 1 to args) yield i.toString).toList
+    val params: List[Parameter[_]] = for (x <- values) yield Left(x)
+    val rf2y = rf1.partiallyApplyParameters(params)
+    rf2y should matchPattern { case Success(_) => }
+    rf2y.get.callByName shouldBe Success(values)
   }
 
   behavior of "boolean expression"
@@ -689,7 +704,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val functionString = FunctionString(w, arity, cbn)
     val classTags = Seq(implicitly[ClassTag[T1]])
     assert(classTags.length==arity)
-    // TODO use the private method mechanism
+    // CONSIDER use the private method mechanism
 //    val privateMethod = PrivateMethod[Try[RenderableFunction[R]]]('partiallyApply)
 //    val h = RenderableFunction invokePrivate privateMethod(arity, f, t1, functionString, cbn, classTags)
 //    println(h)
@@ -707,7 +722,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
   private def testGetPartialApplicationFunction1[T1: ClassTag](expected: String, t1: T1, f: Product => String, cbn: Boolean) = {
     val arity = 1
-    // TODO use the private method mechanism
+    // CONSIDER use the private method mechanism
 //    val _g = PrivateMethod[Product=>String]('getPartialApplicationFunction)
 //    val h = RenderableFunction invokePrivate _g(arity, f, t1, cbn)
 //    h(Tuple0) shouldBe expected

@@ -13,7 +13,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
   *
   * This module/package does more than just parse Rules. In particular, it has a facility to parse expressions too.
   *
-  * TODO the parsing and toString of this package are not compatible so that Json cannot currently be used.
+  * NOTE: the parsing and toString of this package are not compatible so that Json cannot currently be used.
   */
 
 /**
@@ -172,7 +172,7 @@ class RuleParser extends JavaTokenParsers {
   def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case _ ~ l ~ _ ~ h => RangePredicateExpr(l, h) }
 
   private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
-  // TODO implement this...
+  // CONSIDER implement this...
   //  private val lesserOp = regex("""<|<=""".r)
   private val identifier = regex("""\w+""".r)
   private val identifierWithPeriods = regex("""[\w\.]+""".r)
@@ -269,7 +269,6 @@ class RuleParser extends JavaTokenParsers {
   }
 
   //  /**
-  //    * XXX this appears not to be tested
   //    *
   //    * @param s the String which defines this expression
   //    */

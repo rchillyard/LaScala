@@ -7,6 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
+import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -82,7 +83,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   def func: (Product) => R = f
 
   /**
-    * Method which will take this RenderableFunction and apply the given parameters, except that Closure parameters will themselves be partiallyApplied.
+    * Method which will take this RenderableFunction and apply the given parameters, except that any Closure parameters will themselves be partiallyApplied.
     * The result is a RenderableFunction[R] wrapped in Try.
     *
     * @param tps the list of parameters
@@ -125,7 +126,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
 
   /**
     * Method to partially apply the value t to this RenderableFunction.
-    * In this context (t comes from a Parameter which is a Left[T]), then t is always a T (never a function).
+    * In this context (t comes from a Parameter which is a Left[T]), then x is always a T (never a function).
     *
     * @param t a value which should yield a T
     * @tparam T the desired type
@@ -178,7 +179,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: S
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = w.toString
 
   /**
-    * CONSIDER in practice, the only real use for this, currently, is method evaluationStyle
+    * XXX in practice, the only real use for this, currently, is method evaluationStyle
     *
     * @return if true, then this function can be eagerly evaluated.
     */
@@ -322,12 +323,32 @@ case class FreeParam(s: String, cbn: Boolean) {
   * Companion object to RenderableFunction
   */
 object RenderableFunction {
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
   def toScala[T: ClassTag](t: Any): T = (t match {
     case q: java.lang.Boolean => Boolean.unbox(q)
     case q: java.lang.Integer => Int.unbox(q)
     case q: java.lang.Double => Double.unbox(q)
     case _ => t
   }).asInstanceOf[T]
+
+  /**
+    * This is similar to the toScala method except that it isn't concerned with converting Java types to Scala.
+    * For now, there is no attempt at conversion unless T is a String.
+    * If the value cannot be converted, an exception will be thrown.
+    *
+    * @param x an Any
+    * @tparam T the return type
+    * @return a T
+    */
+  def convert[T: ClassTag](x: Any): T = x match {
+    case t: T => t
+    case _ =>
+      val tc = implicitly[ClassTag[T]]
+      if (tc.runtimeClass == classOf[String]) x.toString.asInstanceOf[T]
+      else throw RenderableFunctionException(s"$x of type ${x.getClass} cannot be converted to $tc")
+  }
 
   // CONSIDER using use assert instead
   def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
@@ -411,12 +432,33 @@ object RenderableFunction {
 
   def callByValue(n: Int): Seq[Boolean] = Stream.continually(false) take n
 
+  /**
+    * Method to create a varargs function.
+    *
+    * NOTE: this is limited in the value of n which it can support (currently 7)
+    *
+    * NOTE: there is a far superior way of dealing with varargs: Closure.createVarArgsClosure
+    *
+    * @see Closure
+    * @param n the number of args: a number less than or equal to 7
+    * @tparam T the type of the parameters
+    * @return a RenderableFunction which yields a Seq[T]
+    */
   def varargs[T: ClassTag](n: Int): RenderableFunction[Seq[T]] = {
     val mkList = "mkList"
     val cbn = callByValue(n)
     val cs: ParamClasses = Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n
 
     def emptyList(p: Product) = Seq[T]()
+
+    /**
+      * Method to take a product of any arity and return a Seq[T]
+      * Any element of the given product which is no a T,
+      *
+      * @param p a Product (or Tuple)
+      * @return a Seq[T]
+      */
+    def f(p: Product): Seq[T] = (for (x <- p.productIterator) yield convert(x)).toSeq
 
     n match {
       case 0 => apply(0, emptyList, mkList, cbn, cs)
@@ -429,7 +471,7 @@ object RenderableFunction {
       case 7 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T, t6: T, t7: T) => Seq[T](t1, t2, t3, t4, t5, t6, t7) }, mkList, cbn)
       case 8 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T, t6: T, t7: T, t8: T) => Seq[T](t1, t2, t3, t4, t5, t6, t7, t8) }, mkList, cbn)
       case 9 => apply({ (t1: T, t2: T, t3: T, t4: T, t5: T, t6: T, t7: T, t8: T, t9: T) => Seq[T](t1, t2, t3, t4, t5, t6, t7, t8, t9) }, mkList, cbn)
-      case _ => throw RenderableFunctionException(s"varargs of $n is not implemented")
+      case _ => apply(n, FunctionString(mkList, n), cbn, cs)(f)
     }
   }
 
@@ -479,8 +521,8 @@ object RenderableFunction {
   /**
     * This method unwraps x if it is a Try[T] otherwise, it assumes x to be a T.
     *
-    * XXX Exactly why we need this method -- when we already have apply(Product) to take care of this, I don't know.
     * CONSIDER refactoring so that this method is not necessary.
+    * (Exactly why we need this method -- when we already have apply(Product) to take care of this, I don't know).
     *
     * @param x a value of any type
     * @tparam T the desired result type
@@ -521,7 +563,7 @@ object RenderableFunction {
   }
 
   /**
-    * This method is used to partially apply a the given function (f), with the given parameter (t) and yield
+    * This method is used to partially apply the given function (f), with the given parameter (t) and yield
     * a function with arity one less than that of f.
     *
     * @param n the arity of f
@@ -557,7 +599,8 @@ object RenderableFunction {
       case 7 =>
         val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
         asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-      case _ => throw RenderableFunctionException(s"cannot partially apply function of arity $n (not supported/implemented)")
+      case _ =>
+        throw RenderableFunctionException(s"cannot partially apply function of arity $n (not supported/implemented)")
     }
 
   /**
@@ -567,7 +610,7 @@ object RenderableFunction {
     n match {
       case 1 =>
         val f1: Tuple1[T] => R = f
-        // TODO see why we have to call extract. It should never be necessary.
+        // CONSIDER see why we have to call extract. It should never be necessary.
         val g0: (Product) => R = { _: Product => f1(Tuple1(extract(t())(implicitly[ClassTag[T]]))) }
         g0
       case 2 =>

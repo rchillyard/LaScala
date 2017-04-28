@@ -30,7 +30,7 @@ scalaTestVersion := (scalaBinaryVersion.value match {
 libraryDependencies ++= (scalaBinaryVersion.value match {
     case "2.11" =>   Seq(
       scalaModules %% "scala-parser-combinators" % scalaModulesVersion,
-      //  // TODO we don't need this but dependencies apparently use different versions:
+      // NOTE: we don't need this but dependencies apparently use different versions:
       scalaModules %% "scala-xml" % scalaModulesVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0"
     )
@@ -40,7 +40,7 @@ libraryDependencies ++= (scalaBinaryVersion.value match {
 libraryDependencies ++= Seq(
   typesafeGroup % "config" % configVersion,
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
-  // TODO merge date/time code so as to use Java8 instead of Joda-time
+  // CONSIDER merge date/time code so as to use Java8 instead of Joda-time
   "codes.reactive" %% "scala-time" % "0.4.0",
   "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
   // NOTE: only used for testing

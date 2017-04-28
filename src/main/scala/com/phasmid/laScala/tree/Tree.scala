@@ -174,7 +174,6 @@ sealed trait Tree[+A] extends Node[A] {
     */
   def summary: String = {
     val r = new StringBuilder(s""""$get: """")
-    // TODO need to unpack the option
     val l = for (c <- children; x <- c.get.orElse(Some(Empty))) yield x.toString
     r.append(l mkString ", ")
     r.toString
@@ -455,7 +454,7 @@ trait Branch[+A] extends Tree[A] {
   /**
     * Iterate on the nodes of this branch
     *
-    * TODO: this method is not currently implemented in a tail-recursive manner.
+    * NOTE: this method is not currently implemented in a tail-recursive manner.
     *
     * @param depthFirst if true then we iterate depth-first, else breadth-first
     * @return an iterator of nodes
@@ -472,7 +471,7 @@ trait Branch[+A] extends Tree[A] {
     * Create a String which represents this Node and its subtree
     *
     * XXX not tail-recursive.
-    * TODO make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
+    * CONSIDER make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
     *
     * @param indent the number of tabs before output should start on a new line.
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
@@ -721,7 +720,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // FIXME implement me
+  def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 }
 
 /**
@@ -899,14 +898,14 @@ object Node {
       */
     def children(t: Node[A]): Seq[Node[A]] = t match {
       case tl: Tree[A] => tl.children
-      case _ => Seq.empty // XXX: this should be OK
+      case _ => Seq.empty
     }
   }
 }
 
 object Tree {
-  // TODO we want the key value to implement ordering, not the value itself
-  // TODO implement this like for general tree (below)
+  // CONSIDER we want the key value to implement ordering, not the value itself
+  // CONSIDER implement this like for general tree (below)
 
   /**
     * Method to populate an ordered tree.
@@ -956,7 +955,7 @@ object Tree {
     def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = {
       work._2 match {
         case Nil => r
-        // TODO this looks totally wrong!!
+        // NOTE this looks totally wrong!!
         case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + 2 * h.size, t))
       }
     }
@@ -1023,7 +1022,7 @@ object UnvaluedBinaryTree {
       }
     }
 
-    // TODO simplify this: now that we explicitly order n1, n2 we don't have to be so particular about the various non-overlapping cases
+    // CONSIDER simplify this: now that we explicitly order n1, n2 we don't have to be so particular about the various non-overlapping cases
     def buildTree(x: Node[A], y: Node[A]): Tree[A] = {
       // XXX if x,y are ordered correctly (or overlapping) we create n1, n2 in same order, otherwise we flip the order
       val (n1, n2) = if (AbstractBinaryTree.isOrdered(x, y)) (x, y) else (y, x)
@@ -1114,7 +1113,7 @@ object UnvaluedBinaryTree {
 object BinaryTree {
 
   // TODO implement this properly, given that there are values in BinaryTree
-  // TODO eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
+  // CONSIDER eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
 
   abstract class BinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {
     /**
@@ -1246,7 +1245,7 @@ object AbstractBinaryTree {
   /**
     * Determine whether the value on the left is ordered before all the nodes on the right
     *
-    * TODO: this is recursive
+    * NOTE: this is recursive
     *
     * @param ans the left-node-sequence
     * @param bns the right-node-sequence
@@ -1258,7 +1257,7 @@ object AbstractBinaryTree {
   /**
     * Determine whether the value on the left is ordered before all the nodes on the right
     *
-    * TODO: this is recursive
+    * NOTE: this is recursive
     *
     * @param an  the left-node
     * @param bns the right-node-sequence
@@ -1270,7 +1269,7 @@ object AbstractBinaryTree {
   /**
     * Determine whether the value on the left is ordered before all the nodes on the right
     *
-    * TODO: this is recursive
+    * NOTE: this is recursive
     *
     * @param a  the left-value
     * @param an the right-node

@@ -16,8 +16,6 @@ import scala.util._
   * This has been split off from Valuable by scalaprof on 7/10/16.
   *
   * CONSIDER extending Ordered instead of Ordering
-  *
-  * TODO move this into values package
   */
 trait Orderable[X] extends Ordering[X] {
   /**

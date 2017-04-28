@@ -123,7 +123,7 @@ object Recursion {
       }
 }
 
-// FIXME this is broken but should be fixed!
+// CONSIDER this is broken but should be fixed!
 
 //object Factorial {
 //  def f(x: BigInt, y: Int): BigInt = x * y

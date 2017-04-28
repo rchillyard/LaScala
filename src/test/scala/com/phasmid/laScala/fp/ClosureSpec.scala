@@ -46,7 +46,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     c() shouldBe Success(true)
   }
 
-  // TODO investigate why this doesn't work
+  // CONSIDER investigate why this doesn't work
   ignore should "apply for a closure where the parameter is itself a Closure" in {
     val getPi: Product => String = { _ => math.Pi.toString }
     val f1 = RenderableFunction({ s: String => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
@@ -93,22 +93,29 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   behavior of "createVarArgsClosure"
 
-  it should "handle varargs of cardinality 0" in {
+  it should "handle varargs of 0 elements" in {
     val c = Closure.createVarArgsClosure()
     c.arity shouldBe 0
     c() shouldBe Success(Seq())
   }
 
-  it should "handle varargs of cardinality 1" in {
-    val c = Closure.createVarArgsClosure("l")
+  it should "handle varargs of 1 constant elements" in {
+    val c = Closure.createVarArgsClosure(Left("l"))
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l"))
   }
 
-  it should "handle varargs of cardinality 2" in {
-    val c = Closure.createVarArgsClosure("l", "K")
+  it should "handle varargs of 2 constant elements" in {
+    val c = Closure.createVarArgsClosure(Left("l"), Left("K"))
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "K"))
+  }
+
+  it should "handle varargs of 1 variable elements sandwiched in 2 constant elements" in {
+    val f = RenderableFunction({ s: String => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
+    val c = Closure.createVarArgsClosure(Left("l"), Right(Closure[String, String](f, Left("Hello"))), Left("K"))
+    c.arity shouldBe 0
+    c() shouldBe Success(Seq("l", "HELLO", "K"))
   }
 
   behavior of "Closure with lookup"
@@ -117,7 +124,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     val sArg1 = "p1"
     val col1 = "col1"
     val val1 = "42"
-    // NOTE: create an empty set of variables
+    // XXX: create an empty set of variables
     val variables = mutable.HashMap[String,String]()
     implicit val lookup: String => Try[String] = { s => Spy.spy(s"lookup $s", FP.optionToTry(variables.get(s)))}
 
@@ -210,7 +217,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     val val2 = "VALUE_2"
     val val3 = "VALUE_3"
     val val4 = "VALUE_4"
-    // NOTE: create an empty set of variables
+    // XXX: create an empty set of variables
     val variables = mutable.HashMap[String,String]()
     implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s))}
 
@@ -249,7 +256,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "match" in {
     val sArg1 = "p1"
     val col1 = "col1"
-    // NOTE: create an empty set of variables
+    // XXX: create an empty set of variables
     val variables = mutable.HashMap[String, String]()
     implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s)) }
 
@@ -269,5 +276,21 @@ class ClosureSpec extends FlatSpec with Matchers {
     val dy1 = for (d <- c1 partiallyApply) yield d
     val dy2 = for (d <- c2 partiallyApply) yield d
     dy1.get.hashCode() shouldBe dy2.get.hashCode()
+  }
+
+  behavior of "??"
+  it should "handle apply" in {
+    val x = ??(Seq("1"))
+    x.get shouldBe Seq("1")
+  }
+  it should "handle +:" in {
+    val x = ??(Seq("2"))
+    val y = "1" +: x
+    y.get shouldBe Seq("1","2")
+  }
+  it should "handle ++:" in {
+    val x = ??(Seq("2"))
+    val y = Seq("1") ++: x
+    y.get shouldBe Seq("1","2")
   }
 }

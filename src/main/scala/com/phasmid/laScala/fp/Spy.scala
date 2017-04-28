@@ -178,7 +178,7 @@ object Spy {
     // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
     // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
     case s: Stream[_] => s"[Stream showing at most 5 items] ${s.take(5).toList}"
-    // XXX: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
+    // NOTE: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
     case Success(z) =>
       val sb = new StringBuilder("")
 
@@ -186,14 +186,14 @@ object Spy {
 
       spy(s"Success", z, b)
       sb.toString
-    // XXX: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
+    // NOTE: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
     case Failure(t) => s"Failure($t)"
-    // XXX: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
+    // NOTE: If the value to be spied on is Future(_) then we invoke spy on the underlying value when it is completed
     case f: Future[_] =>
       import scala.concurrent.ExecutionContext.Implicits.global
       f.onComplete(spy("Future", _, b))
       "to be provided in the future"
-    // XXX: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
+    // NOTE: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
     case _ => x.toString
   }
 
