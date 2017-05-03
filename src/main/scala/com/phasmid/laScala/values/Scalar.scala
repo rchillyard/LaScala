@@ -398,7 +398,7 @@ object DateScalar {
 
 object Scalar {
 
-  def unapply(x: Scalar) = Some(x.get)
+  def unapply(x: Scalar): Option[Any] = Some(x.get)
 
   implicit def apply(x: Boolean): Scalar = BooleanScalar(x)
 

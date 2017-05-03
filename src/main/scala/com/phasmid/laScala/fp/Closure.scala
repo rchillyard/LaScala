@@ -124,16 +124,7 @@ object Closure {
     */
   def createVarArgsClosure[T: ClassTag](tps: Parameter[T]*): Closure[T, Seq[T]] = {
 
-    @tailrec
-    def inner(result: (Seq[Seq[T]], Seq[Parameter[T]]), work: Seq[Parameter[T]]): (Seq[Seq[T]], Seq[Parameter[T]]) = work match {
-      case Nil => result
-      case h :: t => h match {
-        case Left(x) => inner((result._1.init :+ (result._1.last :+ x), result._2), t)
-        case Right(_) => inner((result._1 :+ Nil, result._2 :+ h), t)
-      }
-    }
-
-    val (tss, _tps) = inner((Seq(Nil), Nil), tps.toList)
+    val (tss: Seq[Seq[T]], _tps: Seq[Parameter[T]]) = VarArgs[T, T, Closure[_, T]](tps, identity).split
 
     /**
       * Get the number of variables/functions
@@ -165,6 +156,23 @@ object Closure {
     Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
   }
 
+
+}
+
+case class VarArgs[T, X, Y](xYes: Seq[Either[X, Y]], x2t: X => T) {
+  def split: (Seq[Seq[T]], Seq[Either[X, Y]]) = {
+    @tailrec
+    def inner(result: (Seq[Seq[T]], Seq[Either[X, Y]]), work: Seq[Either[X, Y]]): (Seq[Seq[T]], Seq[Either[X, Y]]) = work match {
+      case Nil => result
+      case h :: t => h match {
+        case Left(x) =>
+          inner((result._1.init :+ (result._1.last :+ x2t(x)), result._2), t)
+        case Right(_) => inner((result._1 :+ Nil, result._2 :+ h), t)
+      }
+    }
+
+    inner((Seq(Nil), Nil), xYes.toList)
+  }
 
 }
 
