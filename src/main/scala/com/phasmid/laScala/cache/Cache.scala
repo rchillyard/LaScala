@@ -55,7 +55,7 @@ trait Expiring[K] {
   * @tparam K they key type
   * @tparam V the value type
   */
-case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit, initialSize: Int = 16) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(carper, initialSize) {
+case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(carper) {
   /**
     * method to remove a key from the cache
     *
@@ -82,7 +82,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
   * @tparam K they key type
   * @tparam V the value type
   */
-case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit, initialSize: Int = 16) extends TryFulfillingExpiringCache[K, V](evaluate)(carper, initialSize) {
+case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit) extends TryFulfillingExpiringCache[K, V](evaluate)(carper) {
   /**
     * method to remove a key from the cache
     *
@@ -202,7 +202,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit, initialSize: Int = 16) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](initialSize), evaluationFunc)(carper) {
+abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](), evaluationFunc)(carper) {
 
   /**
     * Define T as Option[V]
@@ -233,7 +233,7 @@ abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class TryFulfillingExpiringCache[K, V](evaluationFunc: K => Try[V])(implicit carper: String => Unit, initialSize: Int = 16) extends AbstractExpiringCache[K, V, Try](new TryHashMap[K, V](initialSize), evaluationFunc) {
+abstract class TryFulfillingExpiringCache[K, V](evaluationFunc: K => Try[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Try](new TryHashMap[K, V](), evaluationFunc) {
 
   /**
     * Define T as Try[V]
@@ -262,7 +262,7 @@ abstract class TryFulfillingExpiringCache[K, V](evaluationFunc: K => Try[V])(imp
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class FutureFulfillingExpiringCache[K, V](evaluationFunc: K => Future[V])(implicit carper: String => Unit, executor: ExecutionContext, initialSize: Int = 16) extends AbstractExpiringCache[K, V, Future](new FutureHashMap[K, V](initialSize), evaluationFunc) {
+abstract class FutureFulfillingExpiringCache[K, V](evaluationFunc: K => Future[V])(implicit carper: String => Unit, executor: ExecutionContext) extends AbstractExpiringCache[K, V, Future](new FutureHashMap[K, V](), evaluationFunc) {
   /**
     * Define T as Future[V]
     */
@@ -376,19 +376,21 @@ object Wrapper {
 }
 
 /**
-  * Abstract base class CacheMap which is a subclass of mutable.HashMap with the same key, value types
+  * CONSIDER using WeakHashMap instead of HashMap
+  *
+  * Abstract base class CacheMap which is a subclass of mutable.WeakHashMap with the same key, value types
   * but with an additional parametric type: M (the wrapper/container type).
   *
   * The reason for extending HashMap (rather than using it directly) is that we need to define a variant
   * of getOrElseUpdate.
   *
   * @param wrapper     (implicit) a wrapper which is used to create an M[V] object
-  * @param initialSize (defaults to 16)
   * @tparam K key type
   * @tparam V value type
   * @tparam M a container which is a monad, such as Option, Future, Try.
   */
-abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M], override val initialSize: Int = 16) extends mutable.HashMap[K, V] {
+abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.HashMap[K, V] {
+  //  abstract class CacheMap[K, V, M[_], H[_,_] <: mutable.MapLike[K,V,H]](val wrapper: Wrapper[M]) extends H[K, V] {
   self =>
 
   /**
@@ -417,7 +419,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M], override val initia
   * @tparam K they key type
   * @tparam V the value type
   */
-class OptionHashMap[K, V](override val initialSize: Int = 16) extends CacheMap[K, V, Option](Wrapper.optionWrapper, initialSize)
+class OptionHashMap[K, V]() extends CacheMap[K, V, Option](Wrapper.optionWrapper)
 
 /**
   * This class is a concrete subclass of CacheMap and uses Try as the container "M".
@@ -425,7 +427,7 @@ class OptionHashMap[K, V](override val initialSize: Int = 16) extends CacheMap[K
   * @tparam K they key type
   * @tparam V the value type
   */
-class TryHashMap[K, V](override val initialSize: Int = 16) extends CacheMap[K, V, Try](Wrapper.tryWrapper, initialSize)
+class TryHashMap[K, V]() extends CacheMap[K, V, Try](Wrapper.tryWrapper)
 
 /**
   * This class is a concrete subclass of CacheMap and uses Future as the container "M".
@@ -433,7 +435,7 @@ class TryHashMap[K, V](override val initialSize: Int = 16) extends CacheMap[K, V
   * @tparam K they key type
   * @tparam V the value type
   */
-class FutureHashMap[K, V](override val initialSize: Int = 16) extends CacheMap[K, V, Future](Wrapper.futureWrapper, initialSize)
+class FutureHashMap[K, V]() extends CacheMap[K, V, Future](Wrapper.futureWrapper)
 
 /**
   * Trait to define the behavior of a cache as a map

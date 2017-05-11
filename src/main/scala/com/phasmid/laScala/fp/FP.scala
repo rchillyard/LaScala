@@ -303,7 +303,7 @@ object FP {
   def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo, null)
 
   /**
-    * Alternative to the toOption method in Option.
+    * Alternative to the toOption method in Option which, in my humble opinion, is dangerous because it's just too easy to lose failures.
     * This method will throw any fatal failures, log any non-fatal failures and then convert the Try to an Option
     *
     * @param xy the Try object
@@ -335,7 +335,29 @@ object FP {
     */
   def toOption[X](p: X => Boolean)(t: X): Option[X] = toOption(p(t), t)
 
-//  /**
+  /**
+    * This method simply returns xy if it is a Success.
+    * If it's a Failure, then it will invoke function f, as a side-effect, and then return the failure but with a standard message.
+    * If the cause is fatal, then it will be thrown.
+    *
+    * Similar to recover, recoverWith, etc.
+    *
+    * @param xy the Try[X] that is passed in (call-by-name)
+    * @param f  the function to process the cause of any failure
+    * @tparam X the underlying type of the return
+    * @return a Try[X]
+    */
+  def logFailure[X](xy: => Try[X], f: Throwable => Unit): Try[X] = xy match {
+    case Success(_) => xy
+    case Failure(t) => t match {
+      case NonFatal(e) => f(e)
+        Failure(new Exception("Failure of Try: see log for details"))
+      case _ => throw t
+    }
+  }
+
+
+  //  /**
 //    * TODO unit test
 //    *
 //    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)

@@ -102,7 +102,7 @@ case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends Inc
 object LongVersion {
   def apply(tag: Long): Version[Long] = apply(tag, None)
 
-  def parse(s: String): Option[Version[Long]] = Version.parse(s, (_.toLong), LongVersion.apply)
+  def parse(s: String): Option[Version[Long]] = Version.parse(s, _.toLong, LongVersion.apply)
 }
 
 object Version {
@@ -110,7 +110,9 @@ object Version {
     def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {
       case h :: t => inner(t,
         vo match {
+          // TODO use FP.toOption
           case Some(v) => (for (z <- v.withSubversion(f(h))) yield z).toOption
+          // TODO use FP.toOption
           case None => Try(g(f(h))).toOption
         })
       case Nil => vo

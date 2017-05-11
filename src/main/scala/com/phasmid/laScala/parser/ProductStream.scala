@@ -208,6 +208,7 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHead
     */
   def tuples: Stream[X] = {
     val xts = getStream map stringToTuple(parser.elementParser)
+    // CONSIDER replacing with FP.toOption
     for (xt <- xts; x <- xt.recoverWith({ case t => carper(t.getLocalizedMessage); Failure(new Exception("logged already")) }).toOption) yield x
   }
 
@@ -242,6 +243,7 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], g
 
   def header: Header = getHeader(givenHeader)
 
+  // CONSIDER replacing with FP.toOption
   def tuplesPartial(allowPartial: Boolean = false): Stream[X] = for (t <- getStream map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
 
   def tuples: Stream[X] = tuplesPartial()

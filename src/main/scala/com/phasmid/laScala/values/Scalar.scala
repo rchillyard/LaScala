@@ -302,7 +302,7 @@ abstract class BaseDateScalar(x: LocalDate, source: Any) extends BaseScalar(x, s
   def defaultFormat: String = null
 }
 
-abstract class BaseScalar(value: Any, source: Any) extends Scalar {
+abstract class BaseScalar(value: Any, source: Any) extends Scalar with Serializable {
   def asBoolean: Option[Boolean] = None
 
   def asOrderable[X: Orderable](implicit pattern: String): Option[X] = None

@@ -164,6 +164,11 @@ object Spy {
     */
   def getPrintlnSpyFunc(ps: PrintStream = System.out): String => Spy = { s => Spy(ps.println(prefix + s)) }
 
+  /**
+    * CONSIDER refactor so that an x which is a Failure will be logged as an exception.
+    * The way the code is now, if X happens to be Try[Y], we will be given a Success(Failure(y)) and this will be formatted in the normal way.
+    *
+    */
   private def doSpy[X](message: String, xy: => Try[X], b: Boolean, spyFunc: (String) => Spy) = {
     val w = xy match {
       case Success(x) => formatMessage(x, b)
@@ -184,6 +189,7 @@ object Spy {
 
       implicit def spyFunc(s: String): Spy = Spy(sb.append(s))
 
+      // CONSIDER reworking this so that the result is "Success(...)" instead of "Success: ..."
       spy(s"Success", z, b)
       sb.toString
     // NOTE: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause
