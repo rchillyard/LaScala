@@ -200,7 +200,7 @@ object Spy {
       f.onComplete(spy("Future", _, b))
       "to be provided in the future"
     // NOTE: If the value to be spied on is a common-or-garden object, then we simply form the appropriate string using the toString method
-    case _ => x.toString
+    case _ => if (x != null) x.toString else "<<null>>"
   }
 
   private val mySpy = apply(())

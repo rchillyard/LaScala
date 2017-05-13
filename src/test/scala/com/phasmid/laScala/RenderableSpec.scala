@@ -8,6 +8,7 @@ package com.phasmid.laScala
 import com.phasmid.laScala.values.Scalar
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
+import scala.language.implicitConversions
 import scala.util.Try
 
 /**
@@ -48,7 +49,12 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     xy.render() shouldBe "Success(x)"
   }
   it should "render either values" in {
-    val e = Left(Scalar("x"))
+    val e: Either[Scalar, Any] = Left(Scalar("x"))
     e.render() shouldBe "Left(x)"
+  }
+  it should "render tuples" in {
+    val t: Product = "x" -> "y"
+    import Renderable.renderableProduct
+    t.render() shouldBe """("x","y")"""
   }
 }

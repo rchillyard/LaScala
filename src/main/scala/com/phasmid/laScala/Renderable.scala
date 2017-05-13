@@ -39,28 +39,11 @@ trait Renderable {
 }
 
 case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)") extends Renderable {
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
-    def addString(b: StringBuilder, start: String, sep: String, end: String): StringBuilder = {
-      var first = true
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.addString(new StringBuilder, xs, indent, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2)).toString()
+}
 
-      b append start
-      for (x <- xs) {
-        if (first) {
-          b append Renderable.renderElem(x, indent)
-          first = false
-        }
-        else {
-          b append sep
-          b append Renderable.renderElem(x, indent)
-        }
-      }
-      b append end
-
-      b
-    }
-
-    addString(new StringBuilder, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2)).toString()
-  }
+case class RenderableProduct(p: Product) extends Renderable {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.addString(new StringBuilder, p.productIterator.toSeq, indent, "(", ",", ")").toString()
 }
 
 case class RenderableOption(xo: Option[_]) extends Renderable {
@@ -96,14 +79,37 @@ object Renderable {
 
   implicit def renderableEither(e: Either[_, _]): Renderable = RenderableEither(e)
 
+  implicit def renderableProduct(p: Product): Renderable = RenderableProduct(p)
+
   def renderElem(elem: Any, indent: Int)(implicit tab: (Int) => Prefix): String = elem match {
     case xo: Option[_] => Renderable.renderableOption(xo).render(indent + 1)
     case xs: Traversable[_] => Renderable.renderableTraversable(xs).render(indent + 1)
     case xy: Try[_] => Renderable.renderableTry(xy).render(indent + 1)
     case e: Either[_, _] => Renderable.renderableEither(e).render(indent + 1)
+    case s: String => s""""$s""""
     case r: Renderable => r.render(indent + 1)
     case x => x.toString
   }
+
+  def addString(b: StringBuilder, xs: Traversable[_], indent: Int, start: String, sep: String, end: String)(implicit tab: (Int) => Prefix): StringBuilder = {
+    var first = true
+
+    b append start
+    for (x <- xs) {
+      if (first) {
+        b append renderElem(x, indent)
+        first = false
+      }
+      else {
+        b append sep
+        b append renderElem(x, indent)
+      }
+    }
+    b append end
+
+    b
+  }
+
 }
 
 case class Prefix(s: String) {
