@@ -52,9 +52,9 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val e: Either[Scalar, Any] = Left(Scalar("x"))
     e.render() shouldBe "Left(x)"
   }
-  it should "render tuples" in {
-    val t: Product = "x" -> "y"
-    import Renderable.renderableProduct
-    t.render() shouldBe """("x","y")"""
-  }
+//  it should "render tuples" in {
+//    val t: Product = "x" -> "y"
+//    import Renderable.renderableProduct
+//    t.render() shouldBe """("x","y")"""
+//  }
 }

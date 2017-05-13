@@ -91,6 +91,14 @@ class ClosureSpec extends FlatSpec with Matchers {
     an[RenderableFunctionException] should be thrownBy c().get
   }
 
+//  it should "throw exception when recursive" in {
+//    val name = "isHello"
+//    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
+//    val c = Closure(f, Left("Hello"), Right())
+//    c.arity shouldBe 0
+//    c() shouldBe Success(true)
+//  }
+
   behavior of "createVarArgsClosure"
 
   it should "handle varargs of 0 elements" in {

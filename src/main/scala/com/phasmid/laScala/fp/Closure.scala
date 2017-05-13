@@ -26,6 +26,8 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
 
   private implicit val logger = Spy.getLogger(getClass)
 
+//  require(Closure.nonRecursive(this), "Closure is recursive")
+
   /**
     * Method to evaluate this closure. If the arity of this is not equal to zero, a Failure will result
     *
@@ -156,6 +158,7 @@ object Closure {
     Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
   }
 
+//  private def nonRecursive[T,R](closure: Closure[T, R]): Boolean = closure.ps.find(_.equals(closure)).isEmpty
 
 }
 
