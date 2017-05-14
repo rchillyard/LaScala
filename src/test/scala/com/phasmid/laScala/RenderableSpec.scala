@@ -25,6 +25,10 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
     list.render() shouldBe "(\n  x,\n  y,\n  z\n)"
   }
+  it should "render list of length one" in {
+    val list = Seq(Scalar("x"))
+    list.render() shouldBe "(x)"
+  }
   it should "render list values with indentation (custom RenderableTraversable)" in {
     implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[;]")
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
@@ -52,9 +56,9 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val e: Either[Scalar, Any] = Left(Scalar("x"))
     e.render() shouldBe "Left(x)"
   }
-//  it should "render tuples" in {
-//    val t: Product = "x" -> "y"
-//    import Renderable.renderableProduct
-//    t.render() shouldBe """("x","y")"""
-//  }
+  it should "render tuples" in {
+    val t: Product = "x" -> "y"
+    import Renderable.renderableProduct
+    t.render() shouldBe """("x","y")"""
+  }
 }
