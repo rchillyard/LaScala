@@ -310,7 +310,7 @@ object FP {
     * @tparam X the underlying type of Try
     * @return an Option which is Some(x) for Success(x) and None for Failure(t) where x has been handled as a side-effect
     */
-  def toOption[X](xy: Try[X], fLog: (Throwable) => Unit = { x => System.err.println(x.getLocalizedMessage) }): Option[X] = xy.recoverWith({
+  def toOption[X](xy: Try[X], fLog: Throwable => Unit = x => System.err.println(x.getLocalizedMessage)): Option[X] = xy.recoverWith({
     case NonFatal(x) => fLog(x); Failure(new NoSuchElementException)
     case x@_ => throw x
   }).toOption

@@ -8,7 +8,7 @@ import org.scalatest.{FlatSpec, Matchers}
   * Created by scalaprof on 8/5/16.
   */
 class BenchmarkSpec extends FlatSpec with Matchers {
-  "Benchmark" should "yield correct number of nanoseconds" in {
+  "Benchmark--don't worry if this fails tests under debug or coverage" should "yield correct number of nanoseconds" in {
     import Benchmark._
     10000.times(Factorial.factorial(40))
     // warmup
