@@ -111,7 +111,7 @@ object Version {
     *
     * This has been moved here from LaScalaVersion which is now deprecated.
     */
-  val version = "1.0.1-51"
+  val version : String = "1.0.1-52"
 
   def parse[V](s: String, f: String => V, g: V => Version[V]): Option[Version[V]] = {
     def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {
