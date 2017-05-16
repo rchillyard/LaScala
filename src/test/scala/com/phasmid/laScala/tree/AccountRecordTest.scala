@@ -126,6 +126,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
         val allTrue = trues.forall(_ == true)
         allTrue shouldBe true
         val values = Spy.noSpy(tree.iterator().toList)
+        //noinspection ScalaUnusedSymbol
         val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key), tree.includes(x, y))))
         Spy.log(s"checking for disagreement between tree and MPTT:")
         // NOTE: The following part of the test only works with Scala 2.11

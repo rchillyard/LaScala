@@ -388,10 +388,14 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val c1 = Closure(lookup, Left("pi"))
+    c1.render() shouldBe "Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))"
     val c2 = Closure(f, Right(c1))
+    c2.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  render(a?)), Right(Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))))"
     val c3y = c2.partiallyApply
     c3y should matchPattern { case Success(_) => }
     c3y.get.arity shouldBe 0
+    c3y.get.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  render(lookup(\"pi\"))), \n  \n)"
+
 
     // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get
     map.put("pi", "3.1415927")
@@ -410,6 +414,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
     val c1 = Closure(lookup, Left("pi"))
+    c1.render() shouldBe "Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))"
     val c2 = Closure(f, Right(c1))
     val xfy: Try[Closure[_, Double]] = c2.partiallyApply
     xfy should matchPattern { case Success(_) => }

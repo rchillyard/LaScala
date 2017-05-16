@@ -225,7 +225,9 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work for GeneralTree" in {
     val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     val tree2 = GeneralTree(1, Seq(Leaf(5), Leaf(6)))
+    //noinspection ScalaUnusedSymbol
     val tree3 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(5), Leaf(6)))))
+    //noinspection ScalaUnusedSymbol
     val tree4 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
     // CONSIDER understand why this doesn't work. At appears to yield Some(true)

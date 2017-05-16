@@ -13,6 +13,10 @@ import scala.language.higherKinds
   * Created by scalaprof on 1/1/17.
   */
 object Quicksort {
+  /**
+    * TODO fix the shadowing problem
+    */
+  //noinspection TypeParameterShadow
   def qsort[E, D[E] <: Seq[E]]
   (s: D[E])(c: (E, E) => Int)
   (implicit cbf: CanBuildFrom[D[E], E, D[E]]): D[E] = {

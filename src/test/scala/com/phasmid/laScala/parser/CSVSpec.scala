@@ -38,6 +38,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
     wtIm.get("Hello".hashCode) should matchPattern { case Some(Tuple1("Hello")) => }
   }
   it should "have column x of type String" in {
+    //noinspection ScalaUnusedSymbol
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
     // NOTE: this works only with 2.11
     //    c column "x" match {

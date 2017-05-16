@@ -64,7 +64,7 @@ object RandomState {
 
   def apply(): RandomState[Long] = apply(System.currentTimeMillis)
 
-  val longToDouble: Long => Double = (_.toDouble / Long.MaxValue)
+  val longToDouble: Long => Double = _.toDouble / Long.MaxValue
   val doubleToUniformDouble: Double => UniformDouble = { x => UniformDouble((x + 1) / 2) }
 }
 

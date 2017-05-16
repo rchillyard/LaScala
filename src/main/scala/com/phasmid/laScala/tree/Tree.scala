@@ -720,6 +720,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
+  //noinspection NotImplementedCode
   def +[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 }
 
@@ -840,8 +841,10 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   */
 abstract class Punctuation(x: String) extends Node[Nothing] {
 
+  //noinspection NotImplementedCode
   def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 
+  //noinspection NotImplementedCode
   protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ??? // TODO implement me
 
   def includes[B >: Nothing](node: Node[B]): Boolean = false
@@ -1144,6 +1147,7 @@ object BinaryTree {
       * @param a    the value of the new node
       * @return the Node to which the new node will be attached (if such a node exists). Note that this might be a leaf
       */
+    //noinspection NotImplementedCode
     def getParent(tree: Tree[A], a: A): Option[Node[A]] = ???
 
     /**
@@ -1153,6 +1157,7 @@ object BinaryTree {
       * @param y node y
       * @return true if they are the same
       */
+    //noinspection NotImplementedCode
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = ???
 
   }

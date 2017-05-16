@@ -106,6 +106,13 @@ object LongVersion {
 }
 
 object Version {
+  /**
+    * NOTE: for now, we just use a literal string with format based on major.minor.revision-build or, if you prefer, major.minor.point-snapshot
+    *
+    * This has been moved here from LaScalaVersion which is now deprecated.
+    */
+  val version = "1.0.1-51"
+
   def parse[V](s: String, f: String => V, g: V => Version[V]): Option[Version[V]] = {
     def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {
       case h :: t => inner(t,

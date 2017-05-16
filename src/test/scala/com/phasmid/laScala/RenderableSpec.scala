@@ -5,6 +5,7 @@
 
 package com.phasmid.laScala
 
+import com.phasmid.laScala.fp.RenderableFunctionException
 import com.phasmid.laScala.values.Scalar
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -44,21 +45,40 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
     list.render() shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
   }
-  it should "render option values" in {
+  it should "render Some" in {
     val xo = Option(Scalar("x"))
     xo.render() shouldBe "Some(x)"
   }
-  it should "render try values" in {
+  it should "render None" in {
+    import Renderable.renderableOption
+    val xo: Option[String] = Option(null)
+    xo.render() shouldBe "None"
+  }
+  it should "render Success" in {
     val xy = Try(Scalar("x"))
     xy.render() shouldBe "Success(x)"
   }
-  it should "render either values" in {
+  it should "render Failure" in {
+    import Renderable.renderableTry
+    val xy = Try(throw RenderableFunctionException("test"))
+    xy.render() shouldBe "Failure(test)"
+  }
+  it should "render either values (left)" in {
     val e: Either[Scalar, Any] = Left(Scalar("x"))
     e.render() shouldBe "Left(x)"
   }
-  it should "render tuples" in {
+  it should "render either values (right)" in {
+    val e: Either[Any, Scalar] = Right(Scalar("x"))
+    e.render() shouldBe "Right(x)"
+  }
+  it should "render Tuple2" in {
     val t: Product = "x" -> "y"
     import Renderable.renderableProduct
-    t.render() shouldBe """("x","y")"""
+    t.render() shouldBe """Tuple2("x","y")"""
+  }
+  it should "render case class" in {
+    val p: Product = Prefix("x")
+    import Renderable.renderableProduct
+    p.render() shouldBe s"""Prefix("x")"""
   }
 }

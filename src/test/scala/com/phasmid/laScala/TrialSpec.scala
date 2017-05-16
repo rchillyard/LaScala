@@ -158,6 +158,7 @@ class TrialSpec extends FlatSpec with Matchers with Inside {
 
     def failure2(x: String): Try[String] = Failure(new Exception("2"))
 
+    //noinspection ConvertibleToMethodValue,ConvertibleToMethodValue
     // XXX we actually need the place-holders here
     val r = failure1 _ |: failure2 _ |: Trial.none
     val r1 = r("x")

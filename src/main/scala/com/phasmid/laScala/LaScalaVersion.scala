@@ -5,16 +5,16 @@
 
 package com.phasmid.laScala
 
-import com.typesafe.scalalogging.Logging
 import org.slf4j.LoggerFactory
 
 /**
   * Created by scalaprof on 4/20/17.
   */
+@deprecated
 object LaScalaVersion {
-  val logger = LoggerFactory.getLogger("LaScalaVersion")
+  private val logger = LoggerFactory.getLogger("LaScalaVersion")
 
-  val version = "1.0.1-42"
+  val version = "1.0.1-51"
 
   logger.debug(s"LaScalaVersion: $version")
 

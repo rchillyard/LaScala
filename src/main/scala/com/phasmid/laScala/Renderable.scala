@@ -6,7 +6,7 @@
 package com.phasmid.laScala
 
 import scala.language.implicitConversions
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
   * This trait defines an aspect of an object as being able to be rendered as a String.
@@ -42,11 +42,11 @@ case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)") e
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = if (xs.size==1)
     bookends.head+Renderable.renderElem(xs.head, indent+1)+bookends(2)
   else
-    Renderable.addString(new StringBuilder, xs, indent, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2)).toString()
+    Renderable.elemsToString(xs, indent, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2))
 }
 
 case class RenderableProduct(p: Product) extends Renderable {
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.addString(new StringBuilder, p.productIterator.toSeq, indent, "(", ",", ")").toString()
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.elemsToString(p.productIterator.toSeq, indent, s"${p.productPrefix}(", ",", ")")
 }
 
 case class RenderableOption(xo: Option[_]) extends Renderable {
@@ -61,7 +61,7 @@ case class RenderableTry(xy: Try[_]) extends Renderable {
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = xy match {
     case Success(x) => s"Success(" + Renderable.renderElem(x, indent) + ")"
-    case _ => "Failure"
+    case Failure(t) => s"Failure(${t.getLocalizedMessage})"
   }
 }
 
@@ -94,9 +94,9 @@ object Renderable {
     case x => x.toString
   }
 
-  def addString(b: StringBuilder, xs: Traversable[_], indent: Int, start: String, sep: String, end: String)(implicit tab: (Int) => Prefix): StringBuilder = {
+  def elemsToString(xs: Traversable[_], indent: Int, start: String, sep: String, end: String)(implicit tab: (Int) => Prefix): String = {
     var first = true
-
+    val b = new StringBuilder()
     b append start
     for (x <- xs) {
       if (first) {
@@ -109,8 +109,7 @@ object Renderable {
       }
     }
     b append end
-
-    b
+    b.toString()
   }
 
 }

@@ -208,10 +208,12 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
 
   def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
 
+  //noinspection ScalaUnusedSymbol
   private def cf(x: N, y: N) = Rational.cf(x, y)
 
   private def cf(x: N, y: Int) = Rational.cf(x, y)
 
+  //noinspection ScalaUnusedSymbol
   private def is(x: N, y: N) = Rational.is(x, y)
 
   private def is(x: N, y: Int) = Rational.is(x, y)

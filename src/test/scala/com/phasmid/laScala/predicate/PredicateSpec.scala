@@ -272,6 +272,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       x < 10
     }
 
+    //noinspection ConvertibleToMethodValue
     // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val p = func1 _ &^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
@@ -302,6 +303,7 @@ class PredicateSpec extends FlatSpec with Matchers {
       x < 10
     }
 
+    //noinspection ConvertibleToMethodValue
     // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val _ = func1 _ |^: Func(func2)
     // NOTE: works only with 2.11

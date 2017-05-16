@@ -7,7 +7,6 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
-import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -323,8 +322,6 @@ case class FreeParam(s: String, cbn: Boolean) {
   * Companion object to RenderableFunction
   */
 object RenderableFunction {
-
-  private val logger = LoggerFactory.getLogger(getClass)
 
   def toScala[T: ClassTag](t: Any): T = (t match {
     case q: java.lang.Boolean => Boolean.unbox(q)
