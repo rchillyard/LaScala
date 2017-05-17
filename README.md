@@ -21,7 +21,13 @@ utility libraries:
 * a utility to deal with command-line arguments (Args);
 * a smart logger (SmartLogger);
 * a simple "spy" utility for debugging via println statements (Spy);
-* various other utilities.
+* various other utilities, including a Version type.
+
+### Added in V1_0_1
+
+* a collaborative pair of classes: RenderableFunction and Closure which are designed to all for the development,
+debugging and deployment of AST-type parsing, for example the parsing of case clauses within SQL;
+* a Renderable class which allows a prettier and better structured textual representation of objects (than toString);
 
 ## Revision History
 

@@ -5,7 +5,7 @@
     <artifactId>lascala_2.10</artifactId>
     <packaging>jar</packaging>
     <description>lascala</description>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <name>lascala</name>
     <organization>
         <name>com.phasmid</name>
@@ -15,6 +15,11 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>2.10.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.3.1</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.scala-logging</groupId>
