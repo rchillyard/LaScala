@@ -21,24 +21,20 @@ utility libraries:
 * a utility to deal with command-line arguments (Args);
 * a smart logger (SmartLogger);
 * a simple "spy" utility for debugging via println statements (Spy);
+* a Renderable class which allows a prettier and better structured textual representation of objects (than toString);
 * various other utilities, including a Version type.
+
+### Note on Scala Binary Versions
+
+LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
+## Revision History
 
 ### Added in V1_0_1
 
 * a collaborative pair of classes: RenderableFunction and Closure which are designed to all for the development,
 debugging and deployment of AST-type parsing, for example the parsing of case clauses within SQL;
-* a Renderable class which allows a prettier and better structured textual representation of objects (than toString);
-
-## Revision History
-
-Version 1.0.1 is almost ready to be frozen. It has the following enhancements/fixes:
 * updates/fixes to the Renderable trait and classes which support more general Renderables,
 such as Traversable, Option, Try, Either -- these are available via implicits;
-* a pair of traits called RenderableFunction and Closure -- these are used to enhance the ability
-to debug complex systems of functions (which are otherwise more or less opaque);
-
-As of Jan 4th 2017, version 1.0.0 has been frozen (no more 1.0.0-SNAPSHOT).
-Future revisions will be via a Development Branch and Pull Request.
 
 ## Notes
 
@@ -68,7 +64,3 @@ La Scala was the venue for the premieres of many of the greatest operas (in no p
 * Norma
 * Turandot
 * Otello
-
-# Note on Scala Binary Versions
-
-LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
