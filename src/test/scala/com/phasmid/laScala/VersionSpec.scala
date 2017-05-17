@@ -11,7 +11,7 @@ import scala.util._
 class VersionSpec extends FlatSpec with Matchers with Inside {
   behavior of "getVersion"
   ignore should "match" in {
-    Version.version shouldBe "1.0.1-52"
+    Version.getVersion shouldBe "1.0.1-52"
   }
   "apply" should "decode 1.1" in {
     val vo = LongVersion.parse("1.1")
