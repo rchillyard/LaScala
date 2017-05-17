@@ -571,14 +571,14 @@ object Predicate {
   }
 
   implicit def convertFromRangePredicateExpr(x: RangePredicateExpr): Predicate[String] = {
-    // XXX for now, we will just turn an RPN list into a String
+    // NOTE for now, we will just turn an RPN list into a String
     val p1: String = x.operand1.toRPN.mkString(" ")
     val p2: String = x.operand2.toRPN.mkString(" ")
     InBounds(p1, p2)
   }
 
   implicit def convertFromBooleanPredicateExpr(x: BooleanPredicateExpr): Predicate[String] = {
-    // XXX for now, we will just turn an RPN list into a String
+    // NOTE for now, we will just turn an RPN list into a String
     val p: String = x.operand.toRPN.mkString(" ")
     getPredicate(x, p)
   }

@@ -5,7 +5,9 @@ package com.phasmid.laScala.fp
   *
   * Created by scalaprof on 8/5/16.
   */
+
 import java.io.Closeable
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Try}
 

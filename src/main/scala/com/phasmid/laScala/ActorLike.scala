@@ -19,7 +19,7 @@ trait ActorLike[T] extends Agent[T] with Queryable[T] with AutoCloseable
   *
   * @tparam T the underlying type
   */
-trait Agent[T] extends PartialFunction[T,Unit]
+trait Agent[T] extends PartialFunction[T, Unit]
 
 /**
   * This trait behaves exactly as the query method does in an actor but takes a query which is a T

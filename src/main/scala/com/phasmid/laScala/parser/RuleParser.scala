@@ -13,7 +13,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
   *
   * This module/package does more than just parse Rules. In particular, it has a facility to parse expressions too.
   *
-  * TODO the parsing and toString of this package are not compatible so that Json cannot currently be used.
+  * NOTE: the parsing and toString of this package are not compatible so that Json cannot currently be used.
   */
 
 /**
@@ -89,6 +89,7 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
   */
 case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
+
   // XXX: this is somewhat experimental
   override def toString: String = if (b) "always" else "never"
 }
@@ -171,8 +172,8 @@ class RuleParser extends JavaTokenParsers {
   def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case _ ~ l ~ _ ~ h => RangePredicateExpr(l, h) }
 
   private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
-  // TODO implement this...
-//  private val lesserOp = regex("""<|<=""".r)
+  // CONSIDER implement this...
+  //  private val lesserOp = regex("""<|<=""".r)
   private val identifier = regex("""\w+""".r)
   private val identifierWithPeriods = regex("""[\w\.]+""".r)
   private val doubleQuote = """"""".r
@@ -182,9 +183,11 @@ class RuleParser extends JavaTokenParsers {
   case class Expr(t: ExprTerm, ts: List[String ~ ExprTerm]) extends Expression {
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
+
       def shunt(xs: List[String], et: String ~ ExprTerm): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
+
       val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }
@@ -197,9 +200,11 @@ class RuleParser extends JavaTokenParsers {
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
+
       def shunt(xs: List[String], et: String ~ ExprFactor): List[String] = et match {
         case op ~ x => stack.push(op); xs ++ x.toRPN
       }
+
       val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt)
       rpn ++ stack.elems.reverse
     }
@@ -264,7 +269,6 @@ class RuleParser extends JavaTokenParsers {
   }
 
   //  /**
-  //    * XXX this appears not to be tested
   //    *
   //    * @param s the String which defines this expression
   //    */

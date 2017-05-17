@@ -1,8 +1,10 @@
 package com.phasmid.laScala.fp
 
 import java.io.Closeable
-import org.scalatest.{ Matchers, WordSpec }
-import scala.util.{ Failure, Success }
+
+import org.scalatest.{Matchers, WordSpec}
+
+import scala.util.{Failure, Success}
 
 /**
   * TryWithSpec based on: http://codereview.stackexchange.com/questions/79267/scala-trywith-that-closes-resources-automatically
@@ -19,6 +21,7 @@ class TryWithSpec extends WordSpec with Matchers {
 
   val goodResource = new Closeable {
     override def toString: String = "good resource"
+
     def close(): Unit = {}
   }
 
@@ -28,7 +31,7 @@ class TryWithSpec extends WordSpec with Matchers {
     }
 
     "catch exceptions in the function" in {
-      TryWith(goodResource){
+      TryWith(goodResource) {
         _ => throw inFunctionException
       } shouldBe Failure(inFunctionException)
     }
@@ -58,7 +61,7 @@ class TryWithSpec extends WordSpec with Matchers {
 
     "propagate errors in the function" in {
       intercept[OutOfMemoryError] {
-        TryWith(goodResource){
+        TryWith(goodResource) {
           _ => throw inFunctionError
         }
       } shouldBe inFunctionError

@@ -34,7 +34,6 @@ import scala.util._
   *
   * Created by scalaprof on 7/8/16.
   *
-  * TODO move this into Scalar module?
   */
 sealed trait Value extends Scalar {
 
@@ -54,7 +53,7 @@ trait ValueMaker extends (Any => Try[Value]) {
 
   def value(a: Any): Try[Value]
 
-  def sequence(as: Seq[Any]): Try[Seq[Value]] = FP.sequence(as map { apply })
+  def sequence(as: Seq[Any]): Try[Seq[Value]] = FP.sequence(as map apply)
 }
 
 /**
@@ -91,6 +90,7 @@ case class DoubleValue(x: Double, source: Any) extends BaseDoubleScalar(x, sourc
   * @param source the source (which could, conceivably, be a String)
   */
 case class RationalValue(x: LongRational, source: Any) extends BaseRationalScalar(x, source) with Value
+
 /**
   * Value which is natively a String. Such a value, providing it is formatted appropriately, can be converted to Int or
   * Double by invoking asValuable[Int] or asValuable[Double], respectively.
@@ -140,7 +140,7 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends BaseScalar(xs, sou
 
 class ValueException(s: String, t: scala.Throwable = null) extends Exception(s, t)
 
-// TODO how do we re-use the code from Scalar in the following methods?
+// CONSIDER how do we re-use the code from Scalar in the following methods?
 object BooleanValue {
   def apply(x: Boolean): BooleanValue = BooleanValue(x, x)
 }
@@ -211,7 +211,7 @@ object Value {
     case b: Boolean => Try(apply(b))
     case i: Int => Try(apply(i))
     case d: Double => Try(apply(d))
-    case r: LongRational @unchecked  => Try(apply(r))
+    case r: LongRational@unchecked => Try(apply(r))
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
     case xs: Seq[Any] => Try(apply(xs))

@@ -1,5 +1,11 @@
+/*
+ * LaScala
+ * Copyright (c) 2017. Phasmid Software
+ */
+
 package com.phasmid.laScala.fp
 
+import scala.collection.immutable.ListMap
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, postfixOps}
 import scala.util._
@@ -11,6 +17,8 @@ import scala.util.control.NonFatal
   *
   * TODO flesh out the unit tests (coverage is low).
   *
+  * TODO replace as an output type with type based on CanBuildFrom
+  *
   * CONSIDER replace Seq with Iterator in signatures
   *
   * CONSIDER use higher-kinded monad types in order to implement methods for Try and Option at the same time
@@ -21,11 +29,11 @@ object FP {
 
   /**
     * @param ox the given Option
-    * @param x the value we want to compare with ox
+    * @param x  the value we want to compare with ox
     * @tparam X the underlying type
     * @return true if ox is Some(x)
     */
-  def contains[X](ox: Option[X], x: X): Boolean = FP_Cross.contains(ox,x)
+  def contains[X](ox: Option[X], x: X): Boolean = FP_Cross.contains(ox, x)
 
   def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
 
@@ -48,6 +56,7 @@ object FP {
     * @param ec   the execution context
     * @tparam X the underlying type
     * @return a sequence of X values wrapped in Future
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def flatten[X](xsfs: Seq[Future[Seq[X]]])(implicit ec: ExecutionContext): Future[Seq[X]] = Future.sequence(xsfs) map {
     _ flatten
@@ -61,6 +70,7 @@ object FP {
     * @param executor the executor to use
     * @tparam X the underlying type
     * @return a Future\[Seq\[X\]\]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def flattenRecover[X](esf: Future[Seq[Either[Throwable, Seq[X]]]], f: => Throwable => Unit)(implicit executor: ExecutionContext): Future[Seq[X]] = {
     def filter(uses: Seq[Either[Throwable, Seq[X]]]): Seq[X] = {
@@ -95,11 +105,34 @@ object FP {
       case Failure(e) => Left(e)
     }
 
+  /**
+    * Transform a Future[X] into a Future of Either[Throwable,X]
+    *
+    * @param xf       a Future[X]
+    * @param executor an execution context
+    * @tparam X the underlying type
+    * @return a Future of Either[Throwable, X]
+    */
   def sequence[X](xf: Future[X])(implicit executor: ExecutionContext): Future[Either[Throwable, X]] =
     xf transform( { s => Right(s) }, { f => f }) recoverWith { case f => Future(Left(f)) }
 
+  /**
+    *
+    * @param xfs      a sequence of Future[X]
+    * @param executor an execution context
+    * @tparam X the underlying type
+    * @return a Seq of Future of Either[Throwable, X]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
+    */
   def sequence[X](xfs: Seq[Future[X]])(implicit executor: ExecutionContext): Seq[Future[Either[Throwable, X]]] = for (xf <- xfs) yield sequence(xf)
 
+  /**
+    *
+    * @param xys a sequence of Try[X]
+    * @tparam X the underlying type
+    * @return a Try of Seq[X]
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
+    */
   def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xys) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
@@ -121,6 +154,7 @@ object FP {
     * @param xos a sequence of Option[X] values
     * @tparam X the underlying type
     * @return a sequence of X values wrapped in Option
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = (Option(Seq[X]()) /: xos) {
     (xso, xo) => for (xs <- xso; x <- xo) yield xs :+ x
@@ -142,6 +176,7 @@ object FP {
     * @param t   the Throwable to replace the nonfatal throwable already reported.
     * @tparam X the underlying type of the tries
     * @return xys essentially unchanged though with the side-effect of having written any non-fatal exceptions to the console and all non-fatal failures replaced by Failure(t)
+    *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
   def recoverWith[X](xys: Seq[Try[X]], t: Throwable = new java.util.NoSuchElementException): Seq[Try[X]] = xys map (xy => xy.recoverWith({ case NonFatal(x) => System.err.println(x.getLocalizedMessage); Failure(t) }))
 
@@ -180,6 +215,21 @@ object FP {
     * @return a tuple containing an A and a B value, all wrapped inside Future
     */
   def zip[A, B](af: Future[A], bf: Future[B])(implicit ec: ExecutionContext): Future[(A, B)] = for (a <- af; b <- bf) yield (a, b)
+
+  /**
+    * Method to zip two iterables together but in such a way that all elements are returned in one or other of the components of the result
+    *
+    * @param as a iterable of As
+    * @param bs a iterable of Bs
+    * @tparam A the underlying type of as
+    * @tparam B the underlying type of bs
+    * @return a Tuple3 which contains: the zip of as and bs; the remaining elements of as (if any); the remaining elements of bs (if any)
+    */
+  def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Traversable[(A, B)], Traversable[A], Traversable[B]) = {
+    val (nas, nbs) = (as.size, bs.size)
+    val n = math.min(nas, nbs)
+    (((as.iterator take n) zip bs.iterator).toTraversable, (as.iterator drop n).toTraversable, (bs.iterator drop n).toTraversable)
+  }
 
   /**
     * TODO unit test
@@ -237,9 +287,10 @@ object FP {
     * @return an X value wrapped as a Try
     */
   def optionToTry[X](xo: Option[X], t: => Throwable): Try[X] = {
-    val result = Try(xo.get)
-    if (t != null) result.recoverWith { case _: java.util.NoSuchElementException => Failure(t) }
-    else result
+    xo match {
+      case Some(x) => Success(x)
+      case None => if (t != null) Failure(t) else Failure(new java.util.NoSuchElementException)
+    }
   }
 
   /**
@@ -252,14 +303,14 @@ object FP {
   def optionToTry[X](xo: Option[X]): Try[X] = optionToTry(xo, null)
 
   /**
-    * Alternative to the toOption method in Option.
+    * Alternative to the toOption method in Option which, in my humble opinion, is dangerous because it's just too easy to lose failures.
     * This method will throw any fatal failures, log any non-fatal failures and then convert the Try to an Option
     *
     * @param xy the Try object
     * @tparam X the underlying type of Try
-    * @return an Option which is Some(x) for Success(x) and None for Failure(t) where t has been handled as a side-effect
+    * @return an Option which is Some(x) for Success(x) and None for Failure(t) where x has been handled as a side-effect
     */
-  def toOption[X](xy: Try[X], fLog: (Throwable) => Unit = { x => System.err.println(x.getLocalizedMessage) }): Option[X] = xy.recoverWith({
+  def toOption[X](xy: Try[X], fLog: Throwable => Unit = x => System.err.println(x.getLocalizedMessage)): Option[X] = xy.recoverWith({
     case NonFatal(x) => fLog(x); Failure(new NoSuchElementException)
     case x@_ => throw x
   }).toOption
@@ -285,18 +336,54 @@ object FP {
   def toOption[X](p: X => Boolean)(t: X): Option[X] = toOption(p(t), t)
 
   /**
+    * This method simply returns xy if it is a Success.
+    * If it's a Failure, then it will invoke function f, as a side-effect, and then return the failure but with a standard message.
+    * If the cause is fatal, then it will be thrown.
+    *
+    * Similar to recover, recoverWith, etc.
+    *
+    * @param xy the Try[X] that is passed in (call-by-name)
+    * @param f  the function to process the cause of any failure
+    * @tparam X the underlying type of the return
+    * @return a Try[X]
+    */
+  def logFailure[X](xy: => Try[X], f: Throwable => Unit): Try[X] = xy match {
+    case Success(_) => xy
+    case Failure(t) => t match {
+      case NonFatal(e) => f(e)
+        Failure(new Exception("Failure of Try: see log for details"))
+      case _ => throw t
+    }
+  }
+
+
+  //  /**
+//    * TODO unit test
+//    *
+//    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+//    *
+//    * @param to1 a Option[T] value
+//    * @param to2 a Option[T] value
+//    * @param f   function which takes two T parameters and yields a U result
+//    * @tparam T the input type
+//    * @tparam U the result type
+//    * @return a Option[U]
+//    */
+//  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+
+  /**
     * TODO unit test
     *
     * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
     *
-    * @param to1 a Option[T] value
-    * @param to2 a Option[T] value
-    * @param f   function which takes two T parameters and yields a U result
-    * @tparam T the input type
-    * @tparam U the result type
+    * @param t1o a Option[T1] value
+    * @param t2o a Option[T2] value
+    * @param f   function which takes a T1 and a T2 parameter and yields a R result
+    * @tparam T1 the underlying type of the first parameter
+    * @tparam R the result type
     * @return a Option[U]
     */
-  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+  def map2[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R): Option[R] = for {t1 <- t1o; t2 <- t2o} yield f(t1, t2)
 
   /**
     * The map2 function.
@@ -310,10 +397,10 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map2[T1, T2, R](t1y: Try[T1], t2y: Try[T2])(f: (T1, T2) => R): Try[R] =
-  for {
-    t1 <- t1y
-    t2 <- t2y
-  } yield f(t1, t2)
+    for {
+      t1 <- t1y
+      t2 <- t2y
+    } yield f(t1, t2)
 
   /**
     * The map3 function. Much like map2
@@ -329,10 +416,10 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map3[T1, T2, T3, R](t1y: Option[T1], t2y: Option[T2], t3y: Option[T3])(f: (T1, T2, T3) => R): Option[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-  } yield f(t1, t2, t3)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+    } yield f(t1, t2, t3)
 
   /**
     * The map3 function. Much like map2
@@ -348,23 +435,23 @@ object FP {
     * @return a value of R, wrapped in Try
     */
   def map3[T1, T2, T3, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3])(f: (T1, T2, T3) => R): Try[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-  } yield f(t1, t2, t3)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+    } yield f(t1, t2, t3)
 
   /**
     * You get the idea...
     */
   def map7[T1, T2, T3, T4, T5, T6, T7, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3], t4y: Try[T4], t5y: Try[T5], t6y: Try[T6], t7y: Try[T7])(f: (T1, T2, T3, T4, T5, T6, T7) => R): Try[R] =
-  for {t1 <- t1y
-       t2 <- t2y
-       t3 <- t3y
-       t4 <- t4y
-       t5 <- t5y
-       t6 <- t6y
-       t7 <- t7y
-  } yield f(t1, t2, t3, t4, t5, t6, t7)
+    for {t1 <- t1y
+         t2 <- t2y
+         t3 <- t3y
+         t4 <- t4y
+         t5 <- t5y
+         t6 <- t6y
+         t7 <- t7y
+    } yield f(t1, t2, t3, t4, t5, t6, t7)
 
   /**
     * TODO unit test
@@ -383,7 +470,7 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map2lazy(ty1,ty2)(f)(g,default)
+    FP_Cross.map2lazy(ty1, ty2)(f)(g, default)
 
   /**
     * NOTE: not available with 2.10
@@ -402,7 +489,7 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map3lazy(ty1,ty2,ty3)(f)(g,default)
+    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(g, default)
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
@@ -452,17 +539,6 @@ object FP {
     * @return a function of type (Try[T1],Try[T2],Try[T3],Try[T4],Try[T5],Try[T6],Try[T7])=>Try[R]
     */
   def lift7[T1, T2, T3, T4, T5, T6, T7, R](f: (T1, T2, T3, T4, T5, T6, T7) => R): (Try[T1], Try[T2], Try[T3], Try[T4], Try[T5], Try[T6], Try[T7]) => Try[R] = map7(_, _, _, _, _, _, _)(f)
-
-  /**
-    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
-    *
-    * @param f the function
-    * @tparam T1 the type of the first parameter
-    * @tparam T2 the type of the second parameter
-    * @tparam R  the result type
-    * @return a curried function which takes the second parameter first
-    */
-  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = { t2 => { t1 => f(t1)(t2) } }
 
   /**
     * TODO unit test
@@ -529,6 +605,16 @@ object FP {
       else optionToTry(result)
   }
 
+  /**
+    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the second parameter first
+    */
+  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = { t2 => { t1 => f(t1)(t2) } }
 
   /**
     * This method inverts the order of the first three parameters of a three-(or more-)parameter curried function.
@@ -554,6 +640,35 @@ object FP {
     * @return a curried function which takes the fourth parameter first, then the third, etc.
     */
   def invert4[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): T4 => T3 => T2 => T1 => R = { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4) } } } }
+
+  /**
+    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam T5 the type of the fifth parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the fourth parameter first, then the third, etc.
+    */
+  def invert5[T1, T2, T3, T4, T5, R](f: T1 => T2 => T3 => T4 => T5 => R): T5 => T4 => T3 => T2 => T1 => R = { t5 => { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4)(t5) } } } } }
+
+  /**
+    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
+    *
+    * @param f the function
+    * @tparam T1 the type of the first parameter
+    * @tparam T2 the type of the second parameter
+    * @tparam T3 the type of the third parameter
+    * @tparam T4 the type of the fourth parameter
+    * @tparam T5 the type of the fifth parameter
+    * @tparam T6 the type of the sixth parameter
+    * @tparam R  the result type
+    * @return a curried function which takes the fourth parameter first, then the third, etc.
+    */
+  def invert6[T1, T2, T3, T4, T5, T6, R](f: T1 => T2 => T3 => T4 => T5 => T6 => R): T6 => T5 => T4 => T3 => T2 => T1 => R = { t6 => { t5 => { t4 => { t3 => { t2 => { t1 => f(t1)(t2)(t3)(t4)(t5)(t6) } } } } } }
 
   /**
     * This method uncurries the first two parameters of a three- (or more-)
@@ -600,7 +715,119 @@ object FP {
     * @tparam R  the result type of function f
     * @return a (curried) function of type (T1,T2,T3)=>T4=>R
     */
-  def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
-  { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
+  def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R = { (t1, t2, t3, t4, t5, t6, t7) => { t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8) } }
 
+  /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, R](f: ((T1, T2)) => R): (T1, T2) => R = {
+    (x1, x2) => f(Tuple2(x1, x2))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, R](f: ((T1, T2, T3)) => R): (T1, T2, T3) => R = {
+    (x1, x2, x3) => f(Tuple3(x1, x2, x3))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function (or at least, the method in Function is flaky)
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, R](f: ((T1, T2, T3, T4)) => R): (T1, T2, T3, T4) => R = {
+    (x1, x2, x3, x4) => f(Tuple4(x1, x2, x3, x4))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, R](f: ((T1, T2, T3, T4, T5)) => R): (T1, T2, T3, T4, T5) => R = {
+    (x1, x2, x3, x4, x5) => f(Tuple5(x1, x2, x3, x4, x5))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam T6 the sixth parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, T6, R](f: ((T1, T2, T3, T4, T5, T6)) => R): (T1, T2, T3, T4, T5, T6) => R = {
+    (x1, x2, x3, x4, x5, x6) => f(Tuple6(x1, x2, x3, x4, x5, x6))
+  }
+
+  /**
+    * This method (and the following similar methods) are missing from Function
+    *
+    * @param f the function to be untupled
+    * @tparam T1 the first parameter type
+    * @tparam T2 the second parameter type
+    * @tparam T3 the third parameter type
+    * @tparam T4 the fourth parameter type
+    * @tparam T5 the fifth parameter type
+    * @tparam T6 the sixth parameter type
+    * @tparam T7 the seventh parameter type
+    * @tparam R  the result type
+    * @return a function which takes the parameters separately (as part of a parameter set)
+    */
+  def untupled[T1, T2, T3, T4, T5, T6, T7, R](f: ((T1, T2, T3, T4, T5, T6, T7)) => R): (T1, T2, T3, T4, T5, T6, T7) => R = {
+    (x1, x2, x3, x4, x5, x6, x7) => f(Tuple7(x1, x2, x3, x4, x5, x6, x7))
+  }
+
+  /**
+    * Method to create an (immutable) Map from a sequence of tuples, such that order is preserved
+    *
+    * @param vKs a sequence of (K,V) tuples
+    * @tparam K the underlying "key" type
+    * @tparam V the underlying "value" type
+    * @return a ListMap[K,V]
+    */
+  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
+
+  /**
+    * Method to select an element from a tuple according to a Boolean value.
+    * You may invoke this method either as which(b)(x,y) or which (b)((x,y))
+    *
+    * @param b a boolean
+    * @param t a tuple
+    * @tparam T the underlying type
+    * @return the first element of the tuple if b is true, else the second element
+    */
+  def which[T](b: Boolean)(t: (T, T)): T = if (b) t._1 else t._2
 }

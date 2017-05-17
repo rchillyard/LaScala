@@ -113,6 +113,16 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     zip(none, two) should matchPattern { case None => }
     zip(one, none) should matchPattern { case None => }
   }
+
+  "zippy" should "succeed" in {
+    val as = List(1, 2, 3, 4, 5)
+    val bs = List("a", "b", "c")
+    zippy(as, bs) should matchPattern { case (Stream((1, "a"), (2, "b"), (3, "c")), Stream(4, 5), Nil) => }
+    zippy(bs, as) should matchPattern { case (Stream(("a", 1), ("b", 2), ("c", 3)), Nil, Stream(4, 5)) => }
+    zippy(as drop 3, bs) should matchPattern { case (Stream((4, "a"), (5, "b")), Nil, Stream("c")) => }
+    zippy(Nil, bs) should matchPattern { case (Nil, Nil, Stream("a", "b", "c")) => }
+    zippy(Nil, Nil) should matchPattern { case (Nil, Nil, Nil) => }
+  }
   "optionToTry" should "succeed for Map" in {
     val map = Map("a" -> "A", "b" -> "B")
     optionToTry(map.get("a")) should matchPattern { case Success("A") => }
@@ -124,15 +134,17 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     optionToTry(map.get("a"), t) should matchPattern { case Success("A") => }
     optionToTry(map.get("x"), t) should matchPattern { case Failure(`t`) => }
   }
-  // TODO what does this have to do with lift?
+  // CONSIDER what does this have to do with lift?
   "lift" should "succeed" in {
     def double(x: Int) = 2 * x
+
     Success(1) map double should matchPattern { case Success(2) => }
     Failure(new Exception("bad")) map double should matchPattern { case Failure(_) => }
   }
 
   "liftTry" should "succeed" in {
     def double(x: Int) = 2 * x
+
     val liftedDouble = liftTry(double)
     liftedDouble(Success(1)) should matchPattern { case Success(2) => }
     Failure(new Exception("bad")) map double should matchPattern { case Failure(_) => }
@@ -149,7 +161,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "map2(Option)" should "sum correctly" in {
     val one = Some(1)
     val two = Some(2)
+
     def sum(x: Int, y: Int) = x + y
+
     map2(one, two)(sum) should matchPattern { case Some(3) => }
     map2(one, None)(sum) should matchPattern { case None => }
   }
@@ -157,7 +171,9 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   it should "equate correctly" in {
     val one = Some(1)
     val two = Some(2)
-    def eq(x: Int, y: Int) = x==y
+
+    def eq(x: Int, y: Int) = x == y
+
     map2(one, one)(eq) should matchPattern { case Some(true) => }
     map2(one, two)(eq) should matchPattern { case Some(false) => }
     map2(None, None)(eq) should matchPattern { case None => }
@@ -166,16 +182,19 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "map2(Try)" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
+
     def sum(x: Int, y: Int) = x + y
+
     implicit val logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // TODO need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here
   "map2lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
+
     def sum(x: Int, y: Int) = x + y
 
     implicit val continue: Int => Boolean = _ => true
@@ -188,16 +207,19 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val one = Success(1)
     val two = Success(2)
     val three = Success(3)
+
     def sum(x: Int, y: Int, z: Int) = x + y + z
+
     map3(one, two, three)(sum) should matchPattern { case Success(6) => }
     map3(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // TODO need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here
   "map3lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
     val three = Success(3)
+
     def sum(x: Int, y: Int, z: Int) = x + y + z
 
     implicit val continue: Int => Boolean = _ => true
@@ -224,13 +246,13 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   it should "fail gracefully" in {
     val xy = Try("x".toInt)
     var log: String = null
-    toOption(xy, {x: Throwable => log = x.getLocalizedMessage}) shouldBe None
+    toOption(xy, { x: Throwable => log = x.getLocalizedMessage }) shouldBe None
     log shouldBe "For input string: \"x\""
   }
 
   it should "fail ungracefully" in {
     val xy: Try[Any] = Failure(new OutOfMemoryError("something bad"))
-    an [OutOfMemoryError] should be thrownBy toOption(xy)
+    an[OutOfMemoryError] should be thrownBy toOption(xy)
   }
 
   "sequence[Try]" should "work" in {
@@ -245,55 +267,42 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     renderLimited(as) shouldBe "(1, 2...)"
   }
 
-
   behavior of "map2"
 
-  it should """match Success(1234) for parse "12" to int and parse "34" to int,with (a:Int,b:Int) => a.toString()+b.toString()"""  in
-    {
-      val a1 = "12"
-      val a2 = "34"
-      val t1 = Try(a1.toInt)
-      val t2 = Try(a2.toInt)
+  it should """match Success(1234) for parse "12" to int and parse "34" to int,with (a:Int,b:Int) => a.toString()+b.toString()""" in {
+    val a1 = "12"
+    val a2 = "34"
+    val t1 = Try(a1.toInt)
+    val t2 = Try(a2.toInt)
+    val test = map2(t1, t2)((a: Int, b: Int) => a.toString + b.toString)
+    test should matchPattern { case Success("1234") => }
+  }
 
-      val test = FP.map2(t1, t2)((a: Int, b: Int) => a.toString + b.toString)
+  it should """fail for "", Int""" in {
 
-      test should matchPattern {
-        case Success("1234") =>
-      }
-    }
-
-  it should """fail for "", Int""" in{
-
-    val t1 = Try(Name("Robin",Some("C"),"Hillyard",Some("Ph.D")))
+    val t1 = Try(Name("Robin", Some("C"), "Hillyard", Some("Ph.D")))
     val t2 = Try(24)
 
-    val test = FP.map2(t1,t2)(Principal.apply)
+    val test = map2(t1, t2)(Principal.apply)
 
-    // TODO this was originally a Failure and I have broken that.
-    test should matchPattern{
-      case Success(_) =>
-    }
+    // NOTE: this was originally a Failure and I have broken that.
+    test should matchPattern { case Success(_) => }
   }
 
 
   behavior of "map7"
 
-  it should "success" in
-    {
-      val p1 = Try(0.02)
-      val p2 = Try(23)
-      val p3 = Rating.parse("PG-13")
-      val p4 = Try(15)
-      val p5 = Try(18)
-      val p6 = Try(20)
-      val p7 = Try(28)
-
-      val test = FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
-
-      test.get should matchPattern{
-        case Reviews(0.02,23,Rating("PG",Some(13)),15,18,20,28) =>
-      }
-    }
+  it should "success" in {
+    val p1 = Try(0.02)
+    val p2 = Try(23)
+    val p3 = Rating.parse("PG-13")
+    val p4 = Try(15)
+    val p5 = Try(18)
+    val p6 = Try(20)
+    val p7 = Try(28)
+    val test = map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
+    test.get should matchPattern { case Reviews(0.02, 23, Rating("PG", Some(13)), 15, 18, 20, 28) => }
+  }
 
   it should """fail with bad input""" in {
     val p1 = Try(0.02)
@@ -303,60 +312,42 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val p5 = Try(18)
     val p6 = Try(20)
     val p7 = Try(28)
-    FP.map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern{
-      case Failure(_) =>
-    }
+    map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern { case Failure(_) => }
   }
 
   behavior of "invert2"
 
-  it should "work" in
-    {
-      val a:Int => Int => String = {a => b=> "abcde".substring(a, b)}
-
-      Try(a(0)(2)) should matchPattern{
-        case Success("ab") =>
-      }
-
-      val aux = FP.invert2(a)
-
-      Try(aux(0)(2)) should matchPattern{
-        case Failure(_) =>
-      }
-    }
+  it should "work" in {
+    val a: Int => Int => String = { a => b => "abcde".substring(a, b) }
+    Try(a(0)(2)) should matchPattern { case Success("ab") => }
+    val aux = invert2(a)
+    Try(aux(2)(0)) should matchPattern { case Success("ab") => }
+    Try(aux(0)(2)) should matchPattern { case Failure(_) => }
+  }
 
   behavior of "invert3"
 
   it should "work" in {
-
-    val a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
-
+    val a: Int => Int => Int => Int = { a => b => c => a * b + c }
     a(2)(3)(4) shouldBe 10
-
-    val aux = FP.invert3(a)
-
+    val aux = invert3(a)
     aux(2)(3)(4) shouldBe 14
   }
 
   behavior of "invert4"
 
   it should "work" in {
-
-    val a:Int => Int=> Int=> Int=>Int = {a => b=> c=> d=> a*b+c*d}
-
-    a(2)(3)(4)(5) shouldBe 26
-
-    val aux = FP.invert3(a)
-
-    aux(2)(3)(4)(5) shouldBe 22
+    val a: Int => Int => Int => Int => Int = { a => b => c => d => a * b + c % d }
+    a(2)(3)(4)(5) shouldBe 10
+    invert4(a)(2)(3)(4)(5) shouldBe 21
   }
 
   behavior of "uncurried2"
-  it should "work" in{
+  it should "work" in {
+    def a: Int => Int => Int => Int = { a => b => c => a * b + c }
 
-    def a:Int => Int=> Int=> Int = {a => b=> c=> a*b+c}
+    def aux = uncurried2(a)
 
-    def aux = FP.uncurried2(a)
     a.toString() shouldBe "<function1>"
     aux.toString() shouldBe "<function2>"
   }
@@ -459,8 +450,8 @@ object Rating {
     * @return a Rating
     */
   def parse(s: String): Try[Rating] =
-  s match {
-    case rRating(code, _, age) => Success(apply(code, Try(age.toInt).toOption))
-    case _ => Failure(new Exception(s"parse error in Rating: $s"))
-  }
+    s match {
+      case rRating(code, _, age) => Success(apply(code, Try(age.toInt).toOption))
+      case _ => Failure(new Exception(s"parse error in Rating: $s"))
+    }
 }

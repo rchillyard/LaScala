@@ -79,7 +79,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Value(""""1"""")
-    x.render shouldBe """"1""""
+    x.render() shouldBe """"1""""
     x.source shouldBe """"1""""
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
@@ -97,8 +97,8 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x shouldBe DoubleValue(1.0)
   }
   "RationalValue" should "work" in {
-    import Rational.RationalHelper
     import FiniteIntegral.LongIsFiniteIntegral
+    import Rational.RationalHelper
     val x = Value(r"1/2")
     val half = Rational.half
     x.source shouldBe half
@@ -201,7 +201,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Value] = Value.sequence(dates)
     val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
-    variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
+    variables("x").get shouldBe LocalDate.of(2016, 7, 13)
   }
   "sequence" should "work when given raw strings" in {
     val ws = List("k", "1", "1.0")

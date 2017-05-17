@@ -14,26 +14,27 @@ import scala.math.BigDecimal
   *
   * @author scalaprof
   */
-class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered[Rational[N]] {
+class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[Rational[N]] {
 
-  type Builder = (N,N)=>Rational[N]
+  type Builder = (N, N) => Rational[N]
 
   def n: N = numerator
 
   def d: N = denominator
 
-  private val i = implicitly[FiniteIntegral[N]]
+  private val i = FiniteIntegral[N]
 
   // Pre-conditions:
 
-  require(cf(d,0)>=0, s"Rational(#n,$d): denominator is negative")
+  require(cf(d, 0) >= 0, s"Rational(#n,$d): denominator is negative")
 
-  require(is(n,0) && is(d,0) || Rational.noCommonFactor(n,d), s"Rational($n,$d): arguments have common factor: ${Rational.absGcd(n, d)}")
+  require(is(n, 0) && is(d, 0) || Rational.noCommonFactor(n, d), s"Rational($n,$d): arguments have common factor: ${Rational.absGcd(n, d)}")
 
   // Methods compare, equals and hashCode:
 
   /**
     * Method defined by Ordered
+    *
     * @param other the Rational with which to compare this
     * @return
     */
@@ -46,7 +47,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
     * @return true if the objects are considered equal
     */
   override def equals(obj: scala.Any): Boolean = obj match {
-    case Rational(p,q) => q==0 && d==0 || n==p && q==d
+    case Rational(p, q) => q == 0 && d == 0 || n == p && q == d
     case _ => super.equals(obj)
   }
 
@@ -61,6 +62,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Operator + to add addend to this
+    *
     * @param addend another Rational[N] -- the addend
     * @return the sum of this with addend
     */
@@ -68,6 +70,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Operator - to subtract subtrahend from this
+    *
     * @param subtrahend the Rational object to be subtracted from this
     * @return the difference of this and subtrahend, i.e. this - subtrahend
     */
@@ -75,12 +78,14 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Unary - operator -- to negate this
+    *
     * @return the negative of this
     */
   def unary_- : Rational[N] = negate
 
   /**
     * Operator * to multiply this by multiplicand
+    *
     * @param multiplicand the factor by which this is to be multiplied
     * @return this * multiplicand
     */
@@ -88,6 +93,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Operator / to divide divisor into this
+    *
     * @param divisor the divisor
     * @return the quotient of this divided by divisor
     */
@@ -95,6 +101,7 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Operator &#94 to take this to the power of the given exponent
+    *
     * @param exponent the power
     * @return this * this * ... * this (exponent times)
     */
@@ -104,23 +111,27 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * Method to negate this
+    *
     * @return this but with a negative numerator
     */
   def negate = new Rational(i.negate(n), d)
 
   /**
     * Method to invert this
+    *
     * @return this but with the numerator and denominator swapped
     */
   def invert(implicit builder: Builder): Rational[N] = builder(d, n)
 
   /**
     * Raise this to the power of x. A tail-recursive method to perform x multiplications is used
+    *
     * @param x the required exponent
     * @return the result of multiplying x by itself x times
     */
   def power(x: Int): Rational[N] = {
     @tailrec def inner(r: Rational[N], x: Int): Rational[N] = if (x == 0) r else inner(r * this, x - 1)
+
     inner(Rational.one, x)
   }
 
@@ -176,19 +187,20 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   /**
     * The signum of this Rational[N]
+    *
     * @return the signum of n (we assume that d is always positive)
     */
   def signum: Int = i.signum(n)
 
   def isNaN: Boolean = isZero && isInfinity
 
-  def isWhole: Boolean = is(d,1)
+  def isWhole: Boolean = is(d, 1)
 
-  def isZero: Boolean = is(n,0)
+  def isZero: Boolean = is(n, 0)
 
-  def isUnity: Boolean = is(n,1) && isWhole
+  def isUnity: Boolean = is(n, 1) && isWhole
 
-  def isInfinity: Boolean = is(d,0)
+  def isInfinity: Boolean = is(d, 0)
 
   def floor: N = i.quot(n, d)
 
@@ -196,51 +208,63 @@ class Rational[N : FiniteIntegral](numerator: N, denominator: N) extends Ordered
 
   def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
 
-  private def cf(x: N, y: N) = Rational.cf(x,y)
-  private def cf(x: N, y: Int) = Rational.cf(x,y)
-  private def is(x: N, y: N) = Rational.is(x,y)
-  private def is(x: N, y: Int) = Rational.is(x,y)
+  //noinspection ScalaUnusedSymbol
+  private def cf(x: N, y: N) = Rational.cf(x, y)
 
-  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (cf(d,100000)>0 || isExactDouble) toDouble.toString else toRationalString
+  private def cf(x: N, y: Int) = Rational.cf(x, y)
+
+  //noinspection ScalaUnusedSymbol
+  private def is(x: N, y: N) = Rational.is(x, y)
+
+  private def is(x: N, y: Int) = Rational.is(x, y)
+
+  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (cf(d, 100000) > 0 || isExactDouble) toDouble.toString else toRationalString
 }
 
 class RationalException(s: String, x: Exception = null) extends Exception(s, x)
 
 object Rational {
 
-  implicit def builder[N : FiniteIntegral](n: N, d: N): Rational[N] = new Rational[N](n,d)
+  implicit def builder[N: FiniteIntegral](n: N, d: N): Rational[N] = new Rational[N](n, d)
 
-  def unapply[N](r: Rational[N]) = Some(r.n,r.d)
+  def unapply[N](r: Rational[N]) = Some(r.n, r.d)
 
   // Constants
 
-  def zero[N : FiniteIntegral]: Rational[N] = apply(0)
-  def infinity[N : FiniteIntegral]: Rational[N] = zero.invert
-  def one[N : FiniteIntegral]: Rational[N] = apply(1)
-  def ten[N : FiniteIntegral]: Rational[N] = apply(10)
-  def half[N : FiniteIntegral]: Rational[N] = one/2
-  def NaN[N : FiniteIntegral] = new Rational(0,0)
+  def zero[N: FiniteIntegral]: Rational[N] = apply(0)
+
+  def infinity[N: FiniteIntegral]: Rational[N] = zero.invert
+
+  def one[N: FiniteIntegral]: Rational[N] = apply(1)
+
+  def ten[N: FiniteIntegral]: Rational[N] = apply(10)
+
+  def half[N: FiniteIntegral]: Rational[N] = one / 2
+
+  def NaN[N: FiniteIntegral] = new Rational(0, 0)
 
   // Apply methods
 
-  def apply[N : FiniteIntegral](n: N, d: N): Rational[N] = normalize(n,d)
+  def apply[N: FiniteIntegral](n: N, d: N): Rational[N] = normalize(n, d)
 
   /**
     * Apply method to form a Rational from a Long
+    *
     * @param x the Long
     * @return the Rational corresponding to x
     */
-  def apply[N : FiniteIntegral](x: N): Rational[N] = new Rational[N](x, implicitly[FiniteIntegral[N]].one)
+  def apply[N: FiniteIntegral](x: N): Rational[N] = new Rational[N](x, FiniteIntegral[N].one)
 
   /**
     * Apply method to form a Rational from a BigDecimal
+    *
     * @param x the BigDecimal
     * @return the Rational corresponding to x
     */
-  def apply[N : FiniteIntegral](x: BigDecimal): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+  def apply[N: FiniteIntegral](x: BigDecimal): Rational[N] = {
+    val i = FiniteIntegral[N]
     if (x.scale >= 0) {
-      val e = BigDecimal.apply(10).pow(x.scale)
+      val e = BigDecimal(10).pow(x.scale)
       Rational.normalize(i.fromLong((x * e).toLongExact), i.fromLong(e.longValue))
     }
     else
@@ -249,34 +273,37 @@ object Rational {
 
   /**
     * Apply method to form a Rational from a Double
+    *
     * @param x the BigDecimal
     * @return the Rational corresponding to x
     */
-  def apply[N : FiniteIntegral](x: Double): Rational[N] = apply(BigDecimal.valueOf(x))
+  def apply[N: FiniteIntegral](x: Double): Rational[N] = apply(BigDecimal.valueOf(x))
 
   /**
     * Apply method to form a Rational from a String
+    *
     * @param x the String
     * @return the Rational corresponding to x
     */
-  def apply[N : FiniteIntegral](x: String): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+  def apply[N: FiniteIntegral](x: String): Rational[N] = {
+    val i = FiniteIntegral[N]
     val rRat = """^\s*(-?\d+)\s*(\/\s*(-?\d+)\s*)?$""".r
     val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
       case rRat(n) => apply(i.fromString(n))
-      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
+      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn'x
       case rRat(n, _, null) => apply(i.fromString(n))
       // XXX we need to watch out for NotNumber exceptions
       case rRat(n, _, d) => Rational.normalize[N](i.fromString(n), i.fromString(d))
-      case rDec(s, w, _, f, null) => Rational(BigDecimal.apply(s + w + f))
-      case rDec(s, w, _, f, e) => Rational(BigDecimal.apply(s + w + f + e))
+      case rDec(s, w, _, f, null) => Rational(BigDecimal(s + w + f))
+      case rDec(s, w, _, f, e) => Rational(BigDecimal(s + w + f + e))
       case _ => throw new RationalException(s"invalid rational expression: $x")
     }
   }
 
   /**
     * Implicit class RationalHelper to support the strings of form r"22/7", etc.
+    *
     * @param sc the StringContext
     */
   implicit class RationalHelper(val sc: StringContext) extends AnyVal {
@@ -312,9 +339,9 @@ object Rational {
     * @param y the other Rational[N]
     * @return a new Rational[N] which is the sum of x and y
     */
-  def plus[N : FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
-    normalize(i.plus(i.times(x.n,y.d), i.times(x.d, y.n)), i.times(x.d, y.d))
+  def plus[N: FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N, N) => Rational[N]): Rational[N] = {
+    val i = FiniteIntegral[N]
+    normalize(i.plus(i.times(x.n, y.d), i.times(x.d, y.n)), i.times(x.d, y.d))
   }
 
   /**
@@ -325,8 +352,8 @@ object Rational {
     * @param y the other Rational[N]
     * @return a new Rational[N] which is the product of x and y
     */
-  def times[N : FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+  def times[N: FiniteIntegral](x: Rational[N], y: Rational[N])(implicit builder: (N, N) => Rational[N]): Rational[N] = {
+    val i = FiniteIntegral[N]
     normalize(i.times(x.n, y.n), i.times(x.d, y.d))
   }
 
@@ -334,47 +361,52 @@ object Rational {
 
   /**
     * Method to compare two Rational[N] numbers
+    *
     * @param x the first Rational[N]
     * @param y the second Rational[N]
     * @return (x-y).signum
     */
-  def compare[N : FiniteIntegral](x: Rational[N], y: Rational[N]): Int = if (x.isInfinity && y.isInfinity) 0 else (x-y).signum
+  def compare[N: FiniteIntegral](x: Rational[N], y: Rational[N]): Int = if (x.isInfinity && y.isInfinity) 0 else (x - y).signum
 
   /**
     * Method to convert a Rational (x) into an Int
+    *
     * @param x the Rational to convert
     * @return if x is whole and if x fits into the range of an Int, then the corresponding Int is returned;
     *         otherwise, we throw a FiniteIntegralException
     */
-  def toInt[N : FiniteIntegral](x: Rational[N]): Int = narrowWhole(x)(implicitly[FiniteIntegral[N]].toInt)
+  def toInt[N: FiniteIntegral](x: Rational[N]): Int = narrowWhole(x)(FiniteIntegral[N].toInt)
 
   /**
     * Method to convert a Rational (x) into a Long
+    *
     * @param x the Rational to convert
     * @return if x is whole, then the corresponding Long is returned;
     *         otherwise, we throw a FiniteIntegralException
     */
-  def toLong[N : FiniteIntegral](x: Rational[N]): Long = narrowWhole(x)(implicitly[FiniteIntegral[N]].toLong)
+  def toLong[N: FiniteIntegral](x: Rational[N]): Long = narrowWhole(x)(FiniteIntegral[N].toLong)
 
   /**
     * Method to convert a Rational (x) into a BigInt
+    *
     * @param x the Rational to convert
     * @return if x is whole, then the corresponding BigInt is returned.
     */
-  def toBigInt[N : FiniteIntegral](x: Rational[N]): BigInt = narrowWhole(x)(implicitly[FiniteIntegral[N]].toBigInt)
+  def toBigInt[N: FiniteIntegral](x: Rational[N]): BigInt = narrowWhole(x)(FiniteIntegral[N].toBigInt)
 
   /**
     * Method to form normalized Rational[N] from the given numerator and denominator
+    *
     * @param n the numerator
     * @param d the denominator
     * @return a Rational[N] corresponding to n/d where n and d have no common factors
     */
-  def normalize[N : FiniteIntegral](n: N, d: N)(implicit builder: (N,N)=>Rational[N]): Rational[N] = {
-    val i = implicitly[FiniteIntegral[N]]
+  def normalize[N: FiniteIntegral](n: N, d: N)(implicit builder: (N, N) => Rational[N]): Rational[N] = {
+    val i = FiniteIntegral[N]
     val g = absGcd(n, d)
     g match {
       case 0 =>
-        builder(i.zero,i.zero)
+        builder(i.zero, i.zero)
       case _ =>
         val f = i.fromInt(i.signum(d))
         val numerator = i.quot(i.times(n, f), g)
@@ -388,69 +420,79 @@ object Rational {
 
   /**
     * Method to determine the greatest common divisor of a and b
+    *
     * @param a the first non-negative FiniteIntegral value
     * @param b the second non-negative FiniteIntegral value
     * @return their greatest common divisor
     */
-  @tailrec private def gcd[N : FiniteIntegral](a: N, b: N): N = if (b == 0) a else gcd(b, implicitly[FiniteIntegral[N]].rem(a,b))
+  @tailrec private def gcd[N: FiniteIntegral](a: N, b: N): N = if (b == 0) a else gcd(b, FiniteIntegral[N].rem(a, b))
 
   /**
     * Method to determine the greatest common divisor of a and b, where a and b may be signed
+    *
     * @param a the first FiniteIntegral value
     * @param b the second FiniteIntegral value
     * @return their greatest common divisor
     */
-  private def absGcd[N : FiniteIntegral](a: N, b: N): N = gcd(integralAbs(a),integralAbs(b))
+  private def absGcd[N: FiniteIntegral](a: N, b: N): N = gcd(integralAbs(a), integralAbs(b))
 
   /**
     * Method to ensure that a and b have no common factor
+    *
     * @param a a value
     * @param b another value
     * @tparam N the underlying type
     * @return true if the greatest common divisor of a and b is 1
     */
-  private def noCommonFactor[N : FiniteIntegral](a: N, b: N) = absGcd(a,b)==1
+  private def noCommonFactor[N: FiniteIntegral](a: N, b: N) = absGcd(a, b) == 1
 
 
   /**
     * Method to get the absolute value of a Long
+    *
     * @param a the Long value
     * @return the absolute value of a
     */
-  private def integralAbs[N : FiniteIntegral](a: N) = implicitly[FiniteIntegral[N]].abs(a)
+  private def integralAbs[N: FiniteIntegral](a: N) = FiniteIntegral[N].abs(a)
 
   // Utilities
 
-  private def cf[N : FiniteIntegral](x: N, y: N): Int = implicitly[FiniteIntegral[N]].compare(x,y)
-  private def cf[N : FiniteIntegral](x: N, y: Int): Int = cf(x,implicitly[FiniteIntegral[N]].fromInt(y))
-  private def is[N : FiniteIntegral](x: N, y: N): Boolean = cf(x,y)==0
-  private def is[N : FiniteIntegral](x: N, y: Int): Boolean = cf(x,y)==0
+  private def cf[N: FiniteIntegral](x: N, y: N): Int = FiniteIntegral[N].compare(x, y)
 
-  private def narrowWhole[N : FiniteIntegral, M](x: Rational[N])(f: N=>M): M = if (x.isWhole) f(x.n) else throw new RationalException(s"$x is not Whole")
+  private def cf[N: FiniteIntegral](x: N, y: Int): Int = cf(x, FiniteIntegral[N].fromInt(y))
+
+  private def is[N: FiniteIntegral](x: N, y: N): Boolean = cf(x, y) == 0
+
+  private def is[N: FiniteIntegral](x: N, y: Int): Boolean = cf(x, y) == 0
+
+  private def narrowWhole[N: FiniteIntegral, M](x: Rational[N])(f: N => M): M = if (x.isWhole) f(x.n) else throw new RationalException(s"$x is not Whole")
 
   /**
     * Implicit conversion method from Int=>Rational.
     * This is used for example when comparing a Rational value with an Int
+    *
     * @param x an Int
     * @return a Rational with the same value as x
     */
-  implicit def intToRational[N : FiniteIntegral](x: Int): Rational[N] = apply(implicitly[FiniteIntegral[N]].fromInt(x))
+  implicit def intToRational[N: FiniteIntegral](x: Int): Rational[N] = apply(FiniteIntegral[N].fromInt(x))
 
   /**
     * Implicit conversion method from Long=>Rational[N].
     * This is used for example when comparing a Rational[N] value with an Long
+    *
     * @param x an Long
     * @return a Rational[N] with the same value as x
     */
-  implicit def longToRational[N : FiniteIntegral](x: Long): Rational[N] = apply(implicitly[FiniteIntegral[N]].fromLong(x))
+  implicit def longToRational[N: FiniteIntegral](x: Long): Rational[N] = apply(FiniteIntegral[N].fromLong(x))
 
   /**
     * Implicit conversion method from Double=>Rational[N].
     * This is used for example when comparing a Rational[N] value with an Double
+    *
     * @param x a Double
     * @return a Rational[N] with the same value as x, or at least as close as possible
     */
-  implicit def doubleToRational[N : FiniteIntegral](x: Double): Rational[N] = Rational(x)
+  implicit def doubleToRational[N: FiniteIntegral](x: Double): Rational[N] = Rational(x)
 
   /**
     * Trait which enables Rational[N] to be used in type classes where the context type is a Fractional (or Numeric or Ordering).
@@ -480,9 +522,9 @@ object Rational {
     def compare(x: Rational[N], y: Rational[N]): Int = x.compare(y)
   }
 
-  class RationalIsFractionalAndFiniteNumeric[N : FiniteIntegral] extends RationalIsFractional[N] {
+  class RationalIsFractionalAndFiniteNumeric[N: FiniteIntegral] extends RationalIsFractional[N] {
 
-    private val i = implicitly[FiniteIntegral[N]]
+    private val i = FiniteIntegral[N]
 
     def fromInt(x: Int): Rational[N] = Rational[N](i.fromInt(x))
 
@@ -490,11 +532,11 @@ object Rational {
 
     override def one: Rational[N] = Rational(i.one)
 
-    override def abs(x: Rational[N]): Rational[N] = Rational(i.abs(x.n),x.d)
+    override def abs(x: Rational[N]): Rational[N] = Rational(i.abs(x.n), x.d)
 
     override def signum(x: Rational[N]): Int = i.signum(x.n)
 
-    def negate(x: Rational[N]): Rational[N] = Rational(i.negate(x.n),x.d)
+    def negate(x: Rational[N]): Rational[N] = Rational(i.negate(x.n), x.d)
   }
 
   /**

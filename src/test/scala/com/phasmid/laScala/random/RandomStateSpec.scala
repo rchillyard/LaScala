@@ -9,12 +9,10 @@ import scala.language.postfixOps
   */
 class RandomStateSpec extends FlatSpec with Matchers {
 
-//  private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
+  //  private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
 
   private def mean(xs: Seq[Double]) = xs.sum / xs.length
 
-  // XXX Clearly, this doesn't look good. We will soon learn how to write
-  // generic methods like sum and mean. But for now, this is what we've got.
   def sumU(xs: Seq[UniformDouble]): Double = xs.foldLeft(0.0)((a, x) => x + a)
 
   private def meanU(xs: Seq[UniformDouble]) = sumU(xs) / xs.length
@@ -34,20 +32,20 @@ class RandomStateSpec extends FlatSpec with Matchers {
   "Double stream" should "have zero mean" in {
     val xs = RandomState(0).map(RandomState.longToDouble).toStream take 10001 toList
     val mu = mean(xs) //xs.sum/xs.length
-    math.abs(mu) shouldBe <= (2E-2)
+    math.abs(mu) shouldBe <=(2E-2)
   }
   "0..1 stream" should "have mean = 0.5" in {
     val xs = RandomState(0).map(RandomState.longToDouble).map(RandomState.doubleToUniformDouble).toStream take 1001 toList;
     math.abs(meanU(xs) - 0.5) shouldBe <=(5E-3)
   }
-//  "Gaussian stream" should "have zero mean" in {
-//    val xs = RandomState.values2(GaussianRandomState(0)) take 11111 toList;
-//    math.abs(mean(xs)) shouldBe <=(5E-3)
-//  }
-//  it should "have unit std. deviation" in {
-//    val xs = RandomState.values2(GaussianRandomState(0)) take 11111 toList;
-//    (math.abs(stdDev(xs)) - 1) shouldBe <=(5E-3)
-//  }
+  //  "Gaussian stream" should "have zero mean" in {
+  //    val xs = RandomState.values2(GaussianRandomState(0)) take 11111 toList;
+  //    math.abs(mean(xs)) shouldBe <=(5E-3)
+  //  }
+  //  it should "have unit std. deviation" in {
+  //    val xs = RandomState.values2(GaussianRandomState(0)) take 11111 toList;
+  //    (math.abs(stdDev(xs)) - 1) shouldBe <=(5E-3)
+  //  }
   "map" should "work" in {
     val rLong: RandomState[Long] = RandomState(0)
     val rInt = rLong.map(_.toInt)
@@ -68,8 +66,8 @@ class RandomStateSpec extends FlatSpec with Matchers {
     val r2 = r1.flatMap(RandomState(_))
     r2.get shouldBe 4804307197456638271L
   }
-//  "for comprehension" should "work" in {
-//    val z = for (x <- RandomState(0); y <- RandomState(0)) yield (x,y)
-//    println(RandomState(0))
-//  }
+  //  "for comprehension" should "work" in {
+  //    val z = for (x <- RandomState(0); y <- RandomState(0)) yield (x,y)
+  //    println(RandomState(0))
+  //  }
 }

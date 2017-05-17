@@ -23,10 +23,12 @@ trait Counter[X] extends Orderable[X] {
 }
 
 object Counter {
+  def apply[A: Counter]: Counter[A] = implicitly[Counter[A]]
 
   trait IntCounter extends Orderable.OrderableInt with Counter[Int] {
     def increment(x: Int): Int = x + 1
   }
+
   implicit object intCounter extends IntCounter
 
   trait LongCounter extends Orderable.OrderableLong with Counter[Long] {
@@ -34,6 +36,7 @@ object Counter {
   }
 
   implicit object longCounter extends LongCounter
+
 }
 
 /**
@@ -54,7 +57,7 @@ object Recursion {
     * @tparam T the underlying type of the work list.
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
-    * @return   a value of R.
+    * @return a value of R.
     */
   final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], r: R): R =
     countRecurse[T, S, R, Int]((_, t) => f(t), g, h, q)(ts, 0, r)
@@ -74,10 +77,10 @@ object Recursion {
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @tparam C The type of the counter -- context-bound to Counter
-    * @return   a value of R.
+    * @return a value of R.
     */
   final def countRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], c: C, r: R): R =
-    genericCountRecurse(f, g, h, { _c: C => implicitly[Counter[C]].increment(_c) }, q)(ts, c, r)
+    genericCountRecurse(f, g, h, { _c: C => Counter[C].increment(_c) }, q)(ts, c, r)
 
   /**
     * Generic tail-recursive method with counting.
@@ -97,30 +100,30 @@ object Recursion {
     * @tparam S the return type of f, typically an Option[X] where X is something that can be combined with an R.
     * @tparam R the result type.
     * @tparam C The type of the counter -- context-bound to Counter
-    * @return   a value of R.
+    * @return a value of R.
     */
   @tailrec
   final def genericCountRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], y: C => C, q: R => Boolean = { _: R => false })(ts: Seq[T], c: C, r: R): R =
-    if (q(r))
-      r
-    else
-      ts match {
-        case Nil => r
-        case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(c), g(r, f(c, t)))
-      }
+  if (q(r))
+    r
+  else
+    ts match {
+      case Nil => r
+      case t :: z => genericCountRecurse(f, g, h, y, q)(h(z, t), y(c), g(r, f(c, t)))
+    }
 
   @tailrec
-  final def genericRecurse[R, T](f: (R,T)=>R, g: (Seq[T],T)=>Seq[T], q: R => Boolean = { _: R => false })(r: R, ts: Seq[T]): R =
+  final def genericRecurse[R, T](f: (R, T) => R, g: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(r: R, ts: Seq[T]): R =
     if (q(r))
       r
     else
       ts match {
         case Nil => r
-        case t :: h => genericRecurse(f,g,q)(f(r,t),g(h,t))
+        case t :: h => genericRecurse(f, g, q)(f(r, t), g(h, t))
       }
 }
 
-// FIXME this is broken but should be fixed!
+// CONSIDER this is broken but should be fixed!
 
 //object Factorial {
 //  def f(x: BigInt, y: Int): BigInt = x * y
@@ -130,9 +133,12 @@ object Recursion {
 
 object Factorial {
   def f(x: Int, y: Int): Int = x
-  def g(x: BigInt, y: Int): BigInt = x*y
-  def h(xs: Seq[Int], x: Int): Seq[Int] = if (x>1) xs :+ x-1 else xs
+
+  def g(x: BigInt, y: Int): BigInt = x * y
+
+  def h(xs: Seq[Int], x: Int): Seq[Int] = if (x > 1) xs :+ x - 1 else xs
 
   def y(x: Int): Int = x + 1
-  def factorial(n: Int): BigInt = Recursion.genericCountRecurse[Int,Int,BigInt,Int](f,g,h,y)(Seq(n),1,1)
+
+  def factorial(n: Int): BigInt = Recursion.genericCountRecurse[Int, Int, BigInt, Int](f, g, h, y)(Seq(n), 1, 1)
 }

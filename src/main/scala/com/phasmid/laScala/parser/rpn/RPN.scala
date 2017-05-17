@@ -1,8 +1,8 @@
 package com.phasmid.laScala.parser.rpn
 
-import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.RuleException
 import com.phasmid.laScala.fp.FP
+import com.phasmid.laScala.parser.Valuable
 
 import scala.language.implicitConversions
 import scala.util._
@@ -18,10 +18,10 @@ case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] 
 }
 
 case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
-  // TODO move this into implicit parameter
+  // CONSIDER move this into implicit parameter
   implicit val pattern = ""
 
-  def evaluate: Try[X] = implicitly[Valuable[X]].fromString(n)
+  def evaluate: Try[X] = Valuable[X].fromString(n)
 }
 
 case class Monadic[X: Valuable](f: X => Try[X]) extends Token[X]
@@ -40,7 +40,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
   def push(t: Token[X]) = RPN(t :: stack)
 
   def evaluate: Try[X] = {
-    // TODO move this into implicit parameter
+    // CONSIDER moving this into implicit parameter
     implicit val pattern = ""
     val (xt, xts) = inner(stack)
     if (xts.isEmpty) xt
@@ -51,7 +51,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
     case Nil =>
       (Failure(new RuleException("token list is empty")), xts)
     case Number(s) :: r0 =>
-      (implicitly[Valuable[X]].fromString(s), r0)
+      (Valuable[X].fromString(s), r0)
     case Constant(x) :: r0 =>
       (x, r0)
     case Monadic(f) :: r0 =>
@@ -71,7 +71,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
 object Token {
   def apply[X: Valuable](s: String)(implicit lookup: String => Option[X]): Token[X] = {
     // CONSIDER checking orderableToken first
-    val n: Valuable[X] = implicitly[Valuable[X]]
+    val n: Valuable[X] = Valuable[X]
     val floatingR = """(-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?)""".r
     val lookupR = """\$(\w+)""".r
     s match {

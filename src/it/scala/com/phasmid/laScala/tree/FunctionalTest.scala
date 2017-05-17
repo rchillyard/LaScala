@@ -1,9 +1,7 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{FP, Spy}
-import org.scalatest.{FlatSpec, Matchers}
+import com.phasmid.laScala.fp.Spy
 
-import scala.io.Source
 import scala.util._
 
 
@@ -13,7 +11,6 @@ import scala.util._
 class FunctionalTest extends FlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
-  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository.
   it should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
@@ -32,6 +29,6 @@ class FunctionalTest extends FlatSpec with Matchers {
   private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
     val aso = AccountRecordTest.readAccountData(tester)
     val checks = Spy.noSpy(AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso))
-    checks should matchPattern { case Success((`size`,`depth`,`before`,`iteratorSize`,`mpttSize`,Some(_),_,_)) => }
+    checks should matchPattern { case Success((`size`, `depth`, `before`, `iteratorSize`, `mpttSize`, Some(_), _, _)) => }
   }
 }

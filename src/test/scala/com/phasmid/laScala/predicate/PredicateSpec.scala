@@ -64,8 +64,8 @@ class PredicateSpec extends FlatSpec with Matchers {
     val q: Predicate[Int] = p map {
       _.toInt
     }
-    q.apply(2) should matchPattern { case Success(false) => }
-    q.apply(4) should matchPattern { case Success(true) => }
+    q(2) should matchPattern { case Success(false) => }
+    q(4) should matchPattern { case Success(true) => }
   }
   it should "be named ok" in {
     val p: Predicate[String] = GT("3")
@@ -80,15 +80,15 @@ class PredicateSpec extends FlatSpec with Matchers {
     val q: Predicate[Int] = p map {
       variables.apply
     }
-    q.apply(2) should matchPattern { case Success(false) => }
-    q.apply(4) should matchPattern { case Success(true) => }
+    q(2) should matchPattern { case Success(false) => }
+    q(4) should matchPattern { case Success(true) => }
   }
   it should "work with a scale factor" in {
     val p: Predicate[Int] = GT(3)
     //    val variables: Map[String, Int] = Map("x" -> 3)
     val q: Predicate[Int] = p map { x => 2 * x }
-    q.apply(4) should matchPattern { case Success(false) => }
-    q.apply(8) should matchPattern { case Success(true) => }
+    q(4) should matchPattern { case Success(false) => }
+    q(8) should matchPattern { case Success(true) => }
   }
   "x > $z" should "be parsed" in {
     //    val variables: Map[String, Int] = Map("x" -> 2, "y" -> 4, "z" -> 3)
@@ -124,12 +124,14 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   "Func" should "work" in {
     def even(x: Int) = x % 2 == 0
+
     val p = Func(even)
     p(6) should matchPattern { case Success(true) => }
     p(11) should matchPattern { case Success(false) => }
   }
   it should "be named ok" in {
     def even(x: Int) = x % 2 == 0
+
     val p = Func(even)
     p.toString shouldBe "function <function1>"
   }
@@ -177,6 +179,7 @@ class PredicateSpec extends FlatSpec with Matchers {
     p("six") should matchPattern { case Success(false) => }
   }
   "Always" should "be true" in {
+    // CONSIDER Figure out why we get a warning here and fix it!
     val p = Always
     p() should matchPattern { case Success(true) => }
   }
@@ -200,21 +203,24 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
+
     def func1(x: Int): Boolean = {
       s.append("func1 evaluated. ")
       x > 0
     }
+
     def func2(x: Int): Boolean = {
       s.append("func2 evaluated. ")
       x < 10
     }
+
     val p = Func(func1) :& Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
     p(-1) should matchPattern { case Success(false) => }
-    // XXX: this fails for 2.10
-//    s.toString shouldBe "func1 evaluated. "
+    // NOTE: this fails for 2.10
+    //    s.toString shouldBe "func1 evaluated. "
   }
   ":|" should "work with Predicate" in {
     val p = Always :| Never
@@ -226,21 +232,24 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
+
     def func1(x: Int): Boolean = {
       s.append("func1 evaluated. ")
       x > 0
     }
+
     def func2(x: Int): Boolean = {
       s.append("func2 evaluated. ")
       x < 10
     }
+
     val _ = Func(func1) :^| func2
-    // XXX: fails for 2.10
-//    p(3) should matchPattern { case Success(true) => }
-//    s.toString shouldBe "func1 evaluated. "
-//    s.clear()
-//    p(-1) should matchPattern { case Success(true) => }
-//    s.toString shouldBe "func1 evaluated. func2 evaluated. "
+    // NOTE: fails for 2.10
+    //    p(3) should matchPattern { case Success(true) => }
+    //    s.toString shouldBe "func1 evaluated. "
+    //    s.clear()
+    //    p(-1) should matchPattern { case Success(true) => }
+    //    s.toString shouldBe "func1 evaluated. func2 evaluated. "
   }
   "&:" should "work with Predicate" in {
     val p = Always &: Never
@@ -252,21 +261,26 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
+
     def func1(x: Int): Boolean = {
       s.append("func1 evaluated. ")
       x > 0
     }
+
     def func2(x: Int): Boolean = {
       s.append("func2 evaluated. ")
       x < 10
     }
+
+    //noinspection ConvertibleToMethodValue
+    // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val p = func1 _ &^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
     p(-1) should matchPattern { case Success(false) => }
-    // XXX: works only with 2.11
-//    s.toString shouldBe "func1 evaluated. "
+    // NOTE: works only with 2.11
+    //    s.toString shouldBe "func1 evaluated. "
   }
   "|:" should "work with Predicate" in {
     val p = Always |: Never
@@ -278,20 +292,25 @@ class PredicateSpec extends FlatSpec with Matchers {
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
+
     def func1(x: Int): Boolean = {
       s.append("func1 evaluated. ")
       x > 0
     }
+
     def func2(x: Int): Boolean = {
       s.append("func2 evaluated. ")
       x < 10
     }
+
+    //noinspection ConvertibleToMethodValue
+    // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
     val _ = func1 _ |^: Func(func2)
-    // XXX: works only with 2.11
-//    p(3) should matchPattern { case Success(true) => }
-//    s.toString shouldBe "func1 evaluated. "
-//    s.clear()
-//    p(-1) should matchPattern { case Success(true) => }
-//    s.toString shouldBe "func1 evaluated. func2 evaluated. "
+    // NOTE: works only with 2.11
+    //    p(3) should matchPattern { case Success(true) => }
+    //    s.toString shouldBe "func1 evaluated. "
+    //    s.clear()
+    //    p(-1) should matchPattern { case Success(true) => }
+    //    s.toString shouldBe "func1 evaluated. func2 evaluated. "
   }
 }

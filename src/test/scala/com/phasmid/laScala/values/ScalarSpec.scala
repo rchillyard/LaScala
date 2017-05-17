@@ -27,16 +27,31 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Int] should matchPattern { case Some(1) => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
   }
+  it should "result from explicit BooleanScalar(String)" in {
+    val x = BooleanScalar("TRUE")
+    x.source shouldBe "TRUE"
+    x.asBoolean should matchPattern { case Some(true) => }
+    x.asValuable[Int] should matchPattern { case Some(1) => }
+  }
+  it should "result from explicit StringScalar(String)" in {
+    val x = StringScalar("true")
+    x.source shouldBe "true"
+    x.asBoolean should matchPattern { case Some(true) => }
+  }
+  it should "work from String form" in {
+    val x = Scalar("true")
+    x.asBoolean should matchPattern { case Some(true) => }
+  }
   it should "work implicitly" in {
     val x: Scalar = true
     x shouldBe BooleanScalar(true)
   }
   it should "render correctly" in {
     val x: Scalar = true
-    x.render shouldBe "true"
+    x.render() shouldBe "true"
     BooleanScalar.setDefaultFormat("%B")
     // TODO well, this is something of a mystery why this is failing.
-//    x.render shouldBe "TRUE"
+    //    x.render shouldBe "TRUE"
   }
   "IntScalar" should "work" in {
     val x = Scalar(1)
@@ -51,7 +66,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render correctly" in {
     val x: Scalar = 1
-    x.render shouldBe "1"
+    x.render() shouldBe "1"
   }
   "StringScalar" should "be Some where string is numeric" in {
     val x = Scalar("1")
@@ -81,8 +96,9 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "work with month names" in {
     implicit val pattern = "dd-MMM-yy"
     val formatter = DateTimeFormatter.ofPattern(pattern)
+    //noinspection ScalaUnusedSymbol
+    // CONSIDER something with this
     val gloriousTwelfth = formatter.parse("12-Aug-16")
-    println(gloriousTwelfth)
     val x = DateScalar("12-Aug-16")
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
@@ -99,15 +115,22 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "be unquoted when created from apply" in {
     val x = Scalar(""""1"""")
-    x.render shouldBe """"1""""
+    x.render() shouldBe """"1""""
     x.source shouldBe """"1""""
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case None => }
   }
-  "DoubleScalar" should "work" in {
+  "DoubleScalar" should "result from Scalar(Double)" in {
     val x = Scalar(1.0)
     x.source shouldBe 1.0
+    x.asBoolean should matchPattern { case None => }
+    x.asValuable[Int] should matchPattern { case None => }
+    x.asValuable[Double] should matchPattern { case Some(1.0) => }
+  }
+  it should "result from explicit DoubleScalar(String)" in {
+    val x = DoubleScalar("1.0")
+    x.source shouldBe "1.0"
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
     x.asValuable[Double] should matchPattern { case Some(1.0) => }
@@ -118,12 +141,12 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render correctly" in {
     val x: Scalar = 1.0
-    x.render shouldBe "1.000000"
+    x.render() shouldBe "1.000000"
     x.renderFormatted("%5.2f") shouldBe " 1.00"
   }
   "RationalScalar" should "work" in {
-    import Rational.RationalHelper
     import FiniteIntegral.LongIsFiniteIntegral
+    import Rational.RationalHelper
     val x = Scalar(r"1/2")
     val half = Rational.half
     x.source shouldBe half
@@ -140,7 +163,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "render correctly" in {
     import Rational.RationalHelper
     val x: Scalar = r"1/2"
-    x.render shouldBe "0.5"
+    x.render() shouldBe "0.5"
     x.renderFormatted("%3.1f") shouldBe "0.5"
   }
   "DateScalar" should "work" in {
@@ -167,7 +190,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
   it should "render correctly" in {
     implicit val pattern = ""
     val x = DateScalar("2016-07-10")
-    x.render shouldBe "2016-07-10"
+    x.render() shouldBe "2016-07-10"
   }
   "attribute map" should "work" in {
     val m: Map[String, Scalar] = Map("k" -> Scalar("k"), "1" -> Scalar(1), "b" -> Scalar(true), "1.0" -> Scalar(1.0))
@@ -191,7 +214,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Scalar] = Scalar.sequence(dates)
     val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
-    variables.apply("x").get shouldBe LocalDate.of(2016, 7, 13)
+    variables("x").get shouldBe LocalDate.of(2016, 7, 13)
   }
   "tryScalar" should "work when given Any" in {
     val w: Any = "k"

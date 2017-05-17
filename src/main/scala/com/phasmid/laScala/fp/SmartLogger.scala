@@ -95,7 +95,7 @@ trait SmartLogger {
   def milestoneFormatter(name: String)(values: Any*): String = {
     val sb = new StringBuilder(s"Milestone $name")
     if (values.size > 1)
-      sb.append((values map { _.toString }).mkString(": ", ", ", ""))
+      sb.append((values map (_.toString)).mkString(": ", ", ", ""))
     else if (values.size == 1)
       sb.append(": " + values.head)
     sb.toString
@@ -105,7 +105,7 @@ trait SmartLogger {
     * The formatter for the end message.
     *
     * @param name the name/identifier of the expression
-    * @param x    the String representing the expression's result (call-by-name so that it isn't evaluated if we don't need it)
+    * @param x    the String representing the expression's result (call-by-name so that it isn't evaluated if we don'x need it)
     * @return a String to be output. If the string is null, then no end message will be logged
     */
   def endFormatter(name: String, x: => String): String = s"Finished $name with result: $x"

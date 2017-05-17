@@ -1,0 +1,16 @@
+name, kingdom, phylum, class, order, family, subfamily, genus, species
+animals, animalia
+vertebrates, animalia, chordata
+birds, animalia, chordata, aves
+hawks-eagles-vultures, animalia, chordata, aves, accipitriformes
+hawks-eagles-OWvultures-kites, animalia, chordata, aves, accipitriformes, accipitridae
+true eagles, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila
+golden eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, chyrsaetos
+Bonelli's eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, fasciata
+Spanish imperial eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, adalberti
+hawks-eagles, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae
+buzzards, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, buteo
+European buzzard, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, buteo, buteo
+kites, animalia, chordata, aves, accipitriformes, accipitridae, milvinae
+true kites, animalia, chordata, aves, accipitriformes, accipitridae, milvinae, milvus
+black kite, animalia, chordata, aves, accipitriformes, accipitridae, milvinae, milvus, milvus

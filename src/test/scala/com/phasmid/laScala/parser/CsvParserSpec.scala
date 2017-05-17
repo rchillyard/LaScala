@@ -17,12 +17,12 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   "term" should """parse "x",y """ in {
     val s = """"x",y"""
-    defaultParser.parse(defaultParser.term,s) should matchPattern { case defaultParser.Success(""""x"""",_) => }
+    defaultParser.parse(defaultParser.term, s) should matchPattern { case defaultParser.Success(""""x"""", _) => }
     // we ignore the ,y part
   }
   "row" should """parse "x",y """ in {
     val s = """"x",y"""
-    defaultParser.parseAll(defaultParser.row,s) should matchPattern { case defaultParser.Success(List(""""x"""","y"),_) => }
+    defaultParser.parseAll(defaultParser.row, s) should matchPattern { case defaultParser.Success(List(""""x"""", "y"), _) => }
   }
   "CsvParser()" should """parse "x" as Success(List("x"))""" in {
     defaultParser.parseRow(""""x"""") should matchPattern { case scala.util.Success(List(""""x"""")) => }
@@ -56,12 +56,13 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
 
   "CsvParser.parseElem" should "parse 1 as 1" in (CsvParser.defaultParser("1") should matchPattern { case Success(IntScalar(1, _)) => })
   it should "parse 1.0 as 1.0" in (CsvParser.defaultParser("1.0") should matchPattern { case Success(DoubleScalar(1.0, _)) => })
+  it should "parse TRUE as true" in (CsvParser.defaultParser("TRUE") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse true as true" in (CsvParser.defaultParser("true") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse false as false" in (CsvParser.defaultParser("false") should matchPattern { case Success(BooleanScalar(false, _)) => })
   it should "parse yes as yes" in (CsvParser.defaultParser("yes") should matchPattern { case Success(BooleanScalar(true, _)) => })
   it should "parse no as false" in (CsvParser.defaultParser("no") should matchPattern { case Success(BooleanScalar(false, _)) => })
   it should "parse T as true" in (CsvParser.defaultParser("T") should matchPattern { case Success(BooleanScalar(true, _)) => })
-  // TODO why does this give StringScalar, not QuotedStringScalar
+  // CONSIDER why does this give StringScalar, not QuotedStringScalar
   it should """parse "1" as "1"""" in (CsvParser.defaultParser(""""1"""") should matchPattern { case Success(StringScalar("1", _)) => })
   it should """parse 2016-3-8 as datetime""" in {
     val dt = CsvParser.defaultParser("2016-3-8")
@@ -70,13 +71,11 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   }
   it should """parse 12-Aug-16 as datetime""" in {
     val pattern = "dd-MMM-yy"
-        val formatter = DateTimeFormatter.ofPattern(pattern)
+    val formatter = DateTimeFormatter.ofPattern(pattern)
     formatter.parse("12-Aug-16")
 
     val dt = CsvParser.defaultParser("12-Aug-16")
     dt should matchPattern { case Success(_: DateScalar) => }
-    println(dt.get.render)
-    println(DateScalar(2016, 8, 12))
     dt.get shouldBe DateScalar(2016, 8, 12)
   }
 
@@ -100,12 +99,13 @@ class CsvParserSpec extends FlatSpec with Matchers with Inside {
   }
   "content of quotes.csv" should "work" in {
     def parser(s: String): Try[Scalar] = CsvParser.defaultParser(s)
+
     val row = """"Apple Inc.",104.48,"8/2/2016",12.18"""
     val xy: Try[(String, Double, LocalDate, Double)] = for {
       ws <- defaultParser.parseRow(row)
       x <- TupleStream.seqToTuple[(String, Double, LocalDate, Double)](ws)(parser)
     } yield x
-    xy should matchPattern { case Success(("Apple Inc.",104.48,_,12.18)) => }
+    xy should matchPattern { case Success(("Apple Inc.", 104.48, _, 12.18)) => }
   }
   """dateParser""" should "recognize 2016-03-15" in {
     val dp = CsvParser.dateParser

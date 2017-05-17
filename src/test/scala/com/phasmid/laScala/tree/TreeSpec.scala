@@ -22,7 +22,7 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "render"
   it should "work for leaf" in {
     Leaf(42).render() shouldBe "42"
-    Leaf(42).render(1) shouldBe "  42"
+    Leaf(42).render(1) shouldBe "42"
   }
   it should "work for GeneralTree" in {
     val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
@@ -125,8 +125,6 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(3)
-    println(tree.iterator().toList)
-    println(UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4))).iterator().toList)
     tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), UnvaluedBinaryTree(Leaf(3), Leaf(4))))
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {
@@ -140,6 +138,12 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(0)
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
   }
+  ignore should "work correctly for BinaryTree" in {
+    import BinaryTree._
+    val tree = BinaryTree(1, Leaf(0), Leaf(2)) :+ Leaf(3)
+    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
+  }
+
   behavior of ":+(value)"
 
   it should "work correctly for GeneralTree" in {
@@ -221,10 +225,12 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work for GeneralTree" in {
     val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
     val tree2 = GeneralTree(1, Seq(Leaf(5), Leaf(6)))
+    //noinspection ScalaUnusedSymbol
     val tree3 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(5), Leaf(6)))))
+    //noinspection ScalaUnusedSymbol
     val tree4 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
-    // TODO understand why this doesn't work. At appears to yield Some(true)
+    // CONSIDER understand why this doesn't work. At appears to yield Some(true)
     //    tree3.like(tree4) should matchPattern {case Kleenean(Some(true)) => }
   }
   it should "work for UnvaluedBinaryTree" in {
@@ -312,7 +318,7 @@ class TreeSpec extends FlatSpec with Matchers {
     }).toList shouldBe Seq(Leaf(1), Leaf(3), Leaf(5))
   }
 
-  // FIXME try to understand why this bit of code -- which hasn't actually changed -- suddenlty causes a weird compiler error
+  // TODO try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error
   //  it should "work correctly for unsorted Flatland tree" in {
   //    val uo = Option(getClass.getResource("flatland.txt"))
   //    uo should matchPattern { case Some(_) => }
@@ -338,7 +344,7 @@ class TreeSpec extends FlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.includesValue(1) shouldBe true
     tree.depth shouldBe 3
-    tree.render() shouldBe "\n\n    1\n    3\n\n    5\n    6"
+    tree.render() shouldBe "\n  \n    1\n    3\n  \n    5\n    6"
   }
 
   behavior of "createIndexedTree"
@@ -368,7 +374,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   }
   /**
-    * TODO reimplement this using GeneralTree instead of GeneralKVTree.
+    * CONSIDER reimplement this using GeneralTree instead of GeneralKVTree.
     * XXX I think it whould work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
     *
     * This test is based on the description of the "nested set model" in Wikipedia: https://en.wikipedia.org/wiki/Nested_set_model

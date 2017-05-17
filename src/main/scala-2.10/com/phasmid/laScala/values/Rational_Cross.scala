@@ -6,5 +6,5 @@ package com.phasmid.laScala.values
   * @author scalaprof
   */
 object Rational_Cross {
-  def isExactDouble[N : FiniteIntegral](r: Rational[N]) = false // (arbitrary)
+  def isExactDouble[N: FiniteIntegral](r: Rational[N]) = false // (arbitrary)
 }
