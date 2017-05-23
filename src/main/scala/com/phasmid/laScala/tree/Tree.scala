@@ -140,19 +140,22 @@ sealed trait Tree[+A] extends Node[A] {
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(t) =>
       val tb = TreeBuilder[B]
-      val no = tb.getParent(this, t)
-      no match {
+      tb.getParent(this, t) match {
         // NOTE: we should always get a match when this is a binary tree
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = Spy.spy(s"addNode: $node\n  to tree: $this\n  with bo=", for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
-          bo match {
-            case Some(_) =>
-              if (allowRecursion)
-                addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
-              else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
-                throw TreeException(s"logic error: recursion beyond root after no parent found for $t")
-            case _ => throw TreeException(s"logic error: cannot get value for new parent of node $node")
+          val optVal = get.asInstanceOf[Option[B]]
+          if (optVal == get) replaceNode(this, this + node)((_, _) => true)
+          else {
+            val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
+            bo match {
+              case Some(_) =>
+                if (allowRecursion)
+                  addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
+                else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
+                  throw TreeException(s"logic error: recursion beyond root after no parent found for $t")
+              case _ => throw TreeException(s"logic error: cannot get value for new parent of node $node")
+            }
           }
       }
 

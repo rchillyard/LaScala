@@ -38,25 +38,50 @@ trait Renderable {
   def nl(indent: Int)(implicit tab: Int => Prefix): String = "\n" + tab(indent)
 }
 
-case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)") extends Renderable {
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = if (xs.size==1)
-    bookends.head+Renderable.renderElem(xs.head, indent+1)+bookends(2)
-  else
-    Renderable.elemsToString(xs, indent, bookends.head + nl(indent + 1), bookends(1) + nl(indent + 1), nl(indent) + bookends(2))
+/**
+  * Case class which defines a Renderable Traversable object.
+  *
+  * @param xs       the traversable to be rendered
+  * @param bookends the prefix, separator, and suffix
+  * @param linear   true if we want the results all on one line; default is false
+  */
+case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)", linear: Boolean = false) extends Renderable {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
+    val (p, q, r) =
+      if (linear || xs.size <= 1)
+        ("" + bookends.head, "" + bookends.tail.head, "" + bookends.last)
+      else
+        (bookends.head + nl(indent + 1), bookends.tail.head + nl(indent + 1), nl(indent) + bookends.last)
+    Renderable.elemsToString(xs, indent, p, q, r)
+  }
 }
 
+/**
+  * Case class which defines a Renderable Product object.
+  *
+  * @param p the product/tuple to be rendered
+  */
 case class RenderableProduct(p: Product) extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.elemsToString(p.productIterator.toSeq, indent, s"${p.productPrefix}(", ",", ")")
 }
 
+/**
+  * Case class which defines a RenderableOption object.
+  *
+  * @param xo the optional value
+  */
 case class RenderableOption(xo: Option[_]) extends Renderable {
-
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = xo match {
     case Some(x) => s"Some(" + Renderable.renderElem(x, indent) + ")"
     case _ => "None"
   }
 }
 
+/**
+  * Case class which defines a Renderable Try object.
+  *
+  * @param xy the try value
+  */
 case class RenderableTry(xy: Try[_]) extends Renderable {
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = xy match {
@@ -65,6 +90,11 @@ case class RenderableTry(xy: Try[_]) extends Renderable {
   }
 }
 
+/**
+  * Case class which defines a Renderable Either object.
+  *
+  * @param e the either value
+  */
 case class RenderableEither(e: Either[_, _]) extends Renderable {
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = e match {
