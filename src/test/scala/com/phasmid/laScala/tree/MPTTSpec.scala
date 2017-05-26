@@ -7,6 +7,7 @@ import scala.util.Try
 /**
   * Created by scalaprof on 10/19/16.
   */
+//noinspection NameBooleanParameters
 class MPTTSpec extends FlatSpec with Matchers {
 
   implicit object StringStringValueOps$ extends StringValueOps[String] {
@@ -79,6 +80,33 @@ class MPTTSpec extends FlatSpec with Matchers {
     mptt.contains("3", "23") should matchPattern { case Some(false) => }
     mptt.contains("3", "3") should matchPattern { case Some(true) => }
     mptt.contains("3", "4") should matchPattern { case Some(false) => }
+  }
+  it should "support containsConditions correctly" in {
+    case class MyInt(x: Int, b: Boolean)
+    implicit object StringMyIntValueOps$ extends StringValueOps[MyInt] {
+      def getParentKey(a: MyInt): Option[String] = Some(a.x./(10).toString)
+
+      override def getKeyAsParent(v: MyInt): String = v.x.toString
+
+      override def getKeyFromValue(v: MyInt): String = v.x.toString
+
+      def createValueFromKey(k: String): Option[MyInt] = Try(MyInt(k.toInt, true)).toOption
+    }
+    val tree: GeneralTree[MyInt] = GeneralTree(MyInt(0, false), Seq(GeneralTree(MyInt(1, true), Seq(Leaf(MyInt(11, true)), Leaf(MyInt(12, true)), GeneralTree(MyInt(2, false), Seq(Leaf(MyInt(21, true)), Leaf(MyInt(22, true))))))))
+    val indexedTree = Tree.createIndexedTree(tree)
+    val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[MyInt]])
+    //    for (i <- mptt.index) println(s"${i._2}")
+
+    def check(x: MyInt, y: MyInt): Boolean = x.b != y.b
+
+    def checkF(x: MyInt, y: MyInt): Option[Boolean] = Some(x.b != y.b)
+
+    mptt.containsConditional("0", "0")(check) should matchPattern { case None => }
+    mptt.containsConditional("0", "1")(check) should matchPattern { case Some(true) => }
+    mptt.containsConditional("0", "11")(check) should matchPattern { case Some(true) => }
+    mptt.containsConditionalF("0", "0")(checkF) should matchPattern { case None => }
+    mptt.containsConditionalF("0", "1")(checkF) should matchPattern { case Some(true) => }
+    mptt.containsConditionalF("0", "11")(checkF) should matchPattern { case Some(true) => }
   }
   //    behavior of "real-life UnvaluedBinaryTree"
   //  it should "build correctly" in {

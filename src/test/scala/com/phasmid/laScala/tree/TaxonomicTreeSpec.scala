@@ -5,17 +5,16 @@
 
 package com.phasmid.laScala.tree
 
-import org.scalatest.{FlatSpec, Matchers}
-
-import scala.language.implicitConversions
-import scala.util.{Failure, Success, Try}
 import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.parser.{Header, TupleStream}
 import com.phasmid.laScala.tree.Taxonomy.{GeneralKVTreeBuilderTaxon, TaxonValueOps}
 import com.phasmid.laScala.values.Scalar
 import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.annotation.tailrec
+import scala.language.implicitConversions
+import scala.util.{Failure, Success, Try}
 
 
 /**
@@ -124,7 +123,6 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     val size1 = mptt.index.size
     size1 shouldBe 16
     println(mptt.render())
-
   }
 }
 
@@ -186,6 +184,7 @@ object Taxonomy {
   def buildTaxonomy(ts: Stream[Taxon]): Try[Node[Taxon]] = {
 
     implicit val spyLogger = Spy.getLogger(getClass)
+
     def populateParentChildTree[V](values: Seq[V])(implicit treeBuilder: TreeBuilder[V], vo: ValueOps[String, V]): Try[Tree[V]] = {
       val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey(""), Seq()).asInstanceOf[KVTree[String, V]]))
 
