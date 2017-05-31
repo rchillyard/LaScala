@@ -5,7 +5,7 @@
     <artifactId>lascala_2.11</artifactId>
     <packaging>jar</packaging>
     <description>lascala</description>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <name>lascala</name>
     <organization>
         <name>com.phasmid</name>

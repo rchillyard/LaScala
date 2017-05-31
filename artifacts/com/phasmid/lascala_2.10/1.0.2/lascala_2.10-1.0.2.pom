@@ -2,10 +2,10 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.phasmid</groupId>
-    <artifactId>lascala_2.11</artifactId>
+    <artifactId>lascala_2.10</artifactId>
     <packaging>jar</packaging>
     <description>lascala</description>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <name>lascala</name>
     <organization>
         <name>com.phasmid</name>
@@ -14,22 +14,7 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.11.8</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_2.11</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_2.11</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.scala-logging</groupId>
-            <artifactId>scala-logging_2.11</artifactId>
-            <version>3.4.0</version>
+            <version>2.10.6</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -38,12 +23,12 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.scala-logging</groupId>
-            <artifactId>scala-logging-slf4j_2.11</artifactId>
+            <artifactId>scala-logging-slf4j_2.10</artifactId>
             <version>2.1.2</version>
         </dependency>
         <dependency>
             <groupId>codes.reactive</groupId>
-            <artifactId>scala-time_2.11</artifactId>
+            <artifactId>scala-time_2.10</artifactId>
             <version>0.4.0</version>
         </dependency>
         <dependency>
@@ -54,20 +39,20 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor_2.11</artifactId>
-            <version>2.4.1</version>
+            <artifactId>akka-actor_2.10</artifactId>
+            <version>2.3.15</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalacheck</groupId>
-            <artifactId>scalacheck_2.11</artifactId>
+            <artifactId>scalacheck_2.10</artifactId>
             <version>1.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
-            <version>3.0.1</version>
+            <artifactId>scalatest_2.10</artifactId>
+            <version>2.2.6</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
