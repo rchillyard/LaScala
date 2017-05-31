@@ -372,8 +372,6 @@ object FP {
 //  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
 
   /**
-    * TODO unit test
-    *
     * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
     *
     * @param t1o a Option[T1] value
@@ -384,6 +382,36 @@ object FP {
     * @return a Option[U]
     */
   def map2[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R): Option[R] = for {t1 <- t1o; t2 <- t2o} yield f(t1, t2)
+
+  /**
+    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+    * but with an additional guard function. If the guard function returns false, the f function will not be called
+    * and None will result.
+    *
+    * @param t1o a Option[T1] value
+    * @param t2o a Option[T2] value
+    * @param f   function which takes a T1 and a T2 parameter and yields a R result
+    * @param g   guard function which takes a T1 and a T2 parameter and yields a Boolean result
+    * @tparam T1 the underlying type of the first parameter
+    * @tparam R  the result type
+    * @return a Option[U]
+    */
+  def map2g[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R, g: (T1, T2) => Boolean): Option[R] = for {t1 <- t1o; t2 <- t2o; if g(t1, t2)} yield f(t1, t2)
+
+  /**
+    * An alternative ethod to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+    * but with an additional guard function. If the guard function returns false, the f function will not be called
+    * and None will result.
+    *
+    * @param t1o a Option[T1] value
+    * @param t2o a Option[T2] value
+    * @param f   function which takes a T1 and a T2 parameter and yields a R result
+    * @param g   guard function which takes a T1 and a T2 parameter and yields a Option[Boolean] result
+    * @tparam T1 the underlying type of the first parameter
+    * @tparam R  the result type
+    * @return a Option[U]
+    */
+  def flatMap2g[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R, g: (T1, T2) => Option[Boolean]): Option[R] = for {t1 <- t1o; t2 <- t2o; b <- g(t1, t2); if b} yield f(t1, t2)
 
   /**
     * The map2 function.

@@ -9,6 +9,7 @@ import com.phasmid.laScala._
 import com.phasmid.laScala.fp.FP._
 import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.tree.AbstractBinaryTree.isOverlap
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -20,7 +21,7 @@ import scala.language.{implicitConversions, postfixOps}
   */
 sealed trait Tree[+A] extends Node[A] {
 
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val spyLogger = Spy.getLogger(getClass)
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -140,20 +141,20 @@ sealed trait Tree[+A] extends Node[A] {
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(t) =>
       val tb = TreeBuilder[B]
-      val no = tb.getParent(this, t)
-      no match {
+      tb.getParent(this, t) match {
         // NOTE: we should always get a match when this is a binary tree
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = Spy.spy(s"addNode: $node\n  to tree: $this\n  with bo=", for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z)
+          val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
           bo match {
             case Some(_) =>
               if (allowRecursion)
                 addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
               else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
                 throw TreeException(s"logic error: recursion beyond root after no parent found for $t")
-            case _ => throw TreeException(s"logic error: cannot get value for new parent of node $node")
+            case _ => Tree.logger.warn(s"logic error: cannot get value for new parent of node $node"); replaceNode(this, this + node)((_, _) => true)
           }
+
       }
 
     case None => throw TreeException("cannot add node without value")
@@ -297,7 +298,7 @@ sealed trait Tree[+A] extends Node[A] {
   */
 sealed trait Node[+A] extends Renderable {
 
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val spyLogger = Spy.getLogger(getClass)
 
   /**
     * @return the value of this node, if any
@@ -644,7 +645,7 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   * @tparam A the underlying type of this Leaf
   */
 case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val spyLogger = Spy.getLogger(getClass)
 
   /**
     * Method to add the given node to this node specifically
@@ -871,6 +872,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 case object Empty extends AbstractEmpty
 
 object TreeBuilder {
+  // CONSIDER: this is a rather strange construction -- might want to refactor
   def apply[A: TreeBuilder]: TreeBuilder[A] = implicitly[TreeBuilder[A]]
 }
 
@@ -907,6 +909,8 @@ object Node {
 }
 
 object Tree {
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+
   // CONSIDER we want the key value to implement ordering, not the value itself
   // CONSIDER implement this like for general tree (below)
 
@@ -975,7 +979,7 @@ object Tree {
 }
 
 object GeneralTree {
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val spyLogger = Spy.getLogger(getClass)
 
   trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children)
@@ -1003,7 +1007,7 @@ object GeneralTree {
 }
 
 object UnvaluedBinaryTree {
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val spyLogger = Spy.getLogger(getClass)
 
   // CONSIDER creating a common TreeBuilder for all binary trees
   abstract class UnvaluedBinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {

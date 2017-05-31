@@ -394,7 +394,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val c3y = c2.partiallyApply
     c3y should matchPattern { case Success(_) => }
     c3y.get.arity shouldBe 0
-    c3y.get.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  render(lookup(\"pi\"))), \n  \n)"
+    c3y.get.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  render(lookup(\"pi\"))), )"
 
 
     // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get

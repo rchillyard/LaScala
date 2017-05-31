@@ -9,7 +9,7 @@ import com.phasmid.laScala.values.Scalar
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 import scala.util.{Left, _}
 
 /**
@@ -95,21 +95,21 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle varargs of 0 elements" in {
     val c = Closure.createVarArgsClosure()
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), \n  \n)"
+    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq())
   }
 
   it should "handle varargs of 1 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"))
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), \n  \n)"
+    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l"))
   }
 
   it should "handle varargs of 2 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"), Left("K"))
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), \n  \n)"
+    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "K"))
   }
@@ -203,7 +203,7 @@ class ClosureSpec extends FlatSpec with Matchers {
     c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String, java.lang.String, java.lang.String, java.lang.String),java.lang.String](4,  fourStringFunction(p1?)(p2?)(p3?)(p4?)), \n  Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  concat(x?)), Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"c1\"))))),\n  Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"c2\"))),\n  Left(\"v3\"),\n  Left(\"v4\")\n)"
     val dy: Try[Closure[_, String]] = for (d <- c partiallyApply) yield d
     dy match {
-      case Success(x) => x.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  fourStringFunction(concat(lookup(\"c1\")))(lookup(\"c2\"))(\"v3\")(\"v4\")), \n  \n)"
+      case Success(x) => x.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  fourStringFunction(concat(lookup(\"c1\")))(lookup(\"c2\"))(\"v3\")(\"v4\")), )"
       case _ => fail("invalid partial apply")
     }
     (for (d <- dy; r <- d()) yield r) match {

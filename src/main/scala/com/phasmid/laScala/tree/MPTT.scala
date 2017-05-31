@@ -1,6 +1,6 @@
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.Spy
+import com.phasmid.laScala.fp.{FP, Spy}
 
 import scala.collection.mutable
 
@@ -10,13 +10,40 @@ import scala.collection.mutable
 case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntry[T]) {
 
   /**
+    * Method to determine if given node is within given subtree, with the additional condition that
+    * f(subtree value, node value) is true. If f returns false, the result will be None;
+    * and contains will not be called
+    *
+    * @param subtree the subtree
+    * @param node    the node
+    * @param f       the "guard" function
+    * @return true if subtree contains node
+    */
+  def containsConditional(subtree: String, node: String)(f: (T, T) => Boolean): Option[Boolean] =
+    FP.map2g(get(subtree), get(node))(_.contains(_), (t1, t2) => f(t1.t, t2.t))
+
+  /**
+    * Method to determine if given node is within given subtree, with the additional condition that
+    * f(subtree value, node value) is true. If f returns false, the result will be None;
+    * and contains will not be called
+    *
+    * @param subtree the subtree
+    * @param node    the node
+    * @param f       the "guard" function
+    * @return true if subtree contains node
+    */
+  def containsConditionalF(subtree: String, node: String)(f: (T, T) => Option[Boolean]): Option[Boolean] =
+    FP.flatMap2g(get(subtree), get(node))(_.contains(_), (t1, t2) => f(t1.t, t2.t))
+
+  /**
     * Method to determine if given node is within given subtree
     *
     * @param subtree the subtree
     * @param node    the node
     * @return true if subtree contains node
     */
-  def contains(subtree: String, node: String): Option[Boolean] = for (e1 <- get(subtree); e2 <- get(node)) yield e1.contains(e2)
+  def contains(subtree: String, node: String): Option[Boolean] =
+    FP.map2(get(subtree), get(node))(_.contains(_))
 
   override def toString: String = {
     val r = new mutable.StringBuilder()

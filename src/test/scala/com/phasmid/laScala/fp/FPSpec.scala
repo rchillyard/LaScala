@@ -179,6 +179,35 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     map2(None, None)(eq) should matchPattern { case None => }
   }
 
+  "map2g(Option)" should "sum correctly when numbers are positive" in {
+    val one = Some(1)
+    val two = Some(2)
+
+    def sum(x: Int, y: Int) = x + y
+
+    def ss(x: Int, y: Int) = x.signum == y.signum
+
+    def ssf(x: Int, y: Int) = Some(x.signum == y.signum)
+
+    map2g(one, two)(sum, ss) should matchPattern { case Some(3) => }
+    flatMap2g(one, two)(sum, ssf) should matchPattern { case Some(3) => }
+    flatMap2g(one, two)(sum, (_, _) => None) should matchPattern { case None => }
+  }
+
+  it should "not sum correctly when numbers have same sign" in {
+    val one = Some(-1)
+    val two = Some(2)
+
+    def sum(x: Int, y: Int) = x + y
+
+    def ss(x: Int, y: Int) = x.signum == y.signum
+
+    def ssf(x: Int, y: Int) = Some(x.signum == y.signum)
+
+    map2g(one, two)(sum, ss) should matchPattern { case None => }
+    flatMap2g(one, two)(sum, ssf) should matchPattern { case None => }
+  }
+
   "map2(Try)" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
