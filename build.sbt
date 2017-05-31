@@ -49,3 +49,4 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion.value % "test"
 )
 
+publishTo := Some(Resolver.file("file",  new File( "~/releases" )) )
