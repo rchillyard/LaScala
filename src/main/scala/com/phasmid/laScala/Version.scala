@@ -2,6 +2,7 @@ package com.phasmid.laScala
 
 import java.io.File
 
+import buildinfo.BuildInfo
 import com.phasmid.laScala.values.Incrementable
 
 import scala.io.Source
@@ -122,7 +123,7 @@ object Version {
     *
     * This has been moved here from LaScalaVersion which is now deprecated.
     */
-  def getVersion : String = "1.0.2"
+  def getVersion : String = s"${BuildInfo.name} ${BuildInfo.version} (compiled with ${BuildInfo.scalaVersion} at ${BuildInfo.buildTime})"
 
   def parse[V](s: String, f: String => V, g: V => Version[V]): Option[Version[V]] = {
     def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {

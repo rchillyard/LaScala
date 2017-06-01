@@ -5,6 +5,19 @@ name := "lascala"
 scalaVersion := "2.11.8"
 crossScalaVersions := Seq("2.10.6","2.11.8")
 
+lazy val lascala = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "buildinfo"
+  )
+
+buildInfoKeys ++= Seq[BuildInfoKey](
+  BuildInfoKey.action("buildTime") {
+    System.currentTimeMillis
+  } // re-computed each time at compile
+)
+
 val scalaModules = "org.scala-lang.modules"
 val scalaModulesVersion = "1.0.4"
 
