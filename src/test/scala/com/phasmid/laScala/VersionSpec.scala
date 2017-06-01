@@ -10,8 +10,9 @@ import scala.util._
 
 class VersionSpec extends FlatSpec with Matchers with Inside {
   behavior of "getVersion"
+  // The following unit test works, but it requires too much maintenance to have it run all the time
   ignore should "match" in {
-    Version.getVersion shouldBe "1.0.1-52"
+    Version.getVersion shouldBe "lascala 1.0.3-SNAPSHOT (compiled with 2.11.8 at 1496320258395)"
   }
   "apply" should "decode 1.1" in {
     val vo = LongVersion.parse("1.1")
