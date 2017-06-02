@@ -145,7 +145,7 @@ sealed trait Tree[+A] extends Node[A] {
         // NOTE: we should always get a match when this is a binary tree
         case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
+          val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k, node.get)) yield z
           bo match {
             case Some(_) =>
               if (allowRecursion)
@@ -590,9 +590,10 @@ trait ValueOps[K, V] extends Ordering[V] {
     * This requires us to find a value for the new node
     *
     * @param k the key for the parent we must create
+    * @param vo a default, optional, value to be applied in the case that no other value can be reasonably be created
     * @return a value for the parent node, wrapped in Try
     */
-  def createValueFromKey(k: K): Option[V]
+  def createValueFromKey(k: K, vo: => Option[V]): Option[V]
 }
 
 trait StringValueOps[V] extends ValueOps[String, V] {
@@ -602,7 +603,7 @@ trait StringValueOps[V] extends ValueOps[String, V] {
 
   def getParentKey(v: V): Option[String]
 
-  def createValueFromKey(k: String): Option[V]
+  def createValueFromKey(k: String, vo: => Option[V]): Option[V]
 
   def compare(x: V, y: V): Int = getKeyFromValue(x).compare(getKeyFromValue(y))
 }
@@ -798,6 +799,8 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   /**
     * Method to add the given node to this leaf
     *
+    * CONSIDER why are we not simply using addNode from Tree?
+    *
     * @param node           a node
     * @param allowRecursion ignore for now
     * @param vo             the (implicit) ValueOps
@@ -807,7 +810,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(_) =>
       // CHECK all of this
-      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
+      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k, node.get)) yield z
       addNode(TreeBuilder[B].buildTree(bo, Seq(node)), allowRecursion)
 
     case None => throw TreeException("cannot add node without value")

@@ -164,7 +164,8 @@ object AccountRecordTest {
 
     override def getKeyAsParent(v: AccountRecord): String = v.account
 
-    def createValueFromKey(k: String): Option[AccountRecord] = Some(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
+    // CONSIDER using the value of vo instead of an arbitrary AccountRecord
+    def createValueFromKey(k: String, vo: => Option[AccountRecord]): Option[AccountRecord] = Some(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
   }
 
   implicit object AccountRecordValueOps$ extends AccountRecordValueOps {
@@ -250,7 +251,7 @@ object ParentChildTree {
     * @return the newly created tree
     */
   def populateParentChildTree[V](values: Seq[V])(implicit treeBuilder: TreeBuilder[V], vo: ValueOps[String, V]): Try[Tree[V]] = {
-    val ty = Try(TreeBuilder[V].buildTree(vo.createValueFromKey("root"), Seq()).asInstanceOf[KVTree[String, V]])
+    val ty = Try(TreeBuilder[V].buildTree(vo.createValueFromKey("root", None), Seq()).asInstanceOf[KVTree[String, V]])
 
     @tailrec
     def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {

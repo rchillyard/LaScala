@@ -22,8 +22,8 @@ import scala.util.{Failure, Success, Try}
   */
 class TaxonomicTreeSpec extends FlatSpec with Matchers {
 
-  private val taxonA = Taxon(Some("a"), Map("name" -> "A"))
-  private val taxonA1 = Taxon(Some("a1"), Map("parent" -> "A", "name" -> "A1"))
+  private val taxonA = Taxon(Some("a"), Seq("name" -> "A"))
+  private val taxonA1 = Taxon(Some("a1"), Seq("parent" -> "A", "name" -> "A1"))
 
   behavior of "Taxon nodes"
   it should "render correctly" in {
@@ -50,7 +50,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     import Taxonomy._
     val valueOps = implicitly[ValueOps[String, Taxon]]
     // NOTE: this looks odd but it's correct for a taxonomy
-    valueOps.createValueFromKey("[A]") shouldBe None
+    valueOps.createValueFromKey("[A]", None) shouldBe None
   }
 
   behavior of "GeneralKVTreeBuilderTaxon"
@@ -61,7 +61,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     leaf.size shouldBe 1
     leaf.isLeaf shouldBe true
     leaf.includes(leaf) shouldBe true
-    leaf.includesValue(Taxon(None, Map())) shouldBe false
+    leaf.includesValue(Taxon(None, Seq())) shouldBe false
     leaf.includesValue(taxonA) shouldBe true
   }
   it should "implement nodesAlike properly" in {
@@ -74,7 +74,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     import Taxonomy._
     val treeBuilder = implicitly[TreeBuilder[Taxon]]
     val valueOps = implicitly[ValueOps[String, Taxon]]
-    val xy = Try(treeBuilder.buildTree(valueOps.createValueFromKey(""), Seq()).asInstanceOf[KVTree[String, Taxon]])
+    val xy = Try(treeBuilder.buildTree(valueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, Taxon]])
     val ty = for (xt <- xy) yield for (t <- xt.get) yield (t.maybeName, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
   }
@@ -84,12 +84,12 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     val a = "a"
     val _a = "A"
     val p = "parent"
-    val xy = Try(treeBuilder.buildTree(TaxonValueOps.createValueFromKey(""), Seq()).asInstanceOf[KVTree[String, Taxon]])
+    val xy = Try(treeBuilder.buildTree(TaxonValueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, Taxon]])
     xy should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List())) => }
     val ty = for (xt <- xy) yield for (t <- xt.get) yield (t.maybeName, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
     // NOTE: addNode is protected so, for now at least, we use :+ as a surrogate
-    val ny = for (x <- xy) yield x :+ treeBuilder.buildLeaf(Taxon(Some(a), Map(p -> _a)))
+    val ny = for (x <- xy) yield x :+ treeBuilder.buildLeaf(Taxon(Some(a), Seq(p -> _a)))
     ny should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     (for (n <- ny) yield n.children) should matchPattern { case Success(List(Leaf(Taxon(Some(_), _)))) => }
   }
@@ -99,11 +99,11 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     val a = "a"
     val _a = "A"
     val p = "parent"
-    val xy = Try(treeBuilder.buildTree(TaxonValueOps.createValueFromKey(""), Seq()).asInstanceOf[KVTree[String, Taxon]])
+    val xy = Try(treeBuilder.buildTree(TaxonValueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, Taxon]])
     xy should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List())) => }
     val ty = for (xt <- xy) yield for (t <- xt.get) yield (t.maybeName, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
-    val taxonA = Taxon(Some(a), Map(p -> _a))
+    val taxonA = Taxon(Some(a), Seq(p -> _a))
     val n1y = for (x <- xy) yield x :+ taxonA
     n1y should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     val n2y = for (n1 <- n1y) yield n1 :+ taxonA1
@@ -132,7 +132,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   * @param maybeName an alternative name, not normally used for matching, only for rendering.
   * @param taxa      the ancestry (including this) of this taxon (two elements at least are required: self and parent, except top level).
   */
-case class Taxon(maybeName: Option[String], taxa: Map[String, Scalar]) extends Renderable {
+case class Taxon(maybeName: Option[String], taxa: Seq[(String, Scalar)]) extends Renderable {
 
   implicit private val spyLogger = Spy.getLogger(getClass)
 
@@ -140,7 +140,9 @@ case class Taxon(maybeName: Option[String], taxa: Map[String, Scalar]) extends R
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = maybeName.map(_ + ":").getOrElse("") + key
 
-  def key: String = taxa.values.toList.render() //  taxa.values.map(_.render()).mkString("--")
+  private def values: Seq[Scalar] = for ((w, q) <- taxa) yield q
+
+  def key: String = values.toList.render() //  taxa.values.map(_.render()).mkString("--")
 
   def parentKey: String =
     if (taxa.isEmpty)
@@ -151,7 +153,7 @@ case class Taxon(maybeName: Option[String], taxa: Map[String, Scalar]) extends R
 }
 
 object Taxon {
-  def apply(xWs: Seq[(String, Scalar)]): Taxon = Taxon(Some(xWs.head._2.source.toString), FP.toMap(xWs.tail))
+  def apply(xWs: Seq[(String, Scalar)]): Taxon = Taxon(Some(xWs.head._2.source.toString), xWs.tail)
 }
 
 /**
@@ -169,8 +171,15 @@ object Taxonomy {
       case Failure(x) => x.printStackTrace(System.err); None
     }
 
-    // NOTE: in this type of tree, we never have to create a value from a key, other than the root
-    def createValueFromKey(k: String): Option[Taxon] = if (k == "") Some(Taxon(None, Map())) else None
+    /**
+      * TODO sync this up with other implementation
+      * If the key is empty, then we must create a root node, which we do arbitrarily using None as the value,
+      * and an empty Seq for the keys.
+      * @param k the key for the parent we must create
+      * @param vo a default, optional, value to be applied in the case that no other value can be reasonably be created
+      * @return a value for the parent node, wrapped in Try
+      */
+    def createValueFromKey(k: String, vo: => Option[Taxon]): Option[Taxon] = if (k == "") Some(Taxon(None, Seq())) else vo
 
     override def getKeyAsParent(v: Taxon): String = v.key
 
@@ -186,7 +195,7 @@ object Taxonomy {
     implicit val spyLogger = Spy.getLogger(getClass)
 
     def populateParentChildTree[V](values: Seq[V])(implicit treeBuilder: TreeBuilder[V], vo: ValueOps[String, V]): Try[Tree[V]] = {
-      val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey(""), Seq()).asInstanceOf[KVTree[String, V]]))
+      val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, V]]))
 
       @tailrec
       def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {

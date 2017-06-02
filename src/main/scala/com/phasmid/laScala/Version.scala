@@ -108,9 +108,8 @@ object LongVersion {
 
 object Version {
   /**
-    * NOTE: for now, we just use a literal string with format based on major.minor.revision-build or, if you prefer, major.minor.point-snapshot
-    *
-    * This has been moved here from LaScalaVersion which is now deprecated.
+    * This code relies on the sbt-buildinfo plugin which creates a source file called BuildInfo.scala in the following directory:
+    * target/scala-2.x/src_managed/main/sbt-buildinfo/
     */
   def getVersion : String = s"${BuildInfo.name} ${BuildInfo.version} (compiled with ${BuildInfo.scalaVersion} at ${BuildInfo.buildTime})"
 
