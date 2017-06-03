@@ -9,7 +9,7 @@ lazy val lascala = (project in file(".")).
   enablePlugins(BuildInfoPlugin).
   settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "buildinfo"
+    buildInfoPackage := "lascalabuildinfo"
   )
 
 buildInfoKeys ++= Seq[BuildInfoKey](
