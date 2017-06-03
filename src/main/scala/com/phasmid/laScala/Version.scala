@@ -1,8 +1,12 @@
 package com.phasmid.laScala
 
+import java.io.File
+
 import buildinfo.BuildInfo
 import com.phasmid.laScala.values.Incrementable
 
+import scala.io.Source
+import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 
 /**
@@ -107,6 +111,13 @@ object LongVersion {
 }
 
 object Version {
+
+  val versionR: Regex = """s?[^"]*"([^"]+)".*""".r
+  lazy val version = Source.fromFile("version.sbt").mkString.trim match {
+    case versionR(v) => v
+    case _ => "<unknown version>"
+  }
+
   /**
     * This code relies on the sbt-buildinfo plugin which creates a source file called BuildInfo.scala in the following directory:
     * target/scala-2.x/src_managed/main/sbt-buildinfo/
