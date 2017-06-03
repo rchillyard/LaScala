@@ -131,32 +131,43 @@ sealed trait Tree[+A] extends Node[A] {
     }
 
   /**
-    * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
+    * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree.
+    * Unusually, I will make comments in this code because it is critical and difficult to follow.
     *
     * @param node           a node
-    * @param allowRecursion ignore for now
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
-    case Some(t) =>
+  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): Tree[B] = node.get match {
+    case Some(b) =>
+      // b is the content of the node to be added to this Tree
       val tb = TreeBuilder[B]
-      tb.getParent(this, t) match {
-        // NOTE: we should always get a match when this is a binary tree
-        case Some(parent) => replaceNode(parent, parent + node)(tb.nodesAlike)
+      tb.getParent(this, b) match {
+        case Some(parent) =>
+          // parent is the Node which will be replaced by the joining of itself with the input node
+          // NOTE: we should always get a match when this is a binary tree
+          replaceNode(parent, parent + node)(tb.nodesAlike)
         case None =>
-          val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
+          // this is the situation where a parent node for the value b cannot be found in the tree.
+          // in such a case, we must infer the properties of the parent so that it can be added to the tree, with node as its child.
+          val bo = for (k <- bKv.getParentKey(b); _b <- bKv.createValueFromKey(k, node.get)) yield _b
           bo match {
             case Some(_) =>
-              if (allowRecursion)
-                addNode(tb.buildTree(bo, Seq(node)), allowRecursion = false)
-              else // CHECK this may be inappropriate for multi-level trees where the parent nodes are not explicitly listed
-                throw TreeException(s"logic error: recursion beyond root after no parent found for $t")
-            case _ => Tree.logger.warn(s"logic error: cannot get value for new parent of node $node"); replaceNode(this, this + node)((_, _) => true)
+              // In this case, we successfully inferred a value for the parent, and now we recursively call addNode with
+              // the new node (based on bo) having as its childL node.
+              if (node.get != bo)
+              // We are not going to recurse infinitely
+                addNode(tb.buildTree(bo, Seq(node)))
+              else // NOTE if we get here the fault most probably lies with the logic in bKv or possibly tb or in the actual data
+                throw TreeException(s"logic error: recursion in addNode for $b")
+            case _ =>
+              // we were unsuccessful in inferring a value, so we give up and simply add node to the root of this tree
+              Tree.logger.warn(s"logic error: cannot get value for new parent of node $node")
+              replaceNode(this, this + node)((_, _) => true)
           }
 
       }
-
+    // we cannot use this method to add a node which has no content
     case None => throw TreeException("cannot add node without value")
   }
 
@@ -418,13 +429,12 @@ sealed trait Node[+A] extends Renderable {
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
     *
     * @param node           a node
-    * @param allowRecursion ignore for now
     * @param vo             the (implicit) ValueOps
     * @tparam K the key type
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean = true)(implicit vo: ValueOps[K, B]): Tree[B]
+  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B]
 }
 
 /**
@@ -589,10 +599,11 @@ trait ValueOps[K, V] extends Ordering[V] {
     * In the event that a parent cannot be found, we sometimes have to create a new node.
     * This requires us to find a value for the new node
     *
-    * @param k the key for the parent we must create
+    * @param k  the key for the parent we must create
+    * @param vo an optional value from which the result may be inferred (as the parent), if possible.
     * @return a value for the parent node, wrapped in Try
     */
-  def createValueFromKey(k: K): Option[V]
+  def createValueFromKey(k: K, vo: => Option[V]): Option[V]
 }
 
 trait StringValueOps[V] extends ValueOps[String, V] {
@@ -602,7 +613,7 @@ trait StringValueOps[V] extends ValueOps[String, V] {
 
   def getParentKey(v: V): Option[String]
 
-  def createValueFromKey(k: String): Option[V]
+  def createValueFromKey(k: String, vo: => Option[V]): Option[V]
 
   def compare(x: V, y: V): Int = getKeyFromValue(x).compare(getKeyFromValue(y))
 }
@@ -798,17 +809,18 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   /**
     * Method to add the given node to this leaf
     *
+    * CONSIDER why are we not simply using addNode from Tree?
+    *
     * @param node           a node
-    * @param allowRecursion ignore for now
     * @param vo             the (implicit) ValueOps
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
+  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
     case Some(_) =>
       // CHECK all of this
-      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k)) yield z
-      addNode(TreeBuilder[B].buildTree(bo, Seq(node)), allowRecursion)
+      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k, node.get)) yield z
+      addNode(TreeBuilder[B].buildTree(bo, Seq(node)))
 
     case None => throw TreeException("cannot add node without value")
   }
@@ -846,7 +858,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   def +[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Node[B] = ??? // TODO implement me
 
   //noinspection NotImplementedCode
-  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B], allowRecursion: Boolean)(implicit vo: ValueOps[K, B]): Tree[B] = ??? // TODO implement me
+  protected[tree] def addNode[K, B >: Nothing : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B] = ??? // TODO implement me
 
   def includes[B >: Nothing](node: Node[B]): Boolean = false
 

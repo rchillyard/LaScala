@@ -18,7 +18,6 @@ src_managed/
 /bin/
 api
 exportToHTML/
-project/
 src/it/resources/
 src/main/java/
 src/main/scala/com/phasmid/laScala/oldtree/
@@ -30,4 +29,5 @@ src/test/resources/com/phasmid/laScala/tree/exampleTree.txt
 src/test/scala-2.10/
 src/test/scala/com/phasmid/laScala/oldtree/
 src/test/scala/com/phasmid/laScala/values/MonoidSpec.scala
+project/project/
 !/project/plugins.sbt

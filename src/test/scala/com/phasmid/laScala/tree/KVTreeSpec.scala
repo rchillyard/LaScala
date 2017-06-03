@@ -14,7 +14,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
   implicit object IntStringValueOps$ extends StringValueOps[Int] {
     def getParentKey(t: Int): Option[String] = (for (i <- Try(t / 10); s = i.toString) yield s).toOption
 
-    def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
+    def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption
   }
 
   implicit object GeneralKVTreeBuilderStringInt extends GeneralKVTreeBuilder[String, Int]
@@ -126,7 +126,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
     implicit object ClothingValueOps extends StringValueOps[String] {
       def getParentKey(v: String): Option[String] = racks.get(v)
 
-      def createValueFromKey(k: String): Option[String] = Some(k)
+      def createValueFromKey(k: String, vo: => Option[String]): Option[String] = Some(k)
     }
     implicit object GeneralKVTreeBuilderString extends GeneralKVTreeBuilder[String, String]
     def add(t: GeneralKVTree[String, String], s: String): GeneralKVTree[String, String] = (t :+ s).asInstanceOf[GeneralKVTree[String, String]]

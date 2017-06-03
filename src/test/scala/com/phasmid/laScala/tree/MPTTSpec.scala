@@ -13,13 +13,13 @@ class MPTTSpec extends FlatSpec with Matchers {
   implicit object StringStringValueOps$ extends StringValueOps[String] {
     def getParentKey(a: String): Option[String] = Some(a.substring(0, a.length - 1))
 
-    def createValueFromKey(k: String): Option[String] = Some(k)
+    def createValueFromKey(k: String, vo: => Option[String]): Option[String] = Some(k)
   }
 
   implicit object StringIntValueOps$ extends StringValueOps[Int] {
     def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
 
-    def createValueFromKey(k: String): Option[Int] = Try(k.toInt).toOption
+    def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption
   }
 
   behavior of "MPTTEntry.contains"
@@ -90,7 +90,7 @@ class MPTTSpec extends FlatSpec with Matchers {
 
       override def getKeyFromValue(v: MyInt): String = v.x.toString
 
-      def createValueFromKey(k: String): Option[MyInt] = Try(MyInt(k.toInt, true)).toOption
+      def createValueFromKey(k: String, vo: => Option[MyInt]): Option[MyInt] = Try(MyInt(k.toInt, true)).toOption
     }
     val tree: GeneralTree[MyInt] = GeneralTree(MyInt(0, false), Seq(GeneralTree(MyInt(1, true), Seq(Leaf(MyInt(11, true)), Leaf(MyInt(12, true)), GeneralTree(MyInt(2, false), Seq(Leaf(MyInt(21, true)), Leaf(MyInt(22, true))))))))
     val indexedTree = Tree.createIndexedTree(tree)
