@@ -134,13 +134,11 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   */
 case class Taxon(maybeName: Option[String], taxa: Seq[(String, Scalar)]) extends Renderable {
 
-  implicit private val spyLogger = Spy.getLogger(getClass)
-
   implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = maybeName.map(_ + ":").getOrElse("") + key
 
-  private def values: Seq[Scalar] = for ((w, q) <- taxa) yield q
+  private def values: Seq[Scalar] = for ((_, q) <- taxa) yield q
 
   def key: String = values.toList.render() //  taxa.values.map(_.render()).mkString("--")
 
@@ -198,9 +196,9 @@ object Taxonomy {
       val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, V]]))
 
       @tailrec
-      def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {
+      def inner(result: Try[StructuralTree[V]], values: List[V]): Try[StructuralTree[V]] = values match {
         case Nil => result
-        case y :: z => inner(for (t <- result; u = Spy.spy(s"inner: $t:+$y", t :+ y)) yield u, z)
+        case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }
 
       inner(ty, values.toList)

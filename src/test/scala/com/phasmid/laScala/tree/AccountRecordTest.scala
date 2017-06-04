@@ -254,7 +254,7 @@ object ParentChildTree {
     val ty = Try(TreeBuilder[V].buildTree(vo.createValueFromKey("root", None), Seq()).asInstanceOf[KVTree[String, V]])
 
     @tailrec
-    def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {
+    def inner(result: Try[StructuralTree[V]], values: List[V]): Try[Tree[V]] = values match {
       case Nil => result
       case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
     }
