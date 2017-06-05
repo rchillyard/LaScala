@@ -18,7 +18,8 @@ import scala.util.{Failure, Success, Try}
   *
   * If you just want to slip in a quick invocation of Spy.spy, you will need to provide an implicit spyFunc.
   * The proper simple way to do this is to declare a logger as follows:
-  * implicit val logger = Spy.getLogger(getClass)
+  *
+  *   implicit val spyLogger = Spy.getLogger(getClass)
   *
   * There's even an (improper) default logger based on the Spy class itself which you can use simply by adding this:
   * import Spy._

@@ -320,6 +320,7 @@ sealed trait Node[+A] extends Renderable {
     * @return the resulting tree
     */
   def +[K, B >: A : TreeBuilder](b: B): Tree[B] = this + implicitly[TreeBuilder[B]].buildLeaf(b)
+
 }
 
 /**
@@ -334,13 +335,23 @@ sealed trait StructuralNode[+A] extends Node[A] {
   /**
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
     *
-    * @param node           a node
-    * @param vo             the (implicit) ValueOps that is used to determine the proper tree position of this node
+    * @param node a node
+    * @param vo   the (implicit) ValueOps that is used to determine the proper tree position of this node
     * @tparam K the key type
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B]
+
+  /**
+    * Method to get the key for this StructuralNode
+    *
+    * @param vo the (implicit) ValueOps that is used to determine the proper tree position of this node
+    * @tparam K the key type
+    * @tparam B the underlying type of the node to be added (and the tree to be returned)
+    * @return the key based on value rather than tree position
+    */
+  def key[K, B >: A](implicit vo: ValueOps[K, B]): Option[K] = get map (vo.getKeyFromValue(_))
 }
 
 /**
@@ -488,7 +499,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @return optionally the node found
     */
   def findByKey[K, B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
-    find { n: Node[B] =>
+    find { n =>
       n.get match {
         case Some(v) => k == vo.getKeyFromValue(v)
         case None => false
@@ -519,7 +530,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree.
     * Unusually, I will make comments in this code because it is critical and difficult to follow.
     *
-    * @param node           a node
+    * @param node a node
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
@@ -857,8 +868,8 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] with StructuralNode[A] {
     *
     * CONSIDER why are we not simply using addNode from Tree?
     *
-    * @param node           a node
-    * @param vo             the (implicit) ValueOps
+    * @param node a node
+    * @param vo   the (implicit) ValueOps
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
@@ -990,7 +1001,7 @@ object Tree {
             Some(result)
           case x: Tree[A] => Option(t.foldLeft(x)(_ + _))
         }
-     }
+    }
   }
 
   def populateGeneralTree[K, A: TreeBuilder](root: Option[A], values: Seq[A])(implicit vo: ValueOps[K, A]): Tree[A] = {
@@ -1245,6 +1256,7 @@ object StructuralTree {
       case _ => None
     }
 }
+
 object AbstractBinaryTree {
 
   /**

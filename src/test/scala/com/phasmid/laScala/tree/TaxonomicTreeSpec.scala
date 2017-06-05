@@ -5,7 +5,7 @@
 
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{FP, Spy}
+import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.parser.{Header, TupleStream}
 import com.phasmid.laScala.tree.Taxonomy.{GeneralKVTreeBuilderTaxon, TaxonValueOps}
 import com.phasmid.laScala.values.Scalar
@@ -173,7 +173,8 @@ object Taxonomy {
       * TODO sync this up with other implementation
       * If the key is empty, then we must create a root node, which we do arbitrarily using None as the value,
       * and an empty Seq for the keys.
-      * @param k the key for the parent we must create
+      *
+      * @param k  the key for the parent we must create
       * @param vo a default, optional, value to be applied in the case that no other value can be reasonably be created
       * @return a value for the parent node, wrapped in Try
       */

@@ -89,12 +89,12 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     * @return the Node to which the new node will be attached (if such a node exists). Note that this might be a leaf
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
-  tree match {
-    case x : StructuralTree[V] =>
-  // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
-    for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(vo)) yield n
-    case _ => None
-  }
+    tree match {
+      case x: StructuralTree[V] =>
+        // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
+        for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(vo)) yield n
+      case _ => None
+    }
 
   /**
     * Build a new tree, given a value and child nodes

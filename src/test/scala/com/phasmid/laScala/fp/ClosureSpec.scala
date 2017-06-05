@@ -129,8 +129,8 @@ class ClosureSpec extends FlatSpec with Matchers {
     val col1 = "col1"
     val val1 = "42"
     // XXX: create an empty set of variables
-    val variables = mutable.HashMap[String,String]()
-    implicit val lookup: String => Try[String] = { s => Spy.spy(s"lookup $s", FP.optionToTry(variables.get(s)))}
+    val variables = mutable.HashMap[String, String]()
+    implicit val lookup: String => Try[String] = { s => Spy.spy(s"lookup $s", FP.optionToTry(variables.get(s))) }
 
     def fStringToInt(arg1: String): Int = arg1.toInt
 
@@ -138,15 +138,15 @@ class ClosureSpec extends FlatSpec with Matchers {
     val fFunction: RenderableFunction[Int] = Spy.spy("fFunction", RenderableFunction(fStringToInt _, wFunction, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
-    val p1: Parameter[String] = Spy.spy("p1",Left(col1))
-    val closureLookup1: Closure[String, String] = Spy.spy("closureLookup",Closure[String, String](fLookup, p1))
+    val p1: Parameter[String] = Spy.spy("p1", Left(col1))
+    val closureLookup1: Closure[String, String] = Spy.spy("closureLookup", Closure[String, String](fLookup, p1))
     closureLookup1.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"col1\"))"
-    val p2: Either[String, Closure[String, String]] = Spy.spy("p2",Right(closureLookup1))
-    val c: Closure[String, Int] = Spy.spy("c",Closure[String, Int](fFunction, p2))
+    val p2: Either[String, Closure[String, String]] = Spy.spy("p2", Right(closureLookup1))
+    val c: Closure[String, Int] = Spy.spy("c", Closure[String, Int](fFunction, p2))
     c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),Int](1,  stringToInt(p1?)), Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"col1\"))))"
     val dy = Spy.spy("dy", for (d <- c.partiallyApply) yield d)
     // XXX: provide the variable values at the last moment
-    variables.put(col1,val1)
+    variables.put(col1, val1)
     (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe 42
       case Failure(x) => fail(x)
@@ -232,8 +232,8 @@ class ClosureSpec extends FlatSpec with Matchers {
     val val3 = "VALUE_3"
     val val4 = "VALUE_4"
     // XXX: create an empty set of variables
-    val variables = mutable.HashMap[String,String]()
-    implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s))}
+    val variables = mutable.HashMap[String, String]()
+    implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s)) }
 
     def fourStringFunction(arg1: String, arg2: String, arg3: String, arg4: String): String = s"$function($sArg1: $arg1, $sArg2: $arg2, $sArg3: $arg3, $sArg4: $arg4)"
 
@@ -245,21 +245,21 @@ class ClosureSpec extends FlatSpec with Matchers {
     val fConcat = Spy.spy("fConcat", RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
-    val p1 = Spy.spy("p1",Left(col1))
-    val closureLookup1 = Spy.spy("closureLookup",Closure[String, String](fLookup, p1))
-    val p3 = Spy.spy("p3",Right(closureLookup1))
-    val p2 = Spy.spy("p2",Left(col2))
-    val closureLookup2 = Spy.spy("closureLookup2",Closure[String, String](fLookup, p2))
-    val closureConcat = Spy.spy("closureConcat",Closure[String, String](fConcat, p3))
-    val p4 = Spy.spy("p4",Right(closureConcat))
-    val p5 = Spy.spy("p5",Right(closureLookup2))
-    val p6 = Spy.spy("p6",Left(val3))
-    val p7 = Spy.spy("p7",Left(val4))
-    val c = Spy.spy("c",Closure[String, String](fFunction, p4, p5, p6, p7))
+    val p1 = Spy.spy("p1", Left(col1))
+    val closureLookup1 = Spy.spy("closureLookup", Closure[String, String](fLookup, p1))
+    val p3 = Spy.spy("p3", Right(closureLookup1))
+    val p2 = Spy.spy("p2", Left(col2))
+    val closureLookup2 = Spy.spy("closureLookup2", Closure[String, String](fLookup, p2))
+    val closureConcat = Spy.spy("closureConcat", Closure[String, String](fConcat, p3))
+    val p4 = Spy.spy("p4", Right(closureConcat))
+    val p5 = Spy.spy("p5", Right(closureLookup2))
+    val p6 = Spy.spy("p6", Left(val3))
+    val p7 = Spy.spy("p7", Left(val4))
+    val c = Spy.spy("c", Closure[String, String](fFunction, p4, p5, p6, p7))
     val dy = Spy.spy("dy", for (d <- c partiallyApply) yield d)
     // XXX: provide the variable values at the last moment
-    variables.put(col1,val1)
-    variables.put(col2,val2)
+    variables.put(col1, val1)
+    variables.put(col2, val2)
     (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe s"fourStringFunction($sArg1: $val1, $sArg2: $val2, $sArg3: $val3, $sArg4: $val4)"
       case Failure(x) => fail(x)
@@ -303,11 +303,11 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "handle +:" in {
     val x = ??(Seq("2"))
     val y = "1" +: x
-    y.get shouldBe Seq("1","2")
+    y.get shouldBe Seq("1", "2")
   }
   it should "handle ++:" in {
     val x = ??(Seq("2"))
     val y = Seq("1") ++: x
-    y.get shouldBe Seq("1","2")
+    y.get shouldBe Seq("1", "2")
   }
 }

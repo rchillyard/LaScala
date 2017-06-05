@@ -41,21 +41,21 @@ class MPTTFunctionalSpec extends FlatSpec with Matchers {
     val to = Spy.noSpy(Tree.populateOrderedTree(z))
     to match {
       case Some(tree) =>
-    val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
-    mptt.index.size shouldBe 176
+        val mptt = MPTT(Tree.createIndexedTree(tree.asInstanceOf[UnvaluedBinaryTree[String]]))
+        mptt.index.size shouldBe 176
 
-    println(mptt)
+        println(mptt)
 
-    println(mptt.index.keySet)
+        println(mptt.index.keySet)
 
-    val nodes = tree.nodeIterator().filter(_.isLeaf).toList
-    println(nodes)
-    val flatland = nodes.find(x => FP.contains(x.get, "flatland"))
-    flatland should matchPattern { case Some(_) => }
-    flatland match {
-      case Some(node) => node.includesValue("flatland") shouldBe true
-      case _ => fail("logic")
-    }
+        val nodes = tree.nodeIterator().filter(_.isLeaf).toList
+        println(nodes)
+        val flatland = nodes.find(x => FP.contains(x.get, "flatland"))
+        flatland should matchPattern { case Some(_) => }
+        flatland match {
+          case Some(node) => node.includesValue("flatland") shouldBe true
+          case _ => fail("logic")
+        }
       case None => fail("could not populate a tree")
     }
 

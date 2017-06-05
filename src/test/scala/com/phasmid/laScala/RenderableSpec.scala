@@ -32,6 +32,7 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render list values with indentation (custom RenderableTraversable)" in {
     implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[;]")
+
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
     list.render() shouldBe "[\n  x;\n  y;\n  z\n]"
   }
@@ -40,8 +41,10 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     list.render() shouldBe "(\n  (\n    x0,\n    x1\n  ),\n  (\n    y0,\n    y1\n  ),\n  (\n    z0,\n    z1\n  )\n)"
   }
   it should "render list values with double indentation (custom tab)" in {
-    val tabulator = Seq(" "*1," "*2," "*3)
+    val tabulator = Seq(" " * 1, " " * 2, " " * 3)
+
     implicit def tab(indent: Int): Prefix = Prefix(tabulator(indent))
+
     val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
     list.render() shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
   }
