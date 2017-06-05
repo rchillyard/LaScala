@@ -32,24 +32,24 @@ object Args {
 
   def apply(seq: Any*): Args = apply(seq.toList)
 
-//    val x = Args(args.toList)
-//
-//    def inner(as: Args, cs: List[Class[_]], result: List[Any]): List[Any] = {
-//      if (as.isEmpty) result
-//      else cs match {
-//        case Nil => throw new Exception(s"insufficient class parameters specified")
-//        case h :: t =>
-//          as.get(h) match {
-//            case Success((y, bs)) => inner(bs, t, result :+ y)
-//            case Failure(z) => throw z
-//          }
-//      }
-//    }
-//
-//    val result = inner(x, List(classOf[String], classOf[String], classOf[Int]), List())
-//    //    val (a: String) :: (b: String) :: (c: Int) :: Nil = result
-//    val a :: b :: c :: Nil = result
-//    println(s"$a @ ${a.getClass}")
-//    println(s"$b @ ${b.getClass}")
-//    println(s"$c @ ${c.getClass}")
+  //    val x = Args(args.toList)
+  //
+  //    def inner(as: Args, cs: List[Class[_]], result: List[Any]): List[Any] = {
+  //      if (as.isEmpty) result
+  //      else cs match {
+  //        case Nil => throw new Exception(s"insufficient class parameters specified")
+  //        case h :: t =>
+  //          as.get(h) match {
+  //            case Success((y, bs)) => inner(bs, t, result :+ y)
+  //            case Failure(z) => throw z
+  //          }
+  //      }
+  //    }
+  //
+  //    val result = inner(x, List(classOf[String], classOf[String], classOf[Int]), List())
+  //    //    val (a: String) :: (b: String) :: (c: Int) :: Nil = result
+  //    val a :: b :: c :: Nil = result
+  //    println(s"$a @ ${a.getClass}")
+  //    println(s"$b @ ${b.getClass}")
+  //    println(s"$c @ ${c.getClass}")
 }

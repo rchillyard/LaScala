@@ -14,7 +14,7 @@ class LazySpec extends FlatSpec with Matchers {
   behavior of "AtomicLazyNumber"
 
   it should "work" in {
-//    val x = AtomicLazyNumber
+    //    val x = AtomicLazyNumber
   }
 
 }

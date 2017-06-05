@@ -67,33 +67,34 @@ object Orderable {
   def parse[X: Orderable](x: String)(implicit pattern: String): Try[X] = implicitly[Orderable[X]].fromString(x)
 
   def comparison(op: String, x: Any, y: Any): Try[Boolean] = {
-    (x,y) match {
-      case (i: Int, j: Int) => comparisonTyped[Int](op,Success(i),Success(j))(OrderableInt)
-      case (i: LocalDate, j: LocalDate) => comparisonTyped[LocalDate](op,Success(i),Success(j))(OrderableLocalDate)
+    (x, y) match {
+      case (i: Int, j: Int) => comparisonTyped[Int](op, Success(i), Success(j))(OrderableInt)
+      case (i: LocalDate, j: LocalDate) => comparisonTyped[LocalDate](op, Success(i), Success(j))(OrderableLocalDate)
       case (i: Int, j: String) =>
-        comparisonTyped[Int](op,Success(i),Try(j.toInt))(OrderableInt)
+        comparisonTyped[Int](op, Success(i), Try(j.toInt))(OrderableInt)
       case (i: String, j: Int) =>
-        comparisonTyped[Int](op,Try(i.toInt),Success(j))(OrderableInt)
+        comparisonTyped[Int](op, Try(i.toInt), Success(j))(OrderableInt)
       case (i: String, j: String) =>
         // CONSIDER dates in the following
-        comparisonTyped[Int](op,Try(i.toInt),Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
+        comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
     }
   }
 
-  def comparisonTyped[X : Orderable](op: String, x: Try[X], y: Try[X]): Try[Boolean] = {
+  def comparisonTyped[X: Orderable](op: String, x: Try[X], y: Try[X]): Try[Boolean] = {
     val orderable = implicitly[Orderable[X]]
 
     def notEqual(x: X, y: X): Boolean = !orderable.equiv(x, y)
+
     val cfy = op match {
-        case "lt" => Success(orderable.lt _)
-        case "le" => Success(orderable.lteq _)
-        case "eq" => Success(orderable.equiv _)
-        case "ne" => Success(notEqual _)
-        case "ge" => Success(orderable.gteq _)
-        case "gt" => Success(orderable.gt _)
-        case _ => Failure(new OrderableException(s"cannot compare using op: $op (not supported)"))
-      }
-    for (cf <- cfy; b <- FP.map2(x,y)(cf)) yield b
+      case "lt" => Success(orderable.lt _)
+      case "le" => Success(orderable.lteq _)
+      case "eq" => Success(orderable.equiv _)
+      case "ne" => Success(notEqual _)
+      case "ge" => Success(orderable.gteq _)
+      case "gt" => Success(orderable.gt _)
+      case _ => Failure(new OrderableException(s"cannot compare using op: $op (not supported)"))
+    }
+    for (cf <- cfy; b <- FP.map2(x, y)(cf)) yield b
   }
 
   trait OrderableInt extends Orderable[Int] {

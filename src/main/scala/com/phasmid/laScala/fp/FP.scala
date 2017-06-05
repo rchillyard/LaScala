@@ -358,18 +358,18 @@ object FP {
 
 
   //  /**
-//    * TODO unit test
-//    *
-//    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
-//    *
-//    * @param to1 a Option[T] value
-//    * @param to2 a Option[T] value
-//    * @param f   function which takes two T parameters and yields a U result
-//    * @tparam T the input type
-//    * @tparam U the result type
-//    * @return a Option[U]
-//    */
-//  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
+  //    * TODO unit test
+  //    *
+  //    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+  //    *
+  //    * @param to1 a Option[T] value
+  //    * @param to2 a Option[T] value
+  //    * @param f   function which takes two T parameters and yields a U result
+  //    * @tparam T the input type
+  //    * @tparam U the result type
+  //    * @return a Option[U]
+  //    */
+  //  def map2[T, U](to1: Option[T], to2: => Option[T])(f: (T, T) => U): Option[U] = for {t1 <- to1; t2 <- to2} yield f(t1, t2)
 
   /**
     * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
@@ -378,7 +378,7 @@ object FP {
     * @param t2o a Option[T2] value
     * @param f   function which takes a T1 and a T2 parameter and yields a R result
     * @tparam T1 the underlying type of the first parameter
-    * @tparam R the result type
+    * @tparam R  the result type
     * @return a Option[U]
     */
   def map2[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R): Option[R] = for {t1 <- t1o; t2 <- t2o} yield f(t1, t2)

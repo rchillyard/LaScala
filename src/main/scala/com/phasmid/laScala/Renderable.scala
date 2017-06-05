@@ -33,6 +33,7 @@ trait Renderable {
 
   /**
     * Method to insert an indented (tabbed) newline
+    *
     * @return a string which is a suitable replacement for newline character
     */
   def nl(indent: Int)(implicit tab: Int => Prefix): String = "\n" + tab(indent)

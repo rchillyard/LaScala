@@ -1,6 +1,7 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.Spy
+import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util._
 

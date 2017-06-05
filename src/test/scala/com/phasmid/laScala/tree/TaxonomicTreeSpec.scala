@@ -5,7 +5,7 @@
 
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{FP, Spy}
+import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.parser.{Header, TupleStream}
 import com.phasmid.laScala.tree.Taxonomy.{GeneralKVTreeBuilderTaxon, TaxonValueOps}
 import com.phasmid.laScala.values.Scalar
@@ -134,13 +134,11 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   */
 case class Taxon(maybeName: Option[String], taxa: Seq[(String, Scalar)]) extends Renderable {
 
-  implicit private val spyLogger = Spy.getLogger(getClass)
-
   implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = maybeName.map(_ + ":").getOrElse("") + key
 
-  private def values: Seq[Scalar] = for ((w, q) <- taxa) yield q
+  private def values: Seq[Scalar] = for ((_, q) <- taxa) yield q
 
   def key: String = values.toList.render() //  taxa.values.map(_.render()).mkString("--")
 
@@ -175,7 +173,8 @@ object Taxonomy {
       * TODO sync this up with other implementation
       * If the key is empty, then we must create a root node, which we do arbitrarily using None as the value,
       * and an empty Seq for the keys.
-      * @param k the key for the parent we must create
+      *
+      * @param k  the key for the parent we must create
       * @param vo a default, optional, value to be applied in the case that no other value can be reasonably be created
       * @return a value for the parent node, wrapped in Try
       */
@@ -198,9 +197,9 @@ object Taxonomy {
       val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, V]]))
 
       @tailrec
-      def inner(result: Try[Tree[V]], values: List[V]): Try[Tree[V]] = values match {
+      def inner(result: Try[StructuralTree[V]], values: List[V]): Try[StructuralTree[V]] = values match {
         case Nil => result
-        case y :: z => inner(for (t <- result; u = Spy.spy(s"inner: $t:+$y", t :+ y)) yield u, z)
+        case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }
 
       inner(ty, values.toList)

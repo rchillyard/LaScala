@@ -13,7 +13,7 @@ class VersionSpec extends FlatSpec with Matchers with Inside {
   println(s"${Version.getVersion}")
 
   behavior of "getVersion"
-  // The following unit test works, but it requires too much maintenance to have it run all the time
+  // The following unit test works correctly, but it requires too much maintenance to have it run all the time
   ignore should "match" in {
     Version.getVersion shouldBe "lascala 1.0.3 (compiled with 2.11.8 at 2017-06-03T14:40:43.200 UTC)"
   }

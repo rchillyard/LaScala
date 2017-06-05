@@ -301,7 +301,7 @@ case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
     case Right(Right(f)) => Param(f.partiallyApply(w))
   }
 
-  def isBound: Boolean = p.isLeft || p.isRight && right.isRight && right.right.get.arity==0
+  def isBound: Boolean = p.isLeft || p.isRight && right.isRight && right.right.get.arity == 0
 
   private def right = p.right.get
 
@@ -540,9 +540,10 @@ object RenderableFunction {
   /**
     * Used by partiallyApplyParameters in RenderableFunction class
     */
-  /**private*/ def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
+  /** private */
+  def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
     val g = getPartialApplicationFunction(n, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
-    RenderableFunction(n-1, w.partiallyApply(t), cbn.tail, cs.tail)(g)
+    RenderableFunction(n - 1, w.partiallyApply(t), cbn.tail, cs.tail)(g)
   }
 
   /**
@@ -563,9 +564,9 @@ object RenderableFunction {
     * This method is used to partially apply the given function (f), with the given parameter (t) and yield
     * a function with arity one less than that of f.
     *
-    * @param n the arity of f
-    * @param f the function to be partially applied
-    * @param t the parameter to be applied to f
+    * @param n   the arity of f
+    * @param f   the function to be partially applied
+    * @param t   the parameter to be applied to f
     * @param cbn if true then the parameter is satisfied via call-by-name
     * @tparam T the type of t
     * @tparam R the type of the result of invoking f

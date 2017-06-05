@@ -384,7 +384,7 @@ object Wrapper {
   * The reason for extending HashMap (rather than using it directly) is that we need to define a variant
   * of getOrElseUpdate.
   *
-  * @param wrapper     (implicit) a wrapper which is used to create an M[V] object
+  * @param wrapper (implicit) a wrapper which is used to create an M[V] object
   * @tparam K key type
   * @tparam V value type
   * @tparam M a container which is a monad, such as Option, Future, Try.

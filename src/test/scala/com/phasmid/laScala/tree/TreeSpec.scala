@@ -111,36 +111,36 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralTree" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3))) :+ Leaf(4)
+    val tree: Tree[Int] = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3))) + Leaf(4)
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 4, 0)
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 2, 3, 4)
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ Leaf(2)
+    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) + Leaf(2)
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 5, 6)
     tree.iterator(false).toSeq shouldBe Seq(1, 2, 3, 5, 6)
   }
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(3)
-    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), UnvaluedBinaryTree(Leaf(3), Leaf(4))))
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) + Leaf(3)
+    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(3))) :+ Leaf(4)
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(3))) + Leaf(4)
     tree.iterator().toList shouldBe List(1, 2, 3, 4)
-    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), UnvaluedBinaryTree(Leaf(3), Leaf(4))))
+    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ Leaf(0)
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) + Leaf(0)
+    tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
   }
   ignore should "work correctly for BinaryTree" in {
     import BinaryTree._
-    val tree = BinaryTree(1, Leaf(0), Leaf(2)) :+ Leaf(3)
+    val tree = BinaryTree(1, Leaf(0), Leaf(2)) + Leaf(3)
     tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
   }
 
@@ -148,29 +148,29 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralTree" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
+    val tree = GeneralTree(0, Nil) + Leaf(1) + Leaf(2) + Leaf(3) + Leaf(4)
     tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) :+ 2
+    val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6))) + Leaf(2)
     tree.iterator().toList shouldBe List(1, 2, 3, 5, 6)
   }
 
   it should "work correctly for UnvaluedBinaryTree type 2/3" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 3
-    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), UnvaluedBinaryTree(Leaf(3), Leaf(4))))
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) + 3
+    tree shouldBe UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(2), Leaf(3)), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 4" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), Empty) :+ Leaf(2) :+ Leaf(3) :+ Leaf(4)
+    val tree = UnvaluedBinaryTree(Leaf(1), Empty) + Leaf(2) + Leaf(3) + Leaf(4)
     tree.iterator().toList shouldBe List(1, 2, 3, 4)
   }
   it should "work correctly for UnvaluedBinaryTree type 5" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) :+ 0
-    tree shouldBe UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(0), Leaf(1)), UnvaluedBinaryTree(Leaf(2), Leaf(4)))
+    val tree = UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))) + 0
+    tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
   }
   it should "work correctly for GeneralTree with parent insertion" in {
     implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int] {
@@ -181,12 +181,12 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "size"
   it should "work for GeneralTree" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Nil) :+ 1 :+ 2 :+ 3 :+ 4
+    val tree = GeneralTree(0, Nil) + 1 + 2 + 3 + 4
     tree.size shouldBe 5
   }
   it should "work for UnvaluedBinaryTree" in {
     import UnvaluedBinaryTree._
-    val tree = UnvaluedBinaryTree(Leaf(1), Empty) :+ Leaf(2) :+ Leaf(3) :+ Leaf(4)
+    val tree = UnvaluedBinaryTree(Leaf(1), Empty) + Leaf(2) + Leaf(3) + Leaf(4)
     tree.size shouldBe 4
   }
 
@@ -318,7 +318,7 @@ class TreeSpec extends FlatSpec with Matchers {
     }).toList shouldBe Seq(Leaf(1), Leaf(3), Leaf(5))
   }
 
-  // TODO try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error
+  // CONSIDER try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error
   //  it should "work correctly for unsorted Flatland tree" in {
   //    val uo = Option(getClass.getResource("flatland.txt"))
   //    uo should matchPattern { case Some(_) => }
@@ -362,7 +362,7 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   it should "work for GeneralTree[Int]" in {
     import GeneralTree._
-    val tree = GeneralTree(0, Nil) :+ 1 :+ 3 :+ 5 :+ 6
+    val tree = GeneralTree(0, Nil) + 1 + 3 + 5 + 6
     val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedTree[Int]]
     indexedTree.lIndex should matchPattern { case Some(0) => }
     indexedTree.rIndex should matchPattern { case Some(9) => }
@@ -375,7 +375,7 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   /**
     * CONSIDER reimplement this using GeneralTree instead of GeneralKVTree.
-    * XXX I think it whould work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
+    * XXX I think it should work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
     *
     * This test is based on the description of the "nested set model" in Wikipedia: https://en.wikipedia.org/wiki/Nested_set_model
     *
@@ -404,13 +404,19 @@ class TreeSpec extends FlatSpec with Matchers {
     def add(t: GeneralKVTree[String, String], s: String): GeneralKVTree[String, String] = (t :+ s).asInstanceOf[GeneralKVTree[String, String]]
 
     val root = GeneralKVTree(Some(clothing), Nil)
-    val tree = List(mens, womens, dresses, skirts, blouses, suits, eveningGowns, sunDresses, slacks, jackets).foldLeft(root)(add)
+    root.key shouldBe Some("Clothing")
+
+    val tree: GeneralKVTree[String, String] = List(mens, womens, dresses, skirts, blouses, suits, eveningGowns, sunDresses, slacks, jackets).foldLeft(root)(add)
+    val nMens = tree.findByKey("Men's")
+    nMens should matchPattern { case Some(_) => }
+    nMens.get should matchPattern { case GeneralKVTree(_, _) => }
+    nMens.get.get should matchPattern { case Some("Men's") => }
     val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedTree[String]]
     indexedTree.lIndex should matchPattern { case Some(0) => }
     indexedTree.rIndex should matchPattern { case Some(21) => }
-    val nMens: Option[IndexedNode[String]] = indexedTree.find(mens).asInstanceOf[Option[IndexedNode[String]]]
-    nMens.get.lIndex should matchPattern { case Some(1) => }
-    nMens.get.rIndex should matchPattern { case Some(8) => }
+    val inMens: Option[IndexedNode[String]] = indexedTree.find(mens).asInstanceOf[Option[IndexedNode[String]]]
+    inMens.get.lIndex should matchPattern { case Some(1) => }
+    inMens.get.rIndex should matchPattern { case Some(8) => }
     indexedTree.find(dresses).get.asInstanceOf[IndexedNode[String]].lIndex should matchPattern { case Some(12) => }
     indexedTree.find(jackets).get.asInstanceOf[IndexedNode[String]].rIndex should matchPattern { case Some(4) => }
 

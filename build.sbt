@@ -50,8 +50,6 @@ libraryDependencies ++= (scalaBinaryVersion.value match {
 libraryDependencies ++= Seq(
   typesafeGroup % "config" % configVersion,
   "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
-  // CONSIDER merge date/time code so as to use Java8 instead of Joda-time
-  "codes.reactive" %% "scala-time" % "0.4.0",
   "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
   // NOTE: only used for testing
   akkaGroup %% "akka-actor" % akkaVersion.value % "test",

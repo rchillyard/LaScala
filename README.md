@@ -27,10 +27,18 @@ utility libraries:
 ### Note on Scala Binary Versions
 
 LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
+
 ## Revision History
+### Changes in V1_0_4
+* Tree: better logic in addNode; refactored by separating out StructuralNode and StructuralTree types
 
-### Added in V1_0_1
+### Changes in V1_0_3
+* improvements to Version: now we use sbt-release and sbt-buildinfo
 
+### Changes in V1_0_2
+* FP: added map2g and flatMap2g; MPTT: added containsConditional
+
+### Changes in V1_0_1
 * a collaborative pair of classes: RenderableFunction and Closure which are designed to all for the development,
 debugging and deployment of AST-type parsing, for example the parsing of case clauses within SQL;
 * updates/fixes to the Renderable trait and classes which support more general Renderables,

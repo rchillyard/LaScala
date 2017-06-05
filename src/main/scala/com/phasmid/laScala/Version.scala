@@ -1,13 +1,10 @@
 package com.phasmid.laScala
 
-import java.io.File
-import java.time.{Instant, LocalDateTime, ZoneId, ZoneOffset}
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 
-import lascalabuildinfo.BuildInfo
 import com.phasmid.laScala.values.Incrementable
+import lascalabuildinfo.BuildInfo
 
-import scala.io.Source
-import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 
 /**
@@ -113,17 +110,11 @@ object LongVersion {
 
 object Version {
 
-  val versionR: Regex = """s?[^"]*"([^"]+)".*""".r
-  lazy val version = Source.fromFile("version.sbt").mkString.trim match {
-    case versionR(v) => v
-    case _ => "<unknown version>"
-  }
-
   /**
     * This code relies on the sbt-buildinfo plugin which creates a source file called BuildInfo.scala in the following directory:
     * target/scala-2.x/src_managed/main/sbt-buildinfo/
     */
-  def getVersion : String = s"${BuildInfo.name} ${BuildInfo.version} (compiled with ${BuildInfo.scalaVersion} at $buildDateTime)"
+  def getVersion: String = s"${BuildInfo.name} ${BuildInfo.version} (compiled with ${BuildInfo.scalaVersion} at $buildDateTime)"
 
   private def buildDateTime: String = s"${LocalDateTime.ofInstant(Instant.ofEpochMilli(BuildInfo.buildTime), ZoneOffset.UTC)} UTC"
 
