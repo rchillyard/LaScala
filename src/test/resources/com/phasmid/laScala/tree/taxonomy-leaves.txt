@@ -1,0 +1,6 @@
+name, kingdom, phylum, class, order, family, subfamily, genus, species
+golden eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, chyrsaetos
+Bonelli's eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, fasciata
+Spanish imperial eagle, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, aquila, adalberti
+European buzzard, animalia, chordata, aves, accipitriformes, accipitridae, buteoninae, buteo, buteo
+black kite, animalia, chordata, aves, accipitriformes, accipitridae, milvinae, milvus, milvus

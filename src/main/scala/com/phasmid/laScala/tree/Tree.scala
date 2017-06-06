@@ -21,8 +21,6 @@ import scala.language.{implicitConversions, postfixOps}
   */
 sealed trait Tree[+A] extends Node[A] {
 
-  private implicit val spyLogger = Spy.getLogger(getClass)
-
   /**
     * @return the immediate descendants (children) of this branch
     */
@@ -45,7 +43,8 @@ sealed trait Tree[+A] extends Node[A] {
     *
     * @return the depth of the subtree
     */
-  def depth: Int = 1 + children.map(_.depth).max
+  // NOTE this is a bit more complex than I'd like because max doesn't operate on an empty collection
+  def depth: Int = (children.map(_.depth + 1) :+ 1).max
 
   /**
     * Method to add the given node to this node.
@@ -137,7 +136,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @return true if value element is found in the sub-tree defined by subtree
     */
   def includes[B >: A](subtree: B, element: B): Boolean = find(subtree) match {
-    case Some(s: Node[B]) => s.includesValue(element) //Spy.spy(s"includes: ${s.get.get}:${element}",s.includesValue(element), false)
+    case Some(s: Node[B]) => s.includesValue(element)
     case _ => false
   }
 
@@ -194,8 +193,6 @@ sealed trait Tree[+A] extends Node[A] {
   */
 sealed trait Node[+A] extends Renderable {
 
-  private implicit val spyLogger = Spy.getLogger(getClass)
-
   /**
     * @return the value of this node, if any
     */
@@ -227,7 +224,7 @@ sealed trait Node[+A] extends Renderable {
     case AbstractLeaf(_) => true
     case Empty => true
     case Branch(_, _) => false
-    case _ => Spy.log(s"isLeaf fell through with $this"); false
+    case _ => Tree.logger.info(s"isLeaf fell through with $this"); false
   }
 
   /**
@@ -544,31 +541,32 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     */
   protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): StructuralTree[B] = node.get match {
     case Some(b) =>
+      implicit val spyLogger: Logger = null // Spy.getLogger(getClass)
+      Spy.spy(s"b", b)
       // b is the content of the node to be added to this Tree
       val tb = TreeBuilder[B]
       tb.getParent(this, b) match {
         case Some(parent) =>
           // parent is the Node which will be replaced by the joining of itself with the input node
           // NOTE: we should always get a match when this is a binary tree
-          replaceNode(parent, parent + node)(tb.nodesAlike).asInstanceOf[StructuralTree[B]]
+          Spy.spy(s"$this with $node attached to $parent", replaceNode(parent, parent + node)(tb.nodesAlike).asInstanceOf[StructuralTree[B]])
         case None =>
           // this is the situation where a parent node for the value b cannot be found in the tree.
           // in such a case, we must infer the properties of the parent so that it can be added to the tree, with node as its child.
-          val bo = for (k <- bKv.getParentKey(b); _b <- bKv.createValueFromKey(k, node.get)) yield _b
+          val bo = Spy.spy(s"parent value for $b is", for (k <- bKv.getParentKey(b); _b <- bKv.createValueFromKey(k, node.get)) yield _b)
           bo match {
             case Some(_) =>
               // In this case, we successfully inferred a value for the parent, and now we recursively call addNode with
               // the new node (based on bo) having, as its child, node.
               if (node.get != bo)
               // We are not going to recurse infinitely
-                addNode(tb.buildTree(bo, Seq(node)))
+                Spy.spy(s"$this with $node added", addNode(tb.buildTree(bo, Seq(node))))
               else // NOTE if we get here the fault most probably lies with the logic in bKv or possibly tb or in the actual data
                 throw TreeException(s"logic error: recursion in addNode for $b")
-            case _ =>
+            case None =>
               // we were unsuccessful in inferring a value, so we give up and simply add node to the root of this tree
-              // CONSIDER removing this warning as I don't think this is a bad thing
-              Tree.logger.warn(s"logic error: cannot get value for new parent of node $node")
-              replaceNode(this, this + node)((_, _) => true).asInstanceOf[StructuralTree[B]]
+              Tree.logger.info(s"cannot get value for new parent of node so we add said node at the root of this tree: node value = ${node.get}")
+              Spy.spy(s"$this with $node attached to root", replaceNode(this, this + node)((_, _) => true).asInstanceOf[StructuralTree[B]])
           }
 
       }
@@ -722,8 +720,6 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
   * @tparam A the underlying type of this Leaf
   */
 case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
-  private implicit val spyLogger = Spy.getLogger(getClass)
-
   /**
     * Method to add the given node to this node specifically
     *
@@ -1058,8 +1054,6 @@ object Tree {
 }
 
 object GeneralTree {
-  private implicit val spyLogger = Spy.getLogger(getClass)
-
   trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children)
 
@@ -1086,8 +1080,6 @@ object GeneralTree {
 }
 
 object UnvaluedBinaryTree {
-  private implicit val spyLogger = Spy.getLogger(getClass)
-
   // CONSIDER creating a common TreeBuilder for all binary trees
   abstract class UnvaluedBinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {

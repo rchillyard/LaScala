@@ -17,16 +17,21 @@ import scala.util.{Failure, Success, Try}
   * You do not have to break up your functional expressions to write logging statements (unless they are the recursive calls of a tail-recursive method).
   *
   * If you just want to slip in a quick invocation of Spy.spy, you will need to provide an implicit spyFunc.
-  * The proper simple way to do this is to declare a logger as follows:
+  * The proper simple way to do this is to declare a logger as follows (you can use any name you like since it's an implicit):
   *
-  *   implicit val spyLogger = Spy.getLogger(getClass)
+  * implicit val spyLogger: org.slf4j.Logger = Spy.getLogger(getClass)
   *
   * There's even an (improper) default logger based on the Spy class itself which you can use simply by adding this:
   * import Spy._
   *
   * In order to use it with an explicitly defined spyFunc, please see the way it's done in SpySpec.
   *
-  * By default, spying is turned on so, if you want to turn it off for a run, you must set spying to false.
+  * By default, spying is turned on so, if you want to turn it off for a portion of a run, you must set spying to false, then reset it as it was when you return.
+  * This is useful for benchmarking or any time you know that there will be just too much information (TMI).
+  *
+  * However, there is another mechanism for turning spying off. For example, you have some code which you are continually working on.
+  * You don't like to release it with the calls to Spy intact so you remove them. Then you have to go to a significant amount of trouble to put them back.
+  * An alternative is to declare the spyLogger to be null (but then you really must include the type annotation as shown above).
   *
   * Created by scalaprof on 8/17/16.
   */
@@ -129,24 +134,29 @@ object Spy {
   implicit val defaultLogger: Logger = getLogger(getClass)
 
   /**
-    * This is the default spy function
+    * This is the default spy function.
+    * NOTE that if the logger parameter is null, then no logging is performed. This is another way to turn off logging.
     *
-    * @param s the message to be output when spying
+    * @param s      the message to be output when spying
+    * @param logger an (implicit) logger (if null, then this method does nothing)
+    * @return a Spy (that's to say nothing)
     */
-  implicit def spyFunc(s: String)(implicit logger: Logger): Spy = Spy(logger.debug(prefix + s))
+  implicit def spyFunc(s: String)(implicit logger: Logger): Spy = if (logger != null) Spy(logger.debug(prefix + s)) else Spy()
 
   /**
     * This is the default isEnabled function
     * This method takes a Spy object (essentially a Unit) and returns a Boolean if the logger is enabled for debug.
     *
-    * Note that it is necessary that this method takes a Spy, in the same way that the spyFunc must return a Spy --
+    * NOTE that it is necessary that this method takes a Spy, in the same way that the spyFunc must return a Spy --
     * so that the implicits can be found.
     *
+    * NOTE that if the logger parameter is null, then no logging is performed. This is another way to turn off logging.
+    *
     * @param x      an instance of Spy
-    * @param logger an (implicit) logger
+    * @param logger an (implicit) logger (if null, then this method returns false)
     * @return true if the logger is debugEnabled
     */
-  implicit def isEnabledFunc(x: Spy)(implicit logger: Logger): Boolean = logger.isDebugEnabled
+  implicit def isEnabledFunc(x: Spy)(implicit logger: Logger): Boolean = logger != null && logger.isDebugEnabled
 
   /**
     * Convenience method to get a logger for a class.
