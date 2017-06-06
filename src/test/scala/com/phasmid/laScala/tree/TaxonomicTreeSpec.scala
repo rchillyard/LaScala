@@ -108,7 +108,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     n1y should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     val n2y = for (n1 <- n1y) yield n1 :+ taxonA1
     n2y should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(GeneralKVTree(Some(`taxonA`), List(Leaf(`taxonA1`)))))) => }
-    n2y.get.render() shouldBe "[]\n  a:[A]\n    a1:[A-A1]"
+    n2y.get.render() shouldBe "[]--(a:[A]--(a1:[A-A1]))"
   }
   it should "work" in {
     val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), allowPartial = true))

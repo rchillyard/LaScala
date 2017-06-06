@@ -321,6 +321,24 @@ sealed trait Node[+A] extends Renderable {
     */
   def +[K, B >: A : TreeBuilder](b: B): Tree[B] = this + implicitly[TreeBuilder[B]].buildLeaf(b)
 
+  /**
+    * Method to render this node
+    *
+    * @param indent the number of "tabs" before output should start (when writing on a new line).
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
+    *               like on an old typewriter where the spacing is non-uniform.
+    * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
+    *         which is then followed by some human-legible rendition of *this*.
+    */
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = //get map (_.toString) getOrElse("")
+    get match {
+      case Some(a) => a match {
+        case r: Renderable => r.render(indent)
+        case _ => a.toString
+      }
+      case None => ""
+    }
 }
 
 /**
@@ -405,19 +423,9 @@ trait Branch[+A] extends Tree[A] {
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     * @return a String.
     */
-  def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
-    val result = new StringBuilder
-    val nodeVal = get match {
-      case Some(a: Renderable) => a.render(indent)
-      case Some(a) => s"$a"
-      case _ => ""
-    }
-
-    def nl(): String = "\n" + tab(indent + 1)
-
-    result.append(s"$nodeVal${nl()}")
-    val expansion = for (x <- children) yield x.render(indent + 1)
-    result.append(expansion mkString nl())
+  override def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
+    val result = new StringBuilder(super.render(indent) + "--")
+    result.append(children.render(indent))
     result.toString
   }
 }
@@ -550,7 +558,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
           bo match {
             case Some(_) =>
               // In this case, we successfully inferred a value for the parent, and now we recursively call addNode with
-              // the new node (based on bo) having as its childL node.
+              // the new node (based on bo) having, as its child, node.
               if (node.get != bo)
               // We are not going to recurse infinitely
                 addNode(tb.buildTree(bo, Seq(node)))
@@ -558,6 +566,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
                 throw TreeException(s"logic error: recursion in addNode for $b")
             case _ =>
               // we were unsuccessful in inferring a value, so we give up and simply add node to the root of this tree
+              // CONSIDER removing this warning as I don't think this is a bad thing
               Tree.logger.warn(s"logic error: cannot get value for new parent of node $node")
               replaceNode(this, this + node)((_, _) => true).asInstanceOf[StructuralTree[B]]
           }
@@ -851,17 +860,17 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] with StructuralNode[A] {
 
   def includesValue[B >: A](b: B): Boolean = a == b
 
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @param indent the number of tabs before output should start on a new line.
-    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-    * @return a String.
-    */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = a match {
-    case renderable: Renderable => renderable.render(indent)
-    case _ => s"$a"
-  }
+  //  /**
+  //    * Create a String which represents this Node and its subtree
+  //    *
+  //    * @param indent the number of tabs before output should start on a new line.
+  //    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+  //    * @return a String.
+  //    */
+  //  def render(indent: Int)(implicit tab: (Int) => Prefix): String = a match {
+  //    case renderable: Renderable => renderable.render(indent)
+  //    case _ => s"$a"
+  //  }
 
   /**
     * Method to add the given node to this leaf
@@ -901,7 +910,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
     *
     * @return an appropriate String
     */
-  def render(indent: Int)(implicit tab: (Int) => Prefix) = s"ø"
+  override def render(indent: Int)(implicit tab: (Int) => Prefix) = s"ø"
 }
 
 /**
@@ -926,7 +935,7 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
 
   def get: Option[Nothing] = None
 
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = x
+  override def render(indent: Int)(implicit tab: (Int) => Prefix): String = x
 
   def depth: Int = 0
 }
