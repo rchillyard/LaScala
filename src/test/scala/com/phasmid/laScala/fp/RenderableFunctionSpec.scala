@@ -7,7 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.RenderableFunction.getPartialApplicationFunction
 import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
-import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
+import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester, Succeeded}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -608,7 +608,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true.booleanValue))
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
@@ -618,7 +618,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true))
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
@@ -628,7 +628,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
@@ -638,7 +638,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
@@ -656,7 +656,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val g = cAnd.partiallyApply
     println(s"g=$g")
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
@@ -674,7 +674,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val g = cAnd.partiallyApply
     println(s"g=$g")
     cAnd() match {
-      case Success(b) => println(s"result: $b"); succeed
+      case Success(b) => println(s"result: $b"); // Succeeded
       case Failure(x) => fail(x.getLocalizedMessage)
     }
   }
