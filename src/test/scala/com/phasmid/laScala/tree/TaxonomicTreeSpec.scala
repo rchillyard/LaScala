@@ -7,7 +7,6 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.parser.{Header, TupleStream}
-import com.phasmid.laScala.tree.Taxonomy.{GeneralKVTreeBuilderTaxon, MockTaxon, MockTaxonValueOps}
 import com.phasmid.laScala.values.Scalar
 import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
 import org.scalatest.{FlatSpec, Matchers}
@@ -17,20 +16,14 @@ import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Created by scalaprof on 10/19/16.
-  */
-
-trait NameBuilder[P] {
-  def name(w: String): P
-}
-
-/**
+  * Originally created by scalaprof on 10/19/16.
+  *
   * A Taxon (an element within a Taxonomy)
   *
   * @param po   an alternative name, not normally used for matching, only for rendering.
   * @param taxa the ancestry (including this) of this taxon (two elements at least are required: self and parent, except top level).
   */
-case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)]) extends Renderable {
+case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q => P) extends Renderable {
 
   implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
 
@@ -61,31 +54,19 @@ case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)]) extends Renderable
     else parentTaxon.structuralKey
 
   def parentTaxon: Taxon[P, Q] = {
-    val p = taxa.toList.reverse match {
-      case _ :: g :: _ => Taxon.asP(g._2)
-      case _ :: Nil =>
-        Taxon.asP[P, String]("root")
-      case Nil => Taxon.asP[P, String]("logic error")
+    val po = taxa.toList.reverse match {
+      case _ :: g :: _ => Some(q2p(g._2))
+      case _ => None
     }
-    // TODO make this generic
-    Taxon(Some(p), taxa.init)
+    Taxon(po, taxa.init)
   }
 
   override def toString: String = render()
 }
 
 object Taxon {
-  // TODO do this properly using typeclass. However, I tried that and got a weird compiler error!
-  def asP[P, Q](q: Q): P = q match {
-    case s: Scalar => s.source.asInstanceOf[P]
-    case s: String => s.asInstanceOf[P]
-    case _ => q.toString.asInstanceOf[P]
-  }
 
-  implicit object StringNameBuilder$ extends NameBuilder[String] {
-    def name(w: String): String = w
-  }
-
+  import Taxonomy._
   def apply(xWs: Seq[(String, Scalar)]): MockTaxon = Taxon(Some(xWs.head._2.source.toString), xWs.tail)
 }
 
@@ -93,12 +74,9 @@ object Taxon {
   * Created by scalaprof on 1/2/17.
   */
 object Taxonomy {
+  implicit def conv(s: Scalar): String = s.source.toString
 
   type MockTaxon = Taxon[String, Scalar]
-
-  implicit object StringNameBuilder$ extends NameBuilder[String] {
-    def name(w: String): String = w
-  }
 
   trait TaxonValueOps[P, Q] extends StringValueOps[Taxon[P, Q]] {
 
@@ -111,7 +89,6 @@ object Taxonomy {
     }
 
     /**
-      * TODO sync this up with other implementation
       * If the key is empty, then we must create a root node, which we do arbitrarily using None as the value,
       * and an empty Seq for the keys.
       *
@@ -119,15 +96,16 @@ object Taxonomy {
       * @param vo a default, optional, value to be applied in the case that no other value can be reasonably be created
       * @return a value for the parent node, wrapped in Try
       */
-    def createValueFromKey(k: String, vo: => Option[Taxon[P, Q]]): Option[Taxon[P, Q]] =
-      if (k == "") Some(Taxon[P, Q](None, Seq[(String, Q)]())) else vo map (_.parentTaxon)
+    def createValueFromKey(k: String, vo: => Option[Taxon[P, Q]]): Option[Taxon[P, Q]]
 
     override def getKeyAsParent(v: Taxon[P, Q]): String = v.structuralKey
 
     override def getKeyFromValue(v: Taxon[P, Q]): String = v.key
   }
 
-  implicit object MockTaxonValueOps extends TaxonValueOps[String, Scalar]
+  implicit object MockTaxonValueOps extends TaxonValueOps[String, Scalar] {
+    def createValueFromKey(k: String, vo: => Option[Taxon[String, Scalar]]): Option[Taxon[String, Scalar]] = if (k == "") Some(Taxon[String, Scalar](None, Seq[(String, Scalar)]())) else vo map (_.parentTaxon)
+  }
 
   implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilder[String, MockTaxon]
 
@@ -158,9 +136,7 @@ case object EmptyTaxonomy extends Exception("cannot get parentKey for taxon with
   */
 class TaxonomicTreeSpec extends FlatSpec with Matchers {
 
-  implicit object StringNameBuilder$ extends NameBuilder[String] {
-    def name(w: String): String = w
-  }
+  import Taxonomy._
 
   private val taxonA = Taxon(Some("a"), Seq("name" -> Scalar("A")))
   private val taxonA1 = Taxon(Some("a1"), Seq("parent" -> Scalar("A"), "name" -> Scalar("A1")))
@@ -201,7 +177,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     leaf.size shouldBe 1
     leaf.isLeaf shouldBe true
     leaf.includes(leaf) shouldBe true
-    leaf.includesValue(Taxon(None, Seq())) shouldBe false
+    leaf.includesValue(Taxon[String, Scalar](None, Seq())) shouldBe false
     leaf.includesValue(taxonA) shouldBe true
   }
   it should "implement nodesAlike properly" in {
@@ -220,10 +196,6 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   }
   it should "implement addNode" in {
     import Taxonomy._
-    // CHECK why doesn't this get picked up from Taxonomy._ ?
-    implicit object StringNameBuilder$ extends NameBuilder[String] {
-      def name(w: String): String = w
-    }
     val treeBuilder = implicitly[TreeBuilder[MockTaxon]]
     val a = "a"
     val _a = "A"
@@ -239,9 +211,6 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   }
   it should "implement :+" in {
     import Taxonomy._
-    implicit object StringNameBuilder extends NameBuilder[String] {
-      def name(w: String): String = w
-    }
     val treeBuilder = implicitly[TreeBuilder[MockTaxon]]
     val a = "a"
     val _a = Scalar("A")
@@ -260,10 +229,9 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
 
   it should "implement :+ as in leaf-only taxonomy" in {
     import Taxonomy._
-    implicit object StringNameBuilder extends NameBuilder[String] {
-      def name(w: String): String = w
+    implicit object MockTaxonValueOps extends TaxonValueOps[String, Scalar] {
+      def createValueFromKey(k: String, vo: => Option[Taxon[String, Scalar]]): Option[Taxon[String, Scalar]] = if (k == "") Some(Taxon[String, Scalar](None, Seq[(String, Scalar)]())) else vo map (_.parentTaxon)
     }
-    implicit object MockTaxonValueOps extends TaxonValueOps[String, Scalar]
     implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilder[String, MockTaxon]
     val t1: KVTree[String, MockTaxon] = GeneralKVTreeBuilderTaxon.buildTree(MockTaxonValueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, MockTaxon]]
     t1.depth shouldBe 1
