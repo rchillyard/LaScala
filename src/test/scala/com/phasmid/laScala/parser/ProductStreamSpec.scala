@@ -1,6 +1,5 @@
 package com.phasmid.laScala.parser
 
-import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.values.Scalar
 import com.phasmid.laScala.{Prefix, Renderable}
 import org.scalatest.{FlatSpec, Matchers}
@@ -49,26 +48,6 @@ class ProductStreamSpec extends FlatSpec with Matchers {
   //      case Tuple1(s) => assert(s == "World!")
   //    }
   //  }
-
-  behavior of "TupleStream"
-  it should "read taxonomy.txt correctly" in {
-    val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), allowPartial = true))
-    //noinspection ScalaUnusedSymbol
-    //    for (t <- ps.input) println(x)
-    val header = ps.header
-    //noinspection ScalaUnusedSymbol
-    val tuples = ps.tuplesPartial(true)
-    //    for (t <- tuples) println(x)
-    import Spy._
-    val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm)
-    tsy.foreach(_.size shouldBe 15)
-    Spy.spy("tsy", tsy)
-    val wst = for (ts <- tsy) yield for (t <- ts) yield t.render()
-    for (ws <- wst) {
-      ws.head shouldBe "animals: animalia"
-      ws(6) shouldBe "golden eagle: animalia--chordata--aves--accipitriformes--accipitridae--buteoninae--aquila--chyrsaetos"
-    }
-  }
 }
 
 case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends Renderable {

@@ -517,6 +517,9 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * Method to find a Node in a tree by its structural key.
     * NOTE: this method is not tail-recursive.
     *
+    * FIXME: this must be made much more efficient because building an N-node tree is currently an O(N2) problem
+    * ... we can reduce that to N log N
+    *
     * @param k  the (structural) key for the desired node
     * @param vo (implicit) ValueOps
     * @tparam K the key type
@@ -758,6 +761,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
   /**
     * @return None
     */
+  // TODO this looks wrong!
   def get = None
 
 }

@@ -33,6 +33,7 @@ abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] wi
 
   def asTree[W >: V](n: Node[W])(implicit treeBuilder: TreeBuilder[W]): KVTree[K, W] = n match {
     case t: KVTree[K, W] => t
+    // TODO refactor the following to avoid instanceOf
     case _ => treeBuilder.buildTree(n.get, Seq()).asInstanceOf[KVTree[K, W]]
   }
 }

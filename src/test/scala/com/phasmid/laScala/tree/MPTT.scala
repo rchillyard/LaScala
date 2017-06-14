@@ -1,6 +1,11 @@
+/*
+ * LaScala
+ * Copyright (c) 2017. Phasmid Software
+ */
+
 package com.phasmid.laScala.tree
 
-import com.phasmid.laScala.fp.{FP, Spy}
+import com.phasmid.laScala.fp.FP
 
 import scala.collection.mutable
 
@@ -45,6 +50,34 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
   def contains(subtree: String, node: String): Option[Boolean] =
     FP.map2(get(subtree), get(node))(_.contains(_))
 
+  /**
+    * Method to transform a seq of node keys into an iterator of optional MPTT entries
+    *
+    * @param ns the Seq of Node keys
+    * @return an Iterator of Option of MPTTEntry[T]
+    */
+  def mpttEntryIterator(ns: Seq[String]): Iterator[Option[MPTTEntry[T]]] = ns.toIterator.map(get)
+
+  /**
+    * Method to determine if given node is within given subtree
+    *
+    * @param subtree the subtree
+    * @param ns      the nodes which are to be checked for inclusion in the subtree
+    * @return true if subtree contains any node from ns
+    */
+  def containsAny(subtree: String, ns: Seq[String]): Option[Boolean] =
+    FP.map2(get(subtree), Some(mpttEntryIterator(ns)))(_.containsAny(_))
+
+  /**
+    * Method to determine if given node is within any of the given subtrees
+    *
+    * @param node the node
+    * @param ns   the subtrees which are to be checked for ownership of the node
+    * @return true if node is contained in any of the subtrees defined by ns
+    */
+  def containedByAny(node: String, ns: Seq[String]): Option[Boolean] =
+    FP.map2(get(node), Some(mpttEntryIterator(ns)))(_.containsAny(_))
+
   override def toString: String = {
     val r = new mutable.StringBuilder()
     for ((k, v) <- index) r.append(s"$k -> $v\n")
@@ -65,13 +98,21 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
   * @tparam T the type of the value
   */
 case class MPTTEntry[T](k: String, t: T)(val pre: Long, val post: Long)(implicit vo: ValueOps[String, T]) {
-  private implicit val logger = Spy.getLogger(getClass)
+  def containsAny(tms: Iterator[Option[MPTTEntry[T]]]): Boolean = FP.foldLeftShort[Option[MPTTEntry[T]], Boolean](tms, false, b => b)(_ || contains(_))
+
+  def containedByAny(tms: Iterator[Option[MPTTEntry[T]]]): Boolean = FP.foldLeftShort[Option[MPTTEntry[T]], Boolean](tms, false, b => b)(_ || containedBy(_))
+
+  def contains(xo: Option[MPTTEntry[T]]): Boolean = xo.isDefined && contains(xo.get)
 
   def contains(x: MPTTEntry[T]): Boolean = this.pre <= x.pre && this.post >= x.post
 
+  def containedBy(x: MPTTEntry[T]): Boolean = x.contains(this)
+
+  def containedBy(xo: Option[MPTTEntry[T]]): Boolean = xo.isDefined && containedBy(xo.get)
+
   def key: String = vo.getKeyFromValue(t).toString
 
-  override def toString = s"$t: $pre,$post"
+  override def toString: String = s"$t: $pre,$post"
 }
 
 object MPTTEntry {

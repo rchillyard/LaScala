@@ -201,16 +201,7 @@ class RationalSpec extends FlatSpec with Matchers {
     Rational(BigDecimal(math.Pi)).floor shouldBe 3
   }
 
-  "toString" should "be decimal when exact" in {
-    val r = Rational(1, 2)
-    r.toString() should be("0.5")
-  }
-  // XXX: this fails with Scala 2.10
-  //  it should "be rational when not exact: 2/3" in {
-  //    val r = Rational(2, 3)
-  //    r.toString() should be("2/3")
-  //  }
-  it should "be decimal when not exact: pi" in {
+  "toString" should "be decimal when not exact: pi" in {
     val pi = Rational(BigDecimal(math.Pi))
     pi.toString() should be("3.141592653589793")
   }
