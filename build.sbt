@@ -57,6 +57,6 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % scalaTestVersion.value % "test"
 )
 
-// releaseCrossBuild := true
+releaseCrossBuild := true
 
 publishTo := Some(Resolver.file("file",  new File( "artifacts" )) )

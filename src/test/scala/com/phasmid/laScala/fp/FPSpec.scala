@@ -6,6 +6,7 @@ import com.phasmid.laScala.fp.FP._
 import org.scalatest._
 import org.scalatest.concurrent._
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
@@ -379,6 +380,44 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     a.toString() shouldBe "<function1>"
     aux.toString() shouldBe "<function2>"
+  }
+
+  behavior of "nextOption"
+  it should "work" in {
+    val xi = Seq(1, 2, 3).toIterator
+    FP.nextOption(xi) should matchPattern { case Some(1) => }
+    FP.nextOption(xi) should matchPattern { case Some(2) => }
+    FP.nextOption(xi) should matchPattern { case Some(3) => }
+    FP.nextOption(xi) should matchPattern { case None => }
+  }
+
+  behavior of "foldLeftShort"
+  it should "show 0 and 1" in {
+    val xs = Seq(0, 1, 2, 3)
+    val ml = mutable.MutableList[Int]()
+    val xi = xs.view.map(x => {
+      ml += x; x
+    }).toIterator
+    foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ > 0) shouldBe true
+    ml.toList shouldBe List(0, 1)
+  }
+  it should "show only 0" in {
+    val xs = Seq(0, 1, 2, 3)
+    val ml = mutable.MutableList[Int]()
+    val xi = xs.view.map(x => {
+      ml += x; x
+    }).toIterator
+    foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ >= 0) shouldBe true
+    ml.toList shouldBe List(0)
+  }
+  it should "show only all" in {
+    val xs = Seq(0, 1, 2, 3)
+    val ml = mutable.MutableList[Int]()
+    val xi = xs.view.map(x => {
+      ml += x; x
+    }).toIterator
+    foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ < 0) shouldBe false
+    ml.toList shouldBe xs
   }
 
 }

@@ -10,13 +10,13 @@ import scala.util.Try
 //noinspection NameBooleanParameters
 class MPTTSpec extends FlatSpec with Matchers {
 
-  implicit object StringStringValueOps$ extends StringValueOps[String] {
+  implicit object MPTTStringStringValueOps extends StringValueOps[String] {
     def getParentKey(a: String): Option[String] = Some(a.substring(0, a.length - 1))
 
     def createValueFromKey(k: String, vo: => Option[String]): Option[String] = Some(k)
   }
 
-  implicit object StringIntValueOps$ extends StringValueOps[Int] {
+  implicit object MPTTStringIntValueOps extends StringValueOps[Int] {
     def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
 
     def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption
@@ -36,6 +36,50 @@ class MPTTSpec extends FlatSpec with Matchers {
     val m1 = MPTTEntry("A")(0, 3)
     val m2 = MPTTEntry("Aardvark")(1, 2)
     m2.contains(m1) shouldBe false
+  }
+
+  behavior of "MPTTEntry.containsAny"
+  it should "only look at Aardvark" in {
+    val m1 = MPTTEntry("A")(0, 3)
+    val m2 = MPTTEntry("Aardvark")(1, 2)
+    val m3 = MPTTEntry("The Story of B")(4, 5)
+    // NOTE: that we should only see Aardvark because is is included and so we don't need to look at the Story of B
+    m1.containsAny(Seq(Some(m2), Some(m3)).view.map(x => {
+      println(x); x
+    }).toIterator) shouldBe true
+  }
+  it should "only look at both entries" in {
+    val m1 = MPTTEntry("A")(0, 3)
+    val m2 = MPTTEntry("Aardvark")(1, 2)
+    val m3 = MPTTEntry("The Story of B")(4, 5)
+    m1.containsAny(Seq(Some(m3), Some(m2)).view.map(x => {
+      println(x); x
+    }).toIterator) shouldBe true
+  }
+
+  behavior of "MPTTEntry.containedByAny"
+  it should " should show A only" in {
+    val m0 = MPTTEntry("A")(0, 3)
+    val m1 = MPTTEntry("B")(4, 7)
+    val m2 = MPTTEntry("Aardvark")(1, 2)
+    val m3 = MPTTEntry("The Story of B")(5, 6)
+    // NOTE: that we should only see A because is is included and so we don't need to look at the Story of B
+    m2.containedByAny(Seq(Some(m0), Some(m1)).view.map(x => {
+      println(x); x
+    }).toIterator) shouldBe true
+    m3.containedByAny(Seq(Some(m0), Some(m1)).view.toIterator) shouldBe true
+  }
+  it should " should show A and B" in {
+    val m0 = MPTTEntry("A")(0, 3)
+    val m1 = MPTTEntry("B")(4, 7)
+    val m2 = MPTTEntry("Aardvark")(1, 2)
+    val m4 = MPTTEntry("C food diet")(8, 9)
+    m2.containedByAny(Seq(Some(m1), Some(m0)).view.map(x => {
+      println(x); x
+    }).toIterator) shouldBe true
+    m4.containedByAny(Seq(Some(m1), Some(m0)).view.map(x => {
+      println(x); x
+    }).toIterator) shouldBe false
   }
 
   behavior of "real-life GeneralTree"
@@ -81,33 +125,7 @@ class MPTTSpec extends FlatSpec with Matchers {
     mptt.contains("3", "3") should matchPattern { case Some(true) => }
     mptt.contains("3", "4") should matchPattern { case Some(false) => }
   }
-  it should "support containsConditions correctly" in {
-    case class MyInt(x: Int, b: Boolean)
-    implicit object StringMyIntValueOps$ extends StringValueOps[MyInt] {
-      def getParentKey(a: MyInt): Option[String] = Some(a.x./(10).toString)
 
-      override def getKeyAsParent(v: MyInt): String = v.x.toString
-
-      override def getKeyFromValue(v: MyInt): String = v.x.toString
-
-      def createValueFromKey(k: String, vo: => Option[MyInt]): Option[MyInt] = Try(MyInt(k.toInt, true)).toOption
-    }
-    val tree: GeneralTree[MyInt] = GeneralTree(MyInt(0, false), Seq(GeneralTree(MyInt(1, true), Seq(Leaf(MyInt(11, true)), Leaf(MyInt(12, true)), GeneralTree(MyInt(2, false), Seq(Leaf(MyInt(21, true)), Leaf(MyInt(22, true))))))))
-    val indexedTree = Tree.createIndexedTree(tree)
-    val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[MyInt]])
-    //    for (i <- mptt.index) println(s"${i._2}")
-
-    def check(x: MyInt, y: MyInt): Boolean = x.b != y.b
-
-    def checkF(x: MyInt, y: MyInt): Option[Boolean] = Some(x.b != y.b)
-
-    mptt.containsConditional("0", "0")(check) should matchPattern { case None => }
-    mptt.containsConditional("0", "1")(check) should matchPattern { case Some(true) => }
-    mptt.containsConditional("0", "11")(check) should matchPattern { case Some(true) => }
-    mptt.containsConditionalF("0", "0")(checkF) should matchPattern { case None => }
-    mptt.containsConditionalF("0", "1")(checkF) should matchPattern { case Some(true) => }
-    mptt.containsConditionalF("0", "11")(checkF) should matchPattern { case Some(true) => }
-  }
   //    behavior of "real-life UnvaluedBinaryTree"
   //  it should "build correctly" in {
   //    val uo = Option(getClass.getResource("flatland.txt"))

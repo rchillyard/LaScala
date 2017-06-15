@@ -849,6 +849,15 @@ object FP {
   def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
 
   /**
+    * Method to get the next element from an iterator, as an Option.
+    *
+    * @param xi the iterator.
+    * @tparam X the underlying type.
+    * @return Some(x) where x is the next element; or None where the iterator is exhausted.
+    */
+  def nextOption[X](xi: Iterator[X]): Option[X] = if (xi.hasNext) Some(xi.next) else None
+
+  /**
     * Method to select an element from a tuple according to a Boolean value.
     * You may invoke this method either as which(b)(x,y) or which (b)((x,y))
     *
@@ -858,4 +867,29 @@ object FP {
     * @return the first element of the tuple if b is true, else the second element
     */
   def which[T](b: Boolean)(t: (T, T)): T = if (b) t._1 else t._2
+
+  /**
+    * This method performs a foldLeft with short-circuit logic
+    *
+    * @param xi an iterator of X objects
+    * @param y0 the initial value of Y (e.g. 0 if Y is Int)
+    * @param q  the quick-return function: if this evaluates to true, given the new y value, that value is immediately returned
+    * @param f  the function which accumulates the result: as with foldLeft, it takes a Y and an X and yields a Y
+    * @tparam X the underlying type of the iterator
+    * @tparam Y the return type
+    * @return the aggregate of the given iterator, according to the initial value of y0 and the accumulator function f.
+    */
+  def foldLeftShort[X, Y](xi: Iterator[X], y0: Y, q: Y => Boolean)(f: (Y, X) => Y): Y = {
+    def inner(_y: Y, xo: => Option[X]): Y =
+      xo match {
+        case None => _y
+        case Some(x) =>
+          val y = f(_y, x)
+          if (q(y)) y
+          else
+            inner(y, nextOption(xi))
+      }
+
+    inner(y0, nextOption(xi))
+  }
 }

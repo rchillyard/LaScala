@@ -24,8 +24,6 @@ import scala.util._
   */
 case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
 
-  private implicit val logger = Spy.getLogger(getClass)
-
   //  require(Closure.nonRecursive(this), "Closure is recursive")
 
   /**
@@ -47,7 +45,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     * Method to determine if this Closure is fully applied. That's to say we can invoke apply() without
     * having to evaluate any of the parameters (they are all evaluated already).
     *
-    * XXX: not currently used
+    * NOTE: not currently used
     *
     * @return true if the arity is zero, the function f has no call-by-name parameters and if all of the
     *         parameters for this Closure are themselves evaluated.
@@ -57,7 +55,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   /**
     * Method to bind an additional parameter to this Closure. The resulting Closure will have arity one less than this.
     *
-    * XXX: this is currently used only by ClosureSpec
+    * NOTE: this is currently used only by ClosureSpec
     *
     * @param p the parameter which will be inserted immediately before the ith bound parameter.
     * @param i the index at which the new parameter should be inserted (defaults to the number of current parameters,
@@ -93,13 +91,13 @@ object Closure {
     case Failure(x) => logger.debug(s"$w: failed: $x"); ry
   }
 
-  // XXX: not currently used
+  // NOTE: not currently used
   private def isFullyApplied[T](tp: Parameter[T]): Boolean = tp match {
     case Left(_) => true
     case Right(c) => c.isFullyApplied
   }
 
-  // XXX: not currently used
+  // NOTE: not currently used
   private def isParameterSetEvaluated[T](ps: Seq[Parameter[T]]): Boolean = {
     @tailrec
     def inner(r: Boolean, tps: Seq[Parameter[T]]): Boolean =
