@@ -6,8 +6,8 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.tree.AbstractBinaryTree.isOverlap
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -53,7 +53,16 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +[K, B >: A : TreeBuilder](node: Node[B]): Tree[B] = TreeBuilder[B].buildTree(get, children :+ node)
+  def +[B >: A : TreeBuilder](node: Node[B]): Tree[B] = TreeBuilder[B].buildTree(get, children :+ node)
+
+  /**
+    * Method to add the given node to this node
+    *
+    * @param b the value to add, as a Leaf
+    * @tparam B the underlying type of the new node (and the resulting tree)
+    * @return the resulting tree
+    */
+  def +[B >: A : TreeBuilder](b: B): Tree[B] = this + implicitly[TreeBuilder[B]].buildLeaf(b)
 
   /**
     * Iterate on the values of this tree
@@ -297,28 +306,6 @@ sealed trait Node[+A] extends Renderable {
   }
 
   /**
-    * Method to add the given node to this node
-    *
-    * CONSIDER returning Tree[B] -- ditto for similar methods
-    *
-    * @param node the node to add
-    * @tparam K the key type
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def +[K, B >: A : TreeBuilder](node: Node[B]): Tree[B]
-
-  /**
-    * Method to add the given node to this node
-    *
-    * @param b the value to add, as a Leaf
-    * @tparam K the key type
-    * @tparam B the underlying type of the new node (and the resulting tree)
-    * @return the resulting tree
-    */
-  def +[K, B >: A : TreeBuilder](b: B): Tree[B] = this + implicitly[TreeBuilder[B]].buildLeaf(b)
-
-  /**
     * Method to render this node
     *
     * @param indent the number of "tabs" before output should start (when writing on a new line).
@@ -344,29 +331,28 @@ sealed trait Node[+A] extends Renderable {
   *
   * CONSIDER do we really need A to be covariant?
   *
+  * @tparam K the key type
   * @tparam A the underlying type of the tree/node
   */
-sealed trait StructuralNode[+A] extends Node[A] {
+sealed trait StructuralNode[K, +A] extends Node[A] {
   /**
     * Method to add the given node to this, which may be a leaf, a branch or the root of an entire tree
     *
     * @param node a node
     * @param vo   the (implicit) ValueOps that is used to determine the proper tree position of this node
-    * @tparam K the key type
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B]
+  protected[tree] def addNode[B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B]
 
   /**
     * Method to get the key for this StructuralNode
     *
     * @param vo the (implicit) ValueOps that is used to determine the proper tree position of this node
-    * @tparam K the key type
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return the key based on value rather than tree position
     */
-  def key[K, B >: A](implicit vo: ValueOps[K, B]): Option[K] = get map (vo.getKeyFromValue(_))
+  def key[B >: A](implicit vo: ValueOps[K, B]): Option[K] = get map (vo.getKeyFromValue(_))
 }
 
 /**
@@ -450,9 +436,10 @@ trait IndexedTree[A] extends IndexedNode[A] with Tree[A]
   *
   * CONSIDER requiring that the ValueOps parameter be a property of the StructuralTree itself.
   *
+  * @tparam K the key type
   * @tparam A the underlying type of the tree/node
   */
-trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
+trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
 
   /**
     * Method to add a value to this tree: because the addition of values is not order-dependent this method simply invokes :+
@@ -463,7 +450,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): StructuralTree[B] = :+(b)
+  def +:[B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): StructuralTree[K, B] = :+(b)
 
   /**
     * Method to add a value to this tree by simply creating a leaf and calling :+(Node[B])
@@ -472,7 +459,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): StructuralTree[B] = :+(TreeBuilder[B].buildLeaf(b))
+  def :+[B >: A : TreeBuilder](b: B)(implicit vo: ValueOps[K, B]): StructuralTree[K, B] = :+(TreeBuilder[B].buildLeaf(b))
 
   /**
     * Method to add a node to this tree: because the addition of nodes is not order-dependent this method simply invokes :+
@@ -483,7 +470,7 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def +:[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): StructuralTree[B] = this :+ node
+  def +:[B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): StructuralTree[K, B] = this :+ node
 
   /**
     * Method to add a node to this tree
@@ -492,18 +479,17 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
     */
-  def :+[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): StructuralTree[B] = addNode(node)
+  def :+[B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): StructuralTree[K, B] = addNode(node)
 
   /**
     * Non tail-recursive method to find a Node in a tree by its key
     *
     * @param k  the key
     * @param vo (implicit) ValueOps
-    * @tparam K the key type
     * @tparam B the value type
     * @return optionally the node found
     */
-  def findByKey[K, B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
+  def findByKey[B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
     find { n =>
       n.get match {
         case Some(v) => k == vo.getKeyFromValue(v)
@@ -522,11 +508,10 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     *
     * @param k  the (structural) key for the desired node
     * @param vo (implicit) ValueOps
-    * @tparam K the key type
     * @tparam B the value type
     * @return optionally the node found
     */
-  def findByParentKey[K, B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
+  def findByParentKey[B >: A](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] =
     find { n =>
       n.get match {
         case Some(v) => k == vo.getKeyAsParent(v)
@@ -542,40 +527,47 @@ trait StructuralTree[+A] extends Tree[A] with StructuralNode[A] {
     * @tparam B the underlying type of the node to be added (and the tree to be returned)
     * @return a tree which is a modified form of this
     */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): StructuralTree[B] = node.get match {
+  protected[tree] def addNode[B >: A : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): StructuralTree[K, B] = node.get match {
     case Some(b) =>
       implicit val spyLogger: Logger = null // Spy.getLogger(getClass)
-      Spy.spy(s"b", b)
       // b is the content of the node to be added to this Tree
       val tb = TreeBuilder[B]
+
       tb.getParent(this, b) match {
         case Some(parent) =>
           // parent is the Node which will be replaced by the joining of itself with the input node
           // NOTE: we should always get a match when this is a binary tree
-          Spy.spy(s"$this with $node attached to $parent", replaceNode(parent, parent + node)(tb.nodesAlike).asInstanceOf[StructuralTree[B]])
+          replaceNode(parent, addNodes(parent, node))(tb.nodesAlike).asInstanceOf[StructuralTree[K, B]]
         case None =>
           // this is the situation where a parent node for the value b cannot be found in the tree.
           // in such a case, we must infer the properties of the parent so that it can be added to the tree, with node as its child.
-          val bo = Spy.spy(s"parent value for $b is", for (k <- bKv.getParentKey(b); _b <- bKv.createValueFromKey(k, node.get)) yield _b)
+          val bo = for (k <- bKv.getParentKey(b); _b <- bKv.createValueFromKey(k, node.get)) yield _b
           bo match {
             case Some(_) =>
               // In this case, we successfully inferred a value for the parent, and now we recursively call addNode with
               // the new node (based on bo) having, as its child, node.
               if (node.get != bo)
               // We are not going to recurse infinitely
-                Spy.spy(s"$this with $node added", addNode(tb.buildTree(bo, Seq(node))))
+                addNode(tb.buildTree(bo, Seq(node)))
               else // NOTE if we get here the fault most probably lies with the logic in bKv or possibly tb or in the actual data
                 throw TreeException(s"logic error: recursion in addNode for $b")
             case None =>
               // we were unsuccessful in inferring a value, so we give up and simply add node to the root of this tree
               Tree.logger.info(s"cannot get value for new parent of node so we add said node at the root of this tree: node value = ${node.get}")
-              Spy.spy(s"$this with $node attached to root", replaceNode(this, this + node)((_, _) => true).asInstanceOf[StructuralTree[B]])
+              replaceNode(this, addNodes(this, node))((_, _) => true).asInstanceOf[StructuralTree[K, B]]
           }
-
+        case p => throw TreeException(s"Parent $p is not a StructuralNode")
       }
     // we cannot use this method to add a node which has no content
     case None => throw TreeException("cannot add node without value")
   }
+
+  private def addNodes[B >: A : TreeBuilder](x: Node[B], y: Node[B]) = x match {
+    case l: Leaf[B] => TreeBuilder[B].buildTree(l.get, Nil) + y
+    case n: Tree[B] => n + y
+    case z => throw TreeException(s"cannot add to parent $z")
+  }
+
 }
 
 /**
@@ -847,7 +839,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
   * @param a the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-abstract class AbstractLeaf[+A](a: A) extends Node[A] with StructuralNode[A] {
+abstract class AbstractLeaf[+A](a: A) extends Node[A] { // with StructuralNode[Any,A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
 
   def get = Some(a)
@@ -860,36 +852,6 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] with StructuralNode[A] {
 
   def includesValue[B >: A](b: B): Boolean = a == b
 
-  //  /**
-  //    * Create a String which represents this Node and its subtree
-  //    *
-  //    * @param indent the number of tabs before output should start on a new line.
-  //    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-  //    * @return a String.
-  //    */
-  //  def render(indent: Int)(implicit tab: (Int) => Prefix): String = a match {
-  //    case renderable: Renderable => renderable.render(indent)
-  //    case _ => s"$a"
-  //  }
-
-  /**
-    * Method to add the given node to this leaf
-    *
-    * CONSIDER why are we not simply using addNode from Tree?
-    *
-    * @param node a node
-    * @param vo   the (implicit) ValueOps
-    * @tparam B the underlying type of the node to be added (and the tree to be returned)
-    * @return a tree which is a modified form of this
-    */
-  protected[tree] def addNode[K, B >: A : TreeBuilder](node: Node[B])(implicit vo: ValueOps[K, B]): Tree[B] = node.get match {
-    case Some(_) =>
-      // CHECK all of this
-      val bo = for (v <- node.get; k <- vo.getParentKey(v); z <- vo.createValueFromKey(k, node.get)) yield z
-      addNode(TreeBuilder[B].buildTree(bo, Seq(node)))
-
-    case None => throw TreeException("cannot add node without value")
-  }
 }
 
 /**
@@ -1003,24 +965,25 @@ object Tree {
       case h :: t =>
         TreeBuilder[A].buildTree(Some(h), Seq()) match {
           case StructuralTree(x) =>
-            var result = x
+            // CHECK this cast looks bad, also we shouldn't need it given that we're doing pattern matching!
+            var result: StructuralTree[K, A] = x.asInstanceOf[StructuralTree[K, A]]
             for (w <- t) {
               result = result :+ Leaf(w)
             }
             Some(result)
-          case x: Tree[A] => Option(t.foldLeft(x)(_ + _))
+          case x: Tree[A] => throw TreeException(s"buildTree produced a Tree which isn't a StructuralTree: $x") // Option(t.foldLeft(x)(_ + _))
         }
     }
   }
 
   def populateGeneralTree[K, A: TreeBuilder](root: Option[A], values: Seq[A])(implicit vo: ValueOps[K, A]): Tree[A] = {
     @tailrec
-    def inner(result: StructuralTree[A], work: Seq[A]): Tree[A] = work match {
+    def inner(result: StructuralTree[K, A], work: Seq[A]): Tree[A] = work match {
       case Nil => result
       case h :: t => inner(result :+ Leaf(h), t)
     }
 
-    inner(TreeBuilder[A].buildTree(root, Seq()).asInstanceOf[StructuralTree[A]], values)
+    inner(TreeBuilder[A].buildTree(root, Seq()).asInstanceOf[StructuralTree[K, A]], values)
   }
 
   def join(xo: Option[String], yo: Option[String]): Option[String] = {
@@ -1255,9 +1218,9 @@ object StructuralTree {
     * @tparam A the tree type
     * @return an optional tuple of two children.
     */
-  def unapply[A](t: Tree[A]): Option[StructuralTree[A]] =
+  def unapply[K, A](t: StructuralTree[K, A]): Option[StructuralTree[K, A]] =
     t match {
-      case x: StructuralTree[A] => Some(x)
+      case x: StructuralTree[K, A]@unchecked => Some(x)
       case _ => None
     }
 }

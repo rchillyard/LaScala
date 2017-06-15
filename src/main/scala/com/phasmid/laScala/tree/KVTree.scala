@@ -1,9 +1,10 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala._
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.fp.FP._
-import com.phasmid.laScala.fp.{FP, Spy}
 
+import scala.collection.mutable
 import scala.language.implicitConversions
 
 /**
@@ -13,9 +14,7 @@ import scala.language.implicitConversions
   * @tparam K the Key type
   * @tparam V the underlying type of the tree/node values
   */
-abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] with StructuralTree[V] {
-
-  private implicit val logger = Spy.getLogger(getClass)
+abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] with StructuralTree[K, V] {
 
   /**
     * Method to determine if this Node's value is like node n's value WITHOUT any recursion.
@@ -36,6 +35,7 @@ abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] wi
     // TODO refactor the following to avoid instanceOf
     case _ => treeBuilder.buildTree(n.get, Seq()).asInstanceOf[KVTree[K, W]]
   }
+
 }
 
 /**
@@ -53,6 +53,41 @@ case class GeneralKVTree[K, V](value: Option[V], children: Seq[Node[V]])(implici
   def get: Option[V] = value
 }
 
+/**
+  * A general branch of a KV-tree, where there is a value at the node itself and the number of children is unbounded.
+  * Parallel to GeneralTree
+  *
+  * @param value    the value of the branch
+  * @param children the children of this Node
+  * @tparam V the underlying value type of this GeneralTree
+  */
+case class GeneralKVTreeWithScaffolding[K, V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K, V], m: mutable.HashMap[K, Node[V]]) extends KVTree[K, V] {
+
+  memoizeNode(this.asInstanceOf[Node[V]])
+
+  /**
+    * @return (optional) value
+    */
+  def get: Option[V] = value
+
+  /**
+    * CHECK these casts which should generally be illegal as we are downcasting from type to sub-type
+    *
+    * @param k  the (structural) key for the desired node
+    * @param vo (implicit) ValueOps
+    * @tparam B the value type
+    * @return optionally the node found
+    */
+  override def findByParentKey[B >: V](k: K)(implicit vo: ValueOps[K, B]): Option[Node[B]] = m.get(k.asInstanceOf[K])
+
+  override protected[tree] def addNode[B >: V : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): StructuralTree[K, B] = {
+    memoizeNode(node.asInstanceOf[Node[V]])
+    super.addNode(node)
+  }
+
+  def memoizeNode(n: Node[V]): Unit = {for (v <- n.get; k = vo.getKeyAsParent(v)) m.put(k, n)}
+}
+
 object KVTree
 
 /**
@@ -63,7 +98,6 @@ object KVTree
   * @tparam V value type
   */
 abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends TreeBuilder[V] {
-  private implicit val logger = Spy.getLogger(getClass)
 
   implicit object NodeOrdering extends Ordering[Node[V]] {
     def compare(x: Node[V], y: Node[V]): Int = FP.map2(x.get, y.get)(implicitly[Ordering[V]].compare).get
@@ -91,7 +125,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
     tree match {
-      case x: StructuralTree[V] =>
+      case x: StructuralTree[K, V] =>
         // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
         for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(vo)) yield n
       case _ => None
@@ -116,3 +150,10 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
 }
 
 object GeneralKVTree
+
+abstract class GeneralKVTreeBuilderWithScaffolding[K, V](implicit vo: ValueOps[K, V]) extends GeneralKVTreeBuilder[K, V] {
+  implicit val scaffolding: mutable.HashMap[K, Node[V]] = mutable.HashMap[K, Node[V]]()
+
+  override def buildTree(maybeValue: Option[V], children: Seq[Node[V]]) = GeneralKVTreeWithScaffolding(maybeValue, children.sorted)
+}
+

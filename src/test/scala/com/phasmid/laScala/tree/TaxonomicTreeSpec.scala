@@ -107,7 +107,9 @@ object Taxonomy {
     def createValueFromKey(k: String, vo: => Option[Taxon[String, Scalar]]): Option[Taxon[String, Scalar]] = if (k == "") Some(Taxon[String, Scalar](None, Seq[(String, Scalar)]())) else vo map (_.parentTaxon)
   }
 
-  implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilder[String, MockTaxon]
+  //  implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilder[String, MockTaxon]
+
+  implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilderWithScaffolding[String, MockTaxon]
 
   def buildTaxonomy(ts: Stream[MockTaxon]): Try[Node[MockTaxon]] = {
 
@@ -117,7 +119,7 @@ object Taxonomy {
       val ty = Spy.spy("root", Try(treeBuilder.buildTree(vo.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, V]]))
 
       @tailrec
-      def inner(result: Try[StructuralTree[V]], values: List[V]): Try[StructuralTree[V]] = values match {
+      def inner(result: Try[StructuralTree[String, V]], values: List[V]): Try[StructuralTree[String, V]] = values match {
         case Nil => result
         case y :: z => inner(for (t <- result; u = t :+ y) yield u, z)
       }
@@ -201,12 +203,12 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     val _a = "A"
     val p = "parent"
     val xy = Try(treeBuilder.buildTree(MockTaxonValueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, MockTaxon]])
-    xy should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List())) => }
+    xy should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List())) => }
     val ty = for (xt <- xy) yield for (t <- xt.get) yield (t.po, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
     // NOTE: addNode is protected so, for now at least, we use :+ as a surrogate
     val ny = for (x <- xy) yield x :+ treeBuilder.buildLeaf(Taxon(Some(a), Seq(p -> _a)))
-    ny should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
+    ny should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     (for (n <- ny) yield n.children) should matchPattern { case Success(List(Leaf(Taxon(Some(_), _)))) => }
   }
   it should "implement :+" in {
@@ -216,14 +218,14 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
     val _a = Scalar("A")
     val p = "parent"
     val xy: Try[KVTree[String, MockTaxon]] = Try(treeBuilder.buildTree(MockTaxonValueOps.createValueFromKey("", None), Seq()).asInstanceOf[KVTree[String, MockTaxon]])
-    xy should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List())) => }
+    xy should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List())) => }
     val ty: Try[Option[(Option[String], Seq[(String, Scalar)])]] = for (xt <- xy) yield for (t <- xt.get) yield (t.po, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
     val taxonA: Taxon[String, Scalar] = Taxon(Some(a), Seq(p -> _a))
     val n1y = for (x <- xy) yield x :+ taxonA
-    n1y should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
+    n1y should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     val n2y = for (n1 <- n1y) yield n1 :+ taxonA1
-    n2y should matchPattern { case Success(GeneralKVTree(Some(Taxon(None, _)), List(GeneralKVTree(Some(`taxonA`), List(Leaf(`taxonA1`)))))) => }
+    n2y should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(GeneralKVTreeWithScaffolding(Some(`taxonA`), List(Leaf(`taxonA1`)))))) => }
     n2y.get.render() shouldBe "--(a:A--(a1:A-A1))"
   }
 
@@ -257,9 +259,11 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
 
   behavior of "buildTaxonomy"
   it should "work with complete taxonomy" in {
+    GeneralKVTreeBuilderTaxon.scaffolding.clear()
     val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), allowPartial = true))
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm.toSeq)
     val yy: Try[Node[MockTaxon]] = for (ts <- tsy; z <- Taxonomy.buildTaxonomy(ts)) yield z
+    GeneralKVTreeBuilderTaxon.scaffolding.size shouldBe 16
     val zy: Try[IndexedNode[MockTaxon]] = for (y <- yy) yield Tree.createIndexedTree(y)
     zy should matchPattern { case Success(_) => }
     val tree = zy.get
@@ -272,9 +276,11 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   }
 
   it should "work with leaves-only taxonomy" in {
+    GeneralKVTreeBuilderTaxon.scaffolding.clear()
     val ps = TupleStream[Product](getClass.getResource("taxonomy-leaves.txt"), Header(Seq(), allowPartial = true))
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm.toSeq)
     val yy: Try[Node[MockTaxon]] = for (ts <- tsy; z <- Taxonomy.buildTaxonomy(ts)) yield z
+    GeneralKVTreeBuilderTaxon.scaffolding.size shouldBe 16
     val zy: Try[IndexedNode[MockTaxon]] = for (y <- yy) yield Tree.createIndexedTree(y)
     zy should matchPattern { case Success(_) => }
     val tree = zy.get
