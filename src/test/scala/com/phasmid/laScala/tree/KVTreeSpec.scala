@@ -22,7 +22,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
   behavior of "nodeIterator"
 
   it should "work properly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.nodeIterator()
     ns.size shouldBe 4
   }
@@ -30,7 +30,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
   behavior of "iterator"
 
   it should "work properly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.iterator(false).toList
     ns.size shouldBe 4
     ns shouldBe List(0, 1, 2, 3)
@@ -39,7 +39,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
   behavior of ":+(node)"
 
   it should "work correctly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     val tree2 = tree :+ Leaf(4)
     val ns = tree2.iterator(false).toList
     ns.size shouldBe 5
@@ -49,7 +49,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
   behavior of ":+(value)"
 
   it should "work correctly for GeneralKVTree(2)" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     val tree2 = tree :+ 4
     val ns = tree2.iterator(false).toList
     ns.size shouldBe 5
@@ -60,7 +60,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralKVTree(1)" in {
     val tree: Tree[Int] = GeneralKVTree(Some(0), Nil) :+ Leaf(1)
-    tree shouldBe GeneralKVTree(Some(0), Seq(Leaf(1)))
+    tree shouldBe GeneralKVTree(Some(0), List(Leaf(1)))
     tree.size shouldBe 2
     tree.depth shouldBe 2
     tree.iterator().toSeq shouldBe Seq(1, 0)
@@ -70,7 +70,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralKVTree(2)" in {
     val tree: Tree[Int] = GeneralKVTree(Some(0), Nil) :+ Leaf(1) :+ Leaf(2)
-    tree shouldBe GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2)))
+    tree shouldBe GeneralKVTree(Some(0), List(Leaf(1), Leaf(2)))
     tree.size shouldBe 3
     tree.depth shouldBe 2
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 2)
@@ -90,25 +90,25 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   behavior of "size"
   it should "work correctly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     tree.size shouldBe 4
   }
 
   behavior of "get"
   it should "work correctly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     tree.get should matchPattern { case Some(0) => }
   }
 
   behavior of "depth"
   it should "work correctly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     tree.depth shouldBe 2
   }
 
   behavior of "includes"
   it should "work for GeneralKVTree" in {
-    val tree = GeneralKVTree[String, Int](Some(1), Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree[String, Int](Some(1), List(Leaf(2), Leaf(3)))
     tree.includesValue(1) shouldBe true
     tree.includesValue(2) shouldBe true
     tree.includesValue(3) shouldBe true
@@ -118,7 +118,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   behavior of "find"
   it should "work for GeneralKVTree" in {
-    val tree = GeneralKVTree[String, Int](Some(1), Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree[String, Int](Some(1), List(Leaf(2), Leaf(3)))
     tree.find(1) should matchPattern { case Some(GeneralKVTree(Some(1), Seq(Leaf(2), Leaf(3)))) => }
     tree.find(2) should matchPattern { case Some(Leaf(2)) => }
     tree.find(3) should matchPattern { case Some(Leaf(3)) => }
@@ -128,7 +128,7 @@ class KVTreeSpec extends FlatSpec with Matchers {
 
   behavior of ":+, findParent, createValueFromKey, etc."
   it should "work correctly for GeneralKVTree" in {
-    val tree = GeneralKVTree(Some(0), Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralKVTree(Some(0), List(Leaf(1), Leaf(2), Leaf(3)))
     val tree2 = tree :+ 14
     val ns = tree2.iterator(false).toList
     ns.size shouldBe 5

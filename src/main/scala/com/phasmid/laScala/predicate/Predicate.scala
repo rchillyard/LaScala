@@ -399,7 +399,7 @@ case class Pred[T, V](p: Predicate[V])(f: T => V) extends BasePredicate[T](s"$p 
   * @param as a sequence of A values
   * @tparam A the underlying type of the sequence
   */
-case class In[A](as: Seq[A]) extends BasePredicate[A](s"in ${renderLimited(as)}...") {
+case class In[A](as: List[A]) extends BasePredicate[A](s"in ${renderLimited(as)}...") {
   def apply(x: A) = Try(as.contains(x))
 
   /**
