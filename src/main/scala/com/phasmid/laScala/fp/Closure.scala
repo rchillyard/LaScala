@@ -154,7 +154,7 @@ object Closure {
       case _ => throw RenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
     }
 
-    val cs: ParamClasses = Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m
+    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m).toList
     Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
   }
 

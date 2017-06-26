@@ -708,7 +708,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val arity = 1
     require(cbn.length == arity)
     val functionString = FunctionString(w, arity, cbn)
-    val classTags = Seq(implicitly[ClassTag[T1]])
+    val classTags = List(implicitly[ClassTag[T1]])
     assert(classTags.length == arity)
     // CONSIDER use the private method mechanism
     //    val privateMethod = PrivateMethod[Try[RenderableFunction[R]]]('partiallyApply)

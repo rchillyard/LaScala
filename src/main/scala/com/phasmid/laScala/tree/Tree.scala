@@ -719,6 +719,8 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
   /**
     * Method to add the given node to this node specifically
     *
+    * CONSIDER this looks incorrect because it defines its own K
+    *
     * @param node the node to add
     * @tparam B the underlying type of the new node (and the resulting tree)
     * @return the resulting tree
@@ -840,7 +842,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
   * @param a the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-abstract class AbstractLeaf[+A](a: A) extends Node[A] { // with StructuralNode[Any,A] {
+abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
 
   def get = Some(a)
@@ -852,7 +854,6 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] { // with StructuralNode[A
   def includes[B >: A](node: Node[B]): Boolean = this == node
 
   def includesValue[B >: A](b: B): Boolean = a == b
-
 }
 
 /**

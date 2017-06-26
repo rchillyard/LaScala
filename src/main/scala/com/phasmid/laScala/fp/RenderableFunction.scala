@@ -372,59 +372,59 @@ object RenderableFunction {
 
   def apply[T: ClassTag, R: ClassTag](f: T => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = {
     asserting(f != null && w != null, "f or w is null",
-      apply(1, w, cbn.toList, Seq(implicitly[ClassTag[T]]))(asTupledFunctionType(f))
+      apply(1, w, cbn.toList, List(implicitly[ClassTag[T]]))(asTupledFunctionType(f))
     )
   }
 
   def apply[T: ClassTag, R: ClassTag](f: T => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 1, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, R: ClassTag](f: (T1, T2) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(2, w, cbn.toList, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]]))(asTupledFunctionType(f))
+    apply(2, w, cbn.toList, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]]))(asTupledFunctionType(f))
   )
 
   def apply[T1: ClassTag, T2: ClassTag, R: ClassTag](f: (T1, T2) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 2, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, R: ClassTag](f: (T1, T2, T3) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(3, w, cbn.toList, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]]))(asTupledFunctionType(f))
+    apply(3, w, cbn.toList, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]]))(asTupledFunctionType(f))
   )
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, R: ClassTag](f: (T1, T2, T3) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 3, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, R: ClassTag](f: (T1, T2, T3, T4) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(4, w, cbn.toList, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]]))(asTupledFunctionType(f))
+    apply(4, w, cbn.toList, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]]))(asTupledFunctionType(f))
   )
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, R: ClassTag](f: (T1, T2, T3, T4) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 4, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(5, w, cbn.toList, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]]))(asTupledFunctionType(f))
+    apply(5, w, cbn.toList, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]]))(asTupledFunctionType(f))
   )
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 5, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: FunctionString, cbn: Seq[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(6, w, cbn.toList, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]]))(asTupledFunctionType(f))
+    apply(6, w, cbn.toList, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]]))(asTupledFunctionType(f))
   )
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 6, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: FunctionString, cbn: List[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(7, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]]))(asTupledFunctionType(f))
+    apply(7, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn.toList)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: FunctionString, cbn: List[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(8, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]]))(asTupledFunctionType(f))
+    apply(8, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 8, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 8, cbn), cbn.toList)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: FunctionString, cbn: List[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
-    apply(9, w, cbn, Seq(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]], implicitly[ClassTag[T9]]))(asTupledFunctionType(f))
+    apply(9, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]], implicitly[ClassTag[T9]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: Seq[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn.toList)
 
 
   def callByName(n: Int): List[Boolean] = (Stream.continually(true) take n).toList
@@ -441,12 +441,12 @@ object RenderableFunction {
     * @see Closure
     * @param n the number of args: a number less than or equal to 7
     * @tparam T the type of the parameters
-    * @return a RenderableFunction which yields a Seq[T]
+    * @return a RenderableFunction which yields a List[T]
     */
   def varargs[T: ClassTag](n: Int): RenderableFunction[Seq[T]] = {
     val mkList = "mkList"
     val cbn = callByValue(n)
-    val cs: ParamClasses = Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n
+    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n).toList
 
     def emptyList(p: Product) = Seq[T]()
 
@@ -640,9 +640,9 @@ object RenderableFunction {
       case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
     }
 
-  private def invert[X](n: Int, xs: Seq[X]): Seq[X] = ((xs take (xs.size - n)) :+ xs(n - 1) :+ xs(n - 2)) ++ (xs drop n)
+  private def invert[X](n: Int, xs: List[X]): List[X] = ((xs take (xs.size - n)) :+ xs(n - 1) :+ xs(n - 2)) ++ (xs drop n)
 
-  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): RenderableFunction[R] = {
+  private def invert[T, R: ClassTag](n: Int, arity: Int, f: (Product) => R, w: FunctionString, cbn: List[Boolean], cs: ParamClasses): RenderableFunction[R] = {
     if (arity < 2 || n > arity)
       throw RenderableFunctionException(s"can't invert $n parameters of a RenderableFunction of arity $arity")
     else {

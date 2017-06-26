@@ -52,6 +52,7 @@ class OrderableSpec extends FlatSpec with Matchers {
   }
   "zero string" should "result in OrderableString of length zero" in {
     implicit val pattern = ""
+    //noinspection ScalaUnusedSymbol
     val dt = OrderableString.zero
     // TODO put a test here
   }

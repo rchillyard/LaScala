@@ -95,21 +95,21 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle varargs of 0 elements" in {
     val c = Closure.createVarArgsClosure()
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq())
   }
 
   it should "handle varargs of 1 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"))
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l"))
   }
 
   it should "handle varargs of 2 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"), Left("K"))
-    c.render() shouldBe "Closure(RenderableFunction[Stream(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "K"))
   }
@@ -117,7 +117,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "handle varargs of 1 variable elements sandwiched in 2 constant elements" in {
     val f = RenderableFunction({ s: String => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
     val c = Closure.createVarArgsClosure(Left("l"), Right(Closure[String, String](f, Left("Hello"))), Left("K"))
-    c.render() shouldBe "Closure(RenderableFunction[Stream(java.lang.String, ?),scala.collection.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
+    c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.collection.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "HELLO", "K"))
   }
