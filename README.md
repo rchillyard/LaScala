@@ -29,6 +29,9 @@ utility libraries:
 LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
 
 ## Revision History
+### Changes in V1_0_7
+* RenderableFunction, Closure, etc.
+    * forced Seq type to be List for parameters of any serializable classes
 ### Changes in V1_0_6
 * Tree:
     * refactored traits/classes for cleaner code;
@@ -36,27 +39,20 @@ LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built
 * FP:
     * added nextOption
     * added foldLeftShort
-
 ### Changes in V1_0_5
 * Tree: minor change in render method
-
 ### Changes in V1_0_4
 * Tree: better logic in addNode; refactored by separating out StructuralNode and StructuralTree types
-
 ### Changes in V1_0_3
 * improvements to Version: now we use sbt-release and sbt-buildinfo
-
 ### Changes in V1_0_2
 * FP: added map2g and flatMap2g; MPTT: added containsConditional
-
 ### Changes in V1_0_1
 * a collaborative pair of classes: RenderableFunction and Closure which are designed to all for the development,
 debugging and deployment of AST-type parsing, for example the parsing of case clauses within SQL;
 * updates/fixes to the Renderable trait and classes which support more general Renderables,
 such as Traversable, Option, Try, Either -- these are available via implicits;
-
 ## Notes
-
 Please contact us at [Dataflowage](http://www.dataflowage.com) if you are interested in receiving or
 providing consulting work in Spark, or any Big Data-related work.
 Also, if you are interested in contributing to LaScala.
