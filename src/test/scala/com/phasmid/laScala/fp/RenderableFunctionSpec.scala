@@ -7,7 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.RenderableFunction.getPartialApplicationFunction
 import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
-import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester, Succeeded}
+import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -110,7 +110,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     def and(x: Boolean, y: => Boolean) = x && y
 
-    val f = RenderableFunction(and _, name, Seq(false, true))
+    val f = RenderableFunction(and _, name, List(false, true))
     val bt: Boolean = true
     val bf: Boolean = false
     val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply(bt)
@@ -124,7 +124,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     def and(x: String, y: => String) = x.toBoolean && y.toBoolean
 
-    val f = RenderableFunction(and _, name, Seq(false, true))
+    val f = RenderableFunction(and _, name, List(false, true))
     val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply("true")
     val g2y: Try[RenderableFunction[Boolean]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
     val by: Try[Boolean] = for (g2 <- g2y; b <- g2.callByName()) yield b
@@ -136,7 +136,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     def and(x: String, y: => String) = (x.toBoolean && y.toBoolean).toString
 
-    val f = RenderableFunction(and _, name, Seq(false, true))
+    val f = RenderableFunction(and _, name, List(false, true))
     val g1y: Try[RenderableFunction[String]] = f.partiallyApply("true")
     val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
     val by: Try[String] = for (g2 <- g2y; b <- g2.callByName()) yield b
@@ -605,7 +605,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   it should """evaluate to true with true & true""" in {
     def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true.booleanValue))
     cAnd() match {
       case Success(b) => println(s"result: $b"); // Succeeded
@@ -615,7 +615,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   it should """evaluate to true with true & (java) true""" in {
     def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true))
     cAnd() match {
       case Success(b) => println(s"result: $b"); // Succeeded
@@ -625,7 +625,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   it should """evaluate (using java Boolean parameter) to true with true & (java) true""" in {
     def fAnd(p1: Boolean, p2: => java.lang.Boolean): Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))
     cAnd() match {
       case Success(b) => println(s"result: $b"); // Succeeded
@@ -635,7 +635,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
   it should """evaluate to java.lang.Boolean(true) with true & (java) true""" in {
     def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true), Left(true))
     cAnd() match {
       case Success(b) => println(s"result: $b"); // Succeeded
@@ -650,7 +650,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
     println(cAnd)
     val g = cAnd.partiallyApply
@@ -668,7 +668,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
 
-    val ifAnd = RenderableFunction(fAnd _, "and", Seq(false, true))
+    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
     val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
     println(cAnd)
     val g = cAnd.partiallyApply
@@ -708,7 +708,7 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
     val arity = 1
     require(cbn.length == arity)
     val functionString = FunctionString(w, arity, cbn)
-    val classTags = Seq(implicitly[ClassTag[T1]])
+    val classTags = List(implicitly[ClassTag[T1]])
     assert(classTags.length == arity)
     // CONSIDER use the private method mechanism
     //    val privateMethod = PrivateMethod[Try[RenderableFunction[R]]]('partiallyApply)

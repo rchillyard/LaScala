@@ -14,7 +14,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class ProductStream2Spec extends FlatSpec with Matchers {
   behavior of "TupleStream"
   it should "read taxonomy.txt correctly" in {
-    val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), allowPartial = true))
+    val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(List(), allowPartial = true))
     //noinspection ScalaUnusedSymbol
     //    for (t <- ps.input) println(x)
     val header = ps.header

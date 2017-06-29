@@ -98,13 +98,13 @@ class PredicateSpec extends FlatSpec with Matchers {
     rt.get shouldBe Disjunction(List(Conjunction(List(Condition("x", BooleanPredicateExpr(">", p.Expr(p.ExprTerm(p.Variable("z"), List()), List())))))))
   }
   "In" should "work" in {
-    val values = Seq(1, 2, 3, 5, 8, 13)
+    val values = List(1, 2, 3, 5, 8, 13)
     val p = In(values)
     p(5) should matchPattern { case Success(true) => }
     p(4) should matchPattern { case Success(false) => }
   }
   it should "be named ok" in {
-    In(Seq(1, 2, 3, 5, 8, 13)).toString shouldBe "in (1, 2, 3, 5, 8, 13)..."
+    In(List(1, 2, 3, 5, 8, 13)).toString shouldBe "in (1, 2, 3, 5, 8, 13)..."
   }
   "InRange" should "work" in {
     val p = InRange(1 to 10)

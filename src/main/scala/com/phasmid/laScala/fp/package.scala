@@ -13,5 +13,5 @@ import scala.reflect.ClassTag
 package object fp {
   type Parameter[T] = Either[T, Closure[_, T]]
 
-  type ParamClasses = Seq[ClassTag[_]]
+  type ParamClasses = List[ClassTag[_]]
 }

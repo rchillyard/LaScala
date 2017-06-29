@@ -98,7 +98,7 @@ trait ProductStream[X <: Product] {
   def asMaps: Try[Stream[Map[String, Scalar]]]
 }
 
-case class Header(columns: Seq[String], allowPartial: Boolean = false) {
+case class Header(columns: List[String], allowPartial: Boolean = false) {
   def isValidRow(size: Int): Boolean = columns.isEmpty || size == columns.size || allowPartial && size <= columns.size
 }
 
@@ -148,7 +148,7 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
   def getHeader(givenHeader: Header): Header =
     if (givenHeader.columns.isEmpty)
       wsy match {
-        case Success(x) => Header(x, givenHeader.allowPartial)
+        case Success(x) => Header(x.toList, givenHeader.allowPartial)
         case Failure(t) => carper(s"failure: $t"); givenHeader
       }
     else
@@ -273,7 +273,7 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], g
 
 
 object TupleStream {
-  val emptyHeader = Header(Seq())
+  val emptyHeader = Header(List())
 
   def apply[X <: Product](input: Stream[String]): TupleStream[X] = apply(input, emptyHeader)
 
@@ -321,7 +321,7 @@ object TupleStream {
 }
 
 object CSV {
-  val emptyHeader = Header(Seq())
+  val emptyHeader = Header(List())
 
   def apply[X <: Product](input: Stream[String]): CSV[X] = apply(input, emptyHeader)
 

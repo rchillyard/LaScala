@@ -260,7 +260,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
   behavior of "buildTaxonomy"
   it should "work with complete taxonomy" in {
     GeneralKVTreeBuilderTaxon.scaffolding.clear()
-    val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(Seq(), allowPartial = true))
+    val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(List(), allowPartial = true))
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm.toSeq)
     val yy: Try[Node[MockTaxon]] = for (ts <- tsy; z <- Taxonomy.buildTaxonomy(ts)) yield z
     GeneralKVTreeBuilderTaxon.scaffolding.size shouldBe 16
@@ -277,7 +277,7 @@ class TaxonomicTreeSpec extends FlatSpec with Matchers {
 
   it should "work with leaves-only taxonomy" in {
     GeneralKVTreeBuilderTaxon.scaffolding.clear()
-    val ps = TupleStream[Product](getClass.getResource("taxonomy-leaves.txt"), Header(Seq(), allowPartial = true))
+    val ps = TupleStream[Product](getClass.getResource("taxonomy-leaves.txt"), Header(List(), allowPartial = true))
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm.toSeq)
     val yy: Try[Node[MockTaxon]] = for (ts <- tsy; z <- Taxonomy.buildTaxonomy(ts)) yield z
     GeneralKVTreeBuilderTaxon.scaffolding.size shouldBe 16

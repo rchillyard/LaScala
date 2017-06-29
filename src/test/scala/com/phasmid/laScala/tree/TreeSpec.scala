@@ -25,7 +25,7 @@ class TreeSpec extends FlatSpec with Matchers {
     Leaf(42).render(1) shouldBe "42"
   }
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3)))
     tree.render() shouldBe "0--(\n  1,\n  2,\n  3\n)"
   }
   behavior of "compare"
@@ -81,7 +81,7 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "nodeIterator"
 
   it should "work properly for GeneralTree" in {
-    val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.nodeIterator()
     ns.size shouldBe 4
   }
@@ -94,7 +94,7 @@ class TreeSpec extends FlatSpec with Matchers {
   behavior of "iterator"
 
   it should "work properly for GeneralTree" in {
-    val tree = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3)))
+    val tree = GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3)))
     val ns = tree.iterator(false).toList
     ns.size shouldBe 4
     ns shouldBe List(0, 1, 2, 3)
@@ -111,8 +111,8 @@ class TreeSpec extends FlatSpec with Matchers {
 
   it should "work correctly for GeneralTree" in {
     import GeneralTree._
-    val tree: Tree[Int] = GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3))) + Leaf(4)
-    tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
+    val tree: Tree[Int] = GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3))) + Leaf(4)
+    tree shouldBe GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
     tree.iterator().toSeq shouldBe Seq(1, 2, 3, 4, 0)
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 2, 3, 4)
   }
@@ -149,7 +149,7 @@ class TreeSpec extends FlatSpec with Matchers {
   it should "work correctly for GeneralTree" in {
     import GeneralTree._
     val tree = GeneralTree(0, Nil) + Leaf(1) + Leaf(2) + Leaf(3) + Leaf(4)
-    tree shouldBe GeneralTree(0, Seq(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
+    tree shouldBe GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3), Leaf(4)))
   }
   it should "work correctly for UnvaluedBinaryTree type 1/3" in {
     import UnvaluedBinaryTree._
@@ -192,7 +192,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "get"
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.get should matchPattern { case Some(1) => }
   }
   it should "work for UnvaluedBinaryTree" in {
@@ -202,7 +202,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "depth"
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.depth shouldBe 2
   }
   it should "work for UnvaluedBinaryTree" in {
@@ -212,7 +212,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "compareValues"
   it should "work for Leaf" in {
-    val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree1 = GeneralTree(1, List(Leaf(2), Leaf(3)))
     val leaf1 = Leaf(1)
     val leaf2 = Leaf(2)
     tree1.compareValues(leaf1) should matchPattern { case Kleenean(Some(true)) => }
@@ -223,12 +223,12 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "like"
   it should "work for GeneralTree" in {
-    val tree1 = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
-    val tree2 = GeneralTree(1, Seq(Leaf(5), Leaf(6)))
+    val tree1 = GeneralTree(1, List(Leaf(2), Leaf(3)))
+    val tree2 = GeneralTree(1, List(Leaf(5), Leaf(6)))
     //noinspection ScalaUnusedSymbol
-    val tree3 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(5), Leaf(6)))))
+    val tree3 = GeneralTree(1, List(GeneralTree(4, List(Leaf(5), Leaf(6)))))
     //noinspection ScalaUnusedSymbol
-    val tree4 = GeneralTree(1, Seq(GeneralTree(4, Seq(Leaf(10), Leaf(11)))))
+    val tree4 = GeneralTree(1, List(GeneralTree(4, List(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
     // CONSIDER understand why this doesn't work. At appears to yield Some(true)
     //    tree3.like(tree4) should matchPattern {case Kleenean(Some(true)) => }
@@ -242,7 +242,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "includes"
   it should "work for GeneralTree with Node" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.includes(Leaf(1)) shouldBe true
     tree.includes(Leaf(2)) shouldBe true
     tree.includes(Leaf(3)) shouldBe true
@@ -260,7 +260,7 @@ class TreeSpec extends FlatSpec with Matchers {
   }
   behavior of "includes"
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.includesValue(1) shouldBe true
     tree.includesValue(2) shouldBe true
     tree.includesValue(3) shouldBe true
@@ -277,7 +277,7 @@ class TreeSpec extends FlatSpec with Matchers {
     tree.includesValue(6) shouldBe true
   }
   it should "work for GeneralTree using the two-parameter form" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.includes(1, 1) shouldBe true
     tree.includes(1, 2) shouldBe true
     tree.includes(1, 3) shouldBe true
@@ -288,7 +288,7 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "find"
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
     tree.find(1) should matchPattern { case Some(GeneralTree(1, Seq(Leaf(2), Leaf(3)))) => }
     tree.find(2) should matchPattern { case Some(Leaf(2)) => }
     tree.find(3) should matchPattern { case Some(Leaf(3)) => }
@@ -307,8 +307,8 @@ class TreeSpec extends FlatSpec with Matchers {
 
   behavior of "filter"
   it should "work for GeneralTree" in {
-    val tree = GeneralTree(1, Seq(Leaf(2), Leaf(3)))
-    tree.filter(_.get.get % 2 == 1).toList shouldBe Seq(Leaf(3), GeneralTree(1, Seq(Leaf(2), Leaf(3))))
+    val tree = GeneralTree(1, List(Leaf(2), Leaf(3)))
+    tree.filter(_.get.get % 2 == 1).toList shouldBe List(Leaf(3), GeneralTree(1, List(Leaf(2), Leaf(3))))
   }
   it should "work for UnvaluedBinaryTree" in {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))

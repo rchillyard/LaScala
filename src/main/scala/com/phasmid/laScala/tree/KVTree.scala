@@ -46,12 +46,25 @@ abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] wi
   * @param children the children of this Node
   * @tparam V the underlying value type of this GeneralTree
   */
-case class GeneralKVTree[K, V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
+case class GeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
+// XXX: works only with Scala 2.11
+  // abstract class AbstractGeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
   /**
     * @return (optional) value
     */
   def get: Option[V] = value
 }
+
+// XXX: works only with Scala 2.11
+///**
+//  * A general branch of a KV-tree, where there is a value at the node itself and the number of children is unbounded.
+//  * Parallel to GeneralTree
+//  *
+//  * @param value    the value of the branch
+//  * @param children the children of this Node
+//  * @tparam V the underlying value type of this GeneralTree
+//  */
+// case class GeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V]) extends AbstractGeneralKVTree(value, children)(vo)
 
 /**
   * A general branch of a KV-tree, where there is a value at the node itself and the number of children is unbounded.
@@ -61,14 +74,11 @@ case class GeneralKVTree[K, V](value: Option[V], children: Seq[Node[V]])(implici
   * @param children the children of this Node
   * @tparam V the underlying value type of this GeneralTree
   */
-case class GeneralKVTreeWithScaffolding[K, V](value: Option[V], children: Seq[Node[V]])(implicit vo: ValueOps[K, V], m: mutable.HashMap[K, Node[V]]) extends KVTree[K, V] {
+case class GeneralKVTreeWithScaffolding[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V], m: mutable.HashMap[K, Node[V]]) extends KVTree[K, V] {
+  def get: Option[V] = value
+//case class GeneralKVTreeWithScaffolding[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V], m: mutable.HashMap[K, Node[V]]) extends AbstractGeneralKVTree(value, children) {
 
   memoizeNode(this.asInstanceOf[Node[V]])
-
-  /**
-    * @return (optional) value
-    */
-  def get: Option[V] = value
 
   /**
     * CHECK these casts which should generally be illegal as we are downcasting from type to sub-type
@@ -85,7 +95,7 @@ case class GeneralKVTreeWithScaffolding[K, V](value: Option[V], children: Seq[No
     super.addNode(node)
   }
 
-  def memoizeNode(n: Node[V]): Unit = {for (v <- n.get; k = vo.getKeyAsParent(v)) m.put(k, n)}
+  private def memoizeNode(n: Node[V]): Unit = {for (v <- n.get; k = vo.getKeyAsParent(v)) m.put(k, n)}
 }
 
 object KVTree
@@ -138,7 +148,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     * @param children   the the children of the node
     * @return a tree the (optional) value at the root and children as the immediate descendants
     */
-  def buildTree(maybeValue: Option[V], children: Seq[Node[V]]): Tree[V] = GeneralKVTree(maybeValue, children.sorted)
+  def buildTree(maybeValue: Option[V], children: Seq[Node[V]]): Tree[V] = GeneralKVTree(maybeValue, children.toList.sorted)
 
   /**
     * Build a new leaf for a GeneralKVTree
@@ -154,6 +164,6 @@ object GeneralKVTree
 abstract class GeneralKVTreeBuilderWithScaffolding[K, V](implicit vo: ValueOps[K, V]) extends GeneralKVTreeBuilder[K, V] {
   implicit val scaffolding: mutable.HashMap[K, Node[V]] = mutable.HashMap[K, Node[V]]()
 
-  override def buildTree(maybeValue: Option[V], children: Seq[Node[V]]) = GeneralKVTreeWithScaffolding(maybeValue, children.sorted)
+  override def buildTree(maybeValue: Option[V], children: Seq[Node[V]]) = GeneralKVTreeWithScaffolding(maybeValue, children.toList.sorted)
 }
 

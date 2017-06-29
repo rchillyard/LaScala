@@ -24,7 +24,7 @@ sealed trait Tree[+A] extends Node[A] {
   /**
     * @return the immediate descendants (children) of this branch
     */
-  def children: Seq[Node[A]]
+  def children: List[Node[A]]
 
   /**
     * Calculate the size of this node's subtree
@@ -408,6 +408,7 @@ trait Branch[+A] extends Tree[A] {
     */
   override def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
     val result = new StringBuilder(super.render(indent) + "--")
+    import Renderable.renderableTraversable
     result.append(children.render(indent))
     result.toString
   }
@@ -683,7 +684,7 @@ trait StringValueOps[V] extends ValueOps[String, V] {
   * @tparam A the underlying type of the Node(s) and Tree
   */
 trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
-  def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children)
+  def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children.toList)
 
   def buildLeaf(a: A): Node[A] = Leaf(a)
 
@@ -701,7 +702,7 @@ trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
   * @param children the children of this Node
   * @tparam A the underlying type of this Branch
   */
-case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
+case class GeneralTree[+A](value: A, children: List[Node[A]]) extends Branch[A] {
   /**
     * @return Some(value)
     */
@@ -717,6 +718,8 @@ case class GeneralTree[+A](value: A, children: Seq[Node[A]]) extends Branch[A] {
 case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
   /**
     * Method to add the given node to this node specifically
+    *
+    * CONSIDER this looks incorrect because it defines its own K
     *
     * @param node the node to add
     * @tparam B the underlying type of the new node (and the resulting tree)
@@ -803,7 +806,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
   * @param children the children of this node
   * @tparam A the underlying type of this Branch
   */
-case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: Seq[Node[A]]) extends Branch[A] with IndexedTree[A] {
+case class MutableGenericIndexedTree[A](var lIndex: Option[Long], var rIndex: Option[Long], var value: Option[A], var children: List[Node[A]]) extends Branch[A] with IndexedTree[A] {
   def get: Option[A] = value
 }
 
@@ -830,7 +833,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
     *
     * @return the immediate descendants (children) of this branch
     */
-  def children: Seq[Node[A]] = Seq(left, right)
+  def children: List[Node[A]] = List(left, right)
 }
 
 /**
@@ -839,7 +842,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
   * @param a the value of this leaf
   * @tparam A the underlying type of this Leaf
   */
-abstract class AbstractLeaf[+A](a: A) extends Node[A] { // with StructuralNode[Any,A] {
+abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
 
   def get = Some(a)
@@ -851,7 +854,6 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] { // with StructuralNode[A
   def includes[B >: A](node: Node[B]): Boolean = this == node
 
   def includesValue[B >: A](b: B): Boolean = a == b
-
 }
 
 /**
@@ -865,7 +867,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   /**
     * @return the immediate descendants (children) of this branch
     */
-  def children: Seq[Tree[Nothing]] = Seq.empty
+  def children: List[Tree[Nothing]] = List.empty
 
   /**
     * Create a String which represents this Node and its subtree
@@ -1013,7 +1015,7 @@ object Tree {
       case Leaf(x) => IndexedLeaf[A](Some(index), Some(index + 1), x)
       case Branch(ao, ans) =>
         val rIndex = index + 1 + 2 * (ans map (_.size) sum)
-        MutableGenericIndexedTree(Some(index), Some(rIndex), ao, inner(Nil, (index + 1, ans)))
+        MutableGenericIndexedTree(Some(index), Some(rIndex), ao, inner(Nil, (index + 1, ans)).toList)
       case Empty => EmptyWithIndex.asInstanceOf[IndexedNode[A]] // CHECK this is OK
       case _ => throw TreeException(s"can't created IndexedTree from $node")
     }
@@ -1022,7 +1024,7 @@ object Tree {
 
 object GeneralTree {
   trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
-    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children)
+    def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = GeneralTree(maybeValue.get, children.toList)
 
     def buildLeaf(a: A): Node[A] = Leaf(a)
 

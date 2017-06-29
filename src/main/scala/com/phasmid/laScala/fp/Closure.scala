@@ -116,6 +116,8 @@ object Closure {
   }
 
   /**
+    * NOTE: this is used solely by unit tests
+    *
     * Factory method to create a VarArgs Closure from a varargs list of Parameter[T]
     *
     * @param tps the varargs parameters
@@ -124,7 +126,7 @@ object Closure {
     */
   def createVarArgsClosure[T: ClassTag](tps: Parameter[T]*): Closure[T, Seq[T]] = {
 
-    val (tss: Seq[Seq[T]], _tps: Seq[Parameter[T]]) = VarArgs[T, T, Closure[_, T]](tps, identity).split
+    val (tss: Seq[Seq[T]], _tps: Seq[Parameter[T]]) = VarArgs[T, T, Closure[_, T]](tps.toList, identity).split
 
     /**
       * Get the number of variables/functions
@@ -152,7 +154,7 @@ object Closure {
       case _ => throw RenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
     }
 
-    val cs: ParamClasses = Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m
+    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m).toList
     Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
   }
 
@@ -160,7 +162,15 @@ object Closure {
 
 }
 
-case class VarArgs[T, X, Y](xYes: Seq[Either[X, Y]], x2t: X => T) {
+/**
+  *
+  * @param xYes a list of Either[X,Y] objects
+  * @param x2t  a conversion function from X to T
+  * @tparam T the underlying type of the args
+  * @tparam X one alternative underlying type of Either
+  * @tparam Y the other alternative underlying type of Either
+  */
+case class VarArgs[T, X, Y](xYes: List[Either[X, Y]], x2t: X => T) {
   def split: (Seq[Seq[T]], Seq[Either[X, Y]]) = {
     @tailrec
     def inner(result: (Seq[Seq[T]], Seq[Either[X, Y]]), work: Seq[Either[X, Y]]): (Seq[Seq[T]], Seq[Either[X, Y]]) = work match {
@@ -172,12 +182,18 @@ case class VarArgs[T, X, Y](xYes: Seq[Either[X, Y]], x2t: X => T) {
       }
     }
 
-    inner((Seq(Nil), Nil), xYes.toList)
+    inner((Seq(Nil), Nil), xYes)
   }
 
 }
 
-case class ??[T](tso: Option[Seq[T]]) {
+/**
+  *
+  *
+  * @param tso an optional list of T
+  * @tparam T the underlying type
+  */
+case class ??[T](tso: Option[List[T]]) {
   self =>
   /**
     * Method to get the underlying Seq[T]
@@ -199,15 +215,15 @@ case class ??[T](tso: Option[Seq[T]]) {
 }
 
 object ?? {
-  def apply[T](ts: Seq[T]): ??[T] = ??(Some(ts))
+  def apply[T](ts: Seq[T]): ??[T] = ??(Some(ts.toList))
 
-  def f_++[T](x: Seq[T], y: Seq[T]): Seq[T] = x ++ y
+  def f_++[T](x: Seq[T], y: Seq[T]): List[T] = x.toList ++ y
 
-  def f_+:[T](x: T, y: Seq[T]): Seq[T] = x +: y
+  def f_+:[T](x: T, y: Seq[T]): List[T] = x +: y.toList
 
-  def ++[T](x: Option[Seq[T]], y: Option[Seq[T]]): Option[Seq[T]] = FP.map2(x, y)(f_++)
+  def ++[T](x: Option[Seq[T]], y: Option[Seq[T]]): Option[List[T]] = FP.map2(x, y)(f_++)
 
-  def +:[T](x: Option[T], y: Option[Seq[T]]): Option[Seq[T]] = FP.map2(x, y)(f_+:)
+  def +:[T](x: Option[T], y: Option[Seq[T]]): Option[List[T]] = FP.map2(x, y)(f_+:)
 }
 
 

@@ -84,7 +84,7 @@ class MPTTSpec extends FlatSpec with Matchers {
 
   behavior of "real-life GeneralTree"
   it should "build correctly" in {
-    val tree = GeneralTree(0, Seq(GeneralTree(1, Seq(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, Seq(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
+    val tree = GeneralTree(0, List(GeneralTree(1, List(Leaf(11), Leaf(12), Leaf(13), Leaf(14))), GeneralTree(2, List(Leaf(21), Leaf(22), Leaf(23))), Leaf(3), Leaf(4)))
     val indexedTree = Tree.createIndexedTree(tree)
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[Int]])
     //    for (i <- mptt.index) println(s"${i._2}")

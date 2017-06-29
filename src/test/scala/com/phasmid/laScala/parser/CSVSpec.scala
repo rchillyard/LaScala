@@ -155,7 +155,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   "quotes.csv" should "work from local URL" in {
     val url = getClass.getResource("quotes.csv")
     url should not be null
-    val csv = CSV[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(List("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", 104.48, _, 12.18) => }
@@ -163,7 +163,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   // NOTE: you may have to ignore this if you are behind a firewall
   ignore should "work from URL stream" in {
     val url = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=AAPL&f=nl1d1r&e=.csv")
-    val csv = CSV[(String, Double, LocalDate, Double)](url, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV[(String, Double, LocalDate, Double)](url, Header(List("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1
     x.head should matchPattern { case ("Apple Inc.", _, _, _) => }
@@ -177,7 +177,7 @@ class CSVSpec extends FlatSpec with Matchers with Inside {
   it should "yield maps from local URL" in {
     val url = getClass.getResource("quotes.csv")
     url should not be null
-    val csv = CSV[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(Seq("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
+    val csv = CSV[(String, Double, LocalDate, Double)](defaultParser, url.toURI, Header(List("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val xWmsy = csv.asMaps
     inside(xWmsy) {
       case Success(xWms) =>

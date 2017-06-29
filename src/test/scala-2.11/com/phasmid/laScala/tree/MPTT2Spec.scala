@@ -29,7 +29,7 @@ class MPTT2Spec extends FlatSpec with Matchers {
       def createValueFromKey(k: String, vo: => Option[MyInt]): Option[MyInt] = Try(MyInt(k.toInt, b = true)).toOption
     }
     //noinspection NameBooleanParameters
-    val tree: GeneralTree[MyInt] = GeneralTree(MyInt(0, false), Seq(GeneralTree(MyInt(1, true), Seq(Leaf(MyInt(11, true)), Leaf(MyInt(12, true)), GeneralTree(MyInt(2, false), Seq(Leaf(MyInt(21, true)), Leaf(MyInt(22, true))))))))
+    val tree: GeneralTree[MyInt] = GeneralTree(MyInt(0, false), List(GeneralTree(MyInt(1, true), List(Leaf(MyInt(11, true)), Leaf(MyInt(12, true)), GeneralTree(MyInt(2, false), List(Leaf(MyInt(21, true)), Leaf(MyInt(22, true))))))))
     val indexedTree = Tree.createIndexedTree(tree)
     val mptt = MPTT(indexedTree.asInstanceOf[IndexedNode[MyInt]])
 
