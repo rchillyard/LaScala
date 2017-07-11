@@ -12,6 +12,48 @@ import scala.util.Success
   */
 class IncrementableSpec extends FlatSpec with Matchers with Inside {
 
+  behavior of "zero"
+  it should "yield 0 for Int" in {
+    import Incrementable.IncrementableInt
+    IncrementableInt.zero shouldBe 0
+  }
+  it should "yield 0L for Long" in {
+    import Incrementable.IncrementableLong
+    IncrementableLong.zero shouldBe 0L
+  }
+  it should "yield A for String" in {
+    import Incrementable.IncrementableString
+    IncrementableString.zero shouldBe "A"
+  }
+  it should "yield now for LocalDate" in {
+    import Incrementable.IncrementableLocalDate
+    val now = LocalDate.now()
+    val zero = IncrementableLocalDate.zero
+    zero.isAfter(now) || zero.isEqual(now) shouldBe true
+  }
+
+  behavior of "IncrementableString"
+  it should "give B after zero" in {
+    import Incrementable.IncrementableString
+    IncrementableString.increment(IncrementableString.zero) should matchPattern { case Success("B") => }
+  }
+  it should "give Z after zero and 25 steps" in {
+    import Incrementable.IncrementableString
+    IncrementableString.increment(IncrementableString.zero, 25) should matchPattern { case Success("Z") => }
+  }
+  it should "give AA after zero and 26 steps" in {
+    import Incrementable.IncrementableString
+    IncrementableString.increment(IncrementableString.zero, 26) should matchPattern { case Success("AA") => }
+  }
+  it should "give ZA after zero and 676 steps" in {
+    import Incrementable.IncrementableString
+    IncrementableString.increment(IncrementableString.zero, 676) should matchPattern { case Success("ZA") => }
+  }
+  it should "give AAA after zero and 702 steps" in {
+    import Incrementable.IncrementableString
+    IncrementableString.increment(IncrementableString.zero, 702) should matchPattern { case Success("AAA") => }
+  }
+
   "1" should "increment by one" in {
     import Incrementable.IncrementableInt
     implicit val pattern = ""

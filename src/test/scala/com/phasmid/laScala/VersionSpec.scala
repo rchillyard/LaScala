@@ -1,6 +1,8 @@
 package com.phasmid.laScala
 
 /**
+  * NOTE: you will need to change the value of VERSION before doing a release
+  *
   * Created by scalaprof on 7/31/16.
   */
 
@@ -9,13 +11,19 @@ import org.scalatest._
 import scala.util._
 
 class VersionSpec extends FlatSpec with Matchers with Inside {
+  // TODO you must increment this every time version changes in order for the tests all to run correctly
+  val VERSION = "1.0.8"
 
   println(s"${Version.getVersion}")
 
   behavior of "getVersion"
+  it should "match version" in {
+    Version.getVersion.startsWith(s"lascala $VERSION") shouldBe true
+  }
   // The following unit test works correctly, but it requires too much maintenance to have it run all the time
+  // Also, it is specific to one Scala binary and therefore, as is, would interfere with the release process
   ignore should "match" in {
-    Version.getVersion shouldBe "lascala 1.0.3 (compiled with 2.11.8 at 2017-06-03T14:40:43.200 UTC)"
+    Version.getVersion shouldBe s"lascala $VERSION (compiled with 2.11.8 at 2017-06-03T14:40:43.200 UTC)"
   }
   "apply" should "decode 1.1" in {
     val vo = LongVersion.parse("1.1")
