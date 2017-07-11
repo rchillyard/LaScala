@@ -47,11 +47,11 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
   }
   it should "give ZA after zero and 676 steps" in {
     import Incrementable.IncrementableString
-    IncrementableString.increment(IncrementableString.zero, 676) should matchPattern { case Success("ZA") => }
+    IncrementableString.increment(IncrementableString.zero, 26, "AZ") should matchPattern { case Success("ZA") => }
   }
   it should "give AAA after zero and 702 steps" in {
     import Incrementable.IncrementableString
-    IncrementableString.increment(IncrementableString.zero, 702) should matchPattern { case Success("AAA") => }
+    IncrementableString.increment(IncrementableString.zero, 27, "AZ") should matchPattern { case Success("AAA") => }
   }
 
   "1" should "increment by one" in {

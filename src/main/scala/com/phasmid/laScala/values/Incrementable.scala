@@ -64,21 +64,26 @@ object Incrementable {
   trait IncrementableString extends Orderable.OrderableString with Incrementable[String] {
 
     private val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    private val n = letters.length
 
     override def zero: String = letters.head.toString
 
     def increment(x: String, y: Int = 1, by: String = ""): Try[String] = by match {
-      case "" =>
-        val p = x.init
-        val i = letters.indexOf(x.last)
-        assert(i >= 0)
-        val j = i + y
-        val a = j / letters.length
-        val b = j % letters.length
-        val prefix = if (a == 0) Success(p) else if (p.isEmpty) increment(zero, a - 1) else increment(p, a)
-        val suffix = Success(letters(b))
-        FP.map2(prefix, suffix)(_ + _)
+      case "" => getResult(x, y)
+      case "AZ" | "A-Z" => getResult(x, y * n)
       case _ => throw new IncrementableException(s"unit: $by is not supported")
+    }
+
+    private def getResult(x: String, y: Int) = {
+      assert(x.nonEmpty, s"given string is empty")
+      val i = letters.indexOf(x.last)
+      assert(i >= 0, s"unable to get index of ${x.last} from $letters")
+      val p = x.init
+      val j = i + y
+      val a = j / n
+      val prefix = if (a == 0) Success(p) else if (p.isEmpty) increment(zero, a - 1) else increment(p, a)
+      val suffix = Success(letters(j % n))
+      FP.map2(prefix, suffix)(_ + _)
     }
   }
 
