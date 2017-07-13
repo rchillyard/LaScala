@@ -420,6 +420,25 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     ml.toList shouldBe xs
   }
 
+  behavior of "discriminate"
+  it should "discriminate between by case" in {
+    var count1 = 0
+    var count2 = 0
+
+    def compareCaseIndependent(s1: String, s2: String): Int = {count1 += 1; s1.toUpperCase.compare(s2.toUpperCase)}
+
+    def compareCaseDependent(s1: String, s2: String): Int = {count2 += 1; s1.compare(s2)}
+
+    discriminate("abc", "Abc")(compareCaseIndependent)(compareCaseDependent) > 0 shouldBe true
+    count1 shouldBe 1
+    count2 shouldBe 1
+    discriminate("abc", "abc")(compareCaseIndependent)(compareCaseDependent) shouldBe 0
+    count1 shouldBe 2
+    count2 shouldBe 2
+    discriminate("abc", "Abc")(compareCaseDependent)(compareCaseIndependent) > 0 shouldBe true
+    count1 shouldBe 2
+    count2 shouldBe 3
+  }
 }
 
 /**
