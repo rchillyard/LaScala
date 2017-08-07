@@ -421,7 +421,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
 
   behavior of "discriminate"
-  it should "discriminate between by case" in {
+  it should "discriminate between Strings by case" in {
     var count1 = 0
     var count2 = 0
 
