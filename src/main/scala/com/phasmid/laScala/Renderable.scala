@@ -5,7 +5,10 @@
 
 package com.phasmid.laScala
 
+import com.phasmid.laScala.values.CaseClasses
+
 import scala.language.implicitConversions
+import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -64,6 +67,23 @@ case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)", l
   */
 case class RenderableProduct(p: Product) extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = Renderable.elemsToString(p.productIterator.toSeq, indent, s"${p.productPrefix}(", ",", ")")
+}
+
+/**
+  * Case class which defines a Renderable Product object.
+  *
+  * @param t the case class to be rendered
+  */
+case class RenderableCaseClass[T: TypeTag](t: T) extends Renderable {
+
+  def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
+    val p = t.asInstanceOf[Product]
+    val z = CaseClasses.caseClassParamsOf zip p.productIterator.toSeq
+    val sb = new StringBuilder(s"${p.productPrefix}(")
+    for (((k, _), v) <- z) sb.append(nl(indent + 1) + s"$k:" + Renderable.renderElem(v, indent + 1))
+    sb.append(nl(indent + 1) + ")")
+    sb.toString()
+  }
 }
 
 /**
