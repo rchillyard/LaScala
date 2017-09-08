@@ -7,7 +7,9 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.values.CaseClasses
 
+import scala.collection.immutable.ListMap
 import scala.language.implicitConversions
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.util.{Failure, Success, Try}
 
@@ -78,14 +80,19 @@ case class RenderableCaseClass[T: TypeTag](t: T) extends Renderable {
 
   def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
     val p = t.asInstanceOf[Product]
-    val z = CaseClasses.caseClassParamsOf zip p.productIterator.toSeq
     val sb = new StringBuilder(s"${p.productPrefix}(")
-    for (((k, _), v) <- z) sb.append(nl(indent + 1) + s"$k:" + Renderable.renderElem(v, indent + 1))
+    // TODO figure out why it doesn't work to invoke RenderableCaseClass.getParameters
+    val parameters = CaseClasses.caseClassParamsOf zip t.asInstanceOf[Product].productIterator.toSeq
+    for (((k, _), v) <- parameters) sb.append(nl(indent + 1) + s"$k:" + Renderable.renderElem(v, indent + 1))
     sb.append(nl(indent + 1) + ")")
     sb.toString()
   }
 }
 
+object RenderableCaseClass {
+  // TODO make this private -- it is used only for unit testing currently so it must match the corresponding line in render above.
+  def getParameters[T: TypeTag](t: T): ListMap[(String, Option[universe.Type]), Any] = CaseClasses.caseClassParamsOf zip t.asInstanceOf[Product].productIterator.toSeq
+}
 /**
   * Case class which defines a RenderableOption object.
   *

@@ -6,7 +6,8 @@
 package com.phasmid.laScala.values
 
 import scala.collection.immutable.ListMap
-import scala.reflect.runtime.universe._
+import scala.reflect.runtime.universe.{Type, TypeTag, termNames, typeOf}
+import scala.util.Try
 
 object CaseClasses {
   /**
@@ -18,7 +19,7 @@ object CaseClasses {
     *
     * Provenance: https://stackoverflow.com/questions/16079113/scala-2-10-reflection-how-do-i-extract-the-field-values-from-a-case-class/16079804#16079804
     */
-  def caseClassParamsOf[T: TypeTag]: ListMap[String, Type] = {
+  def caseClassParamsOf[T: TypeTag]: ListMap[String, Option[Type]] = {
     val tpe = typeOf[T]
     val constructorSymbol = tpe.decl(termNames.CONSTRUCTOR)
     val defaultConstructor =
@@ -28,8 +29,8 @@ object CaseClasses {
         ctors.map(_.asMethod).find(_.isPrimaryConstructor).get
       }
 
-    ListMap[String, Type]() ++ defaultConstructor.paramLists.reduceLeft(_ ++ _).map {
-      sym => sym.name.toString -> tpe.member(sym.name).asMethod.returnType
+    ListMap[String, Option[Type]]() ++ defaultConstructor.paramLists.reduceLeft(_ ++ _).map {
+      sym => sym.name.toString -> Try(tpe.member(sym.name).asMethod.returnType).toOption
     }
   }
 }
