@@ -2,15 +2,16 @@ package com.phasmid.laScala.values
 
 import java.time.LocalDate
 
+import com.phasmid.laScala.fp.FP
+
 import scala.util.{Success, Try}
 
 /**
   * Type class Incrementable.
-  * An extension of Orderable with the ability to increment the value by integral units.
+  * An extension of Orderable with the ability to increment the value by integral units and to initialize such a sequence.
   *
   * This combination of trait Incrementable and implicit objects comprises the "type class" Incrementable.
   *
-  * TODO move this into values package
   */
 trait Incrementable[X] extends Orderable[X] {
   /**
@@ -59,6 +60,34 @@ object Incrementable {
   }
 
   implicit object IncrementableLocalDate extends IncrementableLocalDate
+
+  trait IncrementableString extends Orderable.OrderableString with Incrementable[String] {
+
+    private val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    private val n = letters.length
+
+    override def zero: String = letters.head.toString
+
+    def increment(x: String, y: Int = 1, by: String = ""): Try[String] = by match {
+      case "" => getResult(x, y)
+      case "AZ" | "A-Z" => getResult(x, y * n)
+      case _ => throw new IncrementableException(s"unit: $by is not supported")
+    }
+
+    private def getResult(x: String, y: Int) = {
+      assert(x.nonEmpty, s"given string is empty")
+      val i = letters.indexOf(x.last)
+      assert(i >= 0, s"unable to get index of ${x.last} from $letters")
+      val p = x.init
+      val j = i + y
+      val a = j / n
+      val prefix = if (a == 0) Success(p) else if (p.isEmpty) increment(zero, a - 1) else increment(p, a)
+      val suffix = Success(letters(j % n))
+      FP.map2(prefix, suffix)(_ + _)
+    }
+  }
+
+  implicit object IncrementableString extends IncrementableString
 
   class IncrementableException(s: String) extends Exception(s)
 

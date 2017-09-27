@@ -2,110 +2,125 @@ package com.phasmid.laScala
 
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.values.Incrementable
 import lascalabuildinfo.BuildInfo
 
-import scala.util.{Failure, Try}
+import scala.util.{Success, Try}
 
 /**
-  * Trait Version provides a means of labeling something such that different versions can be compared.
+  * Case class Version provides a means of labeling something such that different versions can be compared.
   * As in the real world, a Version can consist of just one V tag: or a Version can (optionally) be extended by another Version.
   * This allows for versions of the form 1.1.2 or A.B.B. You cannot currently mix these V types.
   *
   * Created by scalaprof on 8/2/16.
+  * Updated by scalaprof on 7/11/17.
   */
-trait Version[V] extends Ordering[V] with Versionable[V] {
+case class Version[V: Incrementable](v: V, subversion: Option[Subversioned[V]], isSnapshot: Boolean = false) extends BaseVersion[V, Version[V]](v) with Sequential[Version[V]] with Subversionable[Version[V]] {
+  def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Version[V] = Version(v, vso, isSnapshot)
 
-  /**
-    * @return the value (tag) of this Version
-    */
-  def get: V
-
-  /**
-    * @return the sub-version of this Version, if available
-    */
-  def subversion: Option[Version[V]]
-
-  /**
-    * @return a Seq of V objects representing the version/subversion of this instance.
-    */
-  def toSeq: Seq[V] = {
-    def inner(v: Version[V], vs: Seq[V]): Seq[V] = v.subversion match {
-      case None => vs
-      case Some(z) => inner(z, get +: vs)
+  override def toString(): String = {
+    val sb = new StringBuilder()
+    sb.append(v)
+    subversion match {
+      case Some(x) => sb.append(s".$x")
+      case _ =>
     }
-
-    inner(this, Seq(get))
+    if (isSnapshot) sb.append(" (snapshot)")
+    sb.toString()
   }
-
-  /**
-    * Create a new Version based on this Version with a new subversion
-    *
-    * @param tag the tag of the new subversion (call by name which allows for the possibility of an exception being thrown
-    *            while evaluating the tag -- this will result in a Failure rather than an exception.
-    */
-  def withSubversion(tag: => V): Try[Version[V]]
-
-  def render: String = toSeq.mkString(".")
-
-  /**
-    * This method is required to build a Version object from the given V tag and an optional subversion.
-    *
-    * @param v          the tag for this version
-    * @param subversion optional subversion
-    * @return a new Version object
-    */
-  def build(v: V, subversion: Option[Version[V]]): Version[V]
 }
 
 /**
-  * This trait models something that is versionable, that is to say has a method next which returns a Try[Versionable[V]...
+  * Trait which defines a Stream of subversions based on this instance of Subversionable.
   *
-  * @tparam V the underlying type of this Versionable
+  * @tparam T the underlying type
   */
-trait Versionable[V] {
+trait Subversionable[T] {
   /**
-    * Method to create a new version such that the new Version will compare as greater than this Version
+    * Method to create a Stream of Ts based on this instance of Subversionable.
     *
-    * @return the new value, wrapped in a Try
+    * @return a Stream of Ts.
     */
-  def next: Try[Versionable[V]]
+  def subversions: Stream[T]
 }
 
-abstract class IncrementableVersion[V: Incrementable](tag: V) extends Version[V] {
-  private val incrementable = Incrementable[V]
+/**
+  * Trait which represents a version value (V) which can be sub-versioned.
+  * Instances of this trait can be ordered so that they can be compared.
+  *
+  * @tparam V the underlying type of this Subversioned object.
+  *           Typically, this will be a String or an integral value such as Long.
+  */
+trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
 
-  def next: Try[Version[V]] = for (l <- nextVersion) yield build(l, subversion)
+  /**
+    * Method to get the subversion of this Subversioned, if any.
+    *
+    * @return Some(vv) or None
+    */
+  def subversion: Option[Subversioned[V]]
 
-  def withSubversion(v: => V): Try[Version[V]] = subversion match {
-    case None => Try(build(tag, Some(build(v, None))))
-    case _ => Failure(VersionException(s"version $this already has subversion"))
+  /**
+    * Method to get this Subversioned and all its subversions, as a Stream of V values.
+    *
+    * @return a Stream of V
+    */
+  def asStream: Stream[V] = {
+    Stream.cons(apply(),
+      subversion match {
+        case Some(vv) => vv.asStream
+        case None => Stream.empty[V]
+      })
   }
+}
 
-  def compare(x: V, y: V): Int = {
-    val cf = incrementable.compare(x, y)
-    if (cf != 0) cf
-    else subversion match {
-      case None => cf
-      case Some(z) => incrementable.compare(z.get, y)
+/**
+  * Abstract class which extends Subversioned with Ordering.
+  * It defines the following behavior:
+  * (1) the apply method yields the value of v;
+  * (2) the compare method yields the comparison of this and that.
+  *
+  * @param v the value of this Subversioned
+  * @tparam V the underlying type of the Subversioned, which is defined to implement Ordering
+  */
+abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] with Renderable {
+
+  def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Repr
+
+  def next(isSnapshot: Boolean = false): Try[Repr] = for (x <- implicitly[Incrementable[V]].increment(v)) yield build(x, None, isSnapshot = false)
+
+  def subversions: Stream[Version[V]] = {
+    def s(v: V): Stream[V] = implicitly[Incrementable[V]].increment(v) match {
+      case Success(w) => Stream.cons(v, s(w))
+      case _ => Stream.cons(v, Stream.empty)
     }
+
+    s(implicitly[Incrementable[V]].zero) map { z => Version(v, Some(Version(z, None))) }
   }
 
-  def get: V = tag
+  def apply(): V = v
 
-  def nextVersion: Try[V] = incrementable.increment(tag)
+  /**
+    * @return a Seq of V objects representing the version/subversions of this instance.
+    *         The value of isSnapshot is ignored.
+    */
+  def toSeq: Seq[V] = {
+    def inner(result: Seq[V], version: Subversioned[V]): Seq[V] = version match {
+      case Version(x, Some(y), _) => inner(result :+ x, y)
+      case Version(x, _, _) => result :+ x
+    }
 
-  override def toString: String = render
-}
+    inner(Seq(), this)
+  }
 
-case class LongVersion(tag: Long, subversion: Option[Version[Long]]) extends IncrementableVersion[Long](tag) {
-  def build(v: Long, subversion: Option[Version[Long]]): Version[Long] = new LongVersion(v, subversion)
-}
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = toSeq.mkString(".")
 
-object LongVersion {
-  def apply(tag: Long): Version[Long] = apply(tag, None)
+  def compare(x: Subversioned[V], y: Subversioned[V]): Int = implicitly[Ordering[V]].compare(x(), y())
 
-  def parse(s: String): Option[Version[Long]] = Version.parse(s, _.toLong, LongVersion.apply)
+  protected val cf: (Subversioned[V], Subversioned[V]) => Int = compare
+
+  def compare(that: Subversioned[V]): Int = FP.map2(this.subversion, that.subversion)(cf).getOrElse(if (subversion.isDefined) -1 else 1)
 }
 
 object Version {
@@ -118,19 +133,27 @@ object Version {
 
   private def buildDateTime: String = s"${LocalDateTime.ofInstant(Instant.ofEpochMilli(BuildInfo.buildTime), ZoneOffset.UTC)} UTC"
 
-  def parse[V](s: String, f: String => V, g: V => Version[V]): Option[Version[V]] = {
-    def inner(xs: List[String], vo: Option[Version[V]]): Option[Version[V]] = xs match {
-      case h :: t => inner(t,
-        vo match {
-          // TODO use FP.toOption
-          case Some(v) => (for (z <- v.withSubversion(f(h))) yield z).toOption
-          // TODO use FP.toOption
-          case None => Try(g(f(h))).toOption
-        })
+  def apply(x: Long): Version[Long] = Version(x, None)
+
+  def longVersion(s: String): Version[Long] = apply(s.toLong)
+
+  def parseLong(s: String): Option[Version[Long]] = parse(s)(longVersion)
+
+  def parse[V](s: String)(f: String => Version[V]): Option[Version[V]] = {
+    def inner(vo: Option[Version[V]], w: String, xs: List[String]): Option[Version[V]] = xs match {
+      case h :: t =>
+        val sb = new StringBuilder()
+        if (w.nonEmpty) sb.append(s"$w.")
+        sb.append(h)
+        val ss = sb.toString()
+        inner(vo match {
+          case Some(v) => v.subversions.find(x => x.toString() == ss)
+          case None => Try(f(h)).toOption
+        }, ss, t)
       case Nil => vo
     }
 
-    inner(s.split("""\.""").toList, None)
+    inner(None, "", s.split("""\.""").toList)
   }
 }
 

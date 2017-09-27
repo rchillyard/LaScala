@@ -79,9 +79,23 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     import Renderable.renderableProduct
     t.render() shouldBe """Tuple2("x","y")"""
   }
-  it should "render case class" in {
-    val p: Product = Prefix("x")
+  it should "render case class as a Product" in {
+    val p: Product = Z(1, Math.PI, Seq("Hello", "Goodbye"))
     import Renderable.renderableProduct
-    p.render() shouldBe s"""Prefix("x")"""
+    p.render() shouldBe
+      s"""Z(1,3.141592653589793,(
+    "Hello",
+    "Goodbye"
+  ))"""
+  }
+  // NOTE: please note that this test will not work for 2.10 - it will throw an exception
+  // TODO refactor so that this test is not run for 2.10
+  ignore should "render case class as a Case Class" in {
+    val z = Z(1, Math.PI, Seq("Hello", "Goodbye"))
+    val r = RenderableCaseClass(z)
+    println(r.render())
+    r.render() shouldBe "Z(\n  x:1\n  y:3.141592653589793\n  z:(\n      \"Hello\",\n      \"Goodbye\"\n    )\n  )"
   }
 }
+
+case class Z(x: Int, y: Double, z: Seq[String])
