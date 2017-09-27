@@ -973,6 +973,7 @@ object Tree {
               result = result :+ Leaf(w)
             }
             Some(result)
+          // FIXME we need to implement this case
           case x: Tree[A] => throw TreeException(s"buildTree produced a Tree which isn't a StructuralTree: $x") // Option(t.foldLeft(x)(_ + _))
         }
     }

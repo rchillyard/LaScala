@@ -399,7 +399,7 @@ object FP {
   def map2g[T1, T2, R](t1o: Option[T1], t2o: => Option[T2])(f: (T1, T2) => R, g: (T1, T2) => Boolean): Option[R] = for {t1 <- t1o; t2 <- t2o; if g(t1, t2)} yield f(t1, t2)
 
   /**
-    * An alternative ethod to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
+    * An alternative method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
     * but with an additional guard function. If the guard function returns false, the f function will not be called
     * and None will result.
     *
@@ -892,4 +892,20 @@ object FP {
 
     inner(y0, nextOption(xi))
   }
+
+  /**
+    * Method to discriminate between (compare) two objects.
+    * This differs from regular comparison in that if the result of the primary
+    * comparison is zero, we try to discriminate by invoking the secondary comparator.
+    *
+    * @param x1 the first object
+    * @param x2 the second object
+    * @param f  the primary comparator
+    * @param g  the secondary comparator
+    * @tparam X the underlying type
+    * @return a negative number if x1 is "less than" x2; a positive number if x1 is "greater than" x2; otherwise 0
+    */
+  def discriminate[X](x1: X, x2: X)(f: (X, X) => Int)(g: (X, X) => Int): Int = discriminate(f(x1, x2), g(x1, x2))
+
+  private def discriminate(cf: Int, discriminator: => Int) = if (cf != 0) cf else discriminator
 }
