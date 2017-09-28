@@ -36,11 +36,16 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
     list.render() shouldBe "[\n  x;\n  y;\n  z\n]"
   }
+  it should "limit the rendering of elements to " + Renderable.MAX_ELEMENTS in {
+    import Renderable.renderableTraversable
+    val list: List[Int] = (Stream from 1 take 20).toList
+    list.render() shouldBe "(\n  1,\n  2,\n  3,\n  4,\n  5,\n  6,\n  7,\n  8,\n  9,\n  10,\n  ...[10 more elements]\n)"
+  }
   it should "render list values with a max" in {
     implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, max = Some(3))
 
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"), Scalar(""))
-    list.render() shouldBe "(\n  x,\n  y,\n  z,\n  ...[1 elements]\n)"
+    list.render() shouldBe "(\n  x,\n  y,\n  z,\n  ...[1 more elements]\n)"
   }
   it should "render list values with double indentation" in {
     val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))

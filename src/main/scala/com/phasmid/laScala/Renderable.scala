@@ -132,7 +132,19 @@ case class RenderableEither(e: Either[_, _]) extends Renderable {
 }
 
 object Renderable {
-  implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs)
+
+  /**
+    * This is the default maximum number of elements that will be rendered by a Traversable (see renderableTraversable).
+    */
+  val MAX_ELEMENTS = 10
+
+  /**
+    * This default implementation of RenderableTraversable limits the number of elements to MAX_ELEMENTS.
+    *
+    * @param xs the Traversable to render
+    * @return a Renderable
+    */
+  implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, max = Some(MAX_ELEMENTS))
 
   implicit def renderableOption(xo: Option[_]): Renderable = RenderableOption(xo)
 
@@ -143,10 +155,10 @@ object Renderable {
   implicit def renderableProduct(p: Product): Renderable = RenderableProduct(p)
 
   def renderElem(elem: Any, indent: Int)(implicit tab: (Int) => Prefix): String = elem match {
-    case xo: Option[_] => Renderable.renderableOption(xo).render(indent + 1)
-    case xs: Traversable[_] => Renderable.renderableTraversable(xs).render(indent + 1)
-    case xy: Try[_] => Renderable.renderableTry(xy).render(indent + 1)
-    case e: Either[_, _] => Renderable.renderableEither(e).render(indent + 1)
+    case xo: Option[_] => renderableOption(xo).render(indent + 1)
+    case xs: Traversable[_] => renderableTraversable(xs).render(indent + 1)
+    case xy: Try[_] => renderableTry(xy).render(indent + 1)
+    case e: Either[_, _] => renderableEither(e).render(indent + 1)
     case s: String => s""""$s""""
     case r: Renderable => r.render(indent + 1)
     case x => x.toString
@@ -171,7 +183,7 @@ object Renderable {
       }
     }
     max match {
-      case Some(n) => if (n < xs.size) b append s"$sep...[${xs.size - n} elements]"
+      case Some(n) => if (n < xs.size) b append s"$sep...[${xs.size - n} more elements]"
       case None =>
     }
     b append end
