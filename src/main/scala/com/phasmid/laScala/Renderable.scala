@@ -51,14 +51,14 @@ trait Renderable {
   * @param bookends the prefix, separator, and suffix
   * @param linear   true if we want the results all on one line; default is false
   */
-case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)", linear: Boolean = false) extends Renderable {
+case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)", linear: Boolean = false, max: Option[Int] = None) extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
     val (p, q, r) =
       if (linear || xs.size <= 1)
         ("" + bookends.head, "" + bookends.tail.head, "" + bookends.last)
       else
         (bookends.head + nl(indent + 1), bookends.tail.head + nl(indent + 1), nl(indent) + bookends.last)
-    Renderable.elemsToString(xs, indent, p, q, r)
+    Renderable.elemsToString(xs, indent, p, q, r, max)
   }
 }
 
@@ -152,11 +152,15 @@ object Renderable {
     case x => x.toString
   }
 
-  def elemsToString(xs: Traversable[_], indent: Int, start: String, sep: String, end: String)(implicit tab: (Int) => Prefix): String = {
+  def elemsToString(xs: Traversable[_], indent: Int, start: String, sep: String, end: String, max: Option[Int] = None)(implicit tab: (Int) => Prefix): String = {
     var first = true
     val b = new StringBuilder()
     b append start
-    for (x <- xs) {
+    val z = max match {
+      case Some(n) => xs take n
+      case None => xs
+    }
+    for (x <- z) {
       if (first) {
         b append renderElem(x, indent)
         first = false
@@ -165,6 +169,10 @@ object Renderable {
         b append sep
         b append renderElem(x, indent)
       }
+    }
+    max match {
+      case Some(n) => if (n < xs.size) b append s"$sep...[${xs.size - n} elements]"
+      case None =>
     }
     b append end
     b.toString()
