@@ -6,10 +6,9 @@
 package com.phasmid.laScala.fp
 
 import scala.annotation.tailrec
-import scala.collection.GenTraversableLike
 
 /**
-  * This class will is based on a mutable Stream.
+  * This class is based on a mutable Stream.
   * Its purpose is like a one-time-pad: each value is yielded by the Streamer once and once only.
  *
   * @param s the Stream

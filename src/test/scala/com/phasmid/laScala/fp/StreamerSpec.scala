@@ -26,8 +26,8 @@ class StreamerSpec extends FlatSpec with Matchers {
   behavior of "take"
 
   it should "work with random number generator" in {
-    val target = Streamer(RNG.values(LongRNG(-4962768465676381896L)))
-    target.take(3) shouldBe Seq(4804307197456638271L, -1034601897293430941L, 7848011421992302230L)
+    val target = Streamer(RNG.values(LongRNG(0L)))
+    target.take(4) shouldBe Seq(-4962768465676381896L, 4804307197456638271L, -1034601897293430941L, 7848011421992302230L)
   }
 
 }
