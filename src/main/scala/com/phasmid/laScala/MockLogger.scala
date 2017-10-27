@@ -5,7 +5,6 @@
 
 package com.phasmid.laScala
 
-import org.slf4j.event.Level
 import org.slf4j.{Logger, Marker}
 
 /**
@@ -18,7 +17,7 @@ import org.slf4j.{Logger, Marker}
   * @param sb    a StringBuilder to which we append messages
   */
 //noinspection TypeAnnotation,NotImplementedCode
-case class MockLogger(name: String, level: Level, sb: StringBuilder) extends Logger {
+case class MockLogger(name: String, level: String, sb: StringBuilder) extends Logger {
   def getName = name
 
   def debug(msg: String) = doLog(msg)
@@ -43,7 +42,7 @@ case class MockLogger(name: String, level: Level, sb: StringBuilder) extends Log
 
   def debug(marker: Marker, msg: String, t: Throwable) = ???
 
-  def isWarnEnabled = level.toString == "WARN" || isInfoEnabled
+  def isWarnEnabled = level == "WARN" || isInfoEnabled
 
   def isWarnEnabled(marker: Marker) = ???
 
@@ -107,19 +106,19 @@ case class MockLogger(name: String, level: Level, sb: StringBuilder) extends Log
 
   def trace(marker: Marker, msg: String, t: Throwable) = ???
 
-  def isInfoEnabled = level.toString == "INFO" || isDebugEnabled
+  def isInfoEnabled = level == "INFO" || isDebugEnabled
 
   def isInfoEnabled(marker: Marker) = ???
 
-  def isErrorEnabled = level.toString == "ERROR" || isWarnEnabled
+  def isErrorEnabled = level == "ERROR" || isWarnEnabled
 
   def isErrorEnabled(marker: Marker) = ???
 
-  def isTraceEnabled = level.toString == "TRACE"
+  def isTraceEnabled = level == "TRACE"
 
   def isTraceEnabled(marker: Marker) = ???
 
-  def isDebugEnabled = level.toString == "DEBUG" || isTraceEnabled
+  def isDebugEnabled = level == "DEBUG" || isTraceEnabled
 
   def isDebugEnabled(marker: Marker) = ???
 

@@ -5,12 +5,9 @@
 
 package com.phasmid.laScala.sort
 
-import com.phasmid.laScala.fp.Benchmark
 import com.phasmid.laScala.sort.Comparison._
 import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.{FlatSpec, Matchers}
-
-import scala.util.Random
 
 /**
   * @author scalaprof
@@ -162,32 +159,6 @@ class SortedSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val sorted = Sorted.create(list)
     val xsf = sorted.async
     whenReady(xsf) { xs => xs shouldBe List(1, 2, 3) }
-  }
-  it should "sort async" in {
-    def verify(xs: Seq[Int]): Boolean = xs.zip(xs.tail).forall(z => z._1 < z._2)
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val list = Seq.fill(1000)(Random.nextInt()).toList
-    val sorted = Sorted.create(list)
-    import Benchmark._
-    val benchmark = 10.times{
-    val xsf = sorted.async
-    val bf = xsf map verify
-    whenReady(bf) { xs => xs shouldBe true }
-  }
-    println(s"async benchmark: $benchmark")
-  }
-  it should "sort in parallel" in {
-    def verify(xs: Seq[Int]): Boolean = xs.zip(xs.tail).forall(z => z._1 < z._2)
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val list = Seq.fill(1000)(Random.nextInt()).toList
-    val sorted = Sorted.create(list)
-    import Benchmark._
-    val benchmark = 10.times{
-      val xsf = sorted.parSort
-      val bf = xsf map verify
-      whenReady(bf) { xs => xs shouldBe true }
-    }
-    println(s"parallel benchmark: $benchmark")
   }
 
   behavior of "merge"

@@ -5,11 +5,7 @@
 
 package com.phasmid.laScala.sort
 
-import com.phasmid.laScala.fp.FP
-
 import scala.annotation.tailrec
-import scala.collection.parallel
-import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
@@ -60,7 +56,7 @@ trait Comparison extends (() => Option[Boolean]) {
     case _ => 0
   }
 
-  def orElse(c: => Comparison): Comparison = Comparison(apply.orElse(c()))
+  def orElse(c: => Comparison): Comparison = ??? // TODO implement me
 
   def flip: Comparison = Comparison(for (v <- apply) yield !v)
 }
@@ -104,6 +100,8 @@ case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T])
 object Sorted {
   def create[T: Ordering](ts: Seq[T]): Sorted[T] = Sorted(ts)(implicitly[Ordering[T]])
 
+  def verify(xs: Seq[Int]): Boolean = xs.zip(xs.tail).forall(z => z._1 <= z._2)
+
   def parSort[T: Ordering](tst: (Seq[T], Seq[T]))(implicit ec: ExecutionContext): Future[Seq[T]] = map2(Future(tst._1.sorted), Future(tst._2.sorted))(merge)
 
   def mergeSort[T: Ordering](ts: Seq[T])(implicit ec: ExecutionContext): Future[Seq[T]] = parSort(ts splitAt (ts.length/2))
@@ -121,5 +119,36 @@ object Sorted {
   }
 
   def map2[T: Ordering](t1f: Future[Seq[T]], t2f: Future[Seq[T]])(f: (Seq[T], Seq[T]) => Seq[T])(implicit ec: ExecutionContext): Future[Seq[T]] = for {t1 <- t1f; t2 <- t2f} yield f(t1, t2)
+
+}
+
+object Test extends App {
+
+  case class Composite(i: Int, d: Double)
+
+  object Composite {
+
+    object OrderingCompositeInt extends Ordering[Composite] {
+      def compare(x: Composite, y: Composite): Int = x.i.compare(y.i)
+    }
+
+    object OrderingCompositeDouble extends Ordering[Composite] {
+      def compare(x: Composite, y: Composite): Int = x.d.compare(y.d)
+    }
+
+  }
+
+  val comparer1: Comparer[Composite] = Composite.OrderingCompositeInt
+  val comparer2: Comparer[Composite] = Composite.OrderingCompositeDouble
+
+  def verify(xs: Seq[Composite], c: Comparer[Composite]): Boolean = xs.zip(xs.tail).forall(c(_).toInt <= 0)
+
+  val list = List(Composite(3, 1.1), Composite(1, 1.1), Composite(1, 1.2), Composite(2, 2.2), Composite(2, 2.2))
+  val sorted1 = Sorted(list)(comparer1).sort(comparer2)
+  sorted1().foreach(println(_))
+  println("Test passed? " + verify(sorted1(), comparer1 orElse comparer2))
+  val sorted2 = Sorted(list)(comparer2).sort(comparer1)
+  sorted2().foreach(println(_))
+  println("Test passed? " + verify(sorted2(), comparer2 orElse comparer1))
 
 }

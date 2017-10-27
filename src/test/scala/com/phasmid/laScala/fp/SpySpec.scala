@@ -3,7 +3,6 @@ package com.phasmid.laScala.fp
 import com.phasmid.laScala.MockLogger
 import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.Logger
-import org.slf4j.event.Level
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -38,7 +37,7 @@ class SpySpec extends FlatSpec with Matchers {
   it should "work with implicit (logger) spy func but with custom mock logger" in {
     Spy.spying = true
     val sb = new StringBuilder
-    implicit val logger: MockLogger = MockLogger("myLogger", Level.DEBUG, sb)
+    implicit val logger: MockLogger = MockLogger("myLogger", "DEBUG", sb)
     (for (i <- 1 to 2) yield Spy.spy("i", i)) shouldBe List(1, 2)
     sb.toString() shouldBe "myLogger: DEBUG: spy: i: 1\nmyLogger: DEBUG: spy: i: 2\n"
   }
