@@ -46,7 +46,7 @@ class FunctionalSortedSpec extends FlatSpec with Matchers with Futures with Scal
     import Benchmark._
     val benchmark = 10.times {
       val xsf = sorted.async
-      val bf = xsf map Sorted.verify
+      val bf = xsf.map (Sorted.verify(_))
       whenReady(bf) { xs => xs shouldBe true }
     }
     println(s"async benchmark: $benchmark")
@@ -58,7 +58,7 @@ class FunctionalSortedSpec extends FlatSpec with Matchers with Futures with Scal
     import Benchmark._
     val benchmark = 10.times {
       val xsf = sorted.parSort
-      val bf = xsf map Sorted.verify
+      val bf = xsf.map (Sorted.verify(_))
       whenReady(bf) { xs => xs shouldBe true }
     }
     println(s"parallel benchmark: $benchmark")

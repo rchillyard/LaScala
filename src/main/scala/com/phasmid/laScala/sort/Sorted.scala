@@ -12,6 +12,7 @@ import scala.language.implicitConversions
 trait Comparer[T] extends (((T, T)) => Comparison) {
   self =>
 
+  //noinspection ConvertExpressionToSAM
   def toOrdering: Ordering[T] = new Ordering[T]() {
     def compare(x: T, y: T): Int = self(x, y).toInt
   }
@@ -51,12 +52,14 @@ object Comparer {
 
 trait Comparison extends (() => Option[Boolean]) {
 
+  override def toString(): String = apply.toString
+
   def toInt: Int = apply match {
     case Some(b) => if (b) -1 else 1;
     case _ => 0
   }
 
-  def orElse(c: => Comparison): Comparison = ??? // TODO implement me
+  def orElse(c: => Comparison): Comparison = Comparison(apply.orElse(c()))
 
   def flip: Comparison = Comparison(for (v <- apply) yield !v)
 }
@@ -100,7 +103,7 @@ case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T])
 object Sorted {
   def create[T: Ordering](ts: Seq[T]): Sorted[T] = Sorted(ts)(implicitly[Ordering[T]])
 
-  def verify(xs: Seq[Int]): Boolean = xs.zip(xs.tail).forall(z => z._1 <= z._2)
+  def verify[T: Comparer](xs: Seq[T]): Boolean = xs.zip(xs.tail).forall(z => implicitly[Comparer[T]].<=(z._1,z._2))
 
   def parSort[T: Ordering](tst: (Seq[T], Seq[T]))(implicit ec: ExecutionContext): Future[Seq[T]] = map2(Future(tst._1.sorted), Future(tst._2.sorted))(merge)
 
@@ -141,14 +144,12 @@ object Test extends App {
   val comparer1: Comparer[Composite] = Composite.OrderingCompositeInt
   val comparer2: Comparer[Composite] = Composite.OrderingCompositeDouble
 
-  def verify(xs: Seq[Composite], c: Comparer[Composite]): Boolean = xs.zip(xs.tail).forall(c(_).toInt <= 0)
-
-  val list = List(Composite(3, 1.1), Composite(1, 1.1), Composite(1, 1.2), Composite(2, 2.2), Composite(2, 2.2))
+  val list = List(Composite(3, 1.1), Composite(1, 1.1), Composite(1, 1.2), Composite(2, 2.2), Composite(2, 2.2), Composite(1, 1.0))
   val sorted1 = Sorted(list)(comparer1).sort(comparer2)
   sorted1().foreach(println(_))
-  println("Test passed? " + verify(sorted1(), comparer1 orElse comparer2))
+  println("Test passed? " + Sorted.verify(sorted1())(comparer1.orElse(comparer2)))
   val sorted2 = Sorted(list)(comparer2).sort(comparer1)
   sorted2().foreach(println(_))
-  println("Test passed? " + verify(sorted2(), comparer2 orElse comparer1))
+  println("Test passed? " + Sorted.verify(sorted2())(comparer2.orElse(comparer1)))
 
 }
