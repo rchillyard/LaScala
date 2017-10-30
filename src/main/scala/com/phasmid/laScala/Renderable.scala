@@ -27,6 +27,10 @@ trait Renderable {
   /**
     * Method to render this object in a human-legible manner.
     *
+    * NOTE: implementations of render may invoke toString
+    *
+    * NOTE: toString may NOT call render
+    *
     * @param indent the number of "tabs" before output should start (when writing on a new line).
     * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
     *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
@@ -83,6 +87,7 @@ case class RenderableCaseClass[T: TypeTag](t: T) extends Renderable {
     val sb = new StringBuilder(s"${p.productPrefix}(")
     // TODO figure out why it doesn't work to invoke RenderableCaseClass.getParameters
     val parameters = CaseClasses.caseClassParamsOf zip t.asInstanceOf[Product].productIterator.toSeq
+    // TODO need to ensure we don't show any parameters not in the first parameter set
     for (((k, _), v) <- parameters) sb.append(nl(indent + 1) + s"$k:" + Renderable.renderElem(v, indent + 1))
     sb.append(nl(indent + 1) + ")")
     sb.toString()

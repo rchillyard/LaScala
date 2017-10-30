@@ -1,6 +1,8 @@
 package com.phasmid.laScala.fp
 
+import com.phasmid.laScala.MockLogger
 import org.scalatest.{FlatSpec, Matchers}
+import org.slf4j.Logger
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
@@ -19,7 +21,7 @@ class SpySpec extends FlatSpec with Matchers {
     // you should see log messages written to console (assuming your logging level, i.e. logback-test.xml, is set to DEBUG)
   }
   it should "work with implicit (logger) spy func (with logger for this class) on the map2 function" in {
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     val x = Some(1)
     FP.map2(x, x)(_ + _)
@@ -28,9 +30,16 @@ class SpySpec extends FlatSpec with Matchers {
   }
   it should "work with implicit (logger) spy func but with custom logger" in {
     Spy.spying = true
-    implicit val logger = org.slf4j.LoggerFactory.getLogger("myLogger")
+    implicit val logger: Logger = org.slf4j.LoggerFactory.getLogger("myLogger")
     (for (i <- 1 to 2) yield Spy.spy("i", i)) shouldBe List(1, 2)
     // you should see log messages written to console (assuming your logging level, i.e. logback-test.xml, is set to DEBUG)
+  }
+  it should "work with implicit (logger) spy func but with custom mock logger" in {
+    Spy.spying = true
+    val sb = new StringBuilder
+    implicit val logger: MockLogger = MockLogger("myLogger", "DEBUG", sb)
+    (for (i <- 1 to 2) yield Spy.spy("i", i)) shouldBe List(1, 2)
+    sb.toString() shouldBe "myLogger: DEBUG: spy: i: 1\nmyLogger: DEBUG: spy: i: 2\n"
   }
   it should "work with explicit spy func" in {
     import Spy._
@@ -65,7 +74,7 @@ class SpySpec extends FlatSpec with Matchers {
   }
   it should "work with explicit provided println spy func" in {
     import Spy._
-    implicit val spyFunc = Spy.getPrintlnSpyFunc()
+    implicit val spyFunc: (String) => Spy = Spy.getPrintlnSpyFunc()
     Spy.spying = true
     val is = for (i <- 1 to 2) yield Spy.spy("i", i)
     is shouldBe List(1, 2)
@@ -128,7 +137,7 @@ class SpySpec extends FlatSpec with Matchers {
     spyMessage shouldBe "Hello: 1 is the value for i\nHello: 2 is the value for i\n"
   }
   it should "work with a Success" in {
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -138,7 +147,7 @@ class SpySpec extends FlatSpec with Matchers {
     spyMessage shouldBe "Hello: success: Success: 1\n"
   }
   it should "work with a failure" in {
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -148,7 +157,7 @@ class SpySpec extends FlatSpec with Matchers {
     spyMessage shouldBe "Hello: failure: Failure(java.lang.Exception: junk)\n"
   }
   it should "work with a Future" in {
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -158,7 +167,7 @@ class SpySpec extends FlatSpec with Matchers {
     spyMessage shouldBe "Hello: success: to be provided in the future\n"
   }
   it should "work with a Stream" in {
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     var spyMessage: String = ""
 
