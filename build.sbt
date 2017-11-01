@@ -74,6 +74,7 @@ libraryDependencies ++= Seq(
   typesafeGroup % "config" % configVersion,
   "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
   // NOTE: only used for testing
+  "junit" % "junit" % "4.11" % Test,
   "org.scalatest" %% "scalatest" % scalaTestVersion.value % "test"
 )
 
