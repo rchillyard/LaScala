@@ -1,5 +1,9 @@
 package com.phasmid.laScala.values
 
+import java.util
+
+import com.phasmid.laScala.equable.{BaseEquable, Equable}
+
 import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.math.BigDecimal
@@ -14,7 +18,7 @@ import scala.math.BigDecimal
   *
   * @author scalaprof
   */
-class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[Rational[N]] {
+class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends BaseEquable with Ordered[Rational[N]] {
 
   type Builder = (N, N) => Rational[N]
 
@@ -26,9 +30,9 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
 
   // Pre-conditions:
 
-  require(cf(d, 0) >= 0, s"Rational(#n,$d): denominator is negative")
+  require(Rational.cf(d, 0) >= 0, s"Rational(#n,$d): denominator is negative")
 
-  require(is(n, 0) && is(d, 0) || Rational.noCommonFactor(n, d), s"Rational($n,$d): arguments have common factor: ${Rational.absGcd(n, d)}")
+  require(Rational.is(n, 0) && Rational.is(d, 0) || Rational.noCommonFactor(n, d), s"Rational($n,$d): arguments have common factor: ${Rational.absGcd(n, d)}")
 
   // Methods compare, equals and hashCode:
 
@@ -47,7 +51,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     * @return true if the objects are considered equal
     */
   override def equals(obj: scala.Any): Boolean = obj match {
-    case Rational(p, q) => q == 0 && d == 0 || n == p && q == d
+    case r@Rational(p, q) => isInfinity && r.isInfinity || n == p && q == d
     case _ => super.equals(obj)
   }
 
@@ -194,13 +198,13 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
 
   def isNaN: Boolean = isZero && isInfinity
 
-  def isWhole: Boolean = is(d, 1)
+  def isWhole: Boolean = Rational.is(d, 1)
 
-  def isZero: Boolean = is(n, 0)
+  def isZero: Boolean = Rational.is(n, 0)
 
-  def isUnity: Boolean = is(n, 1) && isWhole
+  def isUnity: Boolean = Rational.is(n, 1) && isWhole
 
-  def isInfinity: Boolean = is(d, 0)
+  def isInfinity: Boolean = Rational.is(d, 0)
 
   def floor: N = i.quot(n, d)
 
@@ -208,17 +212,15 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
 
   def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
 
-  //noinspection ScalaUnusedSymbol
-  private def cf(x: N, y: N) = Rational.cf(x, y)
+  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (Rational.cf(d, 100000) > 0 || isExactDouble) toDouble.toString else toRationalString
 
-  private def cf(x: N, y: Int) = Rational.cf(x, y)
+  override def getEquable: Equable = {
+    val elements: util.Collection[Any] = new util.ArrayList[Any]
+    elements.add(n)
+    elements.add(d)
+    new Equable(elements)
+  }
 
-  //noinspection ScalaUnusedSymbol
-  private def is(x: N, y: N) = Rational.is(x, y)
-
-  private def is(x: N, y: Int) = Rational.is(x, y)
-
-  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (cf(d, 100000) > 0 || isExactDouble) toDouble.toString else toRationalString
 }
 
 class RationalException(s: String, x: Exception = null) extends Exception(s, x)
@@ -291,7 +293,7 @@ object Rational {
     val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
       case rRat(n) => apply(i.fromString(n))
-      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn'x
+      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
       case rRat(n, _, null) => apply(i.fromString(n))
       // XXX we need to watch out for NotNumber exceptions
       case rRat(n, _, d) => Rational.normalize[N](i.fromString(n), i.fromString(d))
@@ -460,8 +462,6 @@ object Rational {
   private def cf[N: FiniteIntegral](x: N, y: N): Int = FiniteIntegral[N].compare(x, y)
 
   private def cf[N: FiniteIntegral](x: N, y: Int): Int = cf(x, FiniteIntegral[N].fromInt(y))
-
-  private def is[N: FiniteIntegral](x: N, y: N): Boolean = cf(x, y) == 0
 
   private def is[N: FiniteIntegral](x: N, y: Int): Boolean = cf(x, y) == 0
 

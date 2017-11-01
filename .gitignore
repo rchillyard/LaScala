@@ -19,12 +19,10 @@ src_managed/
 api
 exportToHTML/
 src/it/resources/
-src/main/java/
 src/main/scala/com/phasmid/laScala/oldtree/
 src/main/scala/com/phasmid/laScala/tree/MyOrdering.scala
 src/main/scala/com/phasmid/laScala/tree/OrderedList.scala
 src/main/scala/com/phasmid/laScala/tree2/
-src/test/java/
 src/test/resources/com/phasmid/laScala/tree/exampleTree.txt
 src/test/scala-2.10/
 src/test/scala/com/phasmid/laScala/oldtree/

@@ -9,6 +9,15 @@ import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
+/**
+  * This trait defines the concept of a Comparer: something that can compare two T values and yield a Comparison.
+  *
+  * It is a type class
+  *
+  * CONSIDER: renaming this trait as Orderable. The only problem is that we already have an Orderable in LaScala.
+  *
+  * @tparam T the type of the objects to be compared
+  */
 trait Comparer[T] extends (((T, T)) => Comparison) {
   self =>
 
