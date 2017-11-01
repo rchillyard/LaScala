@@ -31,6 +31,9 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
+      # buildInfo
+      - run: cat /dev/null | sbt buildInfo
+      # compile
       - run: cat /dev/null | sbt test:compile
 
       - save_cache:
