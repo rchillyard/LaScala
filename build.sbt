@@ -20,6 +20,8 @@ buildInfoKeys ++= Seq[BuildInfoKey](
   } // re-computed each time at compile
 )
 
+resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
+
 val scalaModules = "org.scala-lang.modules"
 val scalaModulesVersion = "1.0.4"
 
