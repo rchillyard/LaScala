@@ -28,10 +28,10 @@ public class Equable {
         Iterator<?> thatIterator = equable.elements.iterator();
         while (thisIterator.hasNext())
             if (thatIterator.hasNext())
-                if (!thisIterator.next().equals(thatIterator.next()))
-                    return false;
-                else
+                if (thisIterator.next().equals(thatIterator.next()))
                     continue;
+                else
+                    return false;
             else
                 return false;
         return true;
