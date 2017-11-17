@@ -178,7 +178,7 @@ object Orderable {
 
     def compare(x: LocalDate, y: LocalDate): Int = x.compareTo(y)
 
-    val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+    val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     def formatter(s: String): DateTimeFormatter = DateTimeFormatter.ofPattern(s)
   }

@@ -415,7 +415,7 @@ object Scalar {
 
   implicit def apply(x: LocalDate): Scalar = DateScalar(x, x)
 
-  implicit val standardConverter = new ScalarMaker {
+  implicit val standardConverter: ScalarMaker = new ScalarMaker {
     def value(x: Any): Try[Scalar] = tryScalar(x)
   }
 

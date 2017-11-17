@@ -19,7 +19,7 @@ import scala.language.implicitConversions
   *
   * @tparam T the type of the objects to be compared
   */
-trait Comparer[T] extends (((T, T)) => Comparison) {
+trait Comparer[T] extends (((T, T)) => Comparison) with Serializable {
   self =>
 
   //noinspection ConvertExpressionToSAM

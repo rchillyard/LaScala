@@ -16,7 +16,13 @@ import scala.math.BigDecimal
   * NOTE that it is not expected that applications will directly reference this case class constructor.
   * If they do, they must ensure that d is positive and that there are no common factors for n and d
   *
+  * NOTE that the underlying type, N, is invariant.
+  *
   * @author scalaprof
+  *
+  * @param numerator the numerator of this Rational
+  * @param denominator the denominator of this Rational
+  * @tparam N the (invariant) underlying integral type
   */
 class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends BaseEquable with Ordered[Rational[N]] {
 
@@ -60,7 +66,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends BaseEqua
     *
     * @return the hash code for this object.
     */
-  override def hashCode(): Int = super.hashCode()
+  override def hashCode(): Int = if (isInfinity) Int.MaxValue else n.hashCode() + d.hashCode()*31
 
   // Operators
 
@@ -221,6 +227,12 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends BaseEqua
     new Equable(elements)
   }
 
+  /**
+    * This method is provided to enable conversion of this Rational[N] into a Rational[M]
+    * @tparam M the underlying type of the result
+    * @return a Rational[M] that is equal in value to this
+    */
+  def toRational[M: FiniteIntegral]: Rational[M] = Rational(Rational.convertToM(numerator)(implicitly[FiniteIntegral[N]],implicitly[FiniteIntegral[M]]), Rational.convertToM(denominator)(implicitly[FiniteIntegral[N]],implicitly[FiniteIntegral[M]]))
 }
 
 class RationalException(s: String, x: Exception = null) extends Exception(s, x)
@@ -245,14 +257,20 @@ object Rational {
 
   def NaN[N: FiniteIntegral] = new Rational(0, 0)
 
+  def max[N: FiniteIntegral](r1: Rational[N], r2: Rational[N]): Rational[N] = if (r1>=r2) r1 else r2
+
+  def min[N: FiniteIntegral](r1: Rational[N], r2: Rational[N]): Rational[N] = if (r1<=r2) r1 else r2
+
+  def convertToM[N: FiniteIntegral, M: FiniteIntegral](n: N): M = implicitly[FiniteIntegral[M]].fromBigInt(implicitly[FiniteIntegral[N]].toBigInt(n))
+
   // Apply methods
 
   def apply[N: FiniteIntegral](n: N, d: N): Rational[N] = normalize(n, d)
 
   /**
-    * Apply method to form a Rational from a Long
+    * Apply method to form a Rational from a FiniteIntegral
     *
-    * @param x the Long
+    * @param x the FiniteIntegral
     * @return the Rational corresponding to x
     */
   def apply[N: FiniteIntegral](x: N): Rational[N] = new Rational[N](x, FiniteIntegral[N].one)
@@ -280,6 +298,15 @@ object Rational {
     * @return the Rational corresponding to x
     */
   def apply[N: FiniteIntegral](x: Double): Rational[N] = apply(BigDecimal.valueOf(x))
+
+  def fromFractional[N: FiniteIntegral, M: Fractional](x: M): Rational[N] = x match {
+    case r@Rational(_,_) => r.toRational
+    case x: Int => Rational[N](x)
+    case x: Long => Rational[N](x)
+    case x: Double => Rational[N](x)
+    case x: BigDecimal => Rational[N](x)
+    case _ => throw new RationalException(s"cannot apply $x (unsupported)")
+  }
 
   /**
     * Apply method to form a Rational from a String

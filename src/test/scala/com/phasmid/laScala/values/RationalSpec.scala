@@ -103,6 +103,39 @@ class RationalSpec extends FlatSpec with Matchers {
     r.signum shouldBe 1
   }
 
+  "-2147483648" should "hash alright" in {
+    val r = Rational(-2147483648)
+    r.hashCode() shouldBe -2147483618
+  }
+  it should "be equal to itself" in {
+    val r = Rational(-2147483648)
+    r shouldEqual r
+  }
+  "-2147483648/-1" should "hash alright" in {
+    val r = Rational[BigInt](-2147483648,-1)
+    r.hashCode() shouldBe -2147483617
+  }
+  it should "be equal to itself" in {
+    val r = Rational(-2147483648)
+    r shouldEqual r
+  }
+  "2147483647" should "hash alright" in {
+    val r = Rational(2147483647)
+    r.hashCode() shouldBe -2147483618
+  }
+  it should "be equal to itself" in {
+    val r = Rational(2147483647)
+    r shouldEqual r
+  }
+  "D2147483647" should "hash alright" in {
+    val r = Rational(1,2147483647)
+    r.hashCode() shouldBe 2147483618
+  }
+  it should "be equal to itself" in {
+    val r = Rational(1,2147483647)
+    r shouldEqual r
+  }
+
   "power" should "work" in {
     val ten = Rational.ten
     ten.power(2) should equal(Rational(100))
