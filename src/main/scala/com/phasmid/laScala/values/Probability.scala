@@ -8,7 +8,7 @@ package com.phasmid.laScala.values
 /**
   * This trait defines the operations of a Probability
   */
-trait Probability extends (()=>Double) {
+trait Probability extends (() => Double) {
   /**
     * Method to form the disjunction (sum) of this and another probability.
     * Note that the two probability must of independent events for this to yield the correct answer
@@ -28,15 +28,17 @@ trait Probability extends (()=>Double) {
 
   /**
     * Method to form the complement of this probability
+    *
     * @return the probability whose numerical value is 1 - this
     */
   def ! : Probability
 
   /**
     * Method to factor this probability by a scalar value
+    *
     * @return this probability factored by x
     */
-  def *[N: Fractional](x: N) : Probability
+  def *[N: Fractional](x: N): Probability
 }
 
 /**
@@ -49,7 +51,7 @@ trait Probability extends (()=>Double) {
   * @tparam N the underlying type of Rational[N], with implicit evidence FiniteIntegral[N]
   */
 case class RationalProbability[N: FiniteIntegral](p: Rational[N]) extends Probability {
-  require(p>=Rational.zero && p<=Rational.one, s"p $p is not in range 0..1")
+  require(p >= Rational.zero && p <= Rational.one, s"p $p is not in range 0..1")
 
   override def apply(): Double = p.toDouble
 
@@ -65,17 +67,17 @@ case class RationalProbability[N: FiniteIntegral](p: Rational[N]) extends Probab
 
   def *(r: Rational[N]): Probability = RationalProbability(p * r)
 
-  def ! = RationalProbability(-p+Rational.one)
+  def ! = RationalProbability(-p + Rational.one)
 
-  override def hashCode() = ().hashCode()
+  override def hashCode(): Int = ().hashCode()
 
-  override def equals(obj: Any) = obj match {
+  override def equals(obj: Any): Boolean = obj match {
     case RationalProbability(q) => p.equals(q)
     case q: Probability => apply() == q()
     case _ => false
   }
 
-  def *[M: Fractional](x: M): Probability = RationalProbability(Rational.fromFractional[N,M](x) * p)
+  def *[M: Fractional](x: M): Probability = RationalProbability(Rational.fromFractional[N, M](x) * p)
 }
 
 /**
@@ -84,19 +86,19 @@ case class RationalProbability[N: FiniteIntegral](p: Rational[N]) extends Probab
   * @param p the probability as a Double
   */
 case class GenericProbability(p: Double) extends Probability {
-  require(p>=0 && p<=1, s"p $p is not in range 0..1")
+  require(p >= 0 && p <= 1, s"p $p is not in range 0..1")
 
   override def apply(): Double = p
 
-  def |(o: Probability) = GenericProbability(this()+o())
+  def |(o: Probability) = GenericProbability(this () + o())
 
-  def &(o: Probability) = GenericProbability(this()*o())
+  def &(o: Probability) = GenericProbability(this () * o())
 
-  def ! = GenericProbability(1-p)
+  def ! = GenericProbability(1 - p)
 
-  override def hashCode() = ().hashCode()
+  override def hashCode(): Int = ().hashCode()
 
-  override def equals(obj: Any) = obj match {
+  override def equals(obj: Any): Boolean = obj match {
     case GenericProbability(q) => p.equals(q)
     case q: Probability => apply() == q()
     case _ => false
@@ -106,12 +108,16 @@ case class GenericProbability(p: Double) extends Probability {
 }
 
 object Probability {
-  def apply(fav: Int, total: Int): Probability = RationalProbability[Int](Rational[Int](fav,total))
+  def apply(fav: Int, total: Int): Probability = RationalProbability[Int](Rational[Int](fav, total))
+
   def apply[N: FiniteIntegral](p: Rational[N]): Probability = RationalProbability(p)
+
   def apply(p: Double): Probability = GenericProbability(normalize(p))
-  def normalize(p: Double): Double = math.min(math.max(p,0),1)
-  val Certain = Probability(1,1)
-  val Impossible = Probability(0,1)
+
+  def normalize(p: Double): Double = math.min(math.max(p, 0), 1)
+
+  val Certain = Probability(1, 1)
+  val Impossible = Probability(0, 1)
 }
 
 object RationalProbability {
