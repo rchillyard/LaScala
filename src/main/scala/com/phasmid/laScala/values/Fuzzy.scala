@@ -42,7 +42,7 @@ case class Exact[T: Fractional](nominal: T) extends NumericFuzzy[T](nominal) {
 
   def map[U >: T : Fractional](f: T => U): Fuzzy[U] = Exact[U](f(nominal))
 
-  def map2[U: Fractional, V: Fractional](x: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): Fuzzy[V] = x match {
+  def map2[U: Fractional, V: Fractional](x: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = x match {
     case Exact(v) => Exact(f(nominal, v))
     case Bounded(v, deltaV) => Bounded(f(nominal, v), g(Fuzzy.fromInt[T](0), deltaV))
     case _ => throw FuzzyException(s"map2 not supported for $x")
@@ -68,7 +68,7 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends NumericFuzzy[T](
 
   def map[U >: T : Fractional](f: T => U): Fuzzy[U] = Bounded[U](f(nominal), f(bound))
 
-  def map2[U: Fractional, V: Fractional](x: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): Fuzzy[V] = x match {
+  def map2[U: Fractional, V: Fractional](x: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = x match {
     case Bounded(v, deltaV) => Bounded(f(nominal, v), g(bound, deltaV))
     case Exact(v) => Bounded(f(nominal, v), g(bound, fromInt[U](0)))
   }
@@ -86,13 +86,13 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
 
   override def apply(): T = t
 
-  def map2[U: Fractional, V: Fractional](x: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): Fuzzy[V]
+  def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V]
 
-  def plus[U: Fractional, V: Fractional](x: Fuzzy[U]): Fuzzy[V] = map2(x)(plusXY[T, U, V], plusXY[T, U, V])
+  def plus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(plusTU[T, U, V], plusTU[T, U, V])
 
-  def minus[U: Fractional, V: Fractional](x: Fuzzy[U]): Fuzzy[V] = plus(x.map(minusX[U]))
+  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.map(minusT[U]))
 
-  def times[U: Fractional, V: Fractional](x: Fuzzy[U]): Fuzzy[V] = map2(x)(timesXY[T, U, V], (t, u) => plusXY[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](x()), t), implicitly[Fractional[U]].times(toFractional[T, U](apply()), u)))
+  def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTU[T, U, V], timesDerivTU[T, U, V](this, uf))
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
@@ -100,18 +100,16 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
     if (p() > comparisonProbabilityThreshold) 0
     else math.signum(tf.toDouble(z())).toInt
   }
-
 }
 
 object NumericFuzzy {
-  private def minusX[U: Fractional](u: U): U = implicitly[Fractional[U]].negate(u)
+  private def minusT[T: Fractional](t: T): T = implicitly[Fractional[T]].negate(t)
 
-  private def plusXY[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].plus(toFractional[T, V](t), toFractional[U, V](u))
+  private def plusTU[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].plus(toFractional[T, V](t), toFractional[U, V](u))
 
-  private def timesXY[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].times(toFractional[T, V](t), toFractional[U, V](u))
+  private def timesTU[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].times(toFractional[T, V](t), toFractional[U, V](u))
 
-  private def timesDerivXY[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].plus(toFractional[T, V](t), toFractional[U, V](u))
-
+  private def timesDerivTU[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
 }
 
 /**

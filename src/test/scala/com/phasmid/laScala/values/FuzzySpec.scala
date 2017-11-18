@@ -5,7 +5,6 @@
 
 package com.phasmid.laScala.values
 
-import com.phasmid.laScala.values.NumericFuzzy.plusXY
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.language.implicitConversions
@@ -75,9 +74,44 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   it should "work for simple bounded" in {
     val two = Bounded(2.0, 1.0)
     val ten = Exact(10.0)
-    val target: NumericFuzzy[Double] = two.map2(ten)(_ * _, 10.0*_ + _).asInstanceOf[NumericFuzzy[Double]]
+    val target = two.map2(ten)(_ * _, 10.0 * _ + _)
     target() shouldBe 20.0
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
   }
+
+  behavior of "plus"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val ten = Exact(Rational[Int](10))
+    val target: Fuzzy[Rational[Int]] = two.plus(ten)
+    target.apply() shouldBe Rational[Int](12)
+    target.isExact shouldBe true
+  }
+  it should "work for simple bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = two.plus(ten)
+    target() shouldBe 12.0
+    target.fuzziness shouldBe 1.0
+    target.isExact shouldBe false
+  }
+
+  behavior of "times"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val ten = Exact(Rational[Int](10))
+    val target: Fuzzy[Rational[Int]] = two.times(ten)
+    target.apply() shouldBe Rational[Int](20)
+    target.isExact shouldBe true
+  }
+  it should "work for simple bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = two.times(ten)
+    target() shouldBe 20.0
+    target.fuzziness shouldBe 10.0
+    target.isExact shouldBe false
+  }
+
 }
