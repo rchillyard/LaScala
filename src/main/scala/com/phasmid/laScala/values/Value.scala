@@ -267,7 +267,7 @@ object Value {
     * @return a map of Values
     */
   def trySequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Try[Map[K, Value]] = for (
-  // CONSIDER using mapValues
+    // CONSIDER using mapValues
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 

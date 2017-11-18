@@ -468,7 +468,7 @@ object Scalar {
     * @return a map of Scalars
     */
   def trySequence[K](kWm: Map[K, Any])(implicit conv: ScalarMaker): Try[Map[K, Scalar]] = for (
-  // CONSIDER using mapScalars
+    // CONSIDER using mapScalars
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 
