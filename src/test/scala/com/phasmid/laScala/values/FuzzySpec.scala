@@ -51,13 +51,13 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   behavior of "map"
   it should "work for exact" in {
     val two = Exact(Rational[Int](2))
-    val target = two.map(Rational(1,2) * _)
+    val target = two.map(Rational(1, 2) * _, identity)
     target.apply() shouldBe Rational.one[Int]
     target.isExact shouldBe true
   }
   it should "work for simple bounded" in {
     val two = Bounded(2.0, 1.0)
-    val target: NumericFuzzy[Double] = two.map(_ * 0.5).asInstanceOf[NumericFuzzy[Double]]
+    val target: NumericFuzzy[Double] = two.map(_ * 0.5, _ * 0.5).asInstanceOf[NumericFuzzy[Double]]
     target() shouldBe 1.0
     target.fuzziness shouldBe 0.5
     target.isExact shouldBe false
@@ -113,6 +113,31 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.isExact shouldBe false
   }
 
+  behavior of "minus"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val ten = Exact(Rational[Int](10))
+    val target: Fuzzy[Rational[Int]] = two.minus(ten)
+    target.apply() shouldBe Rational[Int](-8)
+    target.isExact shouldBe true
+  }
+  it should "work for bounded and exact" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = two.minus(ten)
+    target() shouldBe -8.0
+    target.fuzziness shouldBe 1.0
+    target.isExact shouldBe false
+  }
+  it should "work for exact and bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = ten.minus(two)
+    target() shouldBe 8.0
+    target.fuzziness shouldBe 1.0
+    target.isExact shouldBe false
+  }
+
   behavior of "times"
   it should "work for exact" in {
     val two = Exact(Rational[Int](2))
@@ -138,4 +163,43 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.isExact shouldBe false
   }
 
+  behavior of "div"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val ten = Exact(Rational[Int](10))
+    val target: Fuzzy[Rational[Int]] = two.div(ten)
+    target.apply() shouldBe Rational[Int](5).invert
+    target.isExact shouldBe true
+  }
+  it should "work for bounded and exact" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = two.div(ten)
+    target() shouldBe 0.2
+    target.fuzziness shouldBe 0.1
+    target.isExact shouldBe false
+  }
+  it should "work for exact and bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = ten.div(two)
+    target() shouldBe 5.0
+    target.fuzziness shouldBe 2.5 // CHECK this
+    target.isExact shouldBe false
+  }
+
+  behavior of "power"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val target: Fuzzy[Rational[Int]] = two.power(5)
+    target.apply() shouldBe Rational[Int](32)
+    target.isExact shouldBe true
+  }
+  it should "work for bounded and exact" in {
+    val two = Bounded(2.0, 1.0)
+    val target: NumericFuzzy[Double] = two.power(5)
+    target() shouldBe 32.0
+    target.fuzziness shouldBe 5.0 // CHECK this I believe it is incorrect
+    target.isExact shouldBe false
+  }
 }

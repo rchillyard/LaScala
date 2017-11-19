@@ -7,6 +7,8 @@ package com.phasmid.laScala.values
 
 import com.phasmid.laScala.values.Fuzzy.toFractional
 
+import scala.annotation.tailrec
+
 /**
   * Typeclass Fuzzy which adds fuzzy behavior to any type.
   *
@@ -15,12 +17,31 @@ import com.phasmid.laScala.values.Fuzzy.toFractional
   * @tparam T the type to which we add the fuzzy behavior
   */
 trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
+
+  /**
+    * Abstract method to determine if this Fuzzy object is exact (i.e. zero fuzziness)
+    *
+    * @return true if this object is exact, otherwise false
+    */
   def isExact: Boolean
 
+  /**
+    * Abstract method to determine the probability that the nominal value of this Fuzzy object is actually t
+    *
+    * @param t the candidate value
+    * @return the probability (as an Option) that t=apply(). NOTE: that the value of the probability follows the rules described in method p
+    */
   def getP(t: T): Option[Probability]
 
-  // CONSIDER is there any good reason why U must be a supertype of T?
-  def map[U >: T : Fractional](f: T => U): Fuzzy[U]
+  /**
+    * Abstract method to map this Fuzzy object into a different Fuzzy object.
+    *
+    * @param f a function T=>U which will be applied to the nominal value of this Fuzzy
+    * @param g a function T=>U which will be applied to the fuzzy value of this Fuzzy. NOTE: that the coefficient of delta-T must be positive.
+    * @tparam U the underlying type of the result
+    * @return a Fuzzy[U] object
+    */
+  def map[U: Fractional](f: T => U, g: T => U): Fuzzy[U]
 
   /**
     * Method to return EITHER the Probability of the nominal value of this Fuzzy being the same as t.
@@ -35,13 +56,19 @@ trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
     else getP(t).getOrElse(throw FuzzyException(s"problem with getP for $t"))
 }
 
-case class Exact[T: Fractional](nominal: T) extends NumericFuzzy[T](nominal) {
+/**
+  * Concrete class extending Fuzzy which has zero fuzziness.
+  *
+  * @param t the numerical value
+  * @tparam T the underlying type of the value: which must support typeclass Fractional
+  */
+case class Exact[T: Fractional](t: T) extends NumericFuzzy[T](t) {
 
   def isExact: Boolean = true
 
   def getP(t: T): Option[Probability] = None
 
-  def map[U >: T : Fractional](f: T => U): Fuzzy[U] = Exact[U](f(nominal))
+  def map[U: Fractional](f: T => U, g: T => U): Fuzzy[U] = Exact[U](f(t))
 
   /**
     * Method to evaluate "map2" for this Fuzzy[T] object
@@ -54,8 +81,8 @@ case class Exact[T: Fractional](nominal: T) extends NumericFuzzy[T](nominal) {
     * @return a Fuzzy[V]
     */
   def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = uf match {
-    case Exact(u) => Exact(f(nominal, u))
-    case Bounded(u, deltaU) => Bounded(f(nominal, u), g(Fuzzy.zero[T], deltaU))
+    case Exact(u) => Exact(f(t, u))
+    case Bounded(u, deltaU) => Bounded(f(t, u), g(Fuzzy.zero[T], deltaU))
     case _ => throw FuzzyException(s"map2 not supported for $uf")
   }
 
@@ -73,12 +100,12 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends NumericFuzzy[T](
   private val max = Fuzzy.plus(nominal, bound)
 
   def getP(t: T): Option[Probability] =
-    if (inRange(min, t, max)) Some(Certain * invert(Fuzzy.times(bound, 2)))
+    if (inRange(min, t, max)) Some(Certain * Fuzzy.invert(Fuzzy.times(bound, 2)))
     else Some(Impossible)
 
   def isExact = false
 
-  def map[U >: T : Fractional](f: T => U): Fuzzy[U] = Bounded[U](f(nominal), f(bound))
+  def map[U: Fractional](f: T => U, g: T => U): Fuzzy[U] = Bounded[U](f(nominal), g(bound))
 
   def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = uf match {
     case Bounded(u, deltaU) => Bounded(f(nominal, u), g(bound, deltaU))
@@ -94,17 +121,42 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
   import Fuzzy._
   import NumericFuzzy._
 
+  /**
+    * Abstract method to yield the fuzziness of this NumericFuzzy object.
+    * NOTE: that this method is not promoted to Fuzzy because non-numeric Fuzzy objects don't have a concept of fuzziness.
+    *
+    * @return the degree of fuzziness of this Fuzzy object (as an absolute value)
+    */
   def fuzziness: T
 
   override def apply(): T = t
 
+  /**
+    * Abstract method to combine this Fuzzy object with another Fuzzy object
+    *
+    * @param uf the other fuzzy object, a Fuzzy[U]
+    * @param f  the function to process the t and u (nominal) values of this and uf, respectively.
+    * @param g  the function to process the deltaT and deltaU (fuzzy) values of this and uf, respectively.
+    * @tparam U the underlying type of uf
+    * @tparam V the underlying type of the result
+    * @return the result
+    */
   def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V]
 
   def plus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(plusTU[T, U, V], plusTU[T, U, V])
 
-  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.map(minusT[U]))
+  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].invert)
 
-  def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTU[T, U, V], timesDerivTU[T, U, V](this, uf))
+  def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
+
+  // TODO use power (-1) for inversion
+  def invert: NumericFuzzy[T] = map(minusT[T], identity).asInstanceOf[NumericFuzzy[T]]
+
+  def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.map(invertTV[U, V], inverseDerivTV[U, V](uf)))
+
+  def power(e: Int): NumericFuzzy[T] =
+    if (e >= 0) map(powerT[T](e), powerDerivT[T](this, e)).asInstanceOf[NumericFuzzy[T]]
+    else power(math.abs(e)).invert
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
@@ -117,11 +169,28 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
 object NumericFuzzy {
   private def minusT[T: Fractional](t: T): T = implicitly[Fractional[T]].negate(t)
 
+  private def invertTV[T: Fractional, V: Fractional](t: T): V = {
+    val f = implicitly[Fractional[T]]
+    toFractional[T, V](f.div(f.fromInt(1), t))
+  }
+
   private def plusTU[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].plus(toFractional[T, V](t), toFractional[U, V](u))
 
-  private def timesTU[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].times(toFractional[T, V](t), toFractional[U, V](u))
+  private def timesTUV[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].times(toFractional[T, V](t), toFractional[U, V](u))
 
-  private def timesDerivTU[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
+  private def timesDerivTUV[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
+
+  private def inverseDerivTV[T: Fractional, V: Fractional](tf: Fuzzy[T])(t: T): V = {
+    val f = implicitly[Fractional[T]]
+    toFractional[T, V](f.div(f.fromInt(1), f.times(tf(), tf())))
+  }
+
+  private def powerDerivT[T: Fractional](tf: Fuzzy[T], k: Int)(t: T): T = {
+    val f = implicitly[Fractional[T]]
+    f.times(Fuzzy.exp(t, k - 1), f.fromInt(k))
+  }
+
+  private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
 }
 
 /**
@@ -191,6 +260,14 @@ object Fuzzy {
   def minus[N: Fractional](n1: N, n2: Int): N = minus(n1, fractional(n2))
 
   def times[N: Fractional](n1: N, n2: Int): N = times(n1, fractional(n2))
+
+  def exp[N: Fractional](n: N, x: Int): N = {
+    val f = implicitly[Fractional[N]]
+
+    @tailrec def inner(r: N, k: Int): N = if (k == 0) r else inner(f.times(n, r), k - 1)
+
+    inner(f.fromInt(1), x)
+  }
 
   def invert[N: Fractional](n: N): N = div(fractional(1), n)
 
