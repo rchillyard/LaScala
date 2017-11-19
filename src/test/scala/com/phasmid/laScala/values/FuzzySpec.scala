@@ -71,10 +71,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational[Int](20)
     target.isExact shouldBe true
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded and exact" in {
     val two = Bounded(2.0, 1.0)
     val ten = Exact(10.0)
     val target = two.map2(ten)(_ * _, 10.0 * _ + _)
+    target() shouldBe 20.0
+    target.fuzziness shouldBe 10.0
+    target.isExact shouldBe false
+  }
+  it should "work for exact and bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target = ten.map2(two)(_ * _, _ + 10.0 * _)
     target() shouldBe 20.0
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
@@ -88,10 +96,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational[Int](12)
     target.isExact shouldBe true
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded and exact" in {
     val two = Bounded(2.0, 1.0)
     val ten = Exact(10.0)
     val target: NumericFuzzy[Double] = two.plus(ten)
+    target() shouldBe 12.0
+    target.fuzziness shouldBe 1.0
+    target.isExact shouldBe false
+  }
+  it should "work for exact and bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = ten.plus(two)
     target() shouldBe 12.0
     target.fuzziness shouldBe 1.0
     target.isExact shouldBe false
@@ -105,10 +121,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational[Int](20)
     target.isExact shouldBe true
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded and exact" in {
     val two = Bounded(2.0, 1.0)
     val ten = Exact(10.0)
     val target: NumericFuzzy[Double] = two.times(ten)
+    target() shouldBe 20.0
+    target.fuzziness shouldBe 10.0
+    target.isExact shouldBe false
+  }
+  it should "work for exact and bounded" in {
+    val two = Bounded(2.0, 1.0)
+    val ten = Exact(10.0)
+    val target: NumericFuzzy[Double] = ten.times(two)
     target() shouldBe 20.0
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
