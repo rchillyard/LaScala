@@ -138,6 +138,21 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.isExact shouldBe false
   }
 
+  behavior of "invert"
+  it should "work for exact" in {
+    val two = Exact(Rational[Int](2))
+    val target: Fuzzy[Rational[Int]] = two.invert
+    target.apply() shouldBe Rational[Int](1,2)
+    target.isExact shouldBe true
+  }
+  it should "work for bounded and exact" in {
+    val two = Bounded(2.0, 1.0)
+    val target: NumericFuzzy[Double] = two.invert
+    target() shouldBe 0.5
+    target.fuzziness shouldBe 0.25
+    target.isExact shouldBe false
+  }
+
   behavior of "times"
   it should "work for exact" in {
     val two = Exact(Rational[Int](2))

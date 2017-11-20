@@ -132,6 +132,15 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
   override def apply(): T = t
 
   /**
+    * Convenience method to invoke map on a NumericFuzzy such that the result is also a NumericFuzzy
+    * @param f a function T=>U which will be applied to the nominal value of this Fuzzy
+    * @param g a function T=>U which will be applied to the fuzzy value of this Fuzzy. NOTE: that the coefficient of delta-T must be positive.
+    * @tparam U the underlying type of the result
+    * @return a NumericFuzzy[U] object
+    */
+  def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = map(f,g).asInstanceOf[NumericFuzzy[U]]
+
+  /**
     * Abstract method to combine this Fuzzy object with another Fuzzy object
     *
     * @param uf the other fuzzy object, a Fuzzy[U]
@@ -145,14 +154,16 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
 
   def plus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(plusTU[T, U, V], plusTU[T, U, V])
 
-  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].invert)
+  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].minus)
 
   def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
 
-  // TODO use power (-1) for inversion
-  def invert: NumericFuzzy[T] = map(minusT[T], identity).asInstanceOf[NumericFuzzy[T]]
+  def minus: NumericFuzzy[T] = map(minusT[T], identity).asInstanceOf[NumericFuzzy[T]]
 
-  def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.map(invertTV[U, V], inverseDerivTV[U, V](uf)))
+  // TODO use power (-1) for inversion
+  def invert: NumericFuzzy[T] = map(invertTV[T,T], inverseDerivTV[T, T](this)).asInstanceOf[NumericFuzzy[T]]
+
+  def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[NumericFuzzy[U]].invert)
 
   def power(e: Int): NumericFuzzy[T] =
     if (e >= 0) map(powerT[T](e), powerDerivT[T](this, e)).asInstanceOf[NumericFuzzy[T]]
