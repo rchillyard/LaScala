@@ -145,18 +145,18 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
 
   def plus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(plusTU[T, U, V], plusTU[T, U, V])
 
-  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].invert)
+  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].negate)
 
   def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
 
+  def negate: NumericFuzzy[T] = map(minusT[T], identity).asInstanceOf[NumericFuzzy[T]]
+
   // TODO use power (-1) for inversion
-  def invert: NumericFuzzy[T] = map(minusT[T], identity).asInstanceOf[NumericFuzzy[T]]
+  def invert: NumericFuzzy[T] = power(-1)
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.map(invertTV[U, V], inverseDerivTV[U, V](uf)))
 
-  def power(e: Int): NumericFuzzy[T] =
-    if (e >= 0) map(powerT[T](e), powerDerivT[T](this, e)).asInstanceOf[NumericFuzzy[T]]
-    else power(math.abs(e)).invert
+  def power(e: Int): NumericFuzzy[T] = map(powerT[T](e), powerDerivT[T](this, e)).asInstanceOf[NumericFuzzy[T]]
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
@@ -164,6 +164,14 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
     if (p() > comparisonProbabilityThreshold) 0
     else math.signum(tf.toDouble(z())).toInt
   }
+
+  def +[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf)
+
+  def -[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = minus(uf)
+
+  def *[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf)
+
+  def /[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = div(uf)
 }
 
 object NumericFuzzy {
@@ -266,7 +274,7 @@ object Fuzzy {
 
     @tailrec def inner(r: N, k: Int): N = if (k == 0) r else inner(f.times(n, r), k - 1)
 
-    inner(f.fromInt(1), x)
+    if (x >= 0) inner(f.fromInt(1), x) else invert(inner(f.fromInt(1), math.abs(x)))
   }
 
   def invert[N: Fractional](n: N): N = div(fractional(1), n)
