@@ -5,6 +5,7 @@
 
 package com.phasmid.laScala.values
 
+import com.phasmid.laScala.fp.FP
 import com.phasmid.laScala.values.Fuzzy.toFractional
 
 import scala.annotation.tailrec
@@ -62,7 +63,7 @@ trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
   * @param t the numerical value
   * @tparam T the underlying type of the value: which must support typeclass Fractional
   */
-case class Exact[T: Fractional](t: T) extends NumericFuzzy[T](t) {
+case class Exact[T: Fractional](t: T) extends BaseNumericFuzzy[T](t) {
 
   def isExact: Boolean = true
 
@@ -82,8 +83,8 @@ case class Exact[T: Fractional](t: T) extends NumericFuzzy[T](t) {
     */
   def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = uf match {
     case Exact(u) => Exact(f(t, u))
-    case Bounded(u, deltaU) => Bounded(f(t, u), g(Fuzzy.zero[T], deltaU))
-    case _ => throw FuzzyException(s"map2 not supported for $uf")
+    case bnf: BaseNumericFuzzy[U] => bnf.map2(this)(flip(f), flip(g))
+    case _ => throw FuzzyException(s"map2 not supported for $this and $uf")
   }
 
   def fuzziness: T = Fuzzy.zero
@@ -91,7 +92,7 @@ case class Exact[T: Fractional](t: T) extends NumericFuzzy[T](t) {
   override def toString(): String = s"$t"
 }
 
-case class Bounded[T: Fractional](nominal: T, bound: T) extends NumericFuzzy[T](nominal) {
+case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy[T](nominal) {
 
   import Fuzzy._
   import Probability._
@@ -112,6 +113,7 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends NumericFuzzy[T](
   def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): NumericFuzzy[V] = uf match {
     case Bounded(u, deltaU) => Bounded(f(nominal, u), g(bound, deltaU))
     case Exact(u) => Bounded(f(nominal, u), g(bound, zero[U]))
+    case _ => throw FuzzyException(s"map2 not supported for $this and $uf")
   }
 
   def fuzziness: T = bound
@@ -119,11 +121,7 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends NumericFuzzy[T](
   override def toString(): String = s"$nominal +- $bound"
 }
 
-abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
-  private val tf = implicitly[Fractional[T]]
-
-  import Fuzzy._
-  import NumericFuzzy._
+trait NumericFuzzy[T] extends Fuzzy[T] {
 
   /**
     * Abstract method to yield the fuzziness of this NumericFuzzy object.
@@ -132,6 +130,15 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
     * @return the degree of fuzziness of this Fuzzy object (as an absolute value)
     */
   def fuzziness: T
+
+}
+
+abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
+  self =>
+  private val tf = implicitly[Fractional[T]]
+
+  import BaseNumericFuzzy._
+  import Fuzzy._
 
   override def apply(): T = t
 
@@ -144,6 +151,8 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
     * @return a NumericFuzzy[U] object
     */
   def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = map(f, g).asInstanceOf[NumericFuzzy[U]]
+
+  //  def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = new MappedFuzzy[U](f, g, isExact).asInstanceOf[NumericFuzzy[U]]
 
   /**
     * Abstract method to combine this Fuzzy object with another Fuzzy object
@@ -159,7 +168,7 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
 
   def plus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(plusTU[T, U, V], plusTU[T, U, V])
 
-  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[NumericFuzzy[U]].negate)
+  def minus[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf.asInstanceOf[BaseNumericFuzzy[U]].negate)
 
   def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
 
@@ -185,9 +194,41 @@ abstract class NumericFuzzy[T: Fractional](t: T) extends Fuzzy[T] {
   def *[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf)
 
   def /[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = div(uf)
+
+  /**
+    * Flip the parameters of the given function f
+    *
+    * @param f a function of (T, U) => V
+    * @tparam U the U type
+    * @tparam V the V type
+    * @return the equivalent function of f but with parameters flipped so that it is of type (U, T) => V
+    */
+  protected def flip[U: Fractional, V: Fractional](f: (T, U) => V) = Function.uncurried(FP.invert2(f.curried))
+
+  /**
+    * This class is for lazy map operations. However, at present, it is not used.
+    *
+    * @param f_      the value function
+    * @param g_      the derivative function
+    * @param isExact is Exact
+    * @tparam U the underlying type of the result
+    */
+  class MappedFuzzy[U: Fractional](f_ : T => U, g_ : T => U, val isExact: Boolean) extends NumericFuzzy[U] {
+
+    def getP(u: U): Option[Probability] = ???
+
+    def map[V: Fractional](f: U => V, g: U => V): Fuzzy[V] = new MappedFuzzy[V](f_ andThen f, g_ andThen g, self.isExact)
+
+    def apply(): U = f_(self())
+
+    def compare(that: Fuzzy[U]): Int = ???
+
+    def fuzziness: U = g_(self.fuzziness)
+  }
+
 }
 
-object NumericFuzzy {
+object BaseNumericFuzzy {
   private def minusT[T: Fractional](t: T): T = implicitly[Fractional[T]].negate(t)
 
   private def invertTV[T: Fractional, V: Fractional](t: T): V = {

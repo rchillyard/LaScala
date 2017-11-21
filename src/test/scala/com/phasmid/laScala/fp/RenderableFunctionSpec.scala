@@ -53,6 +53,8 @@ class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTe
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val r = f(Tuple3(Scalar("Hello"), Scalar(1), Scalar(true)))
+
+    // NOTE: this has failed (rarely) with true in all caps.
     val hello1true = "Hello:1:true"
     r should matchPattern { case Success(`hello1true`) => }
   }
