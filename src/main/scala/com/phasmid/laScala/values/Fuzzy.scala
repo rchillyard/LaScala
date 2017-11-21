@@ -35,6 +35,16 @@ trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
   def getP(t: T): Option[Probability]
 
   /**
+    * Abstract method to determine the probability that the nominal value of this Fuzzy object is
+    * between t1 and t2 (inclusive).
+    *
+    * @param t1 the lower value
+    * @param t2 the higher value
+    * @return a probability
+    */
+  def p(t1: T, t2: T): Probability
+
+  /**
     * Abstract method to map this Fuzzy object into a different Fuzzy object.
     *
     * @param f a function T=>U which will be applied to the nominal value of this Fuzzy
@@ -90,6 +100,8 @@ case class Exact[T: Fractional](t: T) extends BaseNumericFuzzy[T](t) {
   def fuzziness: T = Fuzzy.zero
 
   override def toString(): String = s"$t"
+
+  def p(t1: T, t2: T): Probability = if (Fuzzy.inRange(t1, t, t2)) Probability.Certain else Probability.Impossible
 }
 
 case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy[T](nominal) {
@@ -97,7 +109,8 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
   import Fuzzy._
   import Probability._
 
-  require(implicitly[Fractional[T]].compare(bound, zero) > 0, "bound must be positive")
+  private val frT: Fractional[T] = implicitly[Fractional[T]]
+  require(frT.compare(bound, zero) > 0, "bound must be positive")
 
   private val min = Fuzzy.minus(nominal, bound)
   private val max = Fuzzy.plus(nominal, bound)
@@ -119,6 +132,12 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
   def fuzziness: T = bound
 
   override def toString(): String = s"$nominal +- $bound"
+
+  def p(t1: T, t2: T): Probability = {
+    val range = frT.minus(frT.min(t2, max), frT.max(t1, min))
+    // NOTE: that we don't keep Rational intact: every type of number gets converted to Double
+    Probability(frT.toDouble(frT.div(range, frT.times(frT.fromInt(2), bound))))
+  }
 }
 
 trait NumericFuzzy[T] extends Fuzzy[T] {
@@ -203,7 +222,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
     * @tparam V the V type
     * @return the equivalent function of f but with parameters flipped so that it is of type (U, T) => V
     */
-  protected def flip[U: Fractional, V: Fractional](f: (T, U) => V) = Function.uncurried(FP.invert2(f.curried))
+  protected def flip[U: Fractional, V: Fractional](f: (T, U) => V): (U, T) => V = Function.uncurried(FP.invert2(f.curried))
 
   /**
     * This class is for lazy map operations. However, at present, it is not used.
@@ -224,6 +243,8 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
     def compare(that: Fuzzy[U]): Int = ???
 
     def fuzziness: U = g_(self.fuzziness)
+
+    def p(t1: U, t2: U): Probability = ???
   }
 
 }

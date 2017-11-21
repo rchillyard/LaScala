@@ -35,7 +35,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.isExact shouldBe false
   }
 
-  behavior of "p"
+  behavior of "p(t)"
   it should "work for exact" in {
     val target = Exact(2.0)
     target.p(2) shouldBe Probability.Certain
@@ -46,6 +46,20 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Bounded(2.0, 1.0)
     target.p(2) shouldBe Probability(1, 2)
     target.p(4) shouldBe Probability.Impossible
+  }
+
+  behavior of "p(t,t)"
+  it should "work for exact" in {
+    val target = Exact(2.0)
+    target.p(1, 3) shouldBe Probability.Certain
+    target.p(2.00001, 3) shouldBe Probability.Impossible
+    target.p(0, 1.9999) shouldBe Probability.Impossible
+  }
+  it should "work for simple bounded" in {
+    val target = Bounded(2.0, 1.0)
+    target.p(0, 5) shouldBe Probability.Certain
+    target.p(3, 4) shouldBe Probability.Impossible
+    target.p(2, 4) shouldBe Probability(1, 2)
   }
 
   behavior of "map"
@@ -146,7 +160,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational[Int](1,2)
     target.isExact shouldBe true
   }
-  it should "work for bounded and exact" in {
+  it should "work for bounded" in {
     val two = Bounded(2.0, 1.0)
     val target: NumericFuzzy[Double] = two.invert
     target shouldBe Bounded(0.5, 0.25)
@@ -212,7 +226,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational[Int](32)
     target.isExact shouldBe true
   }
-  it should "work for bounded and exact" in {
+  it should "work for bounded" in {
     val two = Bounded(2.0, 1.0)
     val target: NumericFuzzy[Double] = two.power(5)
     target() shouldBe 32.0
