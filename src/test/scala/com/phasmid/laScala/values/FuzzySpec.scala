@@ -60,6 +60,19 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.p(0, 5) shouldBe Probability.Certain
     target.p(3, 4) shouldBe Probability.Impossible
     target.p(2, 4) shouldBe Probability(1, 2)
+    target.p(2.5, 4) shouldBe Probability(1, 4)
+  }
+
+  behavior of "compare"
+  it should "work for exact" in {
+    val target = Exact(2.0)
+    target.compareTo(Exact(2.0)) shouldBe 0
+  }
+  it should "work for simple bounded" in {
+    val target = Bounded(2.0, 1.0)
+    target.compareTo(Exact(2.0)) shouldBe 0
+    target.compareTo(Bounded(2.0, 1.0)) shouldBe 0
+    //    target.compareTo(Bounded(1.5, 1.0)) shouldBe 0
   }
 
   behavior of "map"
@@ -155,18 +168,22 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   behavior of "invert"
   it should "work for exact" in {
     val two = Exact(Rational[Int](2))
-    val target: Fuzzy[Rational[Int]] = two.invert
+    val target = two.invert
     target shouldBe Exact(Rational(1, 2))
     target.apply() shouldBe Rational[Int](1,2)
     target.isExact shouldBe true
+    target.asInstanceOf[BaseNumericFuzzy[Int]].invert shouldBe two
   }
   it should "work for bounded" in {
-    val two = Bounded(2.0, 1.0)
+    val two = Bounded(2.0, 1.0E-4)
     val target: NumericFuzzy[Double] = two.invert
-    target shouldBe Bounded(0.5, 0.25)
+    println(s"two: $two")
+    println(s"target: $target")
+    target shouldBe Bounded(0.5, 0.25E-4)
     target() shouldBe 0.5
-    target.fuzziness shouldBe 0.25
+    target.fuzziness shouldBe 0.25E-4
     target.isExact shouldBe false
+    target.asInstanceOf[BaseNumericFuzzy[Int]].invert shouldBe two
   }
 
   behavior of "times"

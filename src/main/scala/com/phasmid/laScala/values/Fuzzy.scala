@@ -35,16 +35,6 @@ trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
   def getP(t: T): Option[Probability]
 
   /**
-    * Abstract method to determine the probability that the nominal value of this Fuzzy object is
-    * between t1 and t2 (inclusive).
-    *
-    * @param t1 the lower value
-    * @param t2 the higher value
-    * @return a probability
-    */
-  def p(t1: T, t2: T): Probability
-
-  /**
     * Abstract method to map this Fuzzy object into a different Fuzzy object.
     *
     * @param f a function T=>U which will be applied to the nominal value of this Fuzzy
@@ -101,7 +91,8 @@ case class Exact[T: Fractional](t: T) extends BaseNumericFuzzy[T](t) {
 
   override def toString(): String = s"$t"
 
-  def p(t1: T, t2: T): Probability = if (Fuzzy.inRange(t1, t, t2)) Probability.Certain else Probability.Impossible
+  def p(t1: T, t2: T)(implicit ev: Ordering[T]): Probability = if (Fuzzy.inRange(t1, t, t2)) Probability.Certain else Probability.Impossible
+
 }
 
 case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy[T](nominal) {
@@ -133,8 +124,9 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
 
   override def toString(): String = s"$nominal +- $bound"
 
-  def p(t1: T, t2: T): Probability = {
-    val range = frT.minus(frT.min(t2, max), frT.max(t1, min))
+  def p(t1: T, t2: T)(implicit ev: Ordering[T]): Probability = {
+    val orT = implicitly[Ordering[T]]
+    val range = frT.minus(orT.min(t2, max), orT.max(t1, min))
     // NOTE: that we don't keep Rational intact: every type of number gets converted to Double
     Probability(frT.toDouble(frT.div(range, frT.times(frT.fromInt(2), bound))))
   }
@@ -149,6 +141,16 @@ trait NumericFuzzy[T] extends Fuzzy[T] {
     * @return the degree of fuzziness of this Fuzzy object (as an absolute value)
     */
   def fuzziness: T
+
+  /**
+    * Abstract method to determine the probability that the nominal value of this Fuzzy object is
+    * between t1 and t2 (inclusive).
+    *
+    * @param t1 the lower value
+    * @param t2 the higher value
+    * @return a probability
+    */
+  def p(t1: T, t2: T)(implicit ev: Ordering[T]): Probability
 
 }
 
@@ -244,7 +246,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
     def fuzziness: U = g_(self.fuzziness)
 
-    def p(t1: U, t2: U): Probability = ???
+    def p(t1: U, t2: U)(implicit ev: Ordering[U]): Probability = ???
   }
 
 }
@@ -263,6 +265,7 @@ object BaseNumericFuzzy {
 
   private def timesDerivTUV[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
 
+  // NOTE: this does not use t
   private def inverseDerivTV[T: Fractional, V: Fractional](tf: Fuzzy[T])(t: T): V = {
     val f = implicitly[Fractional[T]]
     toFractional[T, V](f.div(f.fromInt(1), f.times(tf(), tf())))
@@ -270,7 +273,7 @@ object BaseNumericFuzzy {
 
   private def powerDerivT[T: Fractional](tf: Fuzzy[T], k: Int)(t: T): T = {
     val f = implicitly[Fractional[T]]
-    f.times(Fuzzy.exp(tf(), k - 1), f.fromInt(k))
+    f.times(f.times(Fuzzy.exp(tf(), k - 1), f.fromInt(k)), t)
   }
 
   private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
@@ -347,9 +350,10 @@ object Fuzzy {
   def exp[N: Fractional](n: N, x: Int): N = {
     val f = implicitly[Fractional[N]]
 
-    @tailrec def inner(r: N, k: Int): N = if (k <= 0) r else inner(f.times(n, r), k - 1)
+    @tailrec def inner(r: N, k: Int): N = if (k == 0) r else inner(f.times(n, r), k - 1)
 
-    if (x >= 0) inner(f.fromInt(1), x) else invert(inner(f.fromInt(1), math.abs(x)))
+    val r = inner(f.fromInt(1), math.abs(x))
+    if (x >= 0) r else invert(r)
   }
 
   def invert[N: Fractional](n: N): N = div(fractional(1), n)
