@@ -114,6 +114,14 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
   }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target = two.map2(ten)(_ * _, _ * _)
+    target() shouldBe 20.0
+    target.fuzziness shouldBe 0.001
+    target.isExact shouldBe false
+  }
 
   behavior of "plus"
   it should "work for exact" in {
@@ -138,6 +146,16 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target() shouldBe 12.0
     target.fuzziness shouldBe 1.0
     target.isExact shouldBe false
+  }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two.plus(ten)
+    target1() shouldBe 12.0
+    target1.fuzziness shouldBe 0.11
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten.plus(two)
+    target2 shouldBe target1
   }
 
   behavior of "minus"
@@ -164,6 +182,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 1.0
     target.isExact shouldBe false
   }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two.minus(ten)
+    target1() shouldBe -8.0
+    target1.fuzziness shouldBe 0.11
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten.minus(two)
+    target2() shouldBe 8.0
+    target2.fuzziness shouldBe 0.11
+    target2.isExact shouldBe false
+  }
 
   behavior of "invert"
   it should "work for exact" in {
@@ -184,6 +214,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 0.25E-4
     target.isExact shouldBe false
     target.asInstanceOf[BaseNumericFuzzy[Int]].invert shouldBe two
+  }
+  it should "work for exact x * x.invert equals exact(1)" in {
+    val two = Exact(Rational[Int](2))
+    val invertedTwo = two.invert
+    val target: NumericFuzzy[Rational[Int]] = two * invertedTwo
+    target shouldBe Exact(Rational[Int](1))
+  }
+  it should "work for bounded x * x.invert equals bounded(1, x.fuzziness)" in {
+    val two = Bounded(2.0, 1.0E-4)
+    val invertedTwo = two.invert
+    val target: NumericFuzzy[Double] = two * invertedTwo
+    target shouldBe Bounded(1.0, 1.0E-4)
   }
 
   behavior of "times"
@@ -209,6 +251,26 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target() shouldBe 20.0
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
+  }
+  it should "work for bounded Double" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two.times(ten)
+    target1() shouldBe 20.0
+    target1.fuzziness shouldBe 0.3 +- 0.0000000001
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten.times(two)
+    target2 shouldBe target1
+  }
+  it should "work for bounded Rational" in {
+    val two = Bounded(Rational[Int](2), Rational(1, 100))
+    val ten = Bounded(Rational[Int](10), Rational(1, 10))
+    val target1: NumericFuzzy[Rational[Int]] = two.times(ten)
+    target1() shouldBe Rational[Int](20)
+    target1.fuzziness shouldBe Rational(3, 10)
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Rational[Int]] = ten.times(two)
+    target2 shouldBe target1
   }
 
   behavior of "div"
@@ -256,12 +318,24 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational(1, 32)
     target.isExact shouldBe true
   }
-  ignore should "work for bounded and negative power" in {
+  it should "work for bounded and negative power" in {
     val two = Bounded(2.0, 1.0)
-    val target = two.power(-5)
-    target.apply() shouldBe Rational(1, 32)
-    target.fuzziness shouldBe 5 //Don't know what this is
+    val target: NumericFuzzy[Double] = two.power(-5)
+    target.apply() shouldBe 0.03125
+    target.fuzziness shouldBe 0.078125
     target.isExact shouldBe false
+  }
+  it should "work for x.power(2) equals x * x" in {
+    val two = Bounded(2.0, 0.01)
+    val target1: NumericFuzzy[Double] = two.power(2)
+    val target2: NumericFuzzy[Double] = two * two
+    target1 shouldBe target2
+  }
+  it should "work for x.power(-1) equals x.invert" in {
+    val two = Bounded(2.0, 0.01)
+    val target1: NumericFuzzy[Double] = two.power(-1)
+    val target2: NumericFuzzy[Double] = two.invert
+    target1 shouldBe target2
   }
 
   behavior of "negate"
@@ -298,6 +372,16 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 1.0
     target.isExact shouldBe false
   }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two + ten
+    target1() shouldBe 12.0
+    target1.fuzziness shouldBe 0.11
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten + two
+    target2 shouldBe target1
+  }
 
   behavior of "-"
   it should "work for exact" in {
@@ -323,6 +407,18 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 1.0
     target.isExact shouldBe false
   }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two - ten
+    target1() shouldBe -8.0
+    target1.fuzziness shouldBe 0.11
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten - two
+    target2() shouldBe 8.0
+    target2.fuzziness shouldBe 0.11
+    target2.isExact shouldBe false
+  }
 
   behavior of "*"
   it should "work for exact" in {
@@ -347,6 +443,26 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target() shouldBe 20.0
     target.fuzziness shouldBe 10.0
     target.isExact shouldBe false
+  }
+  it should "work for bounded Double" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two * ten
+    target1() shouldBe 20.0
+    target1.fuzziness shouldBe 0.3 +- 0.0000000001
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten * two
+    target2 shouldBe target1
+  }
+  it should "work for bounded Rational" in {
+    val two = Bounded(Rational[Int](2), Rational(1, 100))
+    val ten = Bounded(Rational[Int](10), Rational(1, 10))
+    val target1: NumericFuzzy[Rational[Int]] = two * ten
+    target1() shouldBe Rational[Int](20)
+    target1.fuzziness shouldBe Rational(3, 10)
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Rational[Int]] = ten * two
+    target2 shouldBe target1
   }
 
   behavior of "/"
