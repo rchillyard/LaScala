@@ -201,7 +201,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def invert: NumericFuzzy[T] = power(-1)
 
-  def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.map(invertTV[U, V], inverseDerivTV[U, V](uf)))
+  def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[BaseNumericFuzzy[U]].invert)
 
   def power(e: Int): NumericFuzzy[T] = mapFunc(powerT[T](e), x => tf.times(Fuzzy.exp(x, e - 1), tf.fromInt(e)))
 
@@ -258,22 +258,11 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 object BaseNumericFuzzy {
   private def minusT[T: Fractional](t: T): T = implicitly[Fractional[T]].negate(t)
 
-  private def invertTV[T: Fractional, V: Fractional](t: T): V = {
-    val f = implicitly[Fractional[T]]
-    toFractional[T, V](f.div(f.fromInt(1), t))
-  }
-
   private def plusTU[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].plus(toFractional[T, V](t), toFractional[U, V](u))
 
   private def timesTUV[T: Fractional, U: Fractional, V: Fractional](t: T, u: U): V = implicitly[Fractional[V]].times(toFractional[T, V](t), toFractional[U, V](u))
 
   private def timesDerivTUV[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
-
-  // NOTE: this does not use dt
-  private def inverseDerivTV[T: Fractional, V: Fractional](tf: Fuzzy[T])(dt: T): V = {
-    val f = implicitly[Fractional[T]]
-    toFractional[T, V](f.div(f.fromInt(1), f.times(tf(), tf())))
-  }
 
   private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
 }
