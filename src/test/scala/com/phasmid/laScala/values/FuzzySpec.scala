@@ -84,7 +84,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   }
   it should "work for simple bounded" in {
     val two = Bounded(2.0, 1.0)
-    val target: NumericFuzzy[Double] = two.mapNumeric(_ * 0.5, _ * 0.5)
+    val target = two.map(_ * 0.5, _ * 0.5).asInstanceOf[NumericFuzzy[Double]]
     target() shouldBe 1.0
     target.fuzziness shouldBe 0.5
     target.isExact shouldBe false
@@ -207,8 +207,6 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   it should "work for bounded" in {
     val two = Bounded(2.0, 1.0E-4)
     val target: NumericFuzzy[Double] = two.invert
-    println(s"two: $two")
-    println(s"target: $target")
     target shouldBe Bounded(0.5, 0.25E-4)
     target() shouldBe 0.5
     target.fuzziness shouldBe 0.25E-4
@@ -496,8 +494,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     two.getP(Rational[Int](2)) shouldBe None
     two.getP(Rational[Int](1)) shouldBe None
   }
-  //Not sure if this is right
-  ignore should "work for bounded" in {
+  it should "work for bounded" in {
     val two = Bounded(2.0, 0.5)
     two.getP(2.0) shouldBe Some(Probability.Certain)
     two.getP(0.0) shouldBe Some(Probability.Impossible)

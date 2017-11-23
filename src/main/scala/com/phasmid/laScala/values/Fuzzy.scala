@@ -166,12 +166,16 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   /**
     * Convenience method to invoke map on a NumericFuzzy such that the result is also a NumericFuzzy
     *
-    * @param f a function T=>U which will be applied to the nominal value of this Fuzzy
-    * @param g a function T=>U which will be applied to the fuzzy value of this Fuzzy. NOTE: that the coefficient of delta-T must be positive.
+    * @param f      a function T=>U which will be applied to the nominal value of this Fuzzy
+    * @param dfbydx a function T=>U which will be applied to the nominal value of this Fuzzy.
     * @tparam U the underlying type of the result
     * @return a NumericFuzzy[U] object
     */
-  def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = map(f, g).asInstanceOf[NumericFuzzy[U]]
+  def mapFunc[U: Fractional](f: T => U, dfbydx: T => U): NumericFuzzy[U] = map(f, { dx =>
+    val uf = implicitly[Fractional[U]]
+    uf.abs(uf.times(dfbydx(apply()), toFractional[T, U](dx)))
+  }
+  ).asInstanceOf[NumericFuzzy[U]]
 
   //  def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = new MappedFuzzy[U](f, g, isExact).asInstanceOf[NumericFuzzy[U]]
 
@@ -193,13 +197,13 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
 
-  def negate: NumericFuzzy[T] = mapNumeric(minusT[T], identity)
+  def negate: NumericFuzzy[T] = mapFunc(minusT[T], { _ => tf.fromInt(-1) })
 
   def invert: NumericFuzzy[T] = power(-1)
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.map(invertTV[U, V], inverseDerivTV[U, V](uf)))
 
-  def power(e: Int): NumericFuzzy[T] = mapNumeric(powerT[T](e), powerDerivT[T](this, e))
+  def power(e: Int): NumericFuzzy[T] = mapFunc(powerT[T](e), x => tf.times(Fuzzy.exp(x, e - 1), tf.fromInt(e)))
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
@@ -270,13 +274,6 @@ object BaseNumericFuzzy {
     val f = implicitly[Fractional[T]]
     toFractional[T, V](f.div(f.fromInt(1), f.times(tf(), tf())))
   }
-
-  private def powerDerivT[T: Fractional](tf: Fuzzy[T], k: Int)(dt: T): T = {
-    val f = implicitly[Fractional[T]]
-    fDerivT(tf) { x => f.times(Fuzzy.exp(x(), k - 1), f.fromInt(k)) }(dt)
-  }
-
-  private def fDerivT[T: Fractional](tf: Fuzzy[T])(f: Fuzzy[T] => T)(t: T): T = implicitly[Fractional[T]].times(f(tf), t)
 
   private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
 }
