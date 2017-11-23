@@ -203,10 +203,16 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[BaseNumericFuzzy[U]].invert)
 
-  def power(e: Int): NumericFuzzy[T] = mapFunc(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))
+  def power(e: Int): NumericFuzzy[T] = e match {
+    case 0 => Exact[T](tf.fromInt(1))
+    case _ => mapFunc(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))
+  }
 
   // TODO add in the error due to the power function
-  def power(e: Double): NumericFuzzy[Double] = mapFunc[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)
+  def power(e: Double): NumericFuzzy[Double] = e match {
+    case 0 => Exact[Double](1)
+    case _ => mapFunc[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)
+  }
 
   // TODO add in the error due to the exp function
   def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(tf.toDouble(x)), x => Fuzzy.exp(tf.toDouble(x)))
