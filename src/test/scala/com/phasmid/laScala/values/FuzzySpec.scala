@@ -295,8 +295,15 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 2.5 // CHECK this
     target.isExact shouldBe false
   }
+  it should "work for a.div(b) equals a.times(b.invert)" in {
+    val two = Bounded(2.0, 0.01)
+    val ten = Bounded(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two.div(ten)
+    val target2: NumericFuzzy[Double] = two.times(ten.invert)
+    target1 shouldBe target2
+  }
 
-  behavior of "power"
+  behavior of "power(int)"
   it should "work for exact" in {
     val two = Exact(Rational[Int](2))
     val target: Fuzzy[Rational[Int]] = two.power(5)
@@ -503,17 +510,74 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   behavior of "Fuzzy.exp"
   it should "work for positive power" in {
     val two = Rational[Int](2)
-    val target = Fuzzy.exp(two, 2)
+    val target = Fuzzy.pow(two, 2)
     target shouldBe Rational[Int](4)
   }
   it should "work for negative power" in {
     val two = Rational[Int](2)
-    val target = Fuzzy.exp(two, -2)
+    val target = Fuzzy.pow(two, -2)
     target shouldBe Rational(1, 4)
   }
   it should "work for 0 power" in {
     val two = Rational[Int](2)
-    val target = Fuzzy.exp(two, 0)
+    val target = Fuzzy.pow(two, 0)
     target shouldBe Rational[Int](1)
   }
+
+  behavior of "power(double)"
+  it should "work for exact" in {
+    val two = Exact(2.0)
+    val target = two.power(5.0)
+    target.apply() shouldBe 32.0
+    target.isExact shouldBe true
+  }
+  it should "work for bounded" in {
+    val two = Bounded(2.0, 0.1)
+    val target: NumericFuzzy[Double] = two.power(5.0)
+    target() shouldBe 32.0
+    target.fuzziness shouldBe 8.0
+    target.isExact shouldBe false
+  }
+  it should "work for exact and negative power" in {
+    val two = Exact(2.0)
+    val target = two.power(-5)
+    target.apply() shouldBe 1.0 / 32
+    target.isExact shouldBe true
+  }
+  it should "work for bounded and negative power" in {
+    val two = Bounded(2.0, 1.0)
+    val target: NumericFuzzy[Double] = two.power(-5.0)
+    target.apply() shouldBe 0.03125
+    target.fuzziness shouldBe 0.078125
+    target.isExact shouldBe false
+  }
+  it should "work for x.power(2) equals x * x" in {
+    val two = Bounded(2.0, 0.01)
+    val target1: NumericFuzzy[Double] = two.power(2.0)
+    val target2: NumericFuzzy[Double] = two * two
+    target1 shouldBe target2
+  }
+
+  behavior of "exp"
+  it should "work for exact" in {
+    val one = Exact(1.0)
+    val target = one.exp
+    target() shouldBe math.E
+    target.isExact shouldBe true
+  }
+  it should "work for bounded(1,..)" in {
+    val one = Bounded(1.0, 1.0 / 10)
+    val target = one.exp
+    target() shouldBe math.E
+    target.fuzziness shouldBe math.E / 10 +- 0.0000000000000001
+    target.isExact shouldBe false
+  }
+  it should "work for bounded(2,...)" in {
+    val two = Bounded(2.0, 1.0 / 10)
+    val target = two.exp
+    target() shouldBe math.E * math.E +- 0.000000000000001
+    target.fuzziness shouldBe math.E * math.E / 10 +- 0.000000000000005
+    target.isExact shouldBe false
+  }
+
 }

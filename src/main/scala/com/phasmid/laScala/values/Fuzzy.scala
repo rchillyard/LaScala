@@ -203,7 +203,13 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[BaseNumericFuzzy[U]].invert)
 
-  def power(e: Int): NumericFuzzy[T] = mapFunc(powerT[T](e), x => tf.times(Fuzzy.exp(x, e - 1), tf.fromInt(e)))
+  def power(e: Int): NumericFuzzy[T] = mapFunc(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))
+
+  // TODO add in the error due to the power function
+  def power(e: Double): NumericFuzzy[Double] = mapFunc[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)
+
+  // TODO add in the error due to the exp function
+  def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(tf.toDouble(x)), x => Fuzzy.exp(tf.toDouble(x)))
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
@@ -264,7 +270,10 @@ object BaseNumericFuzzy {
 
   private def timesDerivTUV[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
 
-  private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
+  private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.pow(t, e)
+
+  private def powerTx[T: Fractional](e: Double)(t: T): Double = Fuzzy.pow(implicitly[Fractional[T]].toDouble(t), e)
+
 }
 
 /**
@@ -294,8 +303,6 @@ trait FuzzyIsFractional[T] extends Fractional[Fuzzy[T]] {
   // Members declared in scala.math.Ordering
   def compare(tf1: Fuzzy[T], tf2: Fuzzy[T]): Int = tf1.compare(tf2)
 }
-
-
 
 object Fuzzy {
 
@@ -335,7 +342,7 @@ object Fuzzy {
 
   def times[N: Fractional](n1: N, n2: Int): N = times(n1, fractional(n2))
 
-  def exp[N: Fractional](n: N, x: Int): N = {
+  def pow[N: Fractional](n: N, x: Int): N = {
     val f = implicitly[Fractional[N]]
 
     @tailrec def inner(r: N, k: Int): N = if (k == 0) r else inner(f.times(n, r), k - 1)
@@ -344,21 +351,16 @@ object Fuzzy {
     if (x >= 0) r else invert(r)
   }
 
+  def pow(x: Double, n: Double): Double = math.pow(x, n)
+
+  def exp(y: Double): Double = math.exp(y)
+
   def invert[N: Fractional](n: N): N = div(fractional(1), n)
 
   def inRange[T: Numeric](min: T, t: T, max: T): Boolean = {
     val n = implicitly[Numeric[T]]
     n.compare(min, t) <= 0 && n.compare(t, max) <= 0
   }
-
-  //  implicit object FuzzyIsFractionalInt extends FuzzyIsFractional[Int] {
-  //    def negate(xf: Fuzzy[Int]): Fuzzy[Int] = xf match {
-  //      case Exact(x) => Exact(-x)
-  //      case Bounded(x,b) => Bounded(-x,b)
-  //    }
-  //
-  //    def fromInt(x: Int): Fuzzy[Int] = Exact(x)
-  //  }
 
   implicit object FuzzyIsFractionalDouble extends FuzzyIsFractional[Double] {
     def negate(xf: Fuzzy[Double]): Fuzzy[Double] = xf match {
@@ -368,10 +370,8 @@ object Fuzzy {
 
     def fromInt(x: Int): Fuzzy[Double] = Exact(x)
   }
-
 }
 
-object Bounded {
-}
+object Bounded
 
 case class FuzzyException(w: String) extends Exception(w)
