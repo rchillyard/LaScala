@@ -265,16 +265,18 @@ object BaseNumericFuzzy {
 
   private def timesDerivTUV[T: Fractional, U: Fractional, V: Fractional](tf: Fuzzy[T], uf: Fuzzy[U])(t: T, u: U): V = plusTU[T, U, V](implicitly[Fractional[T]].times(toFractional[U, T](uf()), t), implicitly[Fractional[U]].times(toFractional[T, U](tf()), u))
 
-  // NOTE: this does not use t
-  private def inverseDerivTV[T: Fractional, V: Fractional](tf: Fuzzy[T])(t: T): V = {
+  // NOTE: this does not use dt
+  private def inverseDerivTV[T: Fractional, V: Fractional](tf: Fuzzy[T])(dt: T): V = {
     val f = implicitly[Fractional[T]]
     toFractional[T, V](f.div(f.fromInt(1), f.times(tf(), tf())))
   }
 
-  private def powerDerivT[T: Fractional](tf: Fuzzy[T], k: Int)(t: T): T = {
+  private def powerDerivT[T: Fractional](tf: Fuzzy[T], k: Int)(dt: T): T = {
     val f = implicitly[Fractional[T]]
-    f.times(f.times(Fuzzy.exp(tf(), k - 1), f.fromInt(k)), t)
+    fDerivT(tf) { x => f.times(Fuzzy.exp(x(), k - 1), f.fromInt(k)) }(dt)
   }
+
+  private def fDerivT[T: Fractional](tf: Fuzzy[T])(f: Fuzzy[T] => T)(t: T): T = implicitly[Fractional[T]].times(f(tf), t)
 
   private def powerT[T: Fractional](e: Int)(t: T): T = Fuzzy.exp(t, e)
 }
