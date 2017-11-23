@@ -164,6 +164,13 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   override def apply(): T = t
 
   /**
+    * Method to yield the nominal value as a Double
+    *
+    * @return the nominal value of this NumericFuzzy.
+    */
+  def toDouble: Double = implicitly[Numeric[T]].toDouble(apply())
+
+  /**
     * Convenience method to invoke map on a NumericFuzzy such that the result is also a NumericFuzzy
     *
     * @param f      a function T=>U which will be applied to the nominal value of this Fuzzy
@@ -178,6 +185,19 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   ).asInstanceOf[NumericFuzzy[U]]
 
   //  def mapNumeric[U: Fractional](f: T => U, g: T => U): NumericFuzzy[U] = new MappedFuzzy[U](f, g, isExact).asInstanceOf[NumericFuzzy[U]]
+
+  /**
+    * Convenience method to invoke map on a NumericFuzzy such that the result is also a NumericFuzzy,
+    * but with the possibility of creating an Exact(1)
+    *
+    * @param f      a function T=>U which will be applied to the nominal value of this Fuzzy
+    * @param dfbydx a function T=>U which will be applied to the nominal value of this Fuzzy.
+    * @param unity  if true then an Exact(1) will be returned, otherwise we delegate to mapFunc
+    * @tparam U the underlying type of the result
+    * @return a NumericFuzzy[U] object
+    */
+  def mapFuncExp[U: Fractional](f: T => U, dfbydx: T => U)(unity: Boolean): NumericFuzzy[U] = if (unity) Exact[U](1)
+  else mapFunc(f, dfbydx)
 
   /**
     * Abstract method to combine this Fuzzy object with another Fuzzy object
@@ -197,22 +217,23 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def times[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = map2(uf)(timesTUV[T, U, V], timesDerivTUV[T, U, V](this, uf))
 
+  //  def exp[U: Fractional](uf: NumericFuzzy[U]): NumericFuzzy[Double] = {
+  //    val e = uf.toDouble
+  //    // TODO add in the error from uf
+  //    mapFuncExp(powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e )(uf.isExact && e == 0)
+  //  }
+
   def negate: NumericFuzzy[T] = mapFunc(minusT[T], { _ => tf.fromInt(-1) })
 
   def invert: NumericFuzzy[T] = power(-1)
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[BaseNumericFuzzy[U]].invert)
 
-  def power(e: Int): NumericFuzzy[T] = e match {
-    case 0 => Exact[T](tf.fromInt(1))
-    case _ => mapFunc(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))
-  }
+  def power(e: Int): NumericFuzzy[T] = mapFuncExp(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))(e ==0)
 
   // TODO add in the error due to the power function
-  def power(e: Double): NumericFuzzy[Double] = e match {
-    case 0 => Exact[Double](1)
-    case _ => mapFunc[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)
-  }
+  def power(e: Double): NumericFuzzy[Double] = mapFuncExp[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)(e ==0)
+
 
   // TODO add in the error due to the exp function
   def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(tf.toDouble(x)), x => Fuzzy.exp(tf.toDouble(x)))
@@ -280,6 +301,10 @@ object BaseNumericFuzzy {
 
   private def powerTx[T: Fractional](e: Double)(t: T): Double = Fuzzy.pow(implicitly[Fractional[T]].toDouble(t), e)
 
+}
+
+object Exact {
+  def apply[T: Fractional](i: Int): Exact[T] = apply[T](implicitly[Numeric[T]].fromInt(i))
 }
 
 /**
