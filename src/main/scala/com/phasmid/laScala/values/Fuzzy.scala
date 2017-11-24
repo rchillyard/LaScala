@@ -107,8 +107,13 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
   private val max = Fuzzy.plus(nominal, bound)
 
   def getP(t: T): Option[Probability] =
-    if (inRange(min, t, max)) Some(Certain * Fuzzy.invert(Fuzzy.times(bound, 2)))
+    if (inRange(t)) Some(Certain * Fuzzy.invert(Fuzzy.times(bound, 2)))
     else Some(Impossible)
+
+  override def compare(that: Fuzzy[T]): Int = minus(that) match {
+    case b: Bounded[T] => if (b.inRange(frT.zero)) 0 else super.compareTo(that)
+    case _ => super.compareTo(that)
+  }
 
   def isExact = false
 
@@ -130,6 +135,8 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
     // NOTE: that we don't keep Rational intact: every type of number gets converted to Double
     Probability(frT.toDouble(frT.div(range, frT.times(frT.fromInt(2), bound))))
   }
+
+  private def inRange(t: T) = Fuzzy.inRange(min, t, max)
 }
 
 trait NumericFuzzy[T] extends Fuzzy[T] {
@@ -156,7 +163,7 @@ trait NumericFuzzy[T] extends Fuzzy[T] {
 
 abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   self =>
-  private val tf = implicitly[Fractional[T]]
+  private val frT = implicitly[Fractional[T]]
 
   import BaseNumericFuzzy._
   import Fuzzy._
@@ -223,26 +230,26 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   //    mapFuncExp(powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e )(uf.isExact && e == 0)
   //  }
 
-  def negate: NumericFuzzy[T] = mapFunc(minusT[T], { _ => tf.fromInt(-1) })
+  def negate: NumericFuzzy[T] = mapFunc(minusT[T], { _ => frT.fromInt(-1) })
 
   def invert: NumericFuzzy[T] = power(-1)
 
   def div[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = times(uf.asInstanceOf[BaseNumericFuzzy[U]].invert)
 
-  def power(e: Int): NumericFuzzy[T] = mapFuncExp(powerT[T](e), x => tf.times(pow(x, e - 1), tf.fromInt(e)))(e ==0)
+  def power(e: Int): NumericFuzzy[T] = mapFuncExp(powerT[T](e), x => frT.times(pow(x, e - 1), frT.fromInt(e)))(e == 0)
 
   // TODO add in the error due to the power function
-  def power(e: Double): NumericFuzzy[Double] = mapFuncExp[Double](powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e)(e ==0)
+  def power(e: Double): NumericFuzzy[Double] = mapFuncExp[Double](powerTx(e), x => powerTx(e - 1)(frT.toDouble(x)) * e)(e == 0)
 
 
   // TODO add in the error due to the exp function
-  def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(tf.toDouble(x)), x => Fuzzy.exp(tf.toDouble(x)))
+  def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(frT.toDouble(x)), x => Fuzzy.exp(frT.toDouble(x)))
 
   def compare(that: Fuzzy[T]): Int = {
     val z = minus(that)
-    val p = z.p(tf.zero)
+    val p = z.p(frT.zero)
     if (p() > comparisonProbabilityThreshold) 0
-    else math.signum(tf.toDouble(z())).toInt
+    else math.signum(frT.toDouble(z())).toInt
   }
 
   def +[U: Fractional, V: Fractional](uf: Fuzzy[U]): NumericFuzzy[V] = plus(uf)

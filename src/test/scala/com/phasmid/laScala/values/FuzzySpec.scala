@@ -68,11 +68,15 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Exact(2.0)
     target.compareTo(Exact(2.0)) shouldBe 0
   }
-  it should "work for simple bounded" in {
+  it should "work for simple bounded (exact)" in {
     val target = Bounded(2.0, 1.0)
     target.compareTo(Exact(2.0)) shouldBe 0
     target.compareTo(Bounded(2.0, 1.0)) shouldBe 0
-    //    target.compareTo(Bounded(1.5, 1.0)) shouldBe 0
+  }
+
+  it should "work for simple bounded (fuzzy)" in {
+    val target = Bounded(2.0, 1.0)
+    target.compareTo(Bounded(1.5, 1.0)) shouldBe 0
   }
 
   behavior of "map"
