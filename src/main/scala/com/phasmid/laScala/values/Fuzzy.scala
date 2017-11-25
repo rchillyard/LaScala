@@ -6,7 +6,7 @@
 package com.phasmid.laScala.values
 
 import com.phasmid.laScala.fp.FP
-import com.phasmid.laScala.values.Fuzzy.toFractional
+import com.phasmid.laScala.values.Fuzzy.{toFractional, zero}
 
 import scala.annotation.tailrec
 
@@ -139,6 +139,33 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
   private def inRange(t: T) = Fuzzy.inRange(min, t, max)
 }
 
+case class Gaussian[T: Fractional](mean: T, sd: T) extends BaseNumericFuzzy[T](mean) {
+  require(sd != 0, "standard deviation must be non-zero")
+
+  def map2[U: Fractional, V: Fractional](uf: Fuzzy[U])(f: (T, U) => V, g: (T, U) => V): Gaussian[V] = uf match {
+    case Gaussian(u, deltaU) => Gaussian(f(mean, u), sqrt(g(sqr(sd), sqr(deltaU))))
+    case Exact(u) => Gaussian(f(mean, u), g(sd, zero[U]))
+    case _ => throw FuzzyException(s"map2 not supported for $this and $uf")
+  }
+
+  def fuzziness: T = sd
+
+  private def sqr[X: Fractional](x: X): X = implicitly[Fractional[X]].times(x, x)
+
+  // TODO implement this properly
+  private def sqrt[X: Fractional](x: X): X = Fuzzy.pow(implicitly[Fractional[X]].toDouble(x), 0.5).asInstanceOf[X]
+
+  override def toString(): String = s"$mean +- ($sd)"
+
+  def p(t1: T, t2: T)(implicit ev: Ordering[T]): Probability = ???
+
+  def isExact = false
+
+  def getP(t: T): Option[Probability] = ???
+
+  def map[U: Fractional](f: T => U, g: T => U): Gaussian[U] = Gaussian[U](f(mean), implicitly[Fractional[U]].abs(g(sd)))
+}
+
 trait NumericFuzzy[T] extends Fuzzy[T] {
 
   /**
@@ -203,7 +230,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
     * @tparam U the underlying type of the result
     * @return a NumericFuzzy[U] object
     */
-  def mapFuncExp[U: Fractional](f: T => U, dfbydx: T => U)(unity: Boolean): NumericFuzzy[U] = if (unity) Exact[U](1)
+  def mapFuncExp[U: Fractional](f: T => U, dfbydx: T => U)(unity: Boolean): NumericFuzzy[U] = if (unity) Exact.fromInt[U](1)
   else mapFunc(f, dfbydx)
 
   /**
@@ -311,7 +338,7 @@ object BaseNumericFuzzy {
 }
 
 object Exact {
-  def apply[T: Fractional](i: Int): Exact[T] = apply[T](implicitly[Numeric[T]].fromInt(i))
+  def fromInt[T: Fractional](i: Int): Exact[T] = apply[T](implicitly[Numeric[T]].fromInt(i))
 }
 
 /**
@@ -342,7 +369,29 @@ trait FuzzyIsFractional[T] extends Fractional[Fuzzy[T]] {
   def compare(tf1: Fuzzy[T], tf2: Fuzzy[T]): Int = tf1.compare(tf2)
 }
 
+case class Fuzziness(value: Option[String])
+
+object Fuzziness {
+  def apply(): Fuzziness = Fuzziness(None)
+
+  def apply(s: String): Fuzziness = Fuzziness(Some(s))
+}
+
 object Fuzzy {
+  def apply[T: FromString : Fractional](x: String, z: Fuzziness): Fuzzy[T] = z match {
+    case Fuzziness(Some("~")) =>
+      val f = makeFuzzyString(x, "5", 1)
+      val frsT = implicitly[FromString[T]]
+      Bounded(frsT.fromString(x), frsT.fromString(f))
+    case Fuzziness(Some(i)) =>
+      val f = makeFuzzyString(x, i, 0)
+      val frsT = implicitly[FromString[T]]
+      Gaussian(frsT.fromString(x), frsT.fromString(f))
+    case _ => Exact(implicitly[FromString[T]].fromString(x))
+  }
+
+
+  private def makeFuzzyString[T: FromString](x: String, i: String, n: Int) = (x replaceAll("""\d""", "0")).substring(0, x.length - i.length + n) + i
 
   val comparisonProbabilityThreshold = 0.5
 

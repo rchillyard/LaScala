@@ -20,8 +20,12 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Exact(2.0)
     target() shouldBe 2
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded" in {
     val target = Bounded(2.0, 1.0)
+    target() shouldBe 2
+  }
+  it should "work for Gaussian" in {
+    val target = Gaussian(2.0, 0.1)
     target() shouldBe 2
   }
 
@@ -30,8 +34,12 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Exact(2.0)
     target.isExact shouldBe true
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded" in {
     val target = Bounded(2.0, 1.0)
+    target.isExact shouldBe false
+  }
+  it should "work for Gaussian" in {
+    val target = Gaussian(2.0, 0.1)
     target.isExact shouldBe false
   }
 
@@ -47,6 +55,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.p(2) shouldBe Probability(1, 2)
     target.p(4) shouldBe Probability.Impossible
   }
+  // TODO test for Gaussian
 
   behavior of "p(t,t)"
   it should "work for exact" in {
@@ -55,29 +64,30 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.p(2.00001, 3) shouldBe Probability.Impossible
     target.p(0, 1.9999) shouldBe Probability.Impossible
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded" in {
     val target = Bounded(2.0, 1.0)
     target.p(0, 5) shouldBe Probability.Certain
     target.p(3, 4) shouldBe Probability.Impossible
     target.p(2, 4) shouldBe Probability(1, 2)
     target.p(2.5, 4) shouldBe Probability(1, 4)
   }
+  // TODO test for Gaussian
 
   behavior of "compare"
   it should "work for exact" in {
     val target = Exact(2.0)
     target.compareTo(Exact(2.0)) shouldBe 0
   }
-  it should "work for simple bounded (exact)" in {
+  it should "work for bounded (exact)" in {
     val target = Bounded(2.0, 1.0)
     target.compareTo(Exact(2.0)) shouldBe 0
     target.compareTo(Bounded(2.0, 1.0)) shouldBe 0
   }
-
-  it should "work for simple bounded (fuzzy)" in {
+  it should "work for bounded (fuzzy)" in {
     val target = Bounded(2.0, 1.0)
     target.compareTo(Bounded(1.5, 1.0)) shouldBe 0
   }
+  // TODO test for Gaussian
 
   behavior of "map"
   it should "work for exact" in {
@@ -86,13 +96,14 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.apply() shouldBe Rational.one[Int]
     target.isExact shouldBe true
   }
-  it should "work for simple bounded" in {
+  it should "work for bounded" in {
     val two = Bounded(2.0, 1.0)
     val target = two.map(_ * 0.5, _ * 0.5).asInstanceOf[NumericFuzzy[Double]]
     target() shouldBe 1.0
     target.fuzziness shouldBe 0.5
     target.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
   behavior of "map2"
   it should "work for exact" in {
@@ -126,6 +137,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe 0.001
     target.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
   behavior of "plus"
   it should "work for exact" in {
@@ -157,6 +169,17 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target1: NumericFuzzy[Double] = two.plus(ten)
     target1() shouldBe 12.0
     target1.fuzziness shouldBe 0.11
+    target1.isExact shouldBe false
+    val target2: NumericFuzzy[Double] = ten.plus(two)
+    target2 shouldBe target1
+  }
+  it should "work for Gaussian" in {
+    val two = Gaussian(2.0, 0.01)
+    val ten = Gaussian(10.0, 0.1)
+    val target1: NumericFuzzy[Double] = two.plus(ten)
+    target1() shouldBe 12.0
+    // CHECK
+    target1.fuzziness * target1.fuzziness shouldBe 0.1 * 0.1 + 0.01 * 0.01
     target1.isExact shouldBe false
     val target2: NumericFuzzy[Double] = ten.plus(two)
     target2 shouldBe target1
@@ -198,6 +221,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target2.fuzziness shouldBe 0.11
     target2.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
   behavior of "invert"
   it should "work for exact" in {
@@ -229,6 +253,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target: NumericFuzzy[Double] = two * invertedTwo
     target shouldBe Bounded(1.0, 1.0E-4)
   }
+  // TODO test for Gaussian
 
   behavior of "times"
   it should "work for exact" in {
@@ -274,6 +299,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target2: NumericFuzzy[Rational[Int]] = ten.times(two)
     target2 shouldBe target1
   }
+  // TODO test for Gaussian
 
   behavior of "div"
   it should "work for exact" in {
@@ -330,6 +356,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target2: NumericFuzzy[Double] = two.times(ten.invert)
     target1 shouldBe target2
   }
+  // TODO test for Gaussian
 
   behavior of "power(int)"
   it should "work for exact" in {
@@ -387,6 +414,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target1: NumericFuzzy[Double] = two.power(0)
     target1 shouldBe Exact(1.0)
   }
+  // TODO test for Gaussian
 
   behavior of "negate"
   it should "work for exact" in {
@@ -397,6 +425,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Bounded(2.0, 1.0).negate
     target shouldBe Bounded(-2.0, 1.0)
   }
+  // TODO test for Gaussian
 
   behavior of "+"
   it should "work for exact" in {
@@ -432,6 +461,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target2: NumericFuzzy[Double] = ten + two
     target2 shouldBe target1
   }
+  // TODO test for Gaussian
 
   behavior of "-"
   it should "work for exact" in {
@@ -469,6 +499,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target2.fuzziness shouldBe 0.11
     target2.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
   behavior of "*"
   it should "work for exact" in {
@@ -514,6 +545,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target2: NumericFuzzy[Rational[Int]] = ten * two
     target2 shouldBe target1
   }
+  // TODO test for Gaussian
 
   behavior of "/"
   it should "work for exact" in {
@@ -563,6 +595,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target2.fuzziness shouldBe Rational(3, 40)
     target2.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
   behavior of "getP"
   it should "work for exact" in {
@@ -575,6 +608,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     two.getP(2.0) shouldBe Some(Probability.Certain)
     two.getP(0.0) shouldBe Some(Probability.Impossible)
   }
+  // TODO test for Gaussian
 
   behavior of "Fuzzy.pow"
   it should "work for positive power" in {
@@ -592,6 +626,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target = Fuzzy.pow(two, 0)
     target shouldBe Rational[Int](1)
   }
+  // TODO test for Gaussian
 
   behavior of "power(double)"
   it should "work for exact" in {
@@ -647,6 +682,7 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     val target1: NumericFuzzy[Double] = two.power(0.0)
     target1 shouldBe Exact(1.0)
   }
+  // TODO test for Gaussian
 
   behavior of "exp"
   it should "work for exact" in {
@@ -669,5 +705,6 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
     target.fuzziness shouldBe math.E * math.E / 10 +- 0.000000000000005
     target.isExact shouldBe false
   }
+  // TODO test for Gaussian
 
 }
