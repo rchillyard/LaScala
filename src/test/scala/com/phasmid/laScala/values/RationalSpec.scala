@@ -30,7 +30,7 @@ class RationalSpec extends FlatSpec with Matchers {
     Rational.zero.toInt should be(0)
   }
   it should "equal infinity when inverted" in {
-    Rational.zero.invert shouldBe 'infinity
+    Rational.zero.reciprocal shouldBe 'infinity
   }
   it should "equal BigDecimal.zero" in {
     Rational.zero.toBigDecimal shouldBe BigDecimal(0)
@@ -85,10 +85,10 @@ class RationalSpec extends FlatSpec with Matchers {
     Rational.one.toInt should be(1)
   }
   it should "not equal infinity when inverted" in {
-    Rational.one.invert should not be 'infinity
+    Rational.one.reciprocal should not be 'infinity
   }
   it should "equal itself when inverted" in {
-    Rational.one.invert should be(Rational.one)
+    Rational.one.reciprocal should be(Rational.one)
   }
   it should "equal BigDecimal.one" in {
     Rational.one.toBigDecimal shouldBe BigDecimal(1)
@@ -158,7 +158,7 @@ class RationalSpec extends FlatSpec with Matchers {
     (Rational(2, 3) * 3 toInt) should be(2)
   }
   it should "equal 3/2 when inverted" in {
-    Rational(2, 3).invert should be(Rational(3, 2))
+    Rational(2, 3).reciprocal should be(Rational(3, 2))
   }
   it should "equal 5/3 when added to 1" in {
     (Rational.one + Rational(2, 3)) should be(Rational(5, 3))

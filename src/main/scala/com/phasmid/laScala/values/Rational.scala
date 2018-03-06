@@ -3,6 +3,7 @@ package com.phasmid.laScala.values
 import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.math.BigDecimal
+import scala.util._
 
 
 /**
@@ -14,15 +15,9 @@ import scala.math.BigDecimal
   *
   * @author scalaprof
   */
-class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[Rational[N]] {
+class Rational[N: FiniteIntegral](numerator: N, denominator: N) {
 
   type Builder = (N, N) => Rational[N]
-
-  def n: N = numerator
-
-  def d: N = denominator
-
-  private val i = FiniteIntegral[N]
 
   // Pre-conditions:
 
@@ -57,6 +52,8 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     * @return the hash code for this object.
     */
   override def hashCode(): Int = super.hashCode()
+
+  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (cf(d, 100000) > 0 || isExactDouble) toDouble.toString else toRationalString
 
   // Operators
 
@@ -107,7 +104,14 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     */
   def ^(exponent: Int): Rational[N] = power(exponent)
 
-  // Instance methods required by the operators defined above
+  /**
+    * Method to invert this
+    *
+    * @return this but with the numerator and denominator swapped
+    */
+  def reciprocal: Rational[N] = invert
+
+  // Private instance methods required by the operators defined above
 
   /**
     * Method to negate this
@@ -121,7 +125,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     *
     * @return this but with the numerator and denominator swapped
     */
-  def invert(implicit builder: Builder): Rational[N] = builder(d, n)
+  private def invert(implicit builder: Builder): Rational[N] = builder(d, n)
 
   /**
     * Raise this to the power of x. A tail-recursive method to perform x multiplications is used
@@ -169,21 +173,27 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     *
     * invokes toBigDecimal and converts that to Double
     *
-    * @return a Double corresponding to this Rational[N]
+    * @return a Double corresponding to this Rational[N] or a Double.Nan if that is impossible
     */
-  def toDouble: Double = toBigDecimal.toDouble
+  def toDouble: Double = toBigDecimal map (_.toDouble) getOrElse(Double.NaN)
 
   /**
     * Method to convert this Rational[N] to a BigDecimal
     *
     * @return a BigDecimal corresponding to this Rational[N]
     */
-  def toBigDecimal: BigDecimal = d match {
-    case 0 => throw new RationalException("value is infinite")
-    case _ => BigDecimal(i.toBigInt(n)) / BigDecimal(i.toBigInt(d))
+  def toBigDecimal: Try[BigDecimal] = d match {
+    case 0 => Failure(new RationalException("value is infinite"))
+    case _ => Try(BigDecimal(i.toBigInt(n)) / BigDecimal(i.toBigInt(d)))
   }
 
   // Other methods appropriate to Rational[N]
+
+  def floor: N = i.quot(n, d)
+
+  def n: N = numerator
+
+  def d: N = denominator
 
   /**
     * The signum of this Rational[N]
@@ -192,21 +202,19 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     */
   def signum: Int = i.signum(n)
 
-  def isNaN: Boolean = isZero && isInfinity
+   def isNaN: Boolean = isZero && isInfinity
 
-  def isWhole: Boolean = is(d, 1)
+   def isWhole: Boolean = is(d, 1)
 
-  def isZero: Boolean = is(n, 0)
+   def isZero: Boolean = is(n, 0)
 
-  def isUnity: Boolean = is(n, 1) && isWhole
+   def isUnity: Boolean = is(n, 1) && isWhole
 
-  def isInfinity: Boolean = is(d, 0)
+   def isInfinity: Boolean = is(d, 0)
 
-  def floor: N = i.quot(n, d)
+   def toRationalString = s"$n/$d"
 
-  def toRationalString = s"$n/$d"
-
-  def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
+  private def isExactDouble: Boolean = Rational_Cross.isExactDouble(this)
 
   //noinspection ScalaUnusedSymbol
   private def cf(x: N, y: N) = Rational.cf(x, y)
@@ -218,7 +226,8 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
 
   private def is(x: N, y: Int) = Rational.is(x, y)
 
-  override def toString: String = if (isInfinity) "infinity" else if (isWhole) toLong.toString else if (cf(d, 100000) > 0 || isExactDouble) toDouble.toString else toRationalString
+  private val i = FiniteIntegral[N]
+
 }
 
 class RationalException(s: String, x: Exception = null) extends Exception(s, x)
@@ -291,7 +300,7 @@ object Rational {
     val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
       case rRat(n) => apply(i.fromString(n))
-      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn'x
+      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
       case rRat(n, _, null) => apply(i.fromString(n))
       // XXX we need to watch out for NotNumber exceptions
       case rRat(n, _, d) => Rational.normalize[N](i.fromString(n), i.fromString(d))
