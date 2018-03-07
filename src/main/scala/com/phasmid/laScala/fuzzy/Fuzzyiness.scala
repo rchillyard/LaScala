@@ -2,7 +2,7 @@ package com.phasmid.laScala.fuzzy
 
 import scala.reflect.ClassTag
 
-trait Fuzziness[T, X] extends Probability[T, X] {
+trait Fuzziness[T, X] extends (()=>Probability[T, X]) {
   /**
     * If T is a continuous variable, tfo will provide Some appropriate Fractional,
     * otherwise, it will be None.
@@ -13,6 +13,8 @@ trait Fuzziness[T, X] extends Probability[T, X] {
 }
 
 case class ContinuousFuzziness[T: Fractional, X: Fractional](f: T=>X) extends Fuzziness[T, X] {
+  lazy val p = PDF(f)
+
   /**
   * If T is a continuous variable, tfo will provide Some appropriate Fractional,
   * otherwise, it will be None.
@@ -21,9 +23,7 @@ case class ContinuousFuzziness[T: Fractional, X: Fractional](f: T=>X) extends Fu
   */
   def tfo: Option[Fractional[T]] = Some(implicitly[Fractional[T]])
 
-  def isPdf: Boolean = true
-
-  def apply(t: T): X = f(t)
+  override def apply(): Probability[T, X] = p
 }
 
 object Fuzziness {

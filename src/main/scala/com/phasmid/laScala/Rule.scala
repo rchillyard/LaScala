@@ -248,15 +248,15 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
 object Rule {
   def convertFromStringRuleToValuableRule[X: Valuable](rt: Try[Rule[String]], lookup: String => Option[X]): Try[Rule[X]] = {
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
-    implicit val f = lookup
+    implicit val f: String => Option[X] = lookup
     val evaluateExpression: (String) => Try[X] = { s => RPN.evaluate[X](s) }
     for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
   }
 
   def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit pattern: String): Try[Rule[X]] = {
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
-    implicit val f = lookup
-    implicit val pattern = ""
+    implicit val f: String => Option[X] = lookup
+    implicit val pattern: String = ""
     val evaluateExpression: (String) => Try[X] = { s => Comparand.evaluate[X](s) }
     for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
   }

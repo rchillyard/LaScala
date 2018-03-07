@@ -175,7 +175,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) {
     *
     * @return a Double corresponding to this Rational[N] or a Double.Nan if that is impossible
     */
-  def toDouble: Double = toBigDecimal map (_.toDouble) getOrElse(Double.NaN)
+  def toDouble: Double = toBigDecimal map (_.toDouble) getOrElse Double.NaN
 
   /**
     * Method to convert this Rational[N] to a BigDecimal

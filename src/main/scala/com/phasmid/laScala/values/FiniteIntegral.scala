@@ -123,6 +123,7 @@ object FiniteIntegral {
     * Trait which enables Integral objects to be used in type classes where the
     */
   trait BigIntIsFiniteIntegral extends BigIntIsIntegral with FiniteIntegral[BigInt] with Ordering.BigIntOrdering {
+    implicit object IntIsFiniteIntegral extends IntIsFiniteIntegral
     def fromBigInt(n: BigInt): BigInt = n
 
     override def toInt(x: BigInt): Int = IntIsFiniteIntegral.fromBigInt(x)

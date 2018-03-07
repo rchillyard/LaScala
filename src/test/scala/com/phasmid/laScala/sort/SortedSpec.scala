@@ -9,6 +9,8 @@ import com.phasmid.laScala.sort.Comparison._
 import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.language.postfixOps
+
 /**
   * @author scalaprof
   */

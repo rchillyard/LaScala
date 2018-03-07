@@ -87,14 +87,14 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Double] should matchPattern { case None => }
   }
   it should "be Some(date) for asOrderable where string is a date" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = Scalar("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work with month names" in {
-    implicit val pattern = "dd-MMM-yy"
+    implicit val pattern: String = "dd-MMM-yy"
     val formatter = DateTimeFormatter.ofPattern(pattern)
     //noinspection ScalaUnusedSymbol
     // CONSIDER something with this
@@ -168,7 +168,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.renderFormatted("%3.1f") shouldBe "0.5"
   }
   "DateScalar" should "work" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = DateScalar("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
@@ -177,7 +177,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work work without leading 0s" in {
-    implicit val pattern = "y-M-d"
+    implicit val pattern: String = "y-M-d"
     val x = DateScalar("2016-7-7")
     x.asBoolean should matchPattern { case None => }
     x.asValuable[Int] should matchPattern { case None => }
@@ -189,7 +189,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     x shouldBe DateScalar(LocalDate.of(2016, 7, 10))
   }
   it should "render correctly" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = DateScalar("2016-07-10")
     x.render() shouldBe "2016-07-10"
   }
@@ -211,7 +211,7 @@ class ScalarSpec extends FlatSpec with Matchers with Inside {
     xs.tail.head shouldBe 1.0
   }
   it should "work with real dates" in {
-    implicit val pattern = "MMM dd, yyyy"
+    implicit val pattern: String = "MMM dd, yyyy"
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Scalar] = Scalar.sequence(dates)
     val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])

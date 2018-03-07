@@ -20,7 +20,7 @@ object Quicksort {
   def qsort[E, D[E] <: Seq[E]]
   (s: D[E])(c: (E, E) => Int)
   (implicit cbf: CanBuildFrom[D[E], E, D[E]]): D[E] = {
-    if (s.size <= 1)
+    if (s.lengthCompare(1) <= 0)
       s
     else {
       val pivot = s(s.size / 2)

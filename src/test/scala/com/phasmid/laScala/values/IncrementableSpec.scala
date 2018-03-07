@@ -56,7 +56,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
 
   "1" should "increment by one" in {
     import Incrementable.IncrementableInt
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val xt = for (x <- IncrementableInt.fromString("1"); y <- IncrementableInt.increment(x)) yield y
     xt should matchPattern { case Success(_) => }
     inside(xt) {
@@ -65,7 +65,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
     }
   }
   "2016-01-01" should "increment by one day" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val incrementable = Incrementable[LocalDate]
     val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d)) yield x
     dt should matchPattern { case Success(_) => }
@@ -75,7 +75,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
     }
   }
   it should "increment by two days" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val incrementable = Incrementable[LocalDate]
     val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d, 2)) yield x
     dt should matchPattern { case Success(_) => }
@@ -85,7 +85,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
     }
   }
   it should "increment by one week" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val incrementable = Incrementable[LocalDate]
     val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d, by = "w")) yield x
     dt should matchPattern { case Success(_) => }
@@ -95,7 +95,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
     }
   }
   it should "increment by two months" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val incrementable = Incrementable[LocalDate]
     val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d, 2, "m")) yield x
     dt should matchPattern { case Success(_) => }
@@ -105,7 +105,7 @@ class IncrementableSpec extends FlatSpec with Matchers with Inside {
     }
   }
   it should "decrement by one year" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val incrementable = Incrementable[LocalDate]
     val dt = for (d <- incrementable.fromString("2016-01-01"); x <- incrementable.increment(d, -1, "y")) yield x
     dt should matchPattern { case Success(_) => }

@@ -7,7 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.RenderableFunction.{asFunctionType, callByValue}
 import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -84,7 +84,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   * Companion object to Closure
   */
 object Closure {
-  private implicit val logger = LoggerFactory.getLogger(getClass)
+  private implicit val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
     case Success(r) => logger.debug(s"$w: $r"); ry
@@ -139,7 +139,7 @@ object Closure {
     val n = (tss map (_.size)) sum
 
     assert(tps.length == n + m, s"${tps.length} should equal $n+$m")
-    assert(tss.length == m + 1, s"${tss.length} should equal $m+1")
+    assert(tss.lengthCompare(m + 1) == 0, s"${tss.length} should equal $m+1")
 
     val f = m match {
       case 0 =>

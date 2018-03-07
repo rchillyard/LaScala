@@ -242,7 +242,7 @@ object FP {
     */
   def trial[X, Y](f: X => Y)(x: => X): Try[Y] = lift(f)(Try(x))
 
-  implicit val limit = 25
+  implicit val limit: Int = 25
 
   /**
     * TODO unit test

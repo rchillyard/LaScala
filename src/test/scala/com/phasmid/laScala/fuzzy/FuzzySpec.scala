@@ -7,7 +7,6 @@ package com.phasmid.laScala.fuzzy
 
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.math.Numeric.DoubleIsFractional
 import scala.reflect.ClassTag
 
 /**
@@ -32,7 +31,7 @@ class FuzzySpec extends FlatSpec with Matchers {
   }
   it should "support get" in {
     val x = Exact(1)
-    x() shouldBe 1
+    x() shouldBe Some(1)
   }
   it should "support pdf" in {
     val x = Exact(1)

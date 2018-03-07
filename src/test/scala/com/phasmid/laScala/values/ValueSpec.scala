@@ -60,7 +60,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asValuable[Double] should matchPattern { case None => }
   }
   it should "be Some(date) for asOrderable where string is a date" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = Value("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
@@ -117,7 +117,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x shouldBe DoubleValue(1.0)
   }
   "DateValue" should "work out of the box" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = DateValue("2016-07-10")
     x.source shouldBe "2016-07-10"
     x.asBoolean should matchPattern { case None => }
@@ -126,7 +126,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }
   it should "work with single digits given appropriate pattern" in {
-    implicit val pattern = "y-M-d"
+    implicit val pattern: String = "y-M-d"
     val x = DateValue("2016-7-10")
     x.source shouldBe "2016-7-10"
     x.asBoolean should matchPattern { case None => }
@@ -140,7 +140,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   "SequenceValue" should "work" in {
     val xs = Seq("2016-07-10", 1, """Hello""")
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x: SequenceValue = SequenceValue(xs)
     x.source shouldBe xs
     x.asBoolean should matchPattern { case None => }
@@ -148,7 +148,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
   }
   it should "work with embedded sequence" in {
     val xs = Seq("2016-07-10", 1, """Hello""", List(1, 2))
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x: SequenceValue = SequenceValue(xs)
     x.source shouldBe xs
     x.asBoolean should matchPattern { case None => }
@@ -162,7 +162,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
       }
     }
     val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = Value.sequence(xs)
     for (vs <- x.asSequence) yield vs.size shouldBe 14
   }
@@ -192,12 +192,12 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     }
     val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
     val wWm = Map("expirations" -> xs)
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val x = Value.sequence(wWm)
     for (vs <- x.values; v <- vs.asSequence) yield v.size shouldBe 14
   }
   it should "work with real dates" in {
-    implicit val pattern = "MMM dd, yyyy"
+    implicit val pattern: String = "MMM dd, yyyy"
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Value] = Value.sequence(dates)
     val variables: Map[String, Option[LocalDate]] = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])

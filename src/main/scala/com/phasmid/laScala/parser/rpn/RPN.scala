@@ -19,7 +19,7 @@ case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] 
 
 case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
   // CONSIDER move this into implicit parameter
-  implicit val pattern = ""
+  implicit val pattern: String = ""
 
   def evaluate: Try[X] = Valuable[X].fromString(n)
 }
@@ -41,7 +41,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
 
   def evaluate: Try[X] = {
     // CONSIDER moving this into implicit parameter
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val (xt, xts) = inner(stack)
     if (xts.isEmpty) xt
     else Failure[X](new Exception(s"logic error: remaining values: $xts"))

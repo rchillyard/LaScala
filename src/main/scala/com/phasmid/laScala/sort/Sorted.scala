@@ -7,7 +7,7 @@ package com.phasmid.laScala.sort
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, postfixOps}
 
 trait Comparer[T] extends (((T, T)) => Comparison) {
   self =>

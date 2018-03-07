@@ -1145,7 +1145,7 @@ object UnvaluedBinaryTree {
       */
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
       case Branch(oa1, ns1) => y match {
-        case Branch(oa2, ns2) => ns1.size == ns2.size && Kleenean(map2(oa1, oa2)(_ == _)).toBoolean(true) && ((ns1 zip ns2) forall (p => nodesAlike(p._1, p._2)))
+        case Branch(oa2, ns2) => ns1.lengthCompare(ns2.size) == 0 && Kleenean(map2(oa1, oa2)(_ == _)).toBoolean(true) && ((ns1 zip ns2) forall (p => nodesAlike(p._1, p._2)))
         case _ => false
       }
       case _ => x == y
@@ -1173,7 +1173,7 @@ object BinaryTree {
       */
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
       require(maybeValue.isDefined, "value must be defined for BinaryTree")
-      require(children.size == 2, "children must define exactly two nodes")
+      require(children.lengthCompare(2) == 0, "children must define exactly two nodes")
       BinaryTree(maybeValue.get, children.head, children.tail.head)
     }
 
@@ -1257,7 +1257,7 @@ object AbstractBinaryTree {
     */
   def isOrdered(is: Seq[Int]): Maybe = {
     val distinct = is.distinct
-    if (distinct.size == 1)
+    if (distinct.lengthCompare(1) == 0)
       Kleenean(distinct.head).deny
     else
       Kleenean(None)

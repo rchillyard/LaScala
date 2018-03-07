@@ -7,6 +7,7 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Tuple0
 import com.phasmid.laScala.{Prefix, Renderable}
+import org.slf4j.Logger
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -30,12 +31,12 @@ import scala.util._
   */
 case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable with Serializable {
 
-  implicit private val logger = Spy.getLogger(getClass)
+  implicit private val logger: Logger = Spy.getLogger(getClass)
 
   require(f != null, s"f is null")
   require(w != null, s"w is null")
   require(w.arity == arity, s"arity $arity is not consistent with $w")
-  require(cbn.size == arity, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
+  require(cbn.lengthCompare(arity) == 0, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
 
   private val rc = implicitly[ClassTag[R]]
   private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
@@ -270,7 +271,7 @@ case class FunctionString(f: String, ps: List[Param]) {
     *         BOTH the original is free AND the optional String is Some(_)
     */
   def bind(wos: Seq[Option[Either[String, FunctionString]]]): Seq[Param] = {
-    require(wos.length <= ps.length, s"wos is too long (${wos.length}) for this FunctionString: $this")
+    require(wos.lengthCompare(ps.length) <= 0, s"wos is too long (${wos.length}) for this FunctionString: $this")
 
     @tailrec def inner(result: Seq[Param], work: Seq[(Param, Option[Either[String, FunctionString]])]): Seq[Param] = {
       work match {
@@ -412,19 +413,19 @@ object RenderableFunction {
     apply(7, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 7, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: FunctionString, cbn: List[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(8, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 8, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 8, cbn), cbn)
 
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: FunctionString, cbn: List[Boolean]): RenderableFunction[R] = asserting(f != null && w != null, "f or w is null",
     apply(9, w, cbn, List(implicitly[ClassTag[T1]], implicitly[ClassTag[T2]], implicitly[ClassTag[T3]], implicitly[ClassTag[T4]], implicitly[ClassTag[T5]], implicitly[ClassTag[T6]], implicitly[ClassTag[T7]], implicitly[ClassTag[T8]], implicitly[ClassTag[T9]]))(asTupledFunctionType(f))
   )
 
-  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn.toList)
+  def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn)
 
 
   def callByName(n: Int): List[Boolean] = (Stream.continually(true) take n).toList
@@ -656,7 +657,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g2 = asFunctionType { x: (T, T) => f2i(x._1)(x._2) }
-          RenderableFunction(n, w.invert(n), cbni.toList, csi)(g2)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g2)
         case 3 =>
           val f3 = FP.untupled[T, T, T, R](f).curried
           val f3i = n match {
@@ -665,7 +666,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g3 = asFunctionType { x: (T, T, T) => f3i(x._1)(x._2)(x._3) }
-          RenderableFunction(n, w.invert(n), cbni.toList, csi)(g3)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g3)
         case 4 =>
           val f4 = FP.untupled[T, T, T, T, R](f).curried
           val f4i = n match {
@@ -675,7 +676,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g4 = asFunctionType { x: (T, T, T, T) => f4i(x._1)(x._2)(x._3)(x._4) }
-          RenderableFunction(n, w.invert(n), cbni.toList, csi)(g4)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g4)
         case 5 =>
           val f5 = FP.untupled[T, T, T, T, T, R](f).curried
           val f5ci = n match {
@@ -686,7 +687,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g5 = asFunctionType { x: (T, T, T, T, T) => f5ci(x._1)(x._2)(x._3)(x._4)(x._5) }
-          RenderableFunction(n, w.invert(n), cbni.toList, csi)(g5)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g5)
         case 6 =>
           val f6 = FP.untupled[T, T, T, T, T, T, R](f).curried
           val f6i = n match {
@@ -698,7 +699,7 @@ object RenderableFunction {
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
           val g6 = asFunctionType { x: (T, T, T, T, T, T) => f6i(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
-          RenderableFunction(n, w.invert(n), cbni.toList, csi)(g6)
+          RenderableFunction(n, w.invert(n), cbni, csi)(g6)
         case _ => throw RenderableFunctionException(s"invert with arity $arity is not supported")
       }
     }
