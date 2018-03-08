@@ -44,7 +44,7 @@ jobs:
       # run tests!
       - run: cat /dev/null | sbt "testOnly -- -l org.scalatest.tags.Slow"
       
-      - run: cat /dev/null | sbt publish-local
+      - run: cat /dev/null | sbt publishLocal
       
       - store_artifacts:
           path: /home/circleci/.ivy2/local
