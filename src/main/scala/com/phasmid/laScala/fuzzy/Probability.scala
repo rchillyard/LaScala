@@ -33,7 +33,7 @@ case class PDF[T, X: Numeric](f: T=>X) extends ProbabilityBase[T,X] { self =>
 
   override def ! : Probability[T, X] = build(
     f match {
-      case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering,implicitly[Numeric[X]])
+      case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering.asInstanceOf[Ordering[T]],implicitly[Numeric[X]])
       case _ => t: T => Probability.!(self(t))
     }
 
@@ -122,6 +122,7 @@ case class IndependentEvents[T, X: Fractional](events: (T,X)*) extends Probabili
 trait CompleteNumeric[N] extends Fractional[N] {
   def convert[F: Fractional](f: F): N = {
     import com.phasmid.laScala.values.FiniteIntegral.IntIsFiniteIntegral
+    println(s"convert $f")
     val b = Rational(implicitly[Fractional[F]].toDouble(f))
     this.div(this.fromInt(b.n), this.fromInt(b.d))
   }

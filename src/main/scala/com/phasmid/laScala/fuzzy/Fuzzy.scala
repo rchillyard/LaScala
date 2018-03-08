@@ -119,14 +119,23 @@ case class Bounded[T: Fractional: ClassTag](t: T, bound: T) extends ExtendedCont
 }
 
 object Bounded {
+
   def pdf[T : Fractional](nominal: T, bound: T): T=>Double = {
-    _ =>
-      val tf = implicitly[Fractional[T]]
-      val z = tf.toDouble(tf.div(tf.one, tf.times(tf.fromInt(2), bound)))
-      println(s"z: $z")
-      if (tf.compare(tf.abs(tf.minus(nominal,bound)),tf.zero)>=0) z
-      else 0
-    }
+    val tf = implicitly[Fractional[T]]
+    val absBound = tf.abs(bound)
+    val lower = tf.minus(nominal,absBound)
+    val upper = tf.plus(nominal,absBound)
+    import com.phasmid.laScala.fuzzy.CompleteNumeric.CompleteNumericDouble
+    Probability.bounded(lower, upper)
+  }
+//  def pdf[T : Fractional](nominal: T, bound: T): T=>Double = {
+//    _ =>
+//      val tf = implicitly[Fractional[T]]
+//      val z = tf.toDouble(tf.div(tf.one, tf.times(tf.fromInt(2), bound)))
+//      println(s"z: $z")
+//      if (tf.compare(tf.abs(tf.minus(nominal,bound)),tf.zero)>=0) z
+//      else 0
+//    }
 
 }
 
