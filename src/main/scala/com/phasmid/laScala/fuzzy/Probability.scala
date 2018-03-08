@@ -1,9 +1,10 @@
 package com.phasmid.laScala.fuzzy
 
-import com.phasmid.laScala.values.Rational
+import com.phasmid.laScala.values.Rational.RationalIsFractional
+import com.phasmid.laScala.values.{Rational, RationalException}
 
 import scala.language.postfixOps
-import scala.math.Numeric.DoubleIsFractional
+import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 
 
 trait Probability[-T, +X] extends (T=>X){
@@ -32,7 +33,7 @@ case class PDF[T, X: Numeric](f: T=>X) extends ProbabilityBase[T,X] { self =>
 
   override def ! : Probability[T, X] = build(
     f match {
-      case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering.asInstanceOf[Ordering[T]],implicitly[Numeric[X]])
+      case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering,implicitly[Numeric[X]])
       case _ => t: T => Probability.!(self(t))
     }
 
@@ -131,4 +132,39 @@ object CompleteNumeric {
     def compare(x: Double, y: Double): Int = x.compareTo(y)
   }
   implicit object CompleteNumericDouble extends CompleteNumericDouble
+
+  trait CompleteNumericInt extends CompleteNumeric[Int] {
+    def plus(x: Int, y: Int): Int = x + y
+    def minus(x: Int, y: Int): Int = x - y
+    def times(x: Int, y: Int): Int = x * y
+    def quot(x: Int, y: Int): Int = x / y
+    def rem(x: Int, y: Int): Int = x % y
+    def negate(x: Int): Int = -x
+    def fromInt(x: Int): Int = x
+    def toInt(x: Int): Int = x
+    def toLong(x: Int): Long = x.toLong
+    def toFloat(x: Int): Float = x.toFloat
+    def toDouble(x: Int): Double = x.toDouble
+    def compare(x: Int, y: Int): Int = x.compareTo(y)
+    def div(x: Int, y: Int): Int = if (x % y ==0) x / y else throw new RationalException(s"cannot divide $x by $y")
+  }
+  implicit object CompleteNumericInt extends CompleteNumericInt
+
+  trait CompleteNumericRational extends CompleteNumeric[Rational[Int]] {
+    def compare(x: Rational[Int], y: Rational[Int]): Int = x.compare(y)
+    def plus(x: Rational[Int], y: Rational[Int]): Rational[Int] = x + y
+    def minus(x: Rational[Int], y: Rational[Int]): Rational[Int] = x - y
+    def times(x: Rational[Int], y: Rational[Int]): Rational[Int] = x * y
+    def quot(x: Rational[Int], y: Rational[Int]): Rational[Int] = x / y
+    def rem(x: Rational[Int], y: Rational[Int]): Rational[Int] = throw new RationalException(s"rem operator isn't implemented")
+    def negate(x: Rational[Int]): Rational[Int] = -x
+    def fromInt(x: Int): Rational[Int] = x
+    def toInt(x: Rational[Int]): Int = x.toInt
+    def toLong(x: Rational[Int]): Long = x.toLong
+    def toFloat(x: Rational[Int]): Float = x.toFloat
+    def toDouble(x: Rational[Int]): Double = x.toDouble
+    def div(x: Rational[Int], y: Rational[Int]): Rational[Int] = x / y
+  }
+  implicit object CompleteNumericRational extends CompleteNumericRational
+
 }

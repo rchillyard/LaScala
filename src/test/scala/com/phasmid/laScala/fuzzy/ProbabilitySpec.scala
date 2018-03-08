@@ -65,9 +65,29 @@ class ProbabilitySpec extends FlatSpec with Matchers {
     x(-1) shouldBe 1
   }
 
+  it should "| correctly" in {
+    val x: Probability[Int, Int] = Probability.step(0)
+    val y: Probability[Int, Int] = x.!
+    val z: Probability[Int, Int] = x|y
+    z(1) shouldBe 1
+    z(0) shouldBe 1
+    z(-1) shouldBe 1
+  }
+
+  it should "& correctly" in {
+    val x: Probability[Int, Int] = Probability.step(0)
+    val y: Probability[Int, Int] = x.!
+    // NOTE: x&y is the Dirac Delta function
+    val dirac: Probability[Int, Int] = x&y
+    dirac(1) shouldBe 0
+    dirac(0) shouldBe 1
+    dirac(-1) shouldBe 0
+  }
+
   behavior of "bounded"
 
   it should "apply correctly" in {
+    import com.phasmid.laScala.fuzzy.CompleteNumeric.CompleteNumericDouble
     val x = Probability.bounded(-1.0,1.0)
     x(-2.0) shouldBe 0.0 +- 0.00000001
     x(-1.0) shouldBe 0.5 +- 0.00000001
@@ -77,6 +97,7 @@ class ProbabilitySpec extends FlatSpec with Matchers {
   }
 
   it should "! correctly" in {
+    import com.phasmid.laScala.fuzzy.CompleteNumeric.CompleteNumericDouble
     val x = Probability.bounded(-1.0,1.0).!
     x(-2.0) shouldBe 1.0 +- 0.00000001
     x(-1.0) shouldBe 0.5 +- 0.00000001
@@ -86,7 +107,9 @@ class ProbabilitySpec extends FlatSpec with Matchers {
   }
 
   it should "& correctly" in {
-    import Rational.{RationalHelper, RationalIsFractionalInt, RationalIsInt}
+    import Rational.{RationalHelper}
+    import Numeric.DoubleIsFractional
+
     val x: Probability[Double, Rational[Int]] = Probability.bounded[Double, Rational[Int]](-1,1)
       val z = x & x
     val y = z(1)

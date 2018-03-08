@@ -45,7 +45,6 @@ case class Exact[T](t: T) extends Fuzzy[T, Nothing] {
     * Get method to return an exact value
     *
     * @return the exact value of this Fuzzy, otherwise an exception is thrown
-    * @throws FuzzyException
     */
   override def apply(): Option[T] = Some(t)
 
@@ -121,7 +120,7 @@ case class Bounded[T: Fractional: ClassTag](t: T, bound: T) extends ExtendedCont
 
 object Bounded {
   def pdf[T : Fractional](nominal: T, bound: T): T=>Double = {
-    t =>
+    _ =>
       val tf = implicitly[Fractional[T]]
       val z = tf.toDouble(tf.div(tf.one, tf.times(tf.fromInt(2), bound)))
       println(s"z: $z")

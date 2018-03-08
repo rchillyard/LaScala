@@ -15,7 +15,7 @@ import scala.util._
   *
   * @author scalaprof
   */
-class Rational[N: FiniteIntegral](numerator: N, denominator: N) {
+class Rational[N: FiniteIntegral](numerator: N, denominator: N) {// extends Ordered[Rational[N]] {
 
   type Builder = (N, N) => Rational[N]
 
@@ -125,7 +125,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) {
     *
     * @return this but with the numerator and denominator swapped
     */
-  private def invert(implicit builder: Builder): Rational[N] = builder(d, n)
+  def invert(implicit builder: Builder): Rational[N] = builder(d, n)
 
   /**
     * Raise this to the power of x. A tail-recursive method to perform x multiplications is used
