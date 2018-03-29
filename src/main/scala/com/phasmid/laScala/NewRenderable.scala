@@ -1,6 +1,6 @@
 package com.phasmid.laScala
 
-import com.phasmid.laScala.Renderable.MAX_ELEMENTS
+import com.phasmid.laScala.OldRenderable.MAX_ELEMENTS
 import com.phasmid.laScala.values.Scalar
 
 import scala.util.Try
@@ -48,7 +48,7 @@ object NewRenderableInstances {
   }
 
   implicit val traversableNewRenderable: NewRenderable[Traversable[_]]  = new NewRenderable[Traversable[_]] {
-    def render(xs: Traversable[_])(indent: Int): String = RenderableTraversable(xs, max = Some(MAX_ELEMENTS)).render(indent)
+    def render(xs: Traversable[_])(indent: Int): String = OldRenderableTraversable(xs, max = Some(MAX_ELEMENTS)).render(indent)
   }
 
 }

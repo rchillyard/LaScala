@@ -5,8 +5,8 @@
 
 package com.phasmid.laScala.fp
 
-import com.phasmid.laScala.fp.RenderableFunction.{asFunctionType, callByValue}
-import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
+import com.phasmid.laScala.fp.OldRenderableFunction.{asFunctionType, callByValue}
+import com.phasmid.laScala.{Prefix, OldRenderable, OldRenderableTraversable}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
@@ -22,7 +22,7 @@ import scala.util._
   * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
+case class Closure[T, R: ClassTag](f: OldRenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with OldRenderable {
 
   //  require(Closure.nonRecursive(this), "Closure is recursive")
 
@@ -32,7 +32,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     * @return a Try[R]
     */
   def apply(): Try[R] = if (arity == 0) for (g <- partiallyApply; h <- g.f.callByName()) yield h
-  else Failure(RenderableFunctionException(s"cannot evaluate this closure (with arity $arity): $this"))
+  else Failure(OldRenderableFunctionException(s"cannot evaluate this closure (with arity $arity): $this"))
 
   /**
     * Method to partially apply this Closure, resulting in a RenderableFunction (i.e. a Closure without any parameters).
@@ -72,7 +72,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   override def toString(): String = render()
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
-    implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
+    implicit def renderableTraversable(xs: Traversable[_]): OldRenderable = OldRenderableTraversable(xs, " ,)")
 
     val z = ps.render(indent)
     s"Closure($f," + z
@@ -151,11 +151,11 @@ object Closure {
       case 3 =>
         logger.warn(s"getVarArgsFunction: used the highest supported value of n ($m)")
         asFunctionType { x: (T, T, T) => (tss.head ++: Some(x._1) +: tss(1) ++: Some(x._2) +: tss(2) ++: Some(x._3) +: ??(tss(3))).get }
-      case _ => throw RenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
+      case _ => throw OldRenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
     }
 
     val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m).toList
-    Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
+    Closure(OldRenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
   }
 
   //  private def nonRecursive[T,R](closure: Closure[T, R]): Boolean = closure.ps.find(_.equals(closure)).isEmpty

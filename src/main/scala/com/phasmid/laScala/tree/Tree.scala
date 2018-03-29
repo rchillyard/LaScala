@@ -200,7 +200,7 @@ sealed trait Tree[+A] extends Node[A] {
   *
   * @tparam A the underlying type of the tree/node
   */
-sealed trait Node[+A] extends Renderable {
+sealed trait Node[+A] extends OldRenderable {
 
   /**
     * @return the value of this node, if any
@@ -318,7 +318,7 @@ sealed trait Node[+A] extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = //get map (_.toString) getOrElse("")
     get match {
       case Some(a) => a match {
-        case r: Renderable => r.render(indent)
+        case r: OldRenderable => r.render(indent)
         case _ => a.toString
       }
       case None => ""
@@ -408,7 +408,7 @@ trait Branch[+A] extends Tree[A] {
     */
   override def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
     val result = new StringBuilder(super.render(indent) + "--")
-    import Renderable.renderableTraversable
+    import OldRenderable.renderableTraversable
     result.append(children.render(indent))
     result.toString
   }
@@ -780,7 +780,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @return a String.
     */
   override def render(indent: Int)(implicit tab: (Int) => Prefix): String = value match {
-    case renderable: Renderable => renderable.render(indent)
+    case renderable: OldRenderable => renderable.render(indent)
     case _ => s"""${tab(indent)}$value [$lIndex:$rIndex]"""
   }
 

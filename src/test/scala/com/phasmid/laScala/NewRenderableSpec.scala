@@ -120,4 +120,4 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
   //  }
 }
 
-case class Z(x: Int, y: Double, z: Seq[String])
+//case class Z(x: Int, y: Double, z: Seq[String])
