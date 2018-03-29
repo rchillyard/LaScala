@@ -5,7 +5,7 @@ import com.phasmid.laScala.values.Scalar
 
 import scala.util.Try
 
-trait NewRenderable[A] {
+trait Renderable[A] {
   /**
     * Method to render this object in a human-legible manner.
     *
@@ -30,60 +30,60 @@ trait NewRenderable[A] {
 
 }
 
-object NewRenderableInstances {
-  implicit val stringNewRenderable: NewRenderable[String] = new NewRenderable[String] {
+object RenderableInstances {
+  implicit val stringRenderable: Renderable[String] = new Renderable[String] {
     def render(w: String)(indent: Int): String = w replaceAll("""\n""", tab(indent).toString)
   }
 
-  implicit val intNewRenderable: NewRenderable[Int] = new NewRenderable[Int] {
+  implicit val intRenderable: Renderable[Int] = new Renderable[Int] {
     def render(x: Int)(indent: Int): String = x.toString
   }
 
-  implicit val doubleNewRenderable: NewRenderable[Double] = new NewRenderable[Double] {
+  implicit val doubleRenderable: Renderable[Double] = new Renderable[Double] {
     def render(x: Double)(indent: Int): String = x.toString
   }
 
-  implicit val scalarNewRenderable: NewRenderable[Scalar] = new NewRenderable[Scalar] {
+  implicit val scalarRenderable: Renderable[Scalar] = new Renderable[Scalar] {
     def render(s: Scalar)(indent: Int): String = s.toString
   }
 
-  implicit val traversableNewRenderable: NewRenderable[Traversable[_]]  = new NewRenderable[Traversable[_]] {
+  implicit val traversableRenderable: Renderable[Traversable[_]]  = new Renderable[Traversable[_]] {
     def render(xs: Traversable[_])(indent: Int): String = OldRenderableTraversable(xs, max = Some(MAX_ELEMENTS)).render(indent)
   }
 
 }
 
-object NewRenderable {
-  def render[A](a: A)(indent: Int = 0)(implicit p: NewRenderable[A]): String = p.render(a)(indent)
+object Renderable {
+  def render[A](a: A)(indent: Int = 0)(implicit p: Renderable[A]): String = p.render(a)(indent)
 
-  implicit def renderOption[A](implicit r: NewRenderable[A]): NewRenderable[Option[A]] = new NewRenderable[Option[A]] {
+  implicit def renderOption[A](implicit r: Renderable[A]): Renderable[Option[A]] = new Renderable[Option[A]] {
     def render(ao: Option[A])(indent: Int): String = ao map { x => r.render(x)(indent) } getOrElse "None"
   }
 
-  implicit def renderTry[A](implicit r: NewRenderable[A]): NewRenderable[Try[A]] = new NewRenderable[Try[A]] {
+  implicit def renderTry[A](implicit r: Renderable[A]): Renderable[Try[A]] = new Renderable[Try[A]] {
     def render(ay: Try[A])(indent: Int): String = (ay map { a: A => r.render(a)(indent) }).recover { case t => t.getLocalizedMessage }.get
   }
 
   // CONSIDER eliminating this
-  implicit def renderIterable[A](implicit r: NewRenderable[A]): NewRenderable[Iterable[A]] = new NewRenderable[Iterable[A]] {
+  implicit def renderIterable[A](implicit r: Renderable[A]): Renderable[Iterable[A]] = new Renderable[Iterable[A]] {
     def render(a: Iterable[A])(indent: Int): String = (a map { x: A => r.render(x)(indent) }).mkString
   }
 
-  implicit def renderSeq[A](implicit r: NewRenderable[A]): NewRenderable[Seq[A]] = new NewRenderable[Seq[A]] {
+  implicit def renderSeq[A](implicit r: Renderable[A]): Renderable[Seq[A]] = new Renderable[Seq[A]] {
     def render(a: Seq[A])(indent: Int): String = {
       //      val sy: Seq[String] = a map { x: A => r.render(x)(indent) }
       // TODO what's this about reflective calls?
-      NewRenderableInstances.traversableNewRenderable.render(a)(indent)
+      RenderableInstances.traversableRenderable.render(a)(indent)
     }
   }
 }
 
-object NewRenderableSyntax {
+object RenderableSyntax {
 
-  implicit class NewRenderableOps[A](a: A) {
-    def render(implicit r: NewRenderable[A]): String = r.render(a)()
+  implicit class RenderableOps[A](a: A) {
+    def render(implicit r: Renderable[A]): String = r.render(a)()
 
-    def render(indent: Int)(implicit r: NewRenderable[A]): String = r.render(a)(indent)
+    def render(indent: Int)(implicit r: Renderable[A]): String = r.render(a)(indent)
   }
 
 }

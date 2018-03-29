@@ -18,7 +18,7 @@ import scala.util.Try
   * @author scalaprof
   */
 class OldRenderableSpec extends FlatSpec with Matchers with Inside {
-  behavior of "Renderable"
+  behavior of "OldRenderable"
   it should "render simple values like toString" in {
     Scalar("x").render(1) shouldBe "x"
   }
@@ -30,7 +30,7 @@ class OldRenderableSpec extends FlatSpec with Matchers with Inside {
     val list = Seq(Scalar("x"))
     list.render() shouldBe "(x)"
   }
-  it should "render list values with indentation (custom RenderableTraversable)" in {
+  it should "render list values with indentation (custom OldRenderableTraversable)" in {
     implicit def r(xs: Traversable[_]): OldRenderable = OldRenderableTraversable(xs, "[;]")
 
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))

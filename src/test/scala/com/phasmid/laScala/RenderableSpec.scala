@@ -16,17 +16,17 @@ import scala.util.Try
   *
   * @author scalaprof
   */
-class NewRenderableSpec extends FlatSpec with Matchers with Inside {
-  behavior of "NewRenderable"
+class RenderableSpec extends FlatSpec with Matchers with Inside {
+  behavior of "Renderable"
 
-  import NewRenderableInstances._
+  import RenderableInstances._
 
   it should "render String the hard way" in {
-    import NewRenderable._
+    import Renderable._
     render("Hello")() shouldBe "Hello"
   }
   it should "render String" in {
-    import NewRenderableSyntax._
+    import RenderableSyntax._
     "Hello".render shouldBe "Hello"
   }
   it should "render simple values like toString" in {
@@ -34,26 +34,26 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render list values with indentation" in {
     val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
-    import NewRenderableSyntax._
+    import RenderableSyntax._
     list.render shouldBe "(\n  x,\n  y,\n  z\n)"
   }
   it should "render list of length one" in {
     val list = Seq(Scalar("x"))
     list.render() shouldBe "(x)"
   }
-  //  it should "render list values with indentation (custom NewRenderableTraversable)" in {
-  //    implicit def r(xs: Traversable[_]): NewRenderable = NewRenderableTraversable(xs, "[;]")
+  //  it should "render list values with indentation (custom RenderableTraversable)" in {
+  //    implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[;]")
   //
   //    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
   //    list.render() shouldBe "[\n  x;\n  y;\n  z\n]"
   //  }
-  //  it should "limit the rendering of elements to " + NewRenderable.MAX_ELEMENTS in {
-  //    import NewRenderable.renderableTraversable
+  //  it should "limit the rendering of elements to " + Renderable.MAX_ELEMENTS in {
+  //    import Renderable.renderableTraversable
   //    val list: List[Int] = (Stream from 1 take 20).toList
   //    list.render() shouldBe "(\n  1,\n  2,\n  3,\n  4,\n  5,\n  6,\n  7,\n  8,\n  9,\n  10,\n  ...[10 more elements]\n)"
   //  }
   //  it should "render list values with a max" in {
-  //    implicit def r(xs: Traversable[_]): NewRenderable = NewRenderableTraversable(xs, max = Some(3))
+  //    implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, max = Some(3))
   //
   //    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"), Scalar(""))
   //    list.render() shouldBe "(\n  x,\n  y,\n  z,\n  ...[1 more elements]\n)"
@@ -75,7 +75,7 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
     xo.render() shouldBe "Some(x)"
   }
   //  it should "render None" in {
-  //    import NewRenderable.renderableOption
+  //    import Renderable.renderableOption
   //    val xo: Option[String] = Option(null)
   //    xo.render() shouldBe "None"
   //  }
@@ -84,8 +84,8 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
     xy.render() shouldBe "Success(x)"
   }
   //  it should "render Failure" in {
-  //    import NewRenderable.renderableTry
-  //    val xy = Try(throw NewRenderableFunctionException("test"))
+  //    import Renderable.renderableTry
+  //    val xy = Try(throw RenderableFunctionException("test"))
   //    xy.render() shouldBe "Failure(test)"
   //  }
   it should "render either values (left)" in {
@@ -98,12 +98,12 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
   }
   ////  it should "render Tuple2" in {
   ////    val t: Product = "x" -> "y"
-  ////    import NewRenderable.renderableProduct
+  ////    import Renderable.renderableProduct
   ////    t.render() shouldBe """Tuple2("x","y")"""
   ////  }
   //  it should "render case class as a Product" in {
   //    val p: Product = Z(1, Math.PI, Seq("Hello", "Goodbye"))
-  //    import NewRenderable.renderableProduct
+  //    import Renderable.renderableProduct
   //    p.render() shouldBe
   //      s"""Z(1,3.141592653589793,(
   //    "Hello",
@@ -114,7 +114,7 @@ class NewRenderableSpec extends FlatSpec with Matchers with Inside {
   //  // TODO refactor so that this test is not run for 2.10
   //  ignore should "render case class as a Case Class" in {
   //    val z = Z(1, Math.PI, Seq("Hello", "Goodbye"))
-  //    val r = NewRenderableCaseClass(z)
+  //    val r = RenderableCaseClass(z)
   //    println(r.render())
   //    r.render() shouldBe "Z(\n  x:1\n  y:3.141592653589793\n  z:(\n      \"Hello\",\n      \"Goodbye\"\n    )\n  )"
   //  }
