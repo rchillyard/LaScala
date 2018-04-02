@@ -22,7 +22,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "apply for a simple closure with no params" in {
     val name = "Hello"
     val f1: () => String = { () => "Hello" }
-    val f = OldRenderableFunction(f1, name, OldRenderableFunction.callByValue(0))
+    val f = RenderableFunction(f1, name, RenderableFunction.callByValue(0))
     val c = Closure(f)
     c.arity shouldBe 0
     c() shouldBe Success("Hello")
@@ -30,7 +30,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "apply for a simple closure" in {
     val name = "isHello"
-    val f = OldRenderableFunction({ s: String => s == "Hello" }, name, OldRenderableFunction.callByValue(1))
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f, Left("Hello"))
     c.arity shouldBe 0
     c() shouldBe Success(true)
@@ -41,7 +41,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
     def isHello(s: => String): Boolean = s == "Hello"
 
-    val f = OldRenderableFunction(isHello _, name, OldRenderableFunction.callByName(1))
+    val f = RenderableFunction(isHello _, name, RenderableFunction.callByName(1))
     val c = Closure(f, Left("Hello"))
     c.arity shouldBe 0
     c() shouldBe Success(true)
@@ -50,8 +50,8 @@ class ClosureSpec extends FlatSpec with Matchers {
   // CONSIDER investigate why this doesn't work
   ignore should "apply for a closure where the parameter is itself a Closure" in {
     val getPi: Product => String = { _ => math.Pi.toString }
-    val f1 = OldRenderableFunction({ s: String => s == "Hello" }, "isHello", OldRenderableFunction.callByValue(1))
-    val f2: OldRenderableFunction[String] = OldRenderableFunction(0, FunctionString("pi", Nil), Nil, Nil)(getPi)
+    val f1 = RenderableFunction({ s: String => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
+    val f2: RenderableFunction[String] = RenderableFunction(0, FunctionString("pi", Nil), Nil, Nil)(getPi)
     val c1 = Closure(f2)
     val c2 = Closure(f1, Right(c1))
     c2.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),Boolean](1,  isHello(a?)) \n  Right(Closure(RenderableFunction[List(),java.lang.String](0,  pi) \n      \n    ))\n)"
@@ -65,8 +65,8 @@ class ClosureSpec extends FlatSpec with Matchers {
 
     def isHello(s: => String): Boolean = s == "Hello"
 
-    val f1 = OldRenderableFunction(isHello _, "isHello", OldRenderableFunction.callByName(1))
-    val f2 = OldRenderableFunction(getPi _, "pi", Seq[Boolean]())
+    val f1 = RenderableFunction(isHello _, "isHello", RenderableFunction.callByName(1))
+    val f2 = RenderableFunction(getPi _, "pi", Seq[Boolean]())
     val c1 = Closure(f2)
     val c2 = Closure(f1, Right(c1))
     c2.arity shouldBe 0
@@ -75,7 +75,7 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "implement bind" in {
     val name = "isHello"
-    val f = OldRenderableFunction({ s: String => s == "Hello" }, name, OldRenderableFunction.callByValue(1))
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c1 = Closure[String, Boolean](f)
     c1.arity shouldBe 1
     val c2 = c1.bind(Left("Hello"))
@@ -85,11 +85,11 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "throw exception where there is no parameter" in {
     val name = "isHello"
-    val f = OldRenderableFunction({ s: String => s == "Hello" }, name, OldRenderableFunction.callByValue(1))
+    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f)
     c.arity shouldBe 1
     c() should matchPattern { case Failure(_) => }
-    an[OldRenderableFunctionException] should be thrownBy c().get
+    an[RenderableFunctionException] should be thrownBy c().get
   }
 
   behavior of "createVarArgsClosure"
@@ -116,7 +116,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   }
 
   it should "handle varargs of 1 variable elements sandwiched in 2 constant elements" in {
-    val f = OldRenderableFunction({ s: String => s.toUpperCase }, "upper", OldRenderableFunction.callByValue(1))
+    val f = RenderableFunction({ s: String => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
     val c = Closure.createVarArgsClosure(Left("l"), Right(Closure[String, String](f, Left("Hello"))), Left("K"))
     c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.collection.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
     c.arity shouldBe 0
@@ -136,9 +136,9 @@ class ClosureSpec extends FlatSpec with Matchers {
     def fStringToInt(arg1: String): Int = arg1.toInt
 
     val wFunction = FunctionString.custom("stringToInt", List(sArg1))
-    val fFunction: OldRenderableFunction[Int] = Spy.spy("fFunction", OldRenderableFunction(fStringToInt _, wFunction, OldRenderableFunction.callByValue(1)))
+    val fFunction: RenderableFunction[Int] = Spy.spy("fFunction", RenderableFunction(fStringToInt _, wFunction, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
-    val fLookup = Spy.spy("fLookup", OldRenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[OldRenderableFunction[String]])
+    val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
     val p1: Parameter[String] = Spy.spy("p1", Left(col1))
     val closureLookup1: Closure[String, String] = Spy.spy("closureLookup", Closure[String, String](fLookup, p1))
     closureLookup1.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"col1\"))"
@@ -182,11 +182,11 @@ class ClosureSpec extends FlatSpec with Matchers {
     def concat(p1: String): String = p1
 
     val wFunction = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
-    val fFunction: OldRenderableFunction[String] = OldRenderableFunction(fourStringFunction _, wFunction, OldRenderableFunction.callByValue(4))
+    val fFunction: RenderableFunction[String] = RenderableFunction(fourStringFunction _, wFunction, RenderableFunction.callByValue(4))
     val wConcat = FunctionString.custom("concat", Seq("x"))
-    val fConcat = OldRenderableFunction(concat _, wConcat, OldRenderableFunction.callByValue(1))
+    val fConcat = RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
-    val fLookup = OldRenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[OldRenderableFunction[String]]
+    val fLookup = RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]]
     val p1 = Left(col1)
     val closureLookup1 = Closure[String, String](fLookup, p1)
     closureLookup1.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"c1\"))"
@@ -241,11 +241,11 @@ class ClosureSpec extends FlatSpec with Matchers {
     def concat(p1: String): String = p1
 
     val wFunction = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
-    val fFunction: OldRenderableFunction[String] = Spy.spy("fFunction", OldRenderableFunction(fourStringFunction _, wFunction, OldRenderableFunction.callByValue(4)))
+    val fFunction: RenderableFunction[String] = Spy.spy("fFunction", RenderableFunction(fourStringFunction _, wFunction, RenderableFunction.callByValue(4)))
     val wConcat = Spy.spy("wConcat", FunctionString.custom("concat", Seq("x")))
-    val fConcat = Spy.spy("fConcat", OldRenderableFunction(concat _, wConcat, OldRenderableFunction.callByValue(1)))
+    val fConcat = Spy.spy("fConcat", RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
-    val fLookup = Spy.spy("fLookup", OldRenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[OldRenderableFunction[String]])
+    val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
     val p1 = Spy.spy("p1", Left(col1))
     val closureLookup1 = Spy.spy("closureLookup", Closure[String, String](fLookup, p1))
     val p3 = Spy.spy("p3", Right(closureLookup1))
@@ -278,9 +278,9 @@ class ClosureSpec extends FlatSpec with Matchers {
     def fStringToInt(arg1: String): Int = arg1.toInt
 
     val wFunction = FunctionString.custom("stringToInt", List(sArg1))
-    val fFunction = OldRenderableFunction(fStringToInt _, wFunction, OldRenderableFunction.callByValue(1))
+    val fFunction = RenderableFunction(fStringToInt _, wFunction, RenderableFunction.callByValue(1))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
-    val fLookup = OldRenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[OldRenderableFunction[String]]
+    val fLookup = RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]]
     val p1 = Left(col1)
     val closureLookup1 = Closure[String, String](fLookup, p1)
     closureLookup1.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"col1\"))"

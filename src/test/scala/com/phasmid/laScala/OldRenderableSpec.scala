@@ -5,7 +5,7 @@
 
 package com.phasmid.laScala
 
-import com.phasmid.laScala.fp.OldRenderableFunctionException
+import com.phasmid.laScala.fp.RenderableFunctionException
 import com.phasmid.laScala.values.Scalar
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -74,7 +74,7 @@ class OldRenderableSpec extends FlatSpec with Matchers with Inside {
   }
   it should "render Failure" in {
     import OldRenderable.renderableTry
-    val xy = Try(throw OldRenderableFunctionException("test"))
+    val xy = Try(throw RenderableFunctionException("test"))
     xy.render() shouldBe "Failure(test)"
   }
   it should "render either values (left)" in {

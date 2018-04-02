@@ -26,6 +26,12 @@ abstract class ProbabilityBase[-T, +X: Numeric] extends Probability[T,X] { self 
   def *[Y>:X: Numeric](y: Y) : Probability[T, Y] = build(t => Probability.*(self(t),y))
 }
 
+/**
+  * CONSIDER making T support ClassTag
+  * @param f a function which converts a T into an X
+  * @tparam T the input type
+  * @tparam X the output type
+  */
 case class PDF[T, X: Numeric](f: T=>X) extends ProbabilityBase[T,X] { self =>
   def isPdf: Boolean = true
 
@@ -33,6 +39,7 @@ case class PDF[T, X: Numeric](f: T=>X) extends ProbabilityBase[T,X] { self =>
 
   override def ! : Probability[T, X] = build(
     f match {
+        // NOTE that we really do need the asInstanceOf here
       case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering.asInstanceOf[Ordering[T]],implicitly[Numeric[X]])
       case _ => t: T => Probability.!(self(t))
     }

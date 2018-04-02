@@ -5,6 +5,7 @@
 
 package com.phasmid.laScala
 
+import com.phasmid.laScala.fp.RenderableFunctionException
 import com.phasmid.laScala.values.Scalar
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -29,11 +30,25 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     import RenderableSyntax._
     "Hello".render shouldBe "Hello"
   }
-  it should "render simple values like toString" in {
+  it should "render Int" in {
+    import RenderableSyntax._
+    1.render shouldBe "1"
+  }
+  it should "render simple scalar values like toString" in {
     Scalar("x").render(1) shouldBe "x"
   }
-  it should "render list values with indentation" in {
-    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
+  it should "render Seq values with indentation" in {
+    val seq = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
+    import RenderableSyntax._
+    seq.render shouldBe "(\n  x,\n  y,\n  z\n)"
+  }
+  it should "render Iterable values with indentation" in {
+    val iterable = Iterable(Scalar("x"), Scalar("y"), Scalar("z"))
+    import RenderableSyntax._
+    iterable.render shouldBe "(\n  x,\n  y,\n  z\n)"
+  }
+  it should "render List values with indentation" in {
+    val list = List(Scalar("x"), Scalar("y"), Scalar("z"))
     import RenderableSyntax._
     list.render shouldBe "(\n  x,\n  y,\n  z\n)"
   }
@@ -62,35 +77,45 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
     val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
     list.render() shouldBe "(\n  (\n    x0,\n    x1\n  ),\n  (\n    y0,\n    y1\n  ),\n  (\n    z0,\n    z1\n  )\n)"
   }
-  it should "render list values with double indentation (custom tab)" in {
-    val tabulator = Seq(" " * 1, " " * 2, " " * 3)
-
-    implicit def tab(indent: Int): Prefix = Prefix(tabulator(indent))
-
-    val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
-    list.render() shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
-  }
+//  it should "render list values with double indentation (custom tab)" in {
+//    val tabulator = Seq(" " * 1, " " * 2, " " * 3)
+//    implicit val renderer = new Renderable[Scalar] {
+//      def render(s: Scalar)(indent: Int): String = s.render(indent)
+//
+//      override def tab(indent: Int): String = tabulator(indent)
+//    }
+//    import RenderableSyntax._
+//    1.render shouldBe "1"
+//    val list = List(List(Scalar("x0"), Scalar("x1")), List(Scalar("y0"), Scalar("y1")), List(Scalar("z0"), Scalar("z1")))
+//    import Renderable._
+//    import RenderableInstances._
+//    import RenderableSyntax.RenderableOpsList
+//    list.render shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
+//  }
   it should "render Some" in {
     val xo = Option(Scalar("x"))
-    xo.render() shouldBe "Some(x)"
+    import RenderableSyntax._
+    xo.render shouldBe "Some(x)"
   }
-  //  it should "render None" in {
-  //    import Renderable.renderableOption
-  //    val xo: Option[String] = Option(null)
-  //    xo.render() shouldBe "None"
-  //  }
+    it should "render None" in {
+      import RenderableSyntax._
+      val xo: Option[String] = Option(null)
+      xo.render shouldBe "None"
+    }
   it should "render Success" in {
     val xy = Try(Scalar("x"))
-    xy.render() shouldBe "Success(x)"
+    import RenderableSyntax._
+    xy.render shouldBe "Success(x)"
   }
-  //  it should "render Failure" in {
-  //    import Renderable.renderableTry
-  //    val xy = Try(throw RenderableFunctionException("test"))
-  //    xy.render() shouldBe "Failure(test)"
-  //  }
+    it should "render Failure" in {
+      import RenderableSyntax._
+      val xy = Try[String](throw RenderableFunctionException("test"))
+      xy.render shouldBe "Failure(test)"
+    }
   it should "render either values (left)" in {
     val e: Either[Scalar, Any] = Left(Scalar("x"))
-    e.render() shouldBe "Left(x)"
+    import RenderableSyntax._
+    e.render shouldBe "Left(x)"
   }
   it should "render either values (right)" in {
     val e: Either[Any, Scalar] = Right(Scalar("x"))
@@ -118,6 +143,24 @@ class RenderableSpec extends FlatSpec with Matchers with Inside {
   //    println(r.render())
   //    r.render() shouldBe "Z(\n  x:1\n  y:3.141592653589793\n  z:(\n      \"Hello\",\n      \"Goodbye\"\n    )\n  )"
   //  }
+
+  behavior of "MockContainer"
+
+  it should "render correctly" in {
+    val target = MockContainer(Seq(1,2,3))
+    target.toString shouldBe "(\n  1,\n  2,\n  3\n)"
+  }
 }
 
-//case class Z(x: Int, y: Double, z: Seq[String])
+case class MockContainer[A: Renderable](as: Seq[A]) {
+  import RenderableSyntax._
+  import RenderableInstances._
+  override def toString: String = as.render
+}
+
+case class MockNumericContainer[A: Renderable: Numeric](as: Seq[A]) {
+  import RenderableSyntax._
+  import RenderableInstances._
+  override def toString: String = as.render
+  def total: A = as.sum
+}

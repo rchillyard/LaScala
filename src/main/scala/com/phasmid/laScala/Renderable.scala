@@ -1,6 +1,5 @@
 package com.phasmid.laScala
 
-import com.phasmid.laScala.OldRenderable.MAX_ELEMENTS
 import com.phasmid.laScala.values.Scalar
 
 import scala.util.Try
@@ -26,7 +25,7 @@ trait Renderable[A] {
     *
     * @return a String of white spade.
     */
-  def tab(x: Int): Prefix = Prefix(" " * x)
+  def tab(x: Int): String = " " * x * 2
 
 }
 
@@ -44,38 +43,94 @@ object RenderableInstances {
   }
 
   implicit val scalarRenderable: Renderable[Scalar] = new Renderable[Scalar] {
-    def render(s: Scalar)(indent: Int): String = s.toString
+    def render(s: Scalar)(indent: Int): String = s.render(indent)
   }
-
-  implicit val traversableRenderable: Renderable[Traversable[_]]  = new Renderable[Traversable[_]] {
-    def render(xs: Traversable[_])(indent: Int): String = OldRenderableTraversable(xs, max = Some(MAX_ELEMENTS)).render(indent)
-  }
-
 }
 
 object Renderable {
   def render[A](a: A)(indent: Int = 0)(implicit p: Renderable[A]): String = p.render(a)(indent)
 
   implicit def renderOption[A](implicit r: Renderable[A]): Renderable[Option[A]] = new Renderable[Option[A]] {
-    def render(ao: Option[A])(indent: Int): String = ao map { x => r.render(x)(indent) } getOrElse "None"
+    def render(ao: Option[A])(indent: Int): String = ao map { a => s"Some(${r.render(a)(indent)})" } getOrElse "None"
   }
 
   implicit def renderTry[A](implicit r: Renderable[A]): Renderable[Try[A]] = new Renderable[Try[A]] {
-    def render(ay: Try[A])(indent: Int): String = (ay map { a: A => r.render(a)(indent) }).recover { case t => t.getLocalizedMessage }.get
+    def render(ay: Try[A])(indent: Int): String = (ay map { a: A => s"Success(${r.render(a)(indent)})" }).recover { case t => s"Failure(${t.getLocalizedMessage})" }.get
   }
 
-  // CONSIDER eliminating this
+  implicit def renderEitherLeft[A,B](implicit r: Renderable[A]): Renderable[Either[A,B]] = new Renderable[Either[A,B]] {
+    def render(ae: Either[A,B])(indent: Int): String = (ae.left map { a: A => s"Left(${r.render(a)(indent)})" }).fold(identity,{ b: B => s"Right: ${b.getClass}: ${b.toString}" })
+  }
+
+  implicit def renderEither[B,A](implicit r: Renderable[A]): Renderable[Either[B,A]] = new Renderable[Either[B,A]] {
+    def render(ae: Either[B,A])(indent: Int): String = (ae.left map { b: B => s"Left: ${b.getClass}: ${b.toString}" }).fold(identity,{ a: A => s"Right(${r.render(a)(indent)})" })
+  }
+
+  // CONSIDER why do we need all four of these? But note that Cats has the same problem
+  implicit def renderTraversable[A](implicit r: Renderable[A]): Renderable[Traversable[A]] = new Renderable[Traversable[A]] {
+    def render(as: Traversable[A])(indent: Int): String = renderTraversable(as, max = Some(MAX_ELEMENTS), indent = indent)
+  }
+
   implicit def renderIterable[A](implicit r: Renderable[A]): Renderable[Iterable[A]] = new Renderable[Iterable[A]] {
-    def render(a: Iterable[A])(indent: Int): String = (a map { x: A => r.render(x)(indent) }).mkString
+    def render(as: Iterable[A])(indent: Int): String = renderTraversable(as, max = Some(MAX_ELEMENTS), indent = indent)
   }
 
   implicit def renderSeq[A](implicit r: Renderable[A]): Renderable[Seq[A]] = new Renderable[Seq[A]] {
-    def render(a: Seq[A])(indent: Int): String = {
-      //      val sy: Seq[String] = a map { x: A => r.render(x)(indent) }
-      // TODO what's this about reflective calls?
-      RenderableInstances.traversableRenderable.render(a)(indent)
-    }
+    def render(as: Seq[A])(indent: Int): String = renderTraversable(as, max = Some(MAX_ELEMENTS), indent = indent)
   }
+
+  implicit def renderList[A: Renderable]: Renderable[List[A]] = new Renderable[List[A]] {
+    def render(as: List[A])(indent: Int): String = renderTraversable(as, max = Some(MAX_ELEMENTS), indent = indent)
+  }
+
+  implicit def renderListList[A: Renderable]: Renderable[List[List[A]]] = new Renderable[List[List[A]]] {
+    def render(as: List[List[A]])(indent: Int): String = renderTraversable(as, max = Some(MAX_ELEMENTS), indent = indent)
+  }
+
+  def renderTraversable[A: Renderable](xs: Traversable[A], bookends: String = "(,)", linear: Boolean = false, max: Option[Int] = None, indent: Int = 0): String = {
+    val (p, q, r) = if (linear || xs.size <= 1) ("" + bookends.head, "" + bookends.tail.head, "" + bookends.last)
+    else (bookends.head + nl[A](indent + 1), bookends.tail.head + nl[A](indent + 1), nl[A](indent) + bookends.last)
+    elemsToString(xs, indent, p, q, r, max)
+  }
+
+  def elemsToString[A: Renderable](xs: Traversable[A], indent: Int, start: String, sep: String, end: String, max: Option[Int] = None): String = {
+    val ar = implicitly[Renderable[A]]
+    var first = true
+    val b = new StringBuilder()
+    b append start
+    val z = max match {
+      case Some(n) => xs take n
+      case None => xs
+    }
+    for (x <- z) {
+      if (first) {
+        b append ar.render(x)(indent)
+        first = false
+      }
+      else {
+        b append sep
+        b append ar.render(x)(indent)
+      }
+    }
+    max match {
+      case Some(n) => if (n < xs.size) b append s"$sep...[${xs.size - n} more elements]"
+      case None =>
+    }
+    b append end
+    b.toString()
+  }
+
+  /**
+    * Method to insert an indented (tabbed) newline
+    *
+    * @return a string which is a suitable replacement for newline character
+    */
+  def nl[A: Renderable](indent: Int): String = "\n" + implicitly[Renderable[A]].tab(indent)
+
+  /**
+    * This is the default maximum number of elements that will be rendered by a Traversable (see renderTraversable).
+    */
+  val MAX_ELEMENTS = 10
 }
 
 object RenderableSyntax {
@@ -86,4 +141,27 @@ object RenderableSyntax {
     def render(indent: Int)(implicit r: Renderable[A]): String = r.render(a)(indent)
   }
 
+  implicit class RenderableOpsList[A](as: List[A]) {
+    import Renderable._
+    def render(implicit r: Renderable[A]): String = renderTraversable(as)
+    def render(indent: Int)(implicit r: Renderable[A]): String = renderTraversable(as, indent=indent)
+
+//    def render(indent: Int)(implicit r: Renderable[A]): String = r.render(a)(indent)
+  }
+
 }
+
+//case class Prefix(s: String) {
+//  override def toString: String = {println(s"s is '$s'"); s}
+//}
+//
+//object Prefix {
+//
+//  /**
+//    * The default tab method which translates indent uniformly into that number of double-spaces.
+//    *
+//    * @param indent the number of tabs before output should start on a new line.
+//    * @return a String of white space.
+//    */
+//  implicit def tab(indent: Int): Prefix = Prefix(" " * indent * 2)
+//}
