@@ -908,4 +908,5 @@ object FP {
   def discriminate[X](x1: X, x2: X)(f: (X, X) => Int)(g: (X, X) => Int): Int = discriminate(f(x1, x2), g(x1, x2))
 
   private def discriminate(cf: Int, discriminator: => Int) = if (cf != 0) cf else discriminator
+
 }
