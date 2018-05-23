@@ -3,7 +3,6 @@ package com.phasmid.laScala
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 /**
-  * See https://en.wikipedia.org/wiki/Three-valued_logic#Logics
   *
   * @author scalaprof
   */
@@ -36,7 +35,8 @@ class BinaryTreeSpec extends FlatSpec with Matchers with Inside {
   behavior of "depthFirst (function)"
   it should "perform DFS with single node" in {
     val sb = new StringBuilder
-    Node("a").depthFirst(s => sb.append(s)).mkString shouldBe "a"
+    Node("a").depthFirst(s => sb.append(s))
+    sb.toString() shouldBe "a"
   }
   it should "perform DFS with 2 levels (1)" in {
     val sb = new StringBuilder
@@ -55,4 +55,32 @@ class BinaryTreeSpec extends FlatSpec with Matchers with Inside {
       Node('c', Empty, Node('f', Node('g'), Empty))).depthFirst(s => sb.append(s))
     sb.toString() shouldBe "debgfca"
   }
+
+//  behavior of "depthFirstSearch"
+//  it should "perform DFS with single node" in {
+//    val dfs = DepthFirstSearch(Node("a"))
+//    dfs.postOrder shouldBe List("a")
+//    dfs.preOrder shouldBe List("a")
+//    dfs.revPostOrder shouldBe List("a")
+//  }
+//  it should "perform DFS with 2 levels (1)" in {
+//    val dfs = DepthFirstSearch(Node("a",Node("b"),Empty))
+//    dfs.postOrder shouldBe List("b", "a")
+//    dfs.preOrder shouldBe List("a", "b")
+//    dfs.revPostOrder shouldBe List("a", "b")
+//  }
+//  it should "perform DFS with 2 levels (2)" in {
+//    val dfs = DepthFirstSearch(Node("a",Node("b"),Node("c")))
+//    dfs.postOrder shouldBe List("b", "c", "a")
+//    dfs.preOrder shouldBe List("a", "c", "b")
+//    dfs.revPostOrder shouldBe List("a", "c", "b")
+//  }
+//  it should "perform DFS from 3 levels" in {
+//    val dfs = DepthFirstSearch(Node('a',
+//      Node('b', Node('d'), Node('e')),
+//      Node('c', Empty, Node('f', Node('g'), Empty))))
+//    dfs.postOrder shouldBe List('d', 'e', 'b', 'g', 'f', 'c', 'a')
+//    dfs.preOrder shouldBe List('a', 'c', 'f', 'g', 'b', 'e', 'd')
+//    dfs.revPostOrder shouldBe List('a', 'c', 'f', 'g', 'b', 'e', 'd')
+//  }
 }
