@@ -3,9 +3,11 @@ package com.phasmid.laScala.fp
 import java.net.URL
 
 import com.phasmid.laScala.fp.FP._
+import com.phasmid.laScala.predicate.PredicateFunctionStringParser
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.tagobjects.Slow
+import org.slf4j.Logger
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -216,7 +218,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -291,10 +293,14 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     sequence(Try("x".toInt)) should matchPattern { case Left(_) => }
   }
 
-  "renderLimited" should "work" in {
+  "renderLimited" should "work1" in {
     val as = List(1, 2, 3, 4, 5)
     renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
-    implicit val limit = 5
+  }
+
+  "renderLimited" should "work2" in {
+    val as = List(1, 2, 3, 4, 5)
+    implicit val limit: Int = 5
     renderLimited(as) shouldBe "(1, 2...)"
   }
 
@@ -379,8 +385,13 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def aux = uncurried2(a)
 
-    a.toString() shouldBe "<function1>"
-    aux.toString() shouldBe "<function2>"
+    //    a.toString() shouldBe "<function1>"
+    //    aux.toString() shouldBe "<function2>"
+
+    val parser = PredicateFunctionStringParser
+    parser.parseFunctionString(a.toString) should matchPattern { case Success("com.phasmid.laScala.fp.FPSpec$$") => }
+    parser.parseFunctionString(aux.toString) should matchPattern { case Success("com.phasmid.laScala.fp.FP$$$") => }
+
   }
 
   behavior of "nextOption"

@@ -39,19 +39,19 @@ trait Named {
   * @tparam T the input type
   * @tparam R the result type
   */
-class NamedFunction[-T, +R](val name: String, val f: T => R) extends (T => R) {
+case class NamedFunction[-T, +R](name: String, f: T => R) extends (T => R) {
   override def apply(t: T) = f(t)
 
   override def toString: String = NamedFunction.toString(name, 1)
 
   override def compose[A](g: (A) => T): A => R = g match {
-    case NamedFunction(w, gf) => new NamedFunction(sComposed(w), f.compose(gf))
-    case _ => new NamedFunction(sComposedDefault(g), f.compose(g))
+    case NamedFunction(w, gf) => NamedFunction(sComposed(w), f.compose(gf))
+    case _ => NamedFunction(sComposedDefault(g), f.compose(g))
   }
 
   override def andThen[A](g: (R) => A): T => A = g match {
-    case NamedFunction(w, gf) => new NamedFunction(sComposed(w), f.andThen(gf))
-    case _ => new NamedFunction(sComposedDefault(g), f.andThen(g))
+    case NamedFunction(w, gf) => NamedFunction(sComposed(w), f.andThen(gf))
+    case _ => NamedFunction(sComposedDefault(g), f.andThen(g))
   }
 
   private def sComposed(s: String) = s"$name&&&$s"
@@ -65,7 +65,7 @@ class NamedFunction[-T, +R](val name: String, val f: T => R) extends (T => R) {
   * @param f    the function itself
   * @tparam R the result type
   */
-class NamedFunction0[+R](val name: String, val f: () => R) extends (() => R) with Named {
+case class NamedFunction0[+R](name: String, f: () => R) extends (() => R) with Named {
   override def apply() = f()
 
   override def toString: String = NamedFunction.toString(name, 0)
@@ -80,14 +80,14 @@ class NamedFunction0[+R](val name: String, val f: () => R) extends (() => R) wit
   * @tparam T2 the input type
   * @tparam R  the result type
   */
-class NamedFunction2[-T1, -T2, +R](val name: String, val f: (T1, T2) => R) extends ((T1, T2) => R) with Named {
+case class NamedFunction2[-T1, -T2, +R](name: String, f: (T1, T2) => R) extends ((T1, T2) => R) with Named {
   override def apply(t1: T1, t2: T2) = f(t1, t2)
 
   override def toString: String = NamedFunction.toString(name, 2)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried = NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled = NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -100,14 +100,14 @@ class NamedFunction2[-T1, -T2, +R](val name: String, val f: (T1, T2) => R) exten
   * @tparam T3 the input type
   * @tparam R  the result type
   */
-class NamedFunction3[-T1, -T2, -T3, +R](val name: String, val f: (T1, T2, T3) => R) extends ((T1, T2, T3) => R) with Named {
+case class NamedFunction3[-T1, -T2, -T3, +R](name: String, f: (T1, T2, T3) => R) extends ((T1, T2, T3) => R) with Named {
   override def apply(t1: T1, t2: T2, t3: T3) = f(t1, t2, t3)
 
   override def toString: String = NamedFunction.toString(name, 3)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried = NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled = NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -121,14 +121,14 @@ class NamedFunction3[-T1, -T2, -T3, +R](val name: String, val f: (T1, T2, T3) =>
   * @tparam T4 the input type
   * @tparam R  the result type
   */
-class NamedFunction4[-T1, -T2, -T3, -T4, +R](val name: String, val f: (T1, T2, T3, T4) => R) extends ((T1, T2, T3, T4) => R) with Named {
+case class NamedFunction4[-T1, -T2, -T3, -T4, +R](name: String, f: (T1, T2, T3, T4) => R) extends ((T1, T2, T3, T4) => R) with Named {
   override def apply(t1: T1, t2: T2, t3: T3, t4: T4) = f(t1, t2, t3, t4)
 
   override def toString: String = NamedFunction.toString(name, 4)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried = NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled = NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -143,14 +143,14 @@ class NamedFunction4[-T1, -T2, -T3, -T4, +R](val name: String, val f: (T1, T2, T
   * @tparam T5 the input type
   * @tparam R  the result type
   */
-class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](val name: String, val f: (T1, T2, T3, T4, T5) => R) extends ((T1, T2, T3, T4, T5) => R) with Named {
+case class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](name: String, val f: (T1, T2, T3, T4, T5) => R) extends ((T1, T2, T3, T4, T5) => R) with Named {
   override def apply(t1: T1, t2: T2, t3: T3, t4: T4, t5: T5) = f(t1, t2, t3, t4, t5)
 
   override def toString: String = NamedFunction.toString(name, 5)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried = NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled = NamedFunction(sTupled, f.tupled)
 }
 
 object NamedFunction {

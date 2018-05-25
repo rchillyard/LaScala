@@ -112,7 +112,8 @@ class PredicateSpec extends FlatSpec with Matchers {
     p(11) should matchPattern { case Success(false) => }
   }
   it should "be named ok" in {
-    InRange(1 to 10).toString shouldBe "in Range(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"
+    val range = InRange(1 to 10)
+    range.toString shouldBe s"in ${Predicate_Cross.rangeToString(range.r)}"
   }
   "InBounds" should "work" in {
     val p = InBounds(1, 10)
@@ -133,7 +134,9 @@ class PredicateSpec extends FlatSpec with Matchers {
     def even(x: Int) = x % 2 == 0
 
     val p = Func(even)
-    p.toString shouldBe "function <function1>"
+    val parser = PredicateFunctionStringParser
+    parser.parseCompoundFunctionString(p.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+    //    NamedFunction_CrossSpec.testNamedFunctionString(p,"function","""(\w+) com\.phasmid\.laScala\.predicate\.PredicateSpec\$\$Lambda\$\d+\/\d+@\p{XDigit}{1,8}""".r)
   }
   "Pred" should "work" in {
     val p: Func[Int] = Func(_ % 2 == 0)
@@ -148,7 +151,10 @@ class PredicateSpec extends FlatSpec with Matchers {
     val q: Predicate[String] = Pred(p) {
       _.toInt
     }
-    q.toString shouldBe "function <function1> with <function1>"
+    val parser = PredicateFunctionStringParser
+    parser.parseCompoundFunctionString(q.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$", "com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+    //    q.toString shouldBe "function <function1> with <function1>"
+
   }
   "Matches" should "work for anonymous function" in {
     val f: Any => Boolean = {
@@ -166,7 +172,11 @@ class PredicateSpec extends FlatSpec with Matchers {
       case _ => false
     }
     val p: Func[Any] = Func(f)
-    p.toString shouldBe "function <function1>"
+    //    p.toString shouldBe "function <function1>"
+
+    val parser = PredicateFunctionStringParser
+    parser.parseCompoundFunctionString(p.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+
   }
   it should "work for regex" in {
     val r = """(\d+)""".r
@@ -313,4 +323,10 @@ class PredicateSpec extends FlatSpec with Matchers {
     //    p(-1) should matchPattern { case Success(true) => }
     //    s.toString shouldBe "func1 evaluated. func2 evaluated. "
   }
+}
+
+case object PredicateFunctionStringParser extends FunctionStringParser {
+  def prefix: Parser[String] = "function"
+
+  def suffix: Parser[String] = ""
 }
