@@ -352,7 +352,7 @@ class FutureWrapper(implicit ec: ExecutionContext, atMost: Duration) extends Wra
   * Companion object to Wrapper
   */
 object Wrapper {
-  val optionWrapper = new Wrapper[Option] {
+  val optionWrapper: Wrapper[Option] = new Wrapper[Option] {
     def flatMap[V](m: Option[V], f: V => Option[V]): Option[V] = m flatMap f
 
     def unit[V](v: => V): Option[V] = Some(v)

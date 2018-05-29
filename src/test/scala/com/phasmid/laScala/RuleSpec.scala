@@ -45,6 +45,7 @@ class RuleSpec extends FlatSpec with Matchers {
       _ == 0
     })
     val _: Rule[Int] = new BoundPredicate(0, isZero)
+    // NOTE: don't follow recommendation to name this parameter
     assert(true)
     // XXX Ignore the rest
     //    val q: Rule[Double] = p transform (_.toDouble, _.toDouble)
@@ -62,7 +63,7 @@ class RuleSpec extends FlatSpec with Matchers {
     val r = parser.parseAll(parser.condition, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
     val variables = Map("x" -> 2000.0)
-    implicit val lookup = variables.apply _
+    implicit val lookup: String => Double = variables.apply
     val rule = r.get.asRule
     val truth: Rule[Double] = rule.transform(lookup, _.toDouble)
     truth() should matchPattern { case Success(true) => }
@@ -184,7 +185,7 @@ class RuleSpec extends FlatSpec with Matchers {
     }
   }
   "Orderable rule" should "be true" in {
-    implicit val pattern = ""
+    implicit val pattern: String = ""
     val dates: Map[String, Any] = Map("x" -> "2016-07-13", "z" -> "2015-07-31")
     val values: Map[String, Value] = Value.sequence(dates)
     val variables = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])
@@ -198,7 +199,7 @@ class RuleSpec extends FlatSpec with Matchers {
     }
   }
   it should "be false" in {
-    implicit val pattern = "MMM dd, yyyy"
+    implicit val pattern: String = "MMM dd, yyyy"
     val dates: Map[String, Any] = Map("x" -> "Jul 13, 2016", "z" -> "Jul 31, 2015")
     val values: Map[String, Value] = Value.sequence(dates)
     val variables = for ((k, v) <- values) yield (k, v.asOrderable[LocalDate])

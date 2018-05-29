@@ -29,6 +29,7 @@ trait Comparer[T] extends (((T, T)) => Comparison) {
 
   def !=(tt: (T, T)): Boolean = ! ==(tt)
 
+  // NOTE: do not accept suggestions of making this and similar constructs into a SAM
   def compose(f: Comparison => Comparison): Comparer[T] = new Comparer[T]() {
     def apply(tt: (T, T)): Comparison = f(self(tt))
   }

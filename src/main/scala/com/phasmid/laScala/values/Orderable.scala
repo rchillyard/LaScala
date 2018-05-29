@@ -77,6 +77,7 @@ object Orderable {
       case (i: String, j: String) =>
         // CONSIDER dates in the following
         comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
+      case (_, _) => Failure(new OrderableException(s"comparison unsupported for $x and $y"))
     }
   }
 

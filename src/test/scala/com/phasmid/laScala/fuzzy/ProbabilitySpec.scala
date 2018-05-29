@@ -107,7 +107,8 @@ class ProbabilitySpec extends FlatSpec with Matchers {
   }
 
   it should "& correctly" in {
-    import Rational.{RationalHelper}
+    import Rational.RationalHelper
+
     import Numeric.DoubleIsFractional
 
     val x: Probability[Double, Rational[Int]] = Probability.bounded[Double, Rational[Int]](-1,1)

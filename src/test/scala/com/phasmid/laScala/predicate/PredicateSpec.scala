@@ -135,7 +135,10 @@ class PredicateSpec extends FlatSpec with Matchers {
 
     val p = Func(even)
     val parser = PredicateFunctionStringParser
-    parser.parseCompoundFunctionString(p.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+    parser.parseCompoundFunctionString(p.toString) should matchPattern {
+      case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => // Scala 2.12
+      case Success(("function", List("function1"), _)) => // Scala 2.10, 2.11
+    }
     //    NamedFunction_CrossSpec.testNamedFunctionString(p,"function","""(\w+) com\.phasmid\.laScala\.predicate\.PredicateSpec\$\$Lambda\$\d+\/\d+@\p{XDigit}{1,8}""".r)
   }
   "Pred" should "work" in {
@@ -152,7 +155,10 @@ class PredicateSpec extends FlatSpec with Matchers {
       _.toInt
     }
     val parser = PredicateFunctionStringParser
-    parser.parseCompoundFunctionString(q.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$", "com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+    parser.parseCompoundFunctionString(q.toString) should matchPattern {
+      case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$", "com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => // Scala 2.12
+      case Success(("function", List("function1", "function1"), _)) => // Scala 2.10, 2.11
+    }
     //    q.toString shouldBe "function <function1> with <function1>"
 
   }
@@ -175,7 +181,10 @@ class PredicateSpec extends FlatSpec with Matchers {
     //    p.toString shouldBe "function <function1>"
 
     val parser = PredicateFunctionStringParser
-    parser.parseCompoundFunctionString(p.toString) should matchPattern { case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => }
+    parser.parseCompoundFunctionString(p.toString) should matchPattern {
+      case Success(("function", List("com.phasmid.laScala.predicate.PredicateSpec$$"), _)) => // Scala 2.12
+      case Success(("function", List("function1"), _)) => // Scala 2.10, 2.11
+    }
 
   }
   it should "work for regex" in {

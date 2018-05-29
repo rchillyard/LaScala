@@ -155,6 +155,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     for (vs <- x.asSequence) yield vs.size shouldBe 4
   }
   it should "work with sequence of YMD" in {
+    // NOTE: do not accept suggestions of making this and similar constructs into a SAM
     implicit val valueMaker: ValueMaker = new ValueMaker {
       def value(x: Any): Try[Value] = x match {
         case y: YMD => Success(y)
@@ -184,6 +185,7 @@ class ValueSpec extends FlatSpec with Matchers with Inside {
     xs.tail.head shouldBe 1.0
   }
   it should "work with sequence of YMD" in {
+    // NOTE: do not accept suggestions of making this and similar constructs into a SAM
     implicit val valueMaker: ValueMaker = new ValueMaker {
       def value(x: Any): Try[Value] = x match {
         case y: YMD => Success(y)

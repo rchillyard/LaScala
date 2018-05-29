@@ -1,8 +1,8 @@
 package com.phasmid.laScala.parser
 
 import scala.util._
+import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
-
 
 abstract class BaseFunctionStringParser extends JavaTokenParsers {
 
@@ -34,7 +34,7 @@ abstract class BaseFunctionStringParser extends JavaTokenParsers {
 }
 
 object FunctionParser {
-  val word = """\s*\w+\s*""".r
+  val word: Regex = """\s*\w+\s*""".r
 
   def failure(s: String, x: String, z: String) = {
     scala.util.Failure(new Exception(

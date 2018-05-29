@@ -1,10 +1,9 @@
 package com.phasmid.laScala.fuzzy
 
-import com.phasmid.laScala.values.Rational.RationalIsFractional
 import com.phasmid.laScala.values.{Rational, RationalException}
 
 import scala.language.postfixOps
-import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
+import scala.math.Numeric.DoubleIsFractional
 
 
 trait Probability[-T, +X] extends (T=>X){
@@ -40,7 +39,7 @@ case class PDF[T, X: Numeric](f: T=>X) extends ProbabilityBase[T,X] { self =>
   override def ! : Probability[T, X] = build(
     f match {
         // NOTE that we really do need the asInstanceOf here
-      case s @ Step(t: T,xLTt,xEQt,xGTt) => Step[T,X](t,xGTt,xEQt,xLTt)(s.ordering.asInstanceOf[Ordering[T]],implicitly[Numeric[X]])
+      case s@Step(t: T@unchecked, xLTt, xEQt, xGTt) => Step[T, X](t, xGTt, xEQt, xLTt)(s.ordering.asInstanceOf[Ordering[T]], implicitly[Numeric[X]])
       case _ => t: T => Probability.!(self(t))
     }
 

@@ -29,9 +29,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
     * @tparam U the underlying type of the resulting Predicate
     * @return a Predicate[U]
     */
-  def map[U: Ordering](f: T => U): Predicate[U] = tryMap(new ((T) => Try[U]) {
-    def apply(t: T) = Try(f(t))
-  }).get
+  def map[U: Ordering](f: T => U): Predicate[U] = tryMap((t: T) => Try(f(t))).get
 
 
   /**

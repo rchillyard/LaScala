@@ -19,7 +19,7 @@ class TryWithSpec extends WordSpec with Matchers {
   val inFunctionError = new OutOfMemoryError
   val inCloseError = new OutOfMemoryError
 
-  val goodResource = new Closeable {
+  val goodResource: Closeable = new Closeable {
     override def toString: String = "good resource"
 
     def close(): Unit = {}

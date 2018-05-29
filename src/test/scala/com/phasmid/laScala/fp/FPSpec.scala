@@ -389,8 +389,14 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     //    aux.toString() shouldBe "<function2>"
 
     val parser = PredicateFunctionStringParser
-    parser.parseFunctionString(a.toString) should matchPattern { case Success("com.phasmid.laScala.fp.FPSpec$$") => }
-    parser.parseFunctionString(aux.toString) should matchPattern { case Success("com.phasmid.laScala.fp.FP$$$") => }
+    parser.parseFunctionString(a.toString) should matchPattern {
+      case Success("com.phasmid.laScala.fp.FPSpec$$") => // Scala 2.12
+      case Success("function1") => // Scala 2.10, 2.11
+    }
+    parser.parseFunctionString(aux.toString) should matchPattern {
+      case Success("com.phasmid.laScala.fp.FP$$$") => // Scala 2.12
+      case Success("function2") => // Scala 2.10, 2.11
+    }
 
   }
 

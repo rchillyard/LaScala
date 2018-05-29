@@ -740,7 +740,7 @@ case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) exten
   /**
     * @return None
     */
-  def get = None
+  def get: Option[A] = None
 }
 
 /**
@@ -757,7 +757,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
     * @return None
     */
   // TODO this looks wrong!
-  def get = None
+  def get: Option[A] = None
 
 }
 
@@ -862,7 +862,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 abstract class AbstractEmpty extends Tree[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
-  def get = None
+  def get: Option[Nothing] = None
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -934,6 +934,7 @@ object Node {
     * @tparam A the underlying node type
     * @return a Parent of type Node[A]
     */
+  // NOTE: do not accept suggestions of making this and similar constructs into a SAM
   implicit def nodeParent[A]: Parent[Node[A]] = new Parent[Node[A]] {
     /**
       * Get the children of this Node, if any.

@@ -44,7 +44,7 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
   def transform[U: Ordering](lf: (T) => U, rf: (T) => U): Rule[U]
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
@@ -121,7 +121,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
   def apply(): Try[Boolean] = map2(r1(), r2())(_ && _)
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
@@ -151,7 +151,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
   def apply(): Try[Boolean] = map2(r1(), r2())(_ || _)
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
@@ -181,7 +181,7 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
   def apply(): Try[Boolean] = p(t)
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
@@ -209,7 +209,7 @@ case class Truth[T](b: Boolean) extends BaseRule[T](s"$b") {
   def apply(): Try[Boolean] = Success(b)
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
@@ -230,7 +230,7 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
   def apply(): Try[Boolean] = Failure(x)
 
   /**
-    * Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.
+    * Method to transform this Rule[T] into a Try[Rule[U]. Somewhat similar to flatMap.
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.

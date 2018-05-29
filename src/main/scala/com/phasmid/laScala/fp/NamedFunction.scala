@@ -54,6 +54,7 @@ case class NamedFunction[-T, +R](name: String, f: T => R) extends (T => R) {
     case _ => NamedFunction(sComposedDefault(g), f.andThen(g))
   }
 
+
   private def sComposed(s: String) = s"$name&&&$s"
   private def sComposedDefault[P,Q](g: (P)=>Q) = s"$name&&&$g"
 }
@@ -143,7 +144,7 @@ case class NamedFunction4[-T1, -T2, -T3, -T4, +R](name: String, f: (T1, T2, T3, 
   * @tparam T5 the input type
   * @tparam R  the result type
   */
-case class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](name: String, val f: (T1, T2, T3, T4, T5) => R) extends ((T1, T2, T3, T4, T5) => R) with Named {
+case class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](name: String, f: (T1, T2, T3, T4, T5) => R) extends ((T1, T2, T3, T4, T5) => R) with Named {
   override def apply(t1: T1, t2: T2, t3: T3, t4: T4, t5: T5) = f(t1, t2, t3, t4, t5)
 
   override def toString: String = NamedFunction.toString(name, 5)
@@ -156,25 +157,19 @@ case class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](name: String, val f: (T1,
 object NamedFunction {
   def toString(name: String, arity: Int): String = s"<function$arity: $name>"
 
-  def unapply[T, R](arg: NamedFunction[T, R]): Option[(String, T => R)] = Some(arg.name, arg.f)
 }
 
 object NamedFunction0 {
-  def unapply[R](arg: NamedFunction0[R]): Option[(String, () => R)] = Some(arg.name, arg.f)
 }
 
 object NamedFunction2 {
-  def unapply[T1, T2, R](arg: NamedFunction2[T1, T2, R]): Option[(String, (T1, T2) => R)] = Some(arg.name, arg.f)
 }
 
 object NamedFunction3 {
-  def unapply[T1, T2, T3, R](arg: NamedFunction3[T1, T2, T3, R]): Option[(String, (T1, T2, T3) => R)] = Some(arg.name, arg.f)
 }
 
 object NamedFunction4 {
-  def unapply[T1, T2, T3, T4, R](arg: NamedFunction4[T1, T2, T3, T4, R]): Option[(String, (T1, T2, T3, T4) => R)] = Some(arg.name, arg.f)
 }
 
 object NamedFunction5 {
-  def unapply[T1, T2, T3, T4, T5, R](arg: NamedFunction5[T1, T2, T3, T4, T5, R]): Option[(String, (T1, T2, T3, T4, T5) => R)] = Some(arg.name, arg.f)
 }

@@ -272,7 +272,7 @@ object FP {
     * @tparam R the underlying result type
     * @return a named function which takes a T and returns an R
     */
-  def named[T, R](name: String, f: T => R) = new ((T) => R) {
+  def named[T, R](name: String, f: T => R): T => R = new ((T) => R) {
     def apply(v1: T): R = f(v1)
 
     override def toString: String = name

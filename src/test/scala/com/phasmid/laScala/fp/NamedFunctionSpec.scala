@@ -40,7 +40,10 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
     val f = NamedFunction(sfDouble, fDouble)
     val g = f.compose(fDouble)
     g(1) shouldBe 4
-    p.parseCompoundFunctionString(g.toString) should matchPattern { case Success((`sfDouble`, List("com.phasmid.laScala.fp.NamedFunctionSpec$$"), _)) => }
+    p.parseCompoundFunctionString(g.toString) should matchPattern {
+      case Success((`sfDouble`, List("com.phasmid.laScala.fp.NamedFunctionSpec$$"), _)) => // Scala 2.12
+      case Success((`sfDouble`, List("function1"), _)) => // Scala 2.10, 2.11
+    }
   }
   it should "compose with itself" in {
     def fDouble(x: Int): Int = 2 * x
@@ -103,6 +106,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
+        // NOTE: do not follow recommendation to use syntactic sugar here and in similar places
       case _: Function1[_, _] =>
       case _ => fail
     }

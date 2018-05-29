@@ -11,8 +11,9 @@ import org.scalatest.{FlatSpec, Matchers}
 class BenchmarkSpec extends FlatSpec with Matchers {
   "Benchmark--don't worry if this fails tests under debug or coverage" should "yield correct number of nanoseconds" taggedAs Slow in {
     import Benchmark._
-    val nanos = 10000.times(Factorial.factorial(40))
+    val benchmark = 10000.times(Factorial.factorial(40))
+    println(s"average time for 40! (${benchmark()}) is ${benchmark.nanos/1000} microsecs")
     // NOTE: this might need to be varied according to the speed of the machine, etc.
-    nanos shouldBe 12000.0 +- 6000
+    benchmark.nanos shouldBe 12000.0 +- 8000
   }
 }
