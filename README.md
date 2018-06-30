@@ -31,6 +31,8 @@ utility libraries:
 LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
 
 ## Revision History
+### Changes in V1_0_9 thru V1_0_11
+* Various changes which need to be documented here.
 ### Changes in V1_0_8
 * RenderableFunction, Closure, etc.
     * forced Seq type to be List for parameters of any serializable classes
