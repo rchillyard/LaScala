@@ -242,7 +242,7 @@ object FP {
     */
   def trial[X, Y](f: X => Y)(x: => X): Try[Y] = lift(f)(Try(x))
 
-  implicit val limit = 25
+  implicit val limit: Int = 25
 
   /**
     * TODO unit test
@@ -272,7 +272,7 @@ object FP {
     * @tparam R the underlying result type
     * @return a named function which takes a T and returns an R
     */
-  def named[T, R](name: String, f: T => R) = new ((T) => R) {
+  def named[T, R](name: String, f: T => R): T => R = new ((T) => R) {
     def apply(v1: T): R = f(v1)
 
     override def toString: String = name
@@ -908,4 +908,5 @@ object FP {
   def discriminate[X](x1: X, x2: X)(f: (X, X) => Int)(g: (X, X) => Int): Int = discriminate(f(x1, x2), g(x1, x2))
 
   private def discriminate(cf: Int, discriminator: => Int) = if (cf != 0) cf else discriminator
+
 }

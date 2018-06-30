@@ -196,7 +196,8 @@ object Value {
 
   implicit def apply(xs: Seq[Any]): Value = SequenceValue(xs)
 
-  implicit val standardConverter = new ValueMaker {
+  // NOTE: do not accept suggestions of making this and similar constructs into a SAM
+  implicit val standardConverter: ValueMaker = new ValueMaker {
     def value(x: Any): Try[Value] = tryValue(x)
   }
 

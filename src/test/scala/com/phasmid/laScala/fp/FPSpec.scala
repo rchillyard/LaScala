@@ -3,15 +3,17 @@ package com.phasmid.laScala.fp
 import java.net.URL
 
 import com.phasmid.laScala.fp.FP._
+import com.phasmid.laScala.predicate.PredicateFunctionStringParser
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.tagobjects.Slow
+import org.slf4j.Logger
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 import scala.util.matching.Regex
-import org.scalatest.tagobjects.Slow
 
 /**
   *
@@ -19,34 +21,34 @@ import org.scalatest.tagobjects.Slow
   */
 class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
-  "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs(Slow) in {
+  "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
     val uyf = Future(Try(new URL("http://www.google.com")))
     val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "lift(Try[Future[T]])" should "succeed for http://www.google.com" taggedAs(Slow) in {
+  "lift(Try[Future[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
     val ufy = Try(Future(new URL("http://www.google.com")))
     val uf = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
-    whenReady(Future.sequence(ufs)) { us => Assertions.assert(us.length == 2) }
+    whenReady(Future.sequence(ufs)) { us => Assertions.assert(us.lengthCompare(2) == 0) }
   }
 
-  "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; url = Try(new URL(w))} yield url
     sequence(uys) match {
-      case Success(us) => Assertions.assert(us.length == 2)
+      case Success(us) => Assertions.assert(us.lengthCompare(2) == 0)
       case _ => Failed
     }
   }
 
-  it should "fail for www.google.com, etc." taggedAs(Slow) in {
+  it should "fail for www.google.com, etc." taggedAs Slow in {
     val ws = List("www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
     sequence(uys) match {
@@ -68,11 +70,11 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     whenReady(flatten(ifs)) { x => x should matchPattern { case Seq(1, 2) => } }
   }
 
-  it should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  it should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     val usfs = List(Future.sequence(ufs))
-    whenReady(flatten(usfs)) { us => Assertions.assert(us.length == 2) }
+    whenReady(flatten(usfs)) { us => Assertions.assert(us.lengthCompare(2) == 0) }
   }
 
   it should "succeed for empty list" in {
@@ -86,17 +88,17 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val flat: Map[String, String] = flatten(map)
     flat.size shouldBe 1
   }
-  "sequence" should "succeed for http://www.google.com, www.microsoft.com" taggedAs(Slow) in {
+  "sequence" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     val uefs = for {uf <- ufs} yield sequence(uf)
     val uesf = Future.sequence(uefs)
-    whenReady(uesf) { ues => Assertions.assert(ues.length == 3) }
+    whenReady(uesf) { ues => Assertions.assert(ues.lengthCompare(3) == 0) }
     whenReady(uesf) { ues => (ues.head, ues(1)) should matchPattern { case (Right(_), Right(_)) => } }
     whenReady(uesf) { ues => ues(2) should matchPattern { case Left(_) => } }
   }
 
-  "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs(Slow) in {
+  "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
     for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true; case _ => Assertions.fail() }
@@ -216,7 +218,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -291,10 +293,14 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     sequence(Try("x".toInt)) should matchPattern { case Left(_) => }
   }
 
-  "renderLimited" should "work" in {
+  "renderLimited" should "work1" in {
     val as = List(1, 2, 3, 4, 5)
     renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
-    implicit val limit = 5
+  }
+
+  "renderLimited" should "work2" in {
+    val as = List(1, 2, 3, 4, 5)
+    implicit val limit: Int = 5
     renderLimited(as) shouldBe "(1, 2...)"
   }
 
@@ -379,8 +385,19 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def aux = uncurried2(a)
 
-    a.toString() shouldBe "<function1>"
-    aux.toString() shouldBe "<function2>"
+    //    a.toString() shouldBe "<function1>"
+    //    aux.toString() shouldBe "<function2>"
+
+    val parser = PredicateFunctionStringParser
+    parser.parseFunctionString(a.toString) should matchPattern {
+      case Success("com.phasmid.laScala.fp.FPSpec$$") => // Scala 2.12
+      case Success("function1") => // Scala 2.10, 2.11
+    }
+    parser.parseFunctionString(aux.toString) should matchPattern {
+      case Success("com.phasmid.laScala.fp.FP$$$") => // Scala 2.12
+      case Success("function2") => // Scala 2.10, 2.11
+    }
+
   }
 
   behavior of "nextOption"

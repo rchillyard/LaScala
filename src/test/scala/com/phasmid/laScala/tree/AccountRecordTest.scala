@@ -3,6 +3,7 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala.Kleenean
 import com.phasmid.laScala.fp._
 import org.scalatest.{FlatSpec, Matchers}
+import org.slf4j.Logger
 
 import scala.annotation.tailrec
 import scala.io.Source
@@ -113,8 +114,8 @@ class AccountRecordTest extends FlatSpec with Matchers {
     checkTreeFromResource(TestDetailsSample, 113, 3, 64, 113, 113)
   }
 
-  private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int) = {
-    implicit val logger = Spy.getLogger(getClass)
+  private def checkTreeFromResource(tester: AbstractTestDetails, size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int): Unit = {
+    implicit val logger: Logger = Spy.getLogger(getClass)
     val aso = AccountRecordTest.readAccountData(tester)
     val checks = Spy.noSpy(AccountRecordTest.checkAccountTree(size, depth, before, iteratorSize, mpttSize, aso))
     checks should matchPattern { case Success((`size`, `depth`, `before`, `iteratorSize`, `mpttSize`, Some(_), _, _)) => }

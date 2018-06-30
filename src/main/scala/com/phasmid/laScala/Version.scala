@@ -84,7 +84,7 @@ trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
   * @param v the value of this Subversioned
   * @tparam V the underlying type of the Subversioned, which is defined to implement Ordering
   */
-abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] with Renderable {
+abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] with OldRenderable {
 
   def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Repr
 

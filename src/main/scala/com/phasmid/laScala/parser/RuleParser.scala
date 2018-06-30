@@ -181,6 +181,7 @@ class RuleParser extends JavaTokenParsers {
   abstract class ExprFactor extends Expression
 
   case class Expr(t: ExprTerm, ts: List[String ~ ExprTerm]) extends Expression {
+    //noinspection ScalaDeprecation
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
 
@@ -198,6 +199,7 @@ class RuleParser extends JavaTokenParsers {
   }
 
   case class ExprTerm(f: ExprFactor, fs: List[String ~ ExprFactor]) extends Expression {
+    //noinspection ScalaDeprecation
     def toRPN: List[String] = {
       val stack = new mutable.Stack[String]()
 

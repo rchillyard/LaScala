@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter
 import com.phasmid.laScala.fp.{FP, Spy}
 import com.phasmid.laScala.parser.Valuable
 import com.phasmid.laScala.values.Orderable.OrderableLocalDate
-import com.phasmid.laScala.{Prefix, Renderable}
+import com.phasmid.laScala.{OldRenderable, Prefix}
 
 import scala.language.implicitConversions
 import scala.util._
@@ -41,7 +41,7 @@ import scala.util._
   * Created by scalaprof on 8/4/16.
   *
   */
-trait Scalar extends Renderable {
+trait Scalar extends OldRenderable {
   // CONSIDER seal this again once Value is in this module
 
   /**
@@ -415,7 +415,8 @@ object Scalar {
 
   implicit def apply(x: LocalDate): Scalar = DateScalar(x, x)
 
-  implicit val standardConverter = new ScalarMaker {
+  // NOTE: do not follow recommendation making this a SAM
+  implicit val standardConverter: ScalarMaker = new ScalarMaker {
     def value(x: Any): Try[Scalar] = tryScalar(x)
   }
 

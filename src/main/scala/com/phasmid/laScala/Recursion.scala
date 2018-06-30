@@ -123,14 +123,6 @@ object Recursion {
       }
 }
 
-// CONSIDER this is broken but should be fixed!
-
-//object Factorial {
-//  def f(x: BigInt, y: Int): BigInt = x * y
-//  def g(x: Seq[Int], y: Int): Seq[Int] = x :+ y-1
-//  def factorial(n: Int): BigInt = Recursion.genericRecurse[BigInt,Int](f,g)(1,Seq(n))
-//}
-
 object Factorial {
   def f(x: Int, y: Int): Int = x
 
@@ -141,4 +133,16 @@ object Factorial {
   def y(x: Int): Int = x + 1
 
   def factorial(n: Int): BigInt = Recursion.genericCountRecurse[Int, Int, BigInt, Int](f, g, h, y)(Seq(n), 1, 1)
+
+  // CONSIDER this is broken but should be fixed! ???
+  //  def f(x: BigInt, y: Int): BigInt = x * y
+  //  def g(x: Seq[Int], y: Int): Seq[Int] = x :+ y-1
+  //  def factorial(n: Int): BigInt = Recursion.genericRecurse[BigInt,Int](f,g)(1,Seq(n))
 }
+
+//object FactorialAlt {
+//  // CONSIDER this is broken but should be fixed! ???
+//    def f(x: BigInt, y: Int): BigInt = x * y
+//    def g(x: Seq[Int], y: Int): Seq[Int] = x :+ y-1
+//    def factorial(n: Int): BigInt = Recursion.genericRecurse[BigInt,Int](f,g)(1,Seq(n))
+//}

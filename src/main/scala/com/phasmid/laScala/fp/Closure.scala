@@ -6,8 +6,8 @@
 package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.RenderableFunction.{asFunctionType, callByValue}
-import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
-import org.slf4j.LoggerFactory
+import com.phasmid.laScala.{Prefix, OldRenderable, OldRenderableTraversable}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -22,7 +22,7 @@ import scala.util._
   * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
+case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with OldRenderable {
 
   //  require(Closure.nonRecursive(this), "Closure is recursive")
 
@@ -72,7 +72,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   override def toString(): String = render()
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
-    implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
+    implicit def renderableTraversable(xs: Traversable[_]): OldRenderable = OldRenderableTraversable(xs, " ,)")
 
     val z = ps.render(indent)
     s"Closure($f," + z
@@ -84,7 +84,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   * Companion object to Closure
   */
 object Closure {
-  private implicit val logger = LoggerFactory.getLogger(getClass)
+  private implicit val logger: Logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
     case Success(r) => logger.debug(s"$w: $r"); ry
@@ -139,7 +139,7 @@ object Closure {
     val n = (tss map (_.size)) sum
 
     assert(tps.length == n + m, s"${tps.length} should equal $n+$m")
-    assert(tss.length == m + 1, s"${tss.length} should equal $m+1")
+    assert(tss.lengthCompare(m + 1) == 0, s"${tss.length} should equal $m+1")
 
     val f = m match {
       case 0 =>

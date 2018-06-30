@@ -200,7 +200,7 @@ sealed trait Tree[+A] extends Node[A] {
   *
   * @tparam A the underlying type of the tree/node
   */
-sealed trait Node[+A] extends Renderable {
+sealed trait Node[+A] extends OldRenderable {
 
   /**
     * @return the value of this node, if any
@@ -318,7 +318,7 @@ sealed trait Node[+A] extends Renderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = //get map (_.toString) getOrElse("")
     get match {
       case Some(a) => a match {
-        case r: Renderable => r.render(indent)
+        case r: OldRenderable => r.render(indent)
         case _ => a.toString
       }
       case None => ""
@@ -408,7 +408,7 @@ trait Branch[+A] extends Tree[A] {
     */
   override def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
     val result = new StringBuilder(super.render(indent) + "--")
-    import Renderable.renderableTraversable
+    import OldRenderable.renderableTraversable
     result.append(children.render(indent))
     result.toString
   }
@@ -740,7 +740,7 @@ case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) exten
   /**
     * @return None
     */
-  def get = None
+  def get: Option[A] = None
 }
 
 /**
@@ -757,7 +757,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
     * @return None
     */
   // TODO this looks wrong!
-  def get = None
+  def get: Option[A] = None
 
 }
 
@@ -780,7 +780,7 @@ case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) 
     * @return a String.
     */
   override def render(indent: Int)(implicit tab: (Int) => Prefix): String = value match {
-    case renderable: Renderable => renderable.render(indent)
+    case renderable: OldRenderable => renderable.render(indent)
     case _ => s"""${tab(indent)}$value [$lIndex:$rIndex]"""
   }
 
@@ -862,7 +862,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 abstract class AbstractEmpty extends Tree[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
-  def get = None
+  def get: Option[Nothing] = None
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -934,6 +934,7 @@ object Node {
     * @tparam A the underlying node type
     * @return a Parent of type Node[A]
     */
+  // NOTE: do not accept suggestions of making this and similar constructs into a SAM
   implicit def nodeParent[A]: Parent[Node[A]] = new Parent[Node[A]] {
     /**
       * Get the children of this Node, if any.
@@ -1145,7 +1146,7 @@ object UnvaluedBinaryTree {
       */
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
       case Branch(oa1, ns1) => y match {
-        case Branch(oa2, ns2) => ns1.size == ns2.size && Kleenean(map2(oa1, oa2)(_ == _)).toBoolean(true) && ((ns1 zip ns2) forall (p => nodesAlike(p._1, p._2)))
+        case Branch(oa2, ns2) => ns1.lengthCompare(ns2.size) == 0 && Kleenean(map2(oa1, oa2)(_ == _)).toBoolean(true) && ((ns1 zip ns2) forall (p => nodesAlike(p._1, p._2)))
         case _ => false
       }
       case _ => x == y
@@ -1173,7 +1174,7 @@ object BinaryTree {
       */
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
       require(maybeValue.isDefined, "value must be defined for BinaryTree")
-      require(children.size == 2, "children must define exactly two nodes")
+      require(children.lengthCompare(2) == 0, "children must define exactly two nodes")
       BinaryTree(maybeValue.get, children.head, children.tail.head)
     }
 
@@ -1257,7 +1258,7 @@ object AbstractBinaryTree {
     */
   def isOrdered(is: Seq[Int]): Maybe = {
     val distinct = is.distinct
-    if (distinct.size == 1)
+    if (distinct.lengthCompare(1) == 0)
       Kleenean(distinct.head).deny
     else
       Kleenean(None)

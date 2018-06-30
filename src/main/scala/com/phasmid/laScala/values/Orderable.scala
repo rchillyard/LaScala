@@ -77,6 +77,7 @@ object Orderable {
       case (i: String, j: String) =>
         // CONSIDER dates in the following
         comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
+      case (_, _) => Failure(new OrderableException(s"comparison unsupported for $x and $y"))
     }
   }
 
@@ -178,7 +179,7 @@ object Orderable {
 
     def compare(x: LocalDate, y: LocalDate): Int = x.compareTo(y)
 
-    val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+    private val isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     def formatter(s: String): DateTimeFormatter = DateTimeFormatter.ofPattern(s)
   }
