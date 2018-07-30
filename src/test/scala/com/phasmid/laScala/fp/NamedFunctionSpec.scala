@@ -14,19 +14,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
 
   behavior of "NamedFunction"
   it should "yield correct name" in {
-    val f: NamedFunction[Int, Int] = NamedFunction("test", identity)
+    val f: NamedFunction[Int, Int] = new NamedFunction("test", identity)
     f.toString shouldBe "<function1: test>"
   }
   it should "apply correctly" in {
     def double(x: Int): Int = 2 * x
 
-    val f: NamedFunction[Int, Int] = NamedFunction("double", double)
+    val f: NamedFunction[Int, Int] = new NamedFunction("double", double)
     f(1) shouldBe 2
   }
   it should "unapply correctly" in {
     def double(x: Int): Int = 2 * x
 
-    val f = NamedFunction[Int, Int]("double", double)
+    val f = new NamedFunction[Int, Int]("double", double)
     f match {
       case NamedFunction("double", g) => g(2) shouldBe 4
       case _ => fail
@@ -37,7 +37,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
     def fDouble(x: Int): Int = 2 * x
 
     val sfDouble = "fDouble"
-    val f = NamedFunction(sfDouble, fDouble)
+    val f = new NamedFunction(sfDouble, fDouble)
     val g = f.compose(fDouble)
     g(1) shouldBe 4
     p.parseCompoundFunctionString(g.toString) should matchPattern {
@@ -48,7 +48,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "compose with itself" in {
     def fDouble(x: Int): Int = 2 * x
 
-    val f = NamedFunction("fDouble", fDouble)
+    val f = new NamedFunction("fDouble", fDouble)
     val g = f.compose(f)
     g(1) shouldBe 4
     g.toString shouldBe "<function1: fDouble&&&fDouble>"
@@ -58,19 +58,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "yield correct name" in {
     def x(): Int = 1
 
-    val f: NamedFunction0[Int] = NamedFunction0[Int]("test", x)
+    val f: NamedFunction0[Int] = new NamedFunction0[Int]("test", x)
     f.toString shouldBe "<function0: test>"
   }
   it should "apply correctly" in {
     def x(): Int = 1
 
-    val f: NamedFunction0[Int] = NamedFunction0("test", x)
+    val f: NamedFunction0[Int] = new NamedFunction0("test", x)
     f() shouldBe 1
   }
   it should "unapply correctly" in {
     def x(): Int = 1
 
-    val f: NamedFunction0[Int] = NamedFunction0("test", x)
+    val f: NamedFunction0[Int] = new NamedFunction0("test", x)
     f match {
       case NamedFunction0("test", g) => g() shouldBe 1
       case _ => fail
@@ -81,19 +81,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "yield correct name" in {
     def x(v: Int, y: Int): Double = Math.pow(v, y)
 
-    val f: NamedFunction2[Int, Int, Double] = NamedFunction2("test", x)
+    val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     f.toString shouldBe "<function2: test>"
   }
   it should "apply correctly" in {
     def x(v: Int, y: Int): Double = Math.pow(v, y)
 
-    val f: NamedFunction2[Int, Int, Double] = NamedFunction2("test", x)
+    val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     f(2, 3) shouldBe 8.0 +- 0.001
   }
   it should "unapply correctly" in {
     def x(v: Int, y: Int): Double = Math.pow(v, y)
 
-    val f: NamedFunction2[Int, Int, Double] = NamedFunction2("test", x)
+    val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     f match {
       case NamedFunction2("test", g) => g(2, 3) shouldBe 8.0 +- 0.001
       case _ => fail
@@ -102,7 +102,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "curry correctly" in {
     def x(v: Int, y: Int): Double = Math.pow(v, y)
 
-    val f: NamedFunction2[Int, Int, Double] = NamedFunction2("test", x)
+    val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
@@ -121,7 +121,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "tuple correctly" in {
     def x(v: Int, y: Int): Double = Math.pow(v, y)
 
-    val f: NamedFunction2[Int, Int, Double] = NamedFunction2("test", x)
+    val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     val g = f.tupled
     g.toString shouldBe "<function1: test###>"
     g match {
@@ -141,19 +141,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "yield correct name" in {
     def x(s: String, v: Int, y: Int): Double = s.toDouble * Math.pow(v, y)
 
-    val f = NamedFunction3("test", x)
+    val f = new NamedFunction3("test", x)
     f.toString shouldBe "<function3: test>"
   }
   it should "apply correctly" in {
     def x(s: String, v: Int, y: Int): Double = s.toDouble * Math.pow(v, y)
 
-    val f = NamedFunction3("test", x)
+    val f = new NamedFunction3("test", x)
     f("10", 2, 3) shouldBe 80.0 +- 0.001
   }
   it should "unapply correctly" in {
     def x(s: String, v: Int, y: Int): Double = s.toDouble * Math.pow(v, y)
 
-    val f = NamedFunction3("test", x)
+    val f = new NamedFunction3("test", x)
     f match {
       case NamedFunction3("test", g) => g("10", 2, 3) shouldBe 80.0 +- 0.001
       case _ => fail
@@ -162,7 +162,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "curry correctly" in {
     def x(s: String, v: Int, y: Int): Double = s.toDouble * Math.pow(v, y)
 
-    val f = NamedFunction3("test", x)
+    val f = new NamedFunction3("test", x)
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
@@ -180,7 +180,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "tuple correctly" in {
     def x(s: String, v: Int, y: Int): Double = s.toDouble * Math.pow(v, y)
 
-    val f = NamedFunction3("test", x)
+    val f = new NamedFunction3("test", x)
     val g = f.tupled
     g.toString shouldBe "<function1: test###>"
     g match {
@@ -200,19 +200,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "yield correct name" in {
     def x(s: String, v: Int, y: Int, z: Double): Double = s.toDouble * Math.pow(v, y) * z
 
-    val f = NamedFunction4("test", x)
+    val f = new NamedFunction4("test", x)
     f.toString shouldBe "<function4: test>"
   }
   it should "apply correctly" in {
     def x(s: String, v: Int, y: Int, z: Double): Double = s.toDouble * Math.pow(v, y) * z
 
-    val f = NamedFunction4("test", x)
+    val f = new NamedFunction4("test", x)
     f("10", 2, 3, Math.PI) shouldBe 251.327 +- 0.001
   }
   it should "unapply correctly" in {
     def x(s: String, v: Int, y: Int, z: Double): Double = s.toDouble * Math.pow(v, y) * z
 
-    val f = NamedFunction4("test", x)
+    val f = new NamedFunction4("test", x)
     f match {
       case NamedFunction4("test", g) => g("10", 2, 3, Math.PI) shouldBe 251.327 +- 0.001
       case _ => fail
@@ -221,7 +221,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "curry correctly" in {
     def x(s: String, v: Int, y: Int, z: Double): Double = s.toDouble * Math.pow(v, y) * z
 
-    val f = NamedFunction4("test", x)
+    val f = new NamedFunction4("test", x)
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
@@ -239,7 +239,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "tuple correctly" in {
     def x(s: String, v: Int, y: Int, z: Double): Double = s.toDouble * Math.pow(v, y) * z
 
-    val f = NamedFunction4("test", x)
+    val f = new NamedFunction4("test", x)
     val g = f.tupled
     g.toString shouldBe "<function1: test###>"
     g match {
@@ -259,19 +259,19 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "yield correct name" in {
     def x(s: String, v: Int, y: Int, z: Double, q: Boolean): Double = if (q) s.toDouble * Math.pow(v, y) * z else 0
 
-    val f = NamedFunction5("test", x)
+    val f = new NamedFunction5("test", x)
     f.toString shouldBe "<function5: test>"
   }
   it should "apply correctly" in {
     def x(s: String, v: Int, y: Int, z: Double, q: Boolean): Double = if (q) s.toDouble * Math.pow(v, y) * z else 0
 
-    val f = NamedFunction5("test", x)
+    val f = new NamedFunction5("test", x)
     f("10", 2, 3, Math.PI, false) shouldBe 0.0 +- 0.001
   }
   it should "unapply correctly" in {
     def x(s: String, v: Int, y: Int, z: Double, q: Boolean): Double = if (q) s.toDouble * Math.pow(v, y) * z else 0
 
-    val f = NamedFunction5("test", x)
+    val f = new NamedFunction5("test", x)
     f match {
       case NamedFunction5("test", g) => g("10", 2, 3, Math.PI, false) shouldBe 0.0 +- 0.001
       case _ => fail
@@ -280,7 +280,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "curry correctly" in {
     def x(s: String, v: Int, y: Int, z: Double, q: Boolean): Double = if (q) s.toDouble * Math.pow(v, y) * z else 0
 
-    val f = NamedFunction5("test", x)
+    val f = new NamedFunction5("test", x)
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
@@ -298,7 +298,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
   it should "tuple correctly" in {
     def x(s: String, v: Int, y: Int, z: Double, q: Boolean): Double = if (q) s.toDouble * Math.pow(v, y) * z else 0
 
-    val f = NamedFunction5("test", x)
+    val f = new NamedFunction5("test", x)
     val g = f.tupled
     g.toString shouldBe "<function1: test###>"
     g match {
