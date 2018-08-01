@@ -1,5 +1,6 @@
 package com.phasmid.laScala.fuzzy
 
+import com.phasmid.laScala.values.FiniteIntegral.IntIsFiniteIntegral
 import com.phasmid.laScala.values.{Rational, RationalException}
 
 import scala.language.postfixOps
@@ -65,7 +66,12 @@ object Step {
 }
 
 object Probability {
-  def coinFlip: Probability[Boolean,Rational[Int]] = IndependentEvents[Boolean,Rational[Int]](true->Rational.half,false->Rational.half)
+
+  def coinFlip: Probability[Boolean, Rational[Int]] = IndependentEvents.coinFlip(Rational.half)
+
+  def biasedCoinFlip(heads: Rational[Int]): Probability[Boolean, Rational[Int]] = IndependentEvents.coinFlip(heads)
+
+  def wheelOfFortune(widths: Int*): Probability[Int, Rational[Int]] = IndependentEvents(widths: _*)
   def step[T: Ordering, X: Numeric](s: T): Probability[T,X] = {
     val xn = implicitly[Numeric[X]]
     PDF(Step(s, xn.zero, xn.one, xn.one))
@@ -86,6 +92,8 @@ object Probability {
     val xn = implicitly[Numeric[X]]
     xn.abs(xn.times(x1, x2))
   }
+
+  def zone(p: Rational[Int]): Rational[Int] = Rational.one - p
 }
 
 abstract class ProbabilityEventBase[T, X: Numeric] extends ProbabilityBase[T,X] {
@@ -122,6 +130,32 @@ case class IndependentEvents[T, X: Fractional](events: (T,X)*) extends Probabili
   def p(t: T): X = {
     val xf = implicitly[Fractional[X]]
     (for (x <- events.find(_._1==t) map (_._2)) yield xf.div(x, total)).getOrElse(xf.zero)
+  }
+}
+
+object IndependentEvents {
+  /**
+    * Method to create a biased coin flip, i.e. an IndependentEvents based on a Boolean input.
+    * True corresponds to "heads".
+    *
+    * @param heads the probability of flipping heads
+    * @return an IndependentEvents[Boolean, Rational[Int]
+    */
+  def coinFlip(heads: Rational[Int]): IndependentEvents[Boolean, Rational[Int]] = IndependentEvents(true -> heads, false -> Probability.zone(heads))
+
+  /**
+    * Method to create a "Wheel of Fortune," i.e. an IndependentEvents based on a set of integer probabilities (the "widths")
+    * where the result will be a set of probabilities indexed by the index (0-based) of the widths.
+    * Think of the widths as the areas of values on a dart board.
+    *
+    * @param widths a set of integers which are proportional to the probability of the index being chosen
+    * @return an IndependentEvents[Int, Rational[Int]
+    */
+  def apply(widths: Int*): IndependentEvents[Int, Rational[Int]] = IndependentEvents(wheelOfFortune(widths): _*)
+
+  private def wheelOfFortune(xs: Seq[Int]): Seq[(Int, Rational[Int])] = {
+    val xs_ = for (x <- xs) yield Rational[Int](x)
+    for (iI <- xs_ zipWithIndex) yield iI.swap
   }
 }
 

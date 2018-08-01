@@ -29,13 +29,40 @@ class ProbabilitySpec extends FlatSpec with Matchers {
     x.isPdf shouldBe false
   }
 
-//  it should "& correctly" in {
+  behavior of "biased coin flip"
+
+  it should "apply correctly" in {
+    val x = Probability.biasedCoinFlip(Rational(1, 3))
+    x(true) shouldBe Rational(1, 3)
+    x(false) shouldBe Rational(2, 3)
+  }
+
+  it should "pdf correctly" in {
+    val x = Probability.biasedCoinFlip(Rational.half)
+    x.isPdf shouldBe false
+  }
+
+  //  it should "& correctly" in {
 //    val x: Probability[Boolean, Rational[Int]] = Probability.coinFlip
 //    val y = x.!
 //    val z = x & y
 //    z(true) shouldBe Rational.zero
 //    z(false) shouldBe Rational.zero
 //  }
+
+  behavior of "wheel of fortune"
+
+  it should "apply correctly" in {
+    val x = Probability.wheelOfFortune(10, 3, 7)
+    x(0) shouldBe Rational.half
+    x(1) shouldBe Rational(3, 20)
+    x(2) shouldBe Rational(7, 20)
+  }
+
+  it should "pdf correctly" in {
+    val x = Probability.wheelOfFortune()
+    x.isPdf shouldBe false
+  }
 
   behavior of "step"
 
