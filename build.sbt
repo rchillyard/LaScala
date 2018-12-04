@@ -2,10 +2,8 @@ organization := "com.phasmid"
 
 name := "lascala"
 
-scalaVersion := "2.11.8"
-crossScalaVersions := Seq("2.10.6","2.11.8"
-//  ,"2.12.3"
- )
+scalaVersion := "2.12.5"
+crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.5")
 
 lazy val lascala = (project in file(".")).
   enablePlugins(BuildInfoPlugin).

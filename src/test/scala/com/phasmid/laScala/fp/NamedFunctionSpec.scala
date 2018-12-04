@@ -7,6 +7,8 @@ package com.phasmid.laScala.fp
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.util.matching.Regex
+
 class NamedFunctionSpec extends FlatSpec with Matchers {
 
   behavior of "NamedFunction"
@@ -29,13 +31,18 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
       case _ => fail
     }
   }
+
   it should "compose with fDouble" in {
     def fDouble(x: Int): Int = 2 * x
 
     val f = new NamedFunction("fDouble", fDouble)
     val g = f.compose(fDouble)
     g(1) shouldBe 4
-    g.toString shouldBe "<function1: fDouble&&&<function1>>"
+    val pattern = s"""<function1: fDouble&&&${NamedFunction.getFunctionRep(1)}>""".r
+    g.toString match {
+      case pattern(_) =>
+      case x => fail(x)
+    }
   }
   it should "compose with itself" in {
     def fDouble(x: Int): Int = 2 * x
@@ -98,6 +105,7 @@ class NamedFunctionSpec extends FlatSpec with Matchers {
     val g = f.curried
     g.toString shouldBe "<function1: test!!!>"
     g match {
+      // NOTE: do not try to use syntactic sugar here and similar places
       case _: Function1[_, _] =>
       case _ => fail
     }

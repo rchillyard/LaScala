@@ -156,6 +156,8 @@ class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](val name: String, val f: (T1, 
 object NamedFunction {
   def toString(name: String, arity: Int): String = s"<function$arity: $name>"
 
+  def getFunctionRep(arity: Int): String = FP_Cross.getFunctionRep(arity)
+
   def unapply[T, R](arg: NamedFunction[T, R]): Option[(String, T => R)] = Some(arg.name, arg.f)
 }
 

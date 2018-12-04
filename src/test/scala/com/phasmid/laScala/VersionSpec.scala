@@ -12,7 +12,7 @@ import scala.util._
 
 class VersionSpec extends FlatSpec with Matchers with Inside {
   // TODO you must increment this every time version changes in order for the tests all to run correctly
-  val VERSION = "1.0.10"
+  val VERSION = "1.0.11"
 
   println(s"${Version.getVersion}")
 
@@ -31,6 +31,7 @@ class VersionSpec extends FlatSpec with Matchers with Inside {
 
   behavior of "getVersion"
   it should "match version" in {
+    println(Version.getVersion)
     Version.getVersion.startsWith(s"lascala $VERSION") shouldBe true
   }
   // The following unit test works correctly, but it requires too much maintenance to have it run all the time

@@ -5,13 +5,14 @@ import java.net.URL
 import com.phasmid.laScala.fp.FP._
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.tagobjects.Slow
+import org.slf4j.Logger
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 import scala.util.matching.Regex
-import org.scalatest.tagobjects.Slow
 
 /**
   *
@@ -19,25 +20,25 @@ import org.scalatest.tagobjects.Slow
   */
 class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
-  "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs(Slow) in {
+  "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
     val uyf = Future(Try(new URL("http://www.google.com")))
     val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "lift(Try[Future[T]])" should "succeed for http://www.google.com" taggedAs(Slow) in {
+  "lift(Try[Future[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
     val ufy = Try(Future(new URL("http://www.google.com")))
     val uf = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     whenReady(Future.sequence(ufs)) { us => Assertions.assert(us.length == 2) }
   }
 
-  "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; url = Try(new URL(w))} yield url
     sequence(uys) match {
@@ -46,7 +47,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     }
   }
 
-  it should "fail for www.google.com, etc." taggedAs(Slow) in {
+  it should "fail for www.google.com, etc." taggedAs Slow in {
     val ws = List("www.google.com", "http://www.microsoft.com")
     val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
     sequence(uys) match {
@@ -68,7 +69,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     whenReady(flatten(ifs)) { x => x should matchPattern { case Seq(1, 2) => } }
   }
 
-  it should "succeed for http://www.google.com, etc." taggedAs(Slow) in {
+  it should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     val usfs = List(Future.sequence(ufs))
@@ -86,7 +87,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val flat: Map[String, String] = flatten(map)
     flat.size shouldBe 1
   }
-  "sequence" should "succeed for http://www.google.com, www.microsoft.com" taggedAs(Slow) in {
+  "sequence" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     val uefs = for {uf <- ufs} yield sequence(uf)
@@ -96,7 +97,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     whenReady(uesf) { ues => ues(2) should matchPattern { case Left(_) => } }
   }
 
-  "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs(Slow) in {
+  "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
     for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true; case _ => Assertions.fail() }
@@ -216,7 +217,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    implicit val logger = Spy.getLogger(getClass)
+    implicit val logger: Logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -294,6 +295,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "renderLimited" should "work" in {
     val as = List(1, 2, 3, 4, 5)
     renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
+    // NOTE: leave this as is
     implicit val limit = 5
     renderLimited(as) shouldBe "(1, 2...)"
   }
@@ -379,8 +381,16 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
     def aux = uncurried2(a)
 
-    a.toString() shouldBe "<function1>"
-    aux.toString() shouldBe "<function2>"
+    val patternA: Regex = NamedFunction.getFunctionRep(1).r
+    val patternB: Regex = NamedFunction.getFunctionRep(2).r
+    a.toString match {
+      case patternA(_) =>
+      case x => fail(x)
+    }
+    aux.toString() match {
+      case patternB(_) =>
+      case x => fail(x)
+    }
   }
 
   behavior of "nextOption"
