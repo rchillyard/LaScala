@@ -457,6 +457,15 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     count1 shouldBe 2
     count2 shouldBe 3
   }
+
+  behavior of "safeLift"
+  it should "work" in {
+    def checkValue(x: Int): Try[Int] = if (x!=0) Success(x) else Failure(new ArithmeticException("division by zero"))
+    def reciprocal(x: Int): Double = 1.0/x
+    val safeLiftFunc = safeLift(checkValue)(reciprocal)
+    safeLiftFunc(2) shouldBe Success(0.5)
+    safeLiftFunc(0) should matchPattern { case Failure(x) => }
+  }
 }
 
 /**

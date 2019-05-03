@@ -37,6 +37,12 @@ class ProbabilitySpec extends FlatSpec with Matchers {
     x(false) shouldBe Rational(2, 3)
   }
 
+  it should "apply correctly with two Ints" in {
+    val x = Probability.biasedCoinFlip(1, 3)
+    x(true) shouldBe Rational(1, 3)
+    x(false) shouldBe Rational(2, 3)
+  }
+
   it should "pdf correctly" in {
     val x = Probability.biasedCoinFlip(Rational.half)
     x.isPdf shouldBe false

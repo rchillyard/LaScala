@@ -1,5 +1,7 @@
 package com.phasmid.laScala.values
 
+import java.lang.reflect.Constructor
+
 /**
   * Created by Bowen Cai on 1/24/2015.
   *
@@ -27,7 +29,8 @@ case class SeqProduct(elems: Any*) extends Product {
 
 object Tuples {
   private[this] val ctors = {
-    val ab = Array.newBuilder[java.lang.reflect.Constructor[_]]
+    // NOTE: there doesn't appear to be a Constructor type in the scala reflection library
+    val ab = Array.newBuilder[Constructor[_]]
     for (i <- 1 to 22) {
       val tupleClass = Class.forName("scala.Tuple" + i)
       ab += tupleClass.getConstructors.apply(0)

@@ -71,6 +71,8 @@ object Probability {
 
   def biasedCoinFlip(heads: Rational[Int]): Probability[Boolean, Rational[Int]] = IndependentEvents.coinFlip(heads)
 
+  def biasedCoinFlip(heads: Int, tails: Int): Probability[Boolean, Rational[Int]] = biasedCoinFlip(Rational(heads,tails))
+
   def wheelOfFortune(widths: Int*): Probability[Int, Rational[Int]] = IndependentEvents(widths: _*)
   def step[T: Ordering, X: Numeric](s: T): Probability[T,X] = {
     val xn = implicitly[Numeric[X]]

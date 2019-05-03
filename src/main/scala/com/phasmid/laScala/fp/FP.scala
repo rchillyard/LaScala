@@ -93,6 +93,22 @@ object FP {
   }
 
   /**
+    * The safeLift function is a conditional semi-lift function.
+    * It (semi) lifts a T=>R function to T=>Try[R], according to the condition given by the result of g, the guard function.
+    *
+    * @param g the guard function of type T => Try[T]
+    * @param f the original function of type T => R
+    * @tparam T the type of the parameter to f and g
+    * @tparam R the type of the result of the f
+    * @return a function of tpe T => Try[R]
+    */
+  def safeLift[T, R](g: T => Try[T])(f: T => R): T=>Try[R] = g(_) map f
+
+  def guard2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)])(f: (T1, T2) => R)(t1: T1, t2: T2): Try[R] = g(t1, t2) map f.tupled
+
+  def safeLift2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)])(f: (T1, T2) => R): (T1, T2)=>Try[R] = g(_, _) map f.tupled
+
+  /**
     * TODO unit test
     *
     * @param xy a Try[X] value

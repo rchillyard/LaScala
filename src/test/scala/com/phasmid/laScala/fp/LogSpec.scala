@@ -13,7 +13,7 @@ class LogSpec extends FlatSpec with Matchers {
 
   it should "log Int" in {
     import Log.logger
-    val log = Log()(1)
+    val log: Log[Int] = Log()(1)
     log.log("test") shouldBe 1
   }
   it should "log using MockLogger" in {
