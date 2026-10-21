@@ -32,7 +32,7 @@ object FP_Cross {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
     (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   /**
@@ -51,7 +51,7 @@ object FP_Cross {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
     (for {t1 <- ty1; if g(t1); t2 <- ty2; if g(t2); t3 <- ty3} yield f(t1, t2, t3)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   def getFunctionRep(arity: Int): String = """([a-zA-Z\.]+"""+"""\$""" * (arity + 1) +"""Lambda(?:\$\d+)?\/(?:0x)?[0-9a-f]+@[0-9a-f]+)"""

@@ -67,7 +67,7 @@ case class RationalProbability[N: FiniteIntegral](p: Rational[N]) extends Probab
 
   def *(r: Rational[N]): Probability = RationalProbability(p * r)
 
-  def ! = RationalProbability(-p + Rational.one)
+  def ! : RationalProbability[N] = RationalProbability(-p + Rational.one)
 
   override def hashCode(): Int = ().hashCode()
 
@@ -90,11 +90,11 @@ case class GenericProbability(p: Double) extends Probability {
 
   override def apply(): Double = p
 
-  def |(o: Probability) = GenericProbability(this () + o())
+  def |(o: Probability): GenericProbability = GenericProbability(this () + o())
 
-  def &(o: Probability) = GenericProbability(this () * o())
+  def &(o: Probability): GenericProbability = GenericProbability(this () * o())
 
-  def ! = GenericProbability(1 - p)
+  def ! : GenericProbability = GenericProbability(1 - p)
 
   override def hashCode(): Int = ().hashCode()
 

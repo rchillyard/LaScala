@@ -45,12 +45,12 @@ class NamedFunction[-T, +R](val name: String, val f: T => R) extends (T => R) {
   override def toString: String = NamedFunction.toString(name, 1)
 
   override def compose[A](g: (A) => T): A => R = g match {
-    case NamedFunction(w, gf) => new NamedFunction(sComposed(w), f.compose(gf))
+    case nf: NamedFunction[A, T]@unchecked => new NamedFunction(sComposed(nf.name), f.compose(nf.f))
     case _ => new NamedFunction(sComposedDefault(g), f.compose(g))
   }
 
   override def andThen[A](g: (R) => A): T => A = g match {
-    case NamedFunction(w, gf) => new NamedFunction(sComposed(w), f.andThen(gf))
+    case nf: NamedFunction[R, A]@unchecked => new NamedFunction(sComposed(nf.name), f.andThen(nf.f))
     case _ => new NamedFunction(sComposedDefault(g), f.andThen(g))
   }
 
@@ -85,9 +85,9 @@ class NamedFunction2[-T1, -T2, +R](val name: String, val f: (T1, T2) => R) exten
 
   override def toString: String = NamedFunction.toString(name, 2)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried: NamedFunction[T1, T2 => R] = new NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled: NamedFunction[(T1, T2), R] = new NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -105,9 +105,9 @@ class NamedFunction3[-T1, -T2, -T3, +R](val name: String, val f: (T1, T2, T3) =>
 
   override def toString: String = NamedFunction.toString(name, 3)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried: NamedFunction[T1, T2 => (T3 => R)] = new NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled: NamedFunction[(T1, T2, T3), R] = new NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -126,9 +126,9 @@ class NamedFunction4[-T1, -T2, -T3, -T4, +R](val name: String, val f: (T1, T2, T
 
   override def toString: String = NamedFunction.toString(name, 4)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried: NamedFunction[T1, T2 => (T3 => (T4 => R))] = new NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled: NamedFunction[(T1, T2, T3, T4), R] = new NamedFunction(sTupled, f.tupled)
 }
 
 /**
@@ -148,9 +148,9 @@ class NamedFunction5[-T1, -T2, -T3, -T4, -T5, +R](val name: String, val f: (T1, 
 
   override def toString: String = NamedFunction.toString(name, 5)
 
-  override def curried = new NamedFunction(sCurried, f.curried)
+  override def curried: NamedFunction[T1, T2 => (T3 => (T4 => (T5 => R)))] = new NamedFunction(sCurried, f.curried)
 
-  override def tupled = new NamedFunction(sTupled, f.tupled)
+  override def tupled: NamedFunction[(T1, T2, T3, T4, T5), R] = new NamedFunction(sTupled, f.tupled)
 }
 
 object NamedFunction {

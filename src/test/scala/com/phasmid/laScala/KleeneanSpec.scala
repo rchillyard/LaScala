@@ -25,11 +25,11 @@ class KleeneanSpec extends AnyFlatSpec with Matchers with Inside {
     Kleenean(false) :|| Kleenean(false) should matchPattern { case Kleenean(Some(false)) => }
     Kleenean(false) :|| Kleenean(true) should matchPattern { case Kleenean(Some(true)) => }
     Kleenean(true) :|| Kleenean(true) should matchPattern { case Kleenean(Some(true)) => }
-    ^^ :|| Kleenean() should matchPattern { case Kleenean(None) => }
-    ^^ :| true should matchPattern { case Kleenean(Some(true)) => }
-    ^^ :|| Kleenean(true) should matchPattern { case Kleenean(Some(true)) => }
-    ^^ :| false should matchPattern { case Kleenean(None) => }
-    ^^ :|| Kleenean(false) should matchPattern { case Kleenean(None) => }
+    (^^) :|| Kleenean() should matchPattern { case Kleenean(None) => }
+    (^^) :| true should matchPattern { case Kleenean(Some(true)) => }
+    (^^) :|| Kleenean(true) should matchPattern { case Kleenean(Some(true)) => }
+    (^^) :| false should matchPattern { case Kleenean(None) => }
+    (^^) :|| Kleenean(false) should matchPattern { case Kleenean(None) => }
   }
 
   behavior of ":&"
@@ -47,11 +47,11 @@ class KleeneanSpec extends AnyFlatSpec with Matchers with Inside {
     Kleenean(false) :&& Kleenean(false) should matchPattern { case Kleenean(Some(false)) => }
     Kleenean(false) :&& Kleenean(true) should matchPattern { case Kleenean(Some(false)) => }
     Kleenean(true) :&& Kleenean(true) should matchPattern { case Kleenean(Some(true)) => }
-    ^^ :&& Kleenean() should matchPattern { case Kleenean(None) => }
-    ^^ :& true should matchPattern { case Kleenean(None) => }
-    ^^ :&& Kleenean(true) should matchPattern { case Kleenean(None) => }
-    ^^ :& false should matchPattern { case Kleenean(Some(false)) => }
-    ^^ :&& Kleenean(false) should matchPattern { case Kleenean(Some(false)) => }
+    (^^) :&& Kleenean() should matchPattern { case Kleenean(None) => }
+    (^^) :& true should matchPattern { case Kleenean(None) => }
+    (^^) :&& Kleenean(true) should matchPattern { case Kleenean(None) => }
+    (^^) :& false should matchPattern { case Kleenean(Some(false)) => }
+    (^^) :&& Kleenean(false) should matchPattern { case Kleenean(Some(false)) => }
   }
 
   behavior of "|:"

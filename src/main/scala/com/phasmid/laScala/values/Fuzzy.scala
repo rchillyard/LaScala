@@ -63,7 +63,7 @@ trait Fuzzy[T] extends (() => T) with Ordered[Fuzzy[T]] {
   * @param t the numerical value
   * @tparam T the underlying type of the value: which must support typeclass Fractional
   */
-case class Exact[T: Fractional](t: T) extends BaseNumericFuzzy[T](t) {
+case class Exact[T](t: T)(implicit fractionalT: Fractional[T]) extends BaseNumericFuzzy[T](t) {
 
   def isExact: Boolean = true
 
@@ -110,7 +110,7 @@ case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy
     if (inRange(t)) Some(Certain * Fuzzy.invert(Fuzzy.times(bound, 2)))
     else Some(Impossible)
 
-  override def compare(that: Fuzzy[T]): Int = minus(that) match {
+  override def compare(that: Fuzzy[T]): Int = minus[T, T](that) match {
     case b: Bounded[T] => if (b.inRange(frT.zero)) 0 else super.compareTo(that)
     case _ => super.compareTo(that)
   }
@@ -273,7 +273,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
   def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(frT.toDouble(x)), x => Fuzzy.exp(frT.toDouble(x)))
 
   def compare(that: Fuzzy[T]): Int = {
-    val z = minus(that)
+    val z = minus[T, T](that)
     val p = z.p(frT.zero)
     if (p() > comparisonProbabilityThreshold) 0
     else math.signum(frT.toDouble(z())).toInt
@@ -338,7 +338,7 @@ object BaseNumericFuzzy {
 }
 
 object Exact {
-  def fromInt[T: Fractional](i: Int): Exact[T] = apply[T](implicitly[Numeric[T]].fromInt(i))
+  def fromInt[T](i: Int)(implicit ev: Fractional[T]): Exact[T] = apply[T](ev.fromInt(i))
 }
 
 /**
@@ -378,7 +378,7 @@ object Fuzziness {
 }
 
 object Fuzzy {
-  def apply[T: FromString : Fractional](x: String, z: Fuzziness): Fuzzy[T] = z match {
+  def apply[T](x: String, z: Fuzziness)(implicit fromString: FromString[T], fr: Fractional[T]): Fuzzy[T] = z match {
     case Fuzziness(Some("~")) =>
       val f = makeFuzzyString(x, "5", 1)
       val frsT = implicitly[FromString[T]]
@@ -423,11 +423,11 @@ object Fuzzy {
 
   def div[N: Fractional](n1: N, n2: N): N = implicitly[Fractional[N]].div(n1, n2)
 
-  def plus[N: Fractional](n1: N, n2: Int): N = plus(n1, fractional(n2))
+  def plus[N: Fractional](n1: N, n2: Int): N = plus(n1, fractional[N](n2))
 
-  def minus[N: Fractional](n1: N, n2: Int): N = minus(n1, fractional(n2))
+  def minus[N: Fractional](n1: N, n2: Int): N = minus(n1, fractional[N](n2))
 
-  def times[N: Fractional](n1: N, n2: Int): N = times(n1, fractional(n2))
+  def times[N: Fractional](n1: N, n2: Int): N = times(n1, fractional[N](n2))
 
   def pow[N: Fractional](n: N, x: Int): N = {
     val f = implicitly[Fractional[N]]

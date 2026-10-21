@@ -165,11 +165,11 @@ object Valuable {
 
     def div(x: Int, y: Int) = Try(if (x % y == 0) x / y else throw new ValuableException("integer division leaves remainder"))
 
-    def invert(x: Int) = Failure(new ValuableException("cannot invert an Int"))
+    def invert(x: Int): scala.util.Failure[Nothing] = Failure(new ValuableException("cannot invert an Int"))
 
     def pow(x: Int, y: Int): Try[Int] = Try(Seq.fill[Int](y)(x).product)
 
-    def fromInt(x: Int) = Success(x)
+    def fromInt(x: Int): Success[Int] = Success(x)
 
     def one = 1
 
@@ -193,11 +193,11 @@ object Valuable {
 
     def div(x: Long, y: Long) = Try(if (x % y == 0) x / y else throw new ValuableException("integer division leaves remainder"))
 
-    def invert(x: Long) = Failure(new ValuableException("cannot invert an Long"))
+    def invert(x: Long): scala.util.Failure[Nothing] = Failure(new ValuableException("cannot invert an Long"))
 
     def pow(x: Long, y: Long): Try[Long] = Try(Seq.fill[Int](y.toInt)(x.toInt).product)
 
-    def fromInt(x: Int) = Success(x.toLong)
+    def fromInt(x: Int): Success[Long] = Success(x.toLong)
 
     def one = 1
 

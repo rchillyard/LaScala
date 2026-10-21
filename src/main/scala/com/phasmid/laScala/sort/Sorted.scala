@@ -21,9 +21,9 @@ case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T])
 
   def sort(o: Comparer[T]): Sorted[T] = Sorted(ts)(f orElse o)
 
-  def apply: Seq[T] = ts.sorted
+  def apply(): Seq[T] = ts.sorted
 
-  def async(implicit ec: ExecutionContext): Future[Seq[T]] = Future(apply)
+  def async(implicit ec: ExecutionContext): Future[Seq[T]] = Future(apply())
 
   def parSort(implicit ec: ExecutionContext): Future[Seq[T]] = Sorted.mergeSort(ts)
 }
@@ -35,7 +35,7 @@ case class Sortable[X: Ordering](xs: Seq[X]) {
 object Sorted {
   def create[T: Ordering](ts: Seq[T]): Sorted[T] = Sorted(ts)(implicitly[Ordering[T]])
 
-  def verify[T: Comparer](xs: Seq[T]): Boolean = xs.zip(xs.tail).forall(z => implicitly[Comparer[T]].<=(z._1,z._2))
+  def verify[T](xs: Seq[T])(implicit comparer: Comparer[T]): Boolean = xs.zip(xs.tail).forall(z => comparer.<=(z._1,z._2))
 
   def parSort[T: Ordering](tst: (Seq[T], Seq[T]))(implicit ec: ExecutionContext): Future[Seq[T]] = map2(Future(tst._1.sorted), Future(tst._2.sorted))(merge)
 

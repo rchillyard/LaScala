@@ -62,24 +62,24 @@ object Comparer {
 
 trait Comparison extends (() => Option[Boolean]) {
 
-  override def toString(): String = apply.toString
+  override def toString(): String = apply().toString
 
-  def toInt: Int = apply match {
+  def toInt: Int = apply() match {
     case Some(b) => if (b) -1 else 1;
     case _ => 0
   }
 
-  def orElse(c: => Comparison): Comparison = Comparison(apply.orElse(c()))
+  def orElse(c: => Comparison): Comparison = Comparison(apply().orElse(c()))
 
-  def flip: Comparison = Comparison(for (v <- apply) yield !v)
+  def flip: Comparison = Comparison(for (v <- apply()) yield !v)
 }
 
 case class Different(less: Boolean) extends Comparison {
-  def apply: Option[Boolean] = Some(less)
+  def apply(): Option[Boolean] = Some(less)
 }
 
 case object Same extends Comparison {
-  def apply: Option[Boolean] = None
+  def apply(): Option[Boolean] = None
 }
 
 object Comparison {

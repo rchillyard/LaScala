@@ -242,7 +242,7 @@ object FP {
     */
   def trial[X, Y](f: X => Y)(x: => X): Try[Y] = lift(f)(Try(x))
 
-  implicit val limit = 25
+  implicit val limit: Int = 25
 
   /**
     * TODO unit test
@@ -257,7 +257,7 @@ object FP {
     val buffer = new StringBuilder("(")
     while (iterator.hasNext && buffer.length < limit) {
       if (buffer.length > 1) buffer append ", "
-      buffer append s"${iterator.next}"
+      buffer append s"${iterator.next()}"
     }
     if (iterator.hasNext) buffer append "..."
     buffer append ")"
@@ -497,7 +497,7 @@ object FP {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
     FP_Cross.map2lazy(ty1, ty2)(f)(g, default)
 
   /**
@@ -516,7 +516,7 @@ object FP {
     * @tparam U the result type
     * @return a Try[U]
     */
-  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { _: T => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
+  def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
     FP_Cross.map3lazy(ty1, ty2, ty3)(f)(g, default)
 
   /**
@@ -627,7 +627,7 @@ object FP {
     * @return the corresponding function which takes an Option[T] and returns a Try[U]
     */
   def liftOptionTry[T, U](f: T => U)(implicit ex: Throwable = null): Option[T] => Try[U] = {
-    xo: Option[T] =>
+    (xo: Option[T]) =>
       val result = for (x <- xo) yield f(x)
       if (ex != null) optionToTry(result, ex)
       else optionToTry(result)
@@ -855,7 +855,7 @@ object FP {
     * @tparam X the underlying type.
     * @return Some(x) where x is the next element; or None where the iterator is exhausted.
     */
-  def nextOption[X](xi: Iterator[X]): Option[X] = if (xi.hasNext) Some(xi.next) else None
+  def nextOption[X](xi: Iterator[X]): Option[X] = if (xi.hasNext) Some(xi.next()) else None
 
   /**
     * Method to select an element from a tuple according to a Boolean value.

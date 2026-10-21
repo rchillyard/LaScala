@@ -100,7 +100,7 @@ object Spy {
     * @param spyFunc (implicit) the function to be called with a String based on w and x IF b && spying are true
     * @return the value of x
     */
-  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean) {spy(w, (), b); ()}
+  def log(w: => String, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): Unit = {spy(w, (), b); ()}
 
   /**
     * This method can be used if you have an expression you would like to be evaluated WITHOUT any spying going on.
@@ -141,7 +141,7 @@ object Spy {
     * @param logger an (implicit) logger (if null, then this method does nothing)
     * @return a Spy (that's to say nothing)
     */
-  implicit def spyFunc(s: String)(implicit logger: Logger): Spy = if (logger != null) Spy(logger.debug(prefix + s)) else Spy()
+  implicit def spyFunc(s: String)(implicit logger: Logger): Spy = if (logger != null) Spy(logger.debug(prefix + s)) else Spy(())
 
   /**
     * This is the default isEnabled function
@@ -198,7 +198,7 @@ object Spy {
     case Success(z) =>
       val sb = new StringBuilder("")
 
-      implicit def spyFunc(s: String): Spy = Spy(sb.append(s))
+      implicit val spyFunc: String => Spy = s => Spy(sb.append(s))
 
       // CONSIDER reworking this so that the result is "Success(...)" instead of "Success: ..."
       spy(s"Success", z, b)

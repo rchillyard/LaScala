@@ -59,7 +59,7 @@ object Recursion {
     * @tparam R the result type.
     * @return a value of R.
     */
-  final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], r: R): R =
+  final def recurse[T, S, R](f: T => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { (_: R) => false })(ts: Seq[T], r: R): R =
     countRecurse[T, S, R, Int]((_, t) => f(t), g, h, q)(ts, 0, r)
 
   /**
@@ -79,8 +79,8 @@ object Recursion {
     * @tparam C The type of the counter -- context-bound to Counter
     * @return a value of R.
     */
-  final def countRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(ts: Seq[T], c: C, r: R): R =
-    genericCountRecurse(f, g, h, { _c: C => Counter[C].increment(_c) }, q)(ts, c, r)
+  final def countRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], q: R => Boolean = { (_: R) => false })(ts: Seq[T], c: C, r: R): R =
+    genericCountRecurse(f, g, h, { (_c: C) => Counter[C].increment(_c) }, q)(ts, c, r)
 
   /**
     * Generic tail-recursive method with counting.
@@ -103,7 +103,7 @@ object Recursion {
     * @return a value of R.
     */
   @tailrec
-  final def genericCountRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], y: C => C, q: R => Boolean = { _: R => false })(ts: Seq[T], c: C, r: R): R =
+  final def genericCountRecurse[T, S, R, C: Counter](f: (C, T) => S, g: (R, S) => R, h: (Seq[T], T) => Seq[T], y: C => C, q: R => Boolean = { (_: R) => false })(ts: Seq[T], c: C, r: R): R =
   if (q(r))
     r
   else
@@ -113,7 +113,7 @@ object Recursion {
     }
 
   @tailrec
-  final def genericRecurse[R, T](f: (R, T) => R, g: (Seq[T], T) => Seq[T], q: R => Boolean = { _: R => false })(r: R, ts: Seq[T]): R =
+  final def genericRecurse[R, T](f: (R, T) => R, g: (Seq[T], T) => Seq[T], q: R => Boolean = { (_: R) => false })(r: R, ts: Seq[T]): R =
     if (q(r))
       r
     else

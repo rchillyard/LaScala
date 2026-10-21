@@ -282,7 +282,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   it should "fail gracefully" in {
     val xy = Try("x".toInt)
     var log: String = null
-    toOption(xy, { x: Throwable => log = x.getLocalizedMessage }) shouldBe None
+    toOption(xy, { (x: Throwable) => log = x.getLocalizedMessage }) shouldBe None
     log shouldBe "For input string: \"x\""
   }
 
@@ -306,9 +306,11 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   "renderLimited" should "work" in {
     val as = List(1, 2, 3, 4, 5)
     renderLimited(as) shouldBe "(1, 2, 3, 4, 5)"
-    // NOTE: leave this as is
-    implicit val limit = 5
-    renderLimited(as) shouldBe "(1, 2...)"
+    // NOTE: the inner block keeps this implicit out of scope for the first renderLimited (Scala 3 forbids the forward reference)
+    locally {
+      implicit val limit: Int = 5
+      renderLimited(as) shouldBe "(1, 2...)"
+    }
   }
 
   behavior of "map2"
@@ -344,7 +346,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     val p5 = Try(18)
     val p6 = Try(20)
     val p7 = Try(28)
-    val test = map7(p1, p2, p3, p4, p5, p6, p7)(Reviews)
+    val test = map7(p1, p2, p3, p4, p5, p6, p7)(Reviews.apply)
     test.get should matchPattern { case Reviews(0.02, 23, Rating("PG", Some(13)), 15, 18, 20, 28) => }
   }
 
@@ -356,7 +358,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     val p5 = Try(18)
     val p6 = Try(20)
     val p7 = Try(28)
-    map7(p1, p2, p3, p4, p5, p6, p7)(Reviews) should matchPattern { case Failure(_) => }
+    map7(p1, p2, p3, p4, p5, p6, p7)(Reviews.apply) should matchPattern { case Failure(_) => }
   }
 
   behavior of "invert2"

@@ -30,7 +30,7 @@ import scala.util._
   */
 case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable with Serializable {
 
-  implicit private val logger = Spy.getLogger(getClass)
+  implicit private val logger: org.slf4j.Logger = Spy.getLogger(getClass)
 
   require(f != null, s"f is null")
   require(w != null, s"w is null")
@@ -90,16 +90,16 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     * @param tps the list of parameters
     * @return a RenderableFunction[R] (wrapped in Try)
     */
-  def partiallyApplyParameters(tps: Seq[Parameter[_]]): Try[RenderableFunction[R]] = {
-    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Parameter[_], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
+  def partiallyApplyParameters(tps: Seq[Either[_, Closure[_, _]]]): Try[RenderableFunction[R]] = {
+    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Either[_, Closure[_, _]], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
       case Left(t) => // t: T
-        rfy flatMap (_.partiallyApply(t)(x.asInstanceOf[ClassTag[Any]]))
+        rfy flatMap (_.partiallyApply(t))
       case Right(c) => // c: Closure[_,_]
         for (g <- c.partiallyApply; f = g.f; rf <- rfy; h <- rf.partiallyApplyFunction(f.asFunction, f.w)) yield h
     }
 
     @tailrec
-    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Parameter[_], ClassTag[_])]): Try[RenderableFunction[R]] =
+    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Either[_, Closure[_, _]], ClassTag[_])]): Try[RenderableFunction[R]] =
       work match {
         case Nil => rfy
         case (tp, c) :: _tps => inner(partiallyApplyParameter(rfy, tp, c), _tps)
@@ -133,7 +133,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     * @tparam T the desired type
     * @return RenderableFunction[R] wrapped in Try
     */
-  def partiallyApply[T: ClassTag](t: Any): Try[RenderableFunction[R]] =
+  def partiallyApply[T](t: Any): Try[RenderableFunction[R]] =
     RenderableFunction.partiallyApply(arity, func, t.asInstanceOf[T], w, cbn, cs)
 
   /**
@@ -461,7 +461,7 @@ object RenderableFunction {
 
     n match {
       case 0 => apply(0, emptyList, mkList, cbn, cs)
-      case 1 => apply({ t1: T => Seq[T](t1) }, mkList, cbn)
+      case 1 => apply({ (t1: T) => Seq[T](t1) }, mkList, cbn)
       case 2 => apply({ (t1: T, t2: T) => Seq[T](t1, t2) }, mkList, cbn)
       case 3 => apply({ (t1: T, t2: T, t3: T) => Seq[T](t1, t2, t3) }, mkList, cbn)
       case 4 => apply({ (t1: T, t2: T, t3: T, t4: T) => Seq[T](t1, t2, t3, t4) }, mkList, cbn)
@@ -482,9 +482,9 @@ object RenderableFunction {
 
   def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
 
-  def asTupledFunctionType[R](f: () => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ _: Product => f() }))
+  def asTupledFunctionType[R](f: () => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ (_: Product) => f() }))
 
-  def asTupledFunctionType[T1, R](f: T1 => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ x: Tuple1[T1] => f(x._1) }))
+  def asTupledFunctionType[T1, R](f: T1 => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ (x: Tuple1[T1]) => f(x._1) }))
 
   def asTupledFunctionType[T1, T2, R](f: (T1, T2) => R): Product => R = asserting(f != null, "f is null", asFunctionType[R](f.tupled))
 
@@ -575,30 +575,30 @@ object RenderableFunction {
     * @return a function of arity n-1 which is the result of applying t to f
     */
   // private
-  def getPartialApplicationFunction[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: T, cbn: Boolean): (Product) => R =
+  def getPartialApplicationFunction[T, R](n: Int, f: (Product) => R, t: T, cbn: Boolean)(implicit tt: ClassTag[T], rt: ClassTag[R]): (Product) => R =
   if (cbn) getPartialApplicationFunction(n, f, { () => t }, false)
   else
     n match {
       case 1 =>
-        asFunctionType { _: Product => f(Tuple1(t)) }
+        asFunctionType { (_: Product) => f(Tuple1(t)) }
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        asFunctionType { x: Tuple1[_] => f2.curried(t)(x._1) }
+        asFunctionType { (x: Tuple1[_]) => f2.curried(t)(x._1) }
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        asFunctionType { x: (_, _) => f3.curried(t)(x._1)(x._2) }
+        asFunctionType { (x: (_, _)) => f3.curried(t)(x._1)(x._2) }
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        asFunctionType { x: (_, _, _) => f4.curried(t)(x._1)(x._2)(x._3) }
+        asFunctionType { (x: (_, _, _)) => f4.curried(t)(x._1)(x._2)(x._3) }
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
-        asFunctionType { x: (T, T, T, T) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
+        asFunctionType { (x: (T, T, T, T)) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
       case 6 =>
         val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-        asFunctionType { x: (T, T, T, T, T) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
+        asFunctionType { (x: (T, T, T, T, T)) => f6.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5) }
       case 7 =>
         val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-        asFunctionType { x: (T, T, T, T, T, T) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+        asFunctionType { (x: (T, T, T, T, T, T)) => f7.curried(t)(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
       case _ =>
         throw RenderableFunctionException(s"cannot partially apply function of arity $n (not supported/implemented)")
     }
@@ -606,36 +606,36 @@ object RenderableFunction {
   /**
     * Called by PartiallyApplyParameters (via class.partiallyApplyParameter and object.partiallyApplyFunction)
     */
-  private def getPartialApplicationFunctionCallByName[T: ClassTag, R: ClassTag](n: Int, f: (Product) => R, t: () => T): (Product) => R =
+  private def getPartialApplicationFunctionCallByName[T, R](n: Int, f: (Product) => R, t: () => T)(implicit tt: ClassTag[T], rt: ClassTag[R]): (Product) => R =
     n match {
       case 1 =>
         val f1: Tuple1[T] => R = f
         // CONSIDER see why we have to call extract. It should never be necessary.
-        val g0: (Product) => R = { _: Product => f1(Tuple1(extract(t())(implicitly[ClassTag[T]]))) }
+        val g0: (Product) => R = { (_: Product) => f1(Tuple1(extract[T](t()))) }
         g0
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        val g1 = asFunctionType { x: Tuple1[_] => f2.curried(extract(t())(implicitly[ClassTag[T]]))(x._1) }
+        val g1 = asFunctionType { (x: Tuple1[_]) => f2.curried(extract[T](t()))(x._1) }
         g1
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        val g2 = asFunctionType { x: (_, _) => f3.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2) }
+        val g2 = asFunctionType { (x: (_, _)) => f3.curried(extract[T](t()))(x._1)(x._2) }
         g2
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        val g3 = asFunctionType { x: (_, _, _) => f4.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3) }
+        val g3 = asFunctionType { (x: (_, _, _)) => f4.curried(extract[T](t()))(x._1)(x._2)(x._3) }
         g3
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
-        val g4 = asFunctionType { x: (T, T, T, T) => f5.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4) }
+        val g4 = asFunctionType { (x: (T, T, T, T)) => f5.curried(extract[T](t()))(x._1)(x._2)(x._3)(x._4) }
         g4
       case 6 =>
         val f6 = FP.untupled[T, T, T, T, T, T, R](f)
-        val g5 = asFunctionType { x: (T, T, T, T, T) => f6.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5) }
+        val g5 = asFunctionType { (x: (T, T, T, T, T)) => f6.curried(extract[T](t()))(x._1)(x._2)(x._3)(x._4)(x._5) }
         g5
       case 7 =>
         val f7 = FP.untupled[T, T, T, T, T, T, T, R](f)
-        val g6 = asFunctionType { x: (T, T, T, T, T, T) => f7.curried(extract(t())(implicitly[ClassTag[T]]))(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+        val g6 = asFunctionType { (x: (T, T, T, T, T, T)) => f7.curried(extract[T](t()))(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
         g6
       case _ => throw RenderableFunctionException(s"FunctionCalls with arity $n are not supported")
     }
@@ -655,7 +655,7 @@ object RenderableFunction {
             case 2 => FP.invert2(f2)
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
-          val g2 = asFunctionType { x: (T, T) => f2i(x._1)(x._2) }
+          val g2 = asFunctionType { (x: (T, T)) => f2i(x._1)(x._2) }
           RenderableFunction(n, w.invert(n), cbni.toList, csi)(g2)
         case 3 =>
           val f3 = FP.untupled[T, T, T, R](f).curried
@@ -664,7 +664,7 @@ object RenderableFunction {
             case 3 => FP.invert3(f3)
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
-          val g3 = asFunctionType { x: (T, T, T) => f3i(x._1)(x._2)(x._3) }
+          val g3 = asFunctionType { (x: (T, T, T)) => f3i(x._1)(x._2)(x._3) }
           RenderableFunction(n, w.invert(n), cbni.toList, csi)(g3)
         case 4 =>
           val f4 = FP.untupled[T, T, T, T, R](f).curried
@@ -674,7 +674,7 @@ object RenderableFunction {
             case 4 => FP.invert4(f4)
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
-          val g4 = asFunctionType { x: (T, T, T, T) => f4i(x._1)(x._2)(x._3)(x._4) }
+          val g4 = asFunctionType { (x: (T, T, T, T)) => f4i(x._1)(x._2)(x._3)(x._4) }
           RenderableFunction(n, w.invert(n), cbni.toList, csi)(g4)
         case 5 =>
           val f5 = FP.untupled[T, T, T, T, T, R](f).curried
@@ -685,7 +685,7 @@ object RenderableFunction {
             case 5 => FP.invert5(f5)
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
-          val g5 = asFunctionType { x: (T, T, T, T, T) => f5ci(x._1)(x._2)(x._3)(x._4)(x._5) }
+          val g5 = asFunctionType { (x: (T, T, T, T, T)) => f5ci(x._1)(x._2)(x._3)(x._4)(x._5) }
           RenderableFunction(n, w.invert(n), cbni.toList, csi)(g5)
         case 6 =>
           val f6 = FP.untupled[T, T, T, T, T, T, R](f).curried
@@ -697,7 +697,7 @@ object RenderableFunction {
             case 6 => FP.invert6(f6)
             case _ => throw RenderableFunctionException(s"cannot invert $n parameters when arity = $arity")
           }
-          val g6 = asFunctionType { x: (T, T, T, T, T, T) => f6i(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
+          val g6 = asFunctionType { (x: (T, T, T, T, T, T)) => f6i(x._1)(x._2)(x._3)(x._4)(x._5)(x._6) }
           RenderableFunction(n, w.invert(n), cbni.toList, csi)(g6)
         case _ => throw RenderableFunctionException(s"invert with arity $arity is not supported")
       }

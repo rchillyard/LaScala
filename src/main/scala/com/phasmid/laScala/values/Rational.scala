@@ -250,7 +250,7 @@ object Rational {
 
   def min[N: FiniteIntegral](r1: Rational[N], r2: Rational[N]): Rational[N] = if (r1 <= r2) r1 else r2
 
-  def convertToM[N: FiniteIntegral, M: FiniteIntegral](n: N): M = implicitly[FiniteIntegral[M]].fromBigInt(implicitly[FiniteIntegral[N]].toBigInt(n))
+  def convertToM[N, M](n: N)(implicit fn: FiniteIntegral[N], fm: FiniteIntegral[M]): M = fm.fromBigInt(fn.toBigInt(n))
 
   // Apply methods
 
@@ -291,7 +291,7 @@ object Rational {
   def fromFractional[N: FiniteIntegral, M: Fractional](x: M): Rational[N] = x match {
     case r@Rational(_, _) => r.toRational
     case x: Int => Rational[N](x)
-    case x: Long => Rational[N](x)
+    case x: Long => Rational[N](x.toDouble)
     case x: Double => Rational[N](x)
     case x: BigDecimal => Rational[N](x)
     case _ => throw new RationalException(s"cannot apply $x (unsupported)")
@@ -330,10 +330,10 @@ object Rational {
       val expressions = args.iterator
       val sb = new StringBuffer()
       while (strings.hasNext) {
-        val s = strings.next
+        val s = strings.next()
         if (s.isEmpty) {
           if (expressions.hasNext)
-            sb.append(expressions.next)
+            sb.append(expressions.next())
           else
             throw new RationalException("r: logic error: missing expression")
         }
@@ -341,7 +341,7 @@ object Rational {
           sb.append(s)
       }
       if (expressions.hasNext)
-        throw new RationalException(s"r: ignored: ${expressions.next}")
+        throw new RationalException(s"r: ignored: ${expressions.next()}")
       else
         Rational(sb.toString)
     }

@@ -12,7 +12,7 @@ import scala.util.Try
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends AnyFlatSpec with Matchers {
-  private implicit val logger = Spy.getLogger(getClass)
+  private implicit val logger: org.slf4j.Logger = Spy.getLogger(getClass)
 
   implicit object IntStringValueOps$ extends StringValueOps[Int] {
     def getParentKey(v: Int): Option[String] = Some((v / 10).toString)

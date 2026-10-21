@@ -199,25 +199,25 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
   "Always" should "be true" in {
     // CONSIDER Figure out why we get a warning here and fix it!
     val p = Always
-    p() should matchPattern { case Success(true) => }
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "be named ok" in {
     Always.toString shouldBe "true"
   }
   "Never" should "be false" in {
     val p = Never
-    p() should matchPattern { case Success(false) => }
+    p(()) should matchPattern { case Success(false) => }
   }
   it should "be named ok" in {
     Never.toString shouldBe "false"
   }
   ":&" should "work with Predicate" in {
     val p = Always :& Never
-    p() should matchPattern { case Success(false) => }
+    p(()) should matchPattern { case Success(false) => }
   }
   it should "work with function" in {
-    val p = Never :| { _: Any => Success(true) }
-    p() should matchPattern { case Success(true) => }
+    val p = Never :| { (_: Any) => Success(true) }
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
@@ -242,11 +242,11 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
   }
   ":|" should "work with Predicate" in {
     val p = Always :| Never
-    p() should matchPattern { case Success(true) => }
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "work with function" in {
-    val p = Never :| { _: Any => Success(true) }
-    p() should matchPattern { case Success(true) => }
+    val p = Never :| { (_: Any) => Success(true) }
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
@@ -271,11 +271,11 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
   }
   "&:" should "work with Predicate" in {
     val p = Always &: Never
-    p() should matchPattern { case Success(false) => }
+    p(()) should matchPattern { case Success(false) => }
   }
   it should "work with function" in {
-    val p = { _: Any => Success(true) } &: Never
-    p() should matchPattern { case Success(false) => }
+    val p = { (_: Any) => Success(true) } &: Never
+    p(()) should matchPattern { case Success(false) => }
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()
@@ -302,11 +302,11 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
   }
   "|:" should "work with Predicate" in {
     val p = Always |: Never
-    p() should matchPattern { case Success(true) => }
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "work with function" in {
-    val p = { _: Any => Success(true) } |: Never
-    p() should matchPattern { case Success(true) => }
+    val p = { (_: Any) => Success(true) } |: Never
+    p(()) should matchPattern { case Success(true) => }
   }
   it should "evaluate in the correct order" in {
     val s = new StringBuilder()

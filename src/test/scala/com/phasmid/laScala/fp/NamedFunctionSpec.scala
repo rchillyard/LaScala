@@ -29,7 +29,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f: NamedFunction[Int, Int] = new NamedFunction("double", double)
     f match {
       case NamedFunction("double", g) => g(2) shouldBe 4
-      case _ => fail
+      case _ => fail()
     }
   }
 
@@ -73,7 +73,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f: NamedFunction0[Int] = new NamedFunction0("test", x)
     f match {
       case NamedFunction0("test", g) => g() shouldBe 1
-      case _ => fail
+      case _ => fail()
     }
   }
 
@@ -96,7 +96,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f: NamedFunction2[Int, Int, Double] = new NamedFunction2("test", x)
     f match {
       case NamedFunction2("test", g) => g(2, 3) shouldBe 8.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "curry correctly" in {
@@ -108,14 +108,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g match {
       // NOTE: do not try to use syntactic sugar here and similar places
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g(2)(3) shouldBe 8.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test!!!"
         h(2)(3) shouldBe 8.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "tuple correctly" in {
@@ -126,14 +126,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g((2, 3)) shouldBe 8.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test###"
         h((2, 3)) shouldBe 8.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
 
@@ -156,7 +156,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f = new NamedFunction3("test", x)
     f match {
       case NamedFunction3("test", g) => g("10", 2, 3) shouldBe 80.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "curry correctly" in {
@@ -167,14 +167,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g("10")(2)(3) shouldBe 80.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test!!!"
         h("10")(2)(3) shouldBe 80.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "tuple correctly" in {
@@ -185,14 +185,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g(("10", 2, 3)) shouldBe 80.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test###"
         h(("10", 2, 3)) shouldBe 80.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
 
@@ -215,7 +215,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f = new NamedFunction4("test", x)
     f match {
       case NamedFunction4("test", g) => g("10", 2, 3, Math.PI) shouldBe 251.327 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "curry correctly" in {
@@ -226,14 +226,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g("10")(2)(3)(Math.PI) shouldBe 251.327 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test!!!"
         h("10")(2)(3)(Math.PI) shouldBe 251.327 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "tuple correctly" in {
@@ -244,14 +244,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g(("10", 2, 3, Math.PI)) shouldBe 251.327 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test###"
         h(("10", 2, 3, Math.PI)) shouldBe 251.327 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
 
@@ -274,7 +274,7 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     val f = new NamedFunction5("test", x)
     f match {
       case NamedFunction5("test", g) => g("10", 2, 3, Math.PI, false) shouldBe 0.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "curry correctly" in {
@@ -285,14 +285,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g("10")(2)(3)(Math.PI)(false) shouldBe 0.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test!!!"
         h("10")(2)(3)(Math.PI)(false) shouldBe 00.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
   it should "tuple correctly" in {
@@ -303,14 +303,14 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail
+      case _ => fail()
     }
     g(("10", 2, 3, Math.PI, false)) shouldBe 0.0 +- 0.001
     g match {
       case NamedFunction(w, h) =>
         w shouldBe "test###"
         h(("10", 2, 3, Math.PI, false)) shouldBe 0.0 +- 0.001
-      case _ => fail
+      case _ => fail()
     }
   }
 }

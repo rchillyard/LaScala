@@ -43,7 +43,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     sb.toString() shouldBe "myLogger: DEBUG: spy: i: 1\nmyLogger: DEBUG: spy: i: 2\n"
   }
   it should "work with explicit spy func" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -54,7 +54,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     spyMessage shouldBe "explicit spy: i: 1\nexplicit spy: i: 2\n"
   }
   it should "work with explicit spy func when exception is thrown" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -65,7 +65,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     spyMessage shouldBe "explicit spy: division by zero: <<Exception thrown: / by zero>>\n"
   }
   it should "work with explicit custom println spy func" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     implicit def spyFunc(s: String): Spy = Spy(println(s))
 
     Spy.spying = true
@@ -82,7 +82,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     // you should see messages written to console with "spy" prefix
   }
   it should "not evaluate the argument (noSpy)" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
     var spySpyMessage: String = ""
@@ -97,7 +97,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     spySpyMessage shouldBe ""
   }
   it should "not expand the message when spying is off (global)" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = false
     var spyMessage: String = ""
     var spySpyMessage: String = ""
@@ -112,7 +112,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     spySpyMessage shouldBe ""
   }
   it should "not expand the message when spying is off (local)" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
     var spySpyMessage: String = ""
@@ -127,7 +127,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
     spySpyMessage shouldBe ""
   }
   it should "work with {}-style message" in {
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
 
@@ -180,7 +180,7 @@ class SpySpec extends AnyFlatSpec with Matchers {
   behavior of "Spy.log"
   it should "work with explicit spy func" in {
     // NOTE: we really do need import Spy._ here
-    import Spy._
+    import Spy.{spyFunc => _, _}
     Spy.spying = true
     var spyMessage: String = ""
 

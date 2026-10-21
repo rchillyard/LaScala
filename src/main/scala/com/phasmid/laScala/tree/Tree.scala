@@ -154,7 +154,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the type of b
     * @return Some(node) where node is the first node to be found with value b
     */
-  def find[B >: A](b: B): Option[Node[B]] = find({ n: Node[B] => FP.contains(n.get, b) })
+  def find[B >: A](b: B): Option[Node[B]] = find({ (n: Node[B]) => FP.contains(n.get, b) })
 
   /**
     *
@@ -689,7 +689,7 @@ trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
   def buildLeaf(a: A): Node[A] = Leaf(a)
 
   def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
-    case b@Branch(_, _) => (b like y).toBoolean(false)
+    case b: Tree[A] => (b like y).toBoolean(false)
     case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
@@ -706,7 +706,7 @@ case class GeneralTree[+A](value: A, children: List[Node[A]]) extends Branch[A] 
   /**
     * @return Some(value)
     */
-  def get = Some(value)
+  def get: Some[A] = Some(value)
 }
 
 /**
@@ -740,7 +740,7 @@ case class UnvaluedBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) exten
   /**
     * @return None
     */
-  def get = None
+  def get: None.type = None
 }
 
 /**
@@ -757,7 +757,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
     * @return None
     */
   // TODO this looks wrong!
-  def get = None
+  def get: None.type = None
 
 }
 
@@ -845,7 +845,7 @@ abstract class AbstractBinaryTree[+A: Ordering](left: Node[A], right: Node[A]) e
 abstract class AbstractLeaf[+A](a: A) extends Node[A] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[A]] = Iterator.single(this)
 
-  def get = Some(a)
+  def get: Some[A] = Some(a)
 
   def size: Int = 1
 
@@ -862,7 +862,7 @@ abstract class AbstractLeaf[+A](a: A) extends Node[A] {
 abstract class AbstractEmpty extends Tree[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
-  def get = None
+  def get: None.type = None
 
   /**
     * @return the immediate descendants (children) of this branch
@@ -1030,7 +1030,7 @@ object GeneralTree {
     def buildLeaf(a: A): Node[A] = Leaf(a)
 
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
-      case b@Branch(_, _) => (b like y).toBoolean(false)
+      case b: Tree[A] => (b like y).toBoolean(false)
       case AbstractLeaf(a) => FP.contains(y.get, a)
       case _ => x == y
     }
@@ -1237,7 +1237,10 @@ object AbstractBinaryTree {
     * @tparam A the tree type
     * @return an optional tuple of two children
     */
-  def unapply[A](t: AbstractBinaryTree[A]): Option[(Option[A], Node[A], Node[A])] = Some((t.get, t.children.head, t.children.tail.head))
+  def unapply[A](n: Node[A]): Option[(Option[A], Node[A], Node[A])] = n match {
+    case t: AbstractBinaryTree[A] => Some((t.get, t.children.head, t.children.tail.head))
+    case _ => None
+  }
 
   /**
     * Method to determine if node a compares as less than node b
@@ -1370,12 +1373,17 @@ object AbstractBinaryTree {
 }
 
 object Branch {
-  def unapply[A](e: Tree[A]): Option[(Option[A], NodeSeq[A])] = Some(e.get, e.children)
+  def unapply[A](n: Node[A]): Option[(Option[A], NodeSeq[A])] = n match {
+    case e: Tree[A] => Some((e.get, e.children))
+    case _ => None
+  }
 }
 
 object IndexedNode {
-  def unapply[A](e: IndexedNode[A]): Option[(Node[A], Long, Long)] =
-    for (x <- Option(e); l <- x.lIndex; r <- x.rIndex) yield (x, l, r)
+  def unapply[A](n: Node[A]): Option[(Node[A], Long, Long)] = n match {
+    case x: IndexedNode[A] => for (l <- x.lIndex; r <- x.rIndex) yield (x, l, r)
+    case _ => None
+  }
 }
 
 case object EmptyWithIndex extends AbstractEmpty with TreeIndex {

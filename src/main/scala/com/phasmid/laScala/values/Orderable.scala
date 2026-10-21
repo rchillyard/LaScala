@@ -80,7 +80,7 @@ object Orderable {
     }
   }
 
-  def comparisonTyped[X: Orderable](op: String, x: Try[X], y: Try[X]): Try[Boolean] = {
+  def comparisonTyped[X](op: String, x: Try[X], y: Try[X])(implicit ev: Orderable[X]): Try[Boolean] = {
     val orderable = implicitly[Orderable[X]]
 
     def notEqual(x: X, y: X): Boolean = !orderable.equiv(x, y)

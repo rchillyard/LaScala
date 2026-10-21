@@ -8,7 +8,7 @@ package com.phasmid.laScala.values
 sealed trait Product0 extends Any with Product {
   def productArity = 0
 
-  def productElement(n: Int) = throw new IllegalStateException("No element")
+  def productElement(n: Int): Nothing = throw new IllegalStateException("No element")
 
   def canEqual(that: Any) = false
 }

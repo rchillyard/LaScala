@@ -75,11 +75,11 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "apply a 1-arity function" in {
     val name = "isHello"
     val arity = 1
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
+    val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
     f.func(Tuple1("Hello")) shouldBe true
-    an[ClassCastException] should be thrownBy f.func("Hello")
+    an[ClassCastException] should be thrownBy f.func(("Hello", "Goodbye"))
   }
 
   it should "apply a 2-arity function" in {
@@ -92,7 +92,6 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
     f.func(("Hello", "Goodbye")) shouldBe "Hello:Goodbye"
-    an[ClassCastException] should be thrownBy f.func("Hello")
     an[ClassCastException] should be thrownBy f.func(Tuple1("Hello"))
   }
 
@@ -109,49 +108,11 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     (for (g2 <- g2y; r <- g2.callByName()) yield r) should matchPattern { case Success("Hello:Goodbye") => }
   }
 
-  ignore should "work with partiallyApply (2)" in {
-    val name = "and"
-
-    def and(x: Boolean, y: => Boolean) = x && y
-
-    val f = RenderableFunction(and _, name, List(false, true))
-    val bt: Boolean = true
-    val bf: Boolean = false
-    val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply(bt)
-    val g2y: Try[RenderableFunction[Boolean]] = for (g <- g1y; h <- g.partiallyApply(bf)) yield h
-    val by: Try[Boolean] = for (g2 <- g2y; b <- g2.callByName()) yield b
-    by should matchPattern { case Success(false) => }
-  }
-
-  ignore should "work with partiallyApply (3)" in {
-    val name = "and"
-
-    def and(x: String, y: => String) = x.toBoolean && y.toBoolean
-
-    val f = RenderableFunction(and _, name, List(false, true))
-    val g1y: Try[RenderableFunction[Boolean]] = f.partiallyApply("true")
-    val g2y: Try[RenderableFunction[Boolean]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
-    val by: Try[Boolean] = for (g2 <- g2y; b <- g2.callByName()) yield b
-    by should matchPattern { case Success(false) => }
-  }
-
-  ignore should "work with partiallyApply (4)" in {
-    val name = "and"
-
-    def and(x: String, y: => String) = (x.toBoolean && y.toBoolean).toString
-
-    val f = RenderableFunction(and _, name, List(false, true))
-    val g1y: Try[RenderableFunction[String]] = f.partiallyApply("true")
-    val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("false")) yield h
-    val by: Try[String] = for (g2 <- g2y; b <- g2.callByName()) yield b
-    by should matchPattern { case Success("false") => }
-  }
-
   behavior of "render"
 
   it should "give function string with tabs" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
+    val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
     f.render(1) shouldBe s"$name(a?)"
   }
 
@@ -328,7 +289,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     def render(s: String) = s == "Hello"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left("k")))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
   }
@@ -337,37 +298,37 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     def render(s: String) = s
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left("K")))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("K")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
-    gy.get.callByName shouldBe Success("K")
+    gy.get.callByName() shouldBe Success("K")
   }
 
   it should "reduce arity 2 to 0 (a)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left("k"), Left("l")))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("k"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
-    gy.get.callByName shouldBe Success("k:l")
+    gy.get.callByName() shouldBe Success("k:l")
   }
 
   it should "reduce arity 2 to 0 (b)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left("K"), Left("l")))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("K"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
-    gy.get.callByName shouldBe Success("K:l")
+    gy.get.callByName() shouldBe Success("K:l")
   }
 
   it should "reduce arity 3 to 2" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left(Scalar("k"))))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 2
   }
@@ -376,101 +337,26 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
-    val gy = f.partiallyApplyParameters(List[Parameter[_]](Left(Scalar("k"))))
+    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 3
-  }
-
-  ignore should "handle a function (1)" in {
-    // First we give a bad value of pi
-    val map = mutable.HashMap("pi" -> "22/7")
-
-    def fLookup(s: => String): String = map(s)
-
-    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
-
-    def show(s1: String) = s1
-
-    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val c1 = Closure(lookup, Left("pi"))
-    c1.render() shouldBe "Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))"
-    val c2 = Closure(f, Right(c1))
-    c2.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  render(a?)), Right(Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))))"
-    val c3y = c2.partiallyApply
-    c3y should matchPattern { case Success(_) => }
-    c3y.get.arity shouldBe 0
-    c3y.get.render() shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  render(lookup(\"pi\"))), )"
-
-
-    // At this point, c4y does not "close" over the value of pi, it is still to be evaluated which means that we can set the new, proper value, before we apply c4y.get
-    map.put("pi", "3.1415927")
-    val wy = for (c3 <- c3y; c4 <- c3()) yield c4
-    wy shouldBe Success("3.1415927")
-  }
-
-  ignore should "handle a function (2)" in {
-    val map = Map("pi" -> "3.1415927")
-
-    def fLookup(s: => String): String = map(s)
-
-    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
-
-    def show(s1: String) = s1.toDouble
-
-    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val c1 = Closure(lookup, Left("pi"))
-    c1.render() shouldBe "Closure(RenderableFunction[List(scala.Function0),java.lang.String](1, => lookup(=>a?)), Left(\"pi\"))"
-    val c2 = Closure(f, Right(c1))
-    val xfy: Try[Closure[_, Double]] = c2.partiallyApply
-    xfy should matchPattern { case Success(_) => }
-    xfy.get.arity shouldBe 0
-    xfy.get() shouldBe Success(3.1415927)
   }
 
   /**
     * CONSIDER figure out how to avoid using asInstanceOf in this and other unit tests
     */
-  ignore should "handle a function that throws an exception (1)" in {
-    val map = Map("PI" -> "3.1415927")
-
-    def fLookup(s: => String): String = map(s)
-
-    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
-
-    def show(s1: String) = s1
-
-    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val fy: Try[RenderableFunction[String]] = f.partiallyApplyParameters(Seq(Right(Closure(lookup, Left("pi")))).asInstanceOf[Seq[Parameter[_]]])
-    val ry = for (g: RenderableFunction[String] <- fy; r <- g.callByName()) yield r
-    ry should matchPattern { case Failure(_: NoSuchElementException) => }
-  }
-
-  ignore should "handle a function that throws an exception 2)" in {
-    val map = Map("PI" -> "3.1415927")
-
-    def fLookup(s: => String): String = map(s)
-
-    val lookup: RenderableFunction[String] = RenderableFunction(fLookup _, "lookup", Seq(true))
-
-    def show(s1: String) = s1
-
-    val f = RenderableFunction(show _, "render", RenderableFunction.callByValue(1))
-    val cy = f.partiallyApplyParameters(List[Parameter[String]](Right(Closure(lookup, Left("pi")))).asInstanceOf[Seq[Parameter[_]]])
-    cy should matchPattern { case Failure(_: RenderableFunctionException) => }
-  }
-
   it should "deal with not" in {
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
     val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)).asInstanceOf[Seq[Parameter[_]]])
+    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
-    gy.get.callByName shouldBe Success(false)
+    gy.get.callByName() shouldBe Success(false)
   }
 
   it should "deal with NOT IN" in {
-    val f_1: RenderableFunction[Boolean] = RenderableFunction({ b: Boolean => println(s"call NOT $b"); !b }, "NOT", RenderableFunction.callByValue(1))
+    val f_1: RenderableFunction[Boolean] = RenderableFunction({ (b: Boolean) => println(s"call NOT $b"); !b }, "NOT", RenderableFunction.callByValue(1))
     f_1.arity shouldBe 1
     val g_2: RenderableFunction[Boolean] = RenderableFunction((p0: String, p1: List[String]) => {
       println(s"$p0 IN $p1")
@@ -478,11 +364,11 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     }, "IN", RenderableFunction.callByValue(2))
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
-    val g__1y = g_2i.partiallyApplyParameters(Seq[Parameter[List[String]]](Left(List("x", "y", "z"))).asInstanceOf[Seq[Parameter[_]]])
+    val g__1y = g_2i.partiallyApplyParameters(Seq[Parameter[List[String]]](Left(List("x", "y", "z"))).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
     g__1.arity shouldBe 1
-    val fg_2y = f_1.partiallyApplyParameters(Seq[Parameter[Boolean]](Right(Closure(g__1, Left("x")))).asInstanceOf[Seq[Parameter[_]]])
+    val fg_2y = f_1.partiallyApplyParameters(Seq[Parameter[Boolean]](Right(Closure(g__1, Left("x")))).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     fg_2.callByName() shouldBe Success(false)
@@ -569,25 +455,25 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "handle varargs of cardinality 0" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs(0)
     rf1.arity shouldBe 0
-    val rf2y = rf1.partiallyApplyParameters(List[Parameter[_]]())
+    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]]())
     rf2y should matchPattern { case Success(_) => }
-    rf2y.get.callByName shouldBe Success(List())
+    rf2y.get.callByName() shouldBe Success(List())
   }
 
   it should "handle varargs of cardinality 1" in {
     val rf1: RenderableFunction[Seq[Seq[String]]] = RenderableFunction.varargs(1)
     rf1.arity shouldBe 1
-    val rf2y = rf1.partiallyApplyParameters(List[Parameter[_]](Left("l")))
+    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("l")))
     rf2y should matchPattern { case Success(_) => }
-    rf2y.get.callByName shouldBe Success(List("l"))
+    rf2y.get.callByName() shouldBe Success(List("l"))
   }
 
   it should "handle varargs of cardinality 2" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](2)
     rf1.arity shouldBe 2
-    val rf2y = rf1.partiallyApplyParameters(List[Parameter[_]](Left("l"), Left("K")))
+    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
-    rf2y.get.callByName shouldBe Success(List("l", "K"))
+    rf2y.get.callByName() shouldBe Success(List("l", "K"))
   }
 
   /**
@@ -599,90 +485,13 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](args)
     rf1.arity shouldBe args
     val values = (for (i <- 1 to args) yield i.toString).toList
-    val params: List[Parameter[_]] = for (x <- values) yield Left(x)
+    val params: List[Either[_, Closure[_, _]]] = for (x <- values) yield Left(x)
     val rf2y = rf1.partiallyApplyParameters(params)
     rf2y should matchPattern { case Success(_) => }
-    rf2y.get.callByName shouldBe Success(values)
+    rf2y.get.callByName() shouldBe Success(values)
   }
 
   behavior of "boolean expression"
-  ignore should """evaluate to true with true & true""" in {
-    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true.booleanValue))
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-  ignore should """evaluate to true with true & (java) true""" in {
-    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true.booleanValue), Left(true))
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-  ignore should """evaluate (using java Boolean parameter) to true with true & (java) true""" in {
-    def fAnd(p1: Boolean, p2: => java.lang.Boolean): Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true), Left(true))
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-  ignore should """evaluate to java.lang.Boolean(true) with true & (java) true""" in {
-    def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true), Left(true))
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-
-  ignore should """evaluate to java.lang.Boolean(true) with true & not (java) true""" in {
-    def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
-
-    val ifNot = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-
-    def fAnd(p1: java.lang.Boolean, p2: => java.lang.Boolean): java.lang.Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
-    println(cAnd)
-    val g = cAnd.partiallyApply
-    println(s"g=$g")
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-
-  ignore should """evaluate to true with true & not true""" in {
-    def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
-
-    val ifNot = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-
-    def fAnd(p1: Boolean, p2: => Boolean): Boolean = p1 && p2
-
-    val ifAnd = RenderableFunction(fAnd _, "and", List(false, true))
-    val cAnd = Closure(ifAnd, Left(true), Right(Closure(ifNot, Left(false))))
-    println(cAnd)
-    val g = cAnd.partiallyApply
-    println(s"g=$g")
-    cAnd() match {
-      case Success(b) => println(s"result: $b"); // Succeeded
-      case Failure(x) => fail(x.getLocalizedMessage)
-    }
-  }
-
   behavior of "toScala"
 
   it should "convert Integer" in {

@@ -29,7 +29,7 @@ case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q =>
 
   implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
 
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = po.map(_ + ":").getOrElse("") + structuralKey
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = po.map(_.toString + ":").getOrElse("") + structuralKey
 
   private def values: Seq[Q] = for ((_, q) <- taxa) yield q
 

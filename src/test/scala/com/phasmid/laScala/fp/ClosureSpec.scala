@@ -31,18 +31,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
 
   it should "apply for a simple closure" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
-    val c = Closure(f, Left("Hello"))
-    c.arity shouldBe 0
-    c() shouldBe Success(true)
-  }
-
-  ignore should "apply for a simple call-by-name closure" in {
-    val name = "isHello"
-
-    def isHello(s: => String): Boolean = s == "Hello"
-
-    val f = RenderableFunction(isHello _, name, RenderableFunction.callByName(1))
+    val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f, Left("Hello"))
     c.arity shouldBe 0
     c() shouldBe Success(true)
@@ -51,7 +40,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   // CONSIDER investigate why this doesn't work
   ignore should "apply for a closure where the parameter is itself a Closure" in {
     val getPi: Product => String = { _ => math.Pi.toString }
-    val f1 = RenderableFunction({ s: String => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
+    val f1 = RenderableFunction({ (s: String) => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
     val f2: RenderableFunction[String] = RenderableFunction(0, FunctionString("pi", Nil), Nil, Nil)(getPi)
     val c1 = Closure(f2)
     val c2 = Closure(f1, Right(c1))
@@ -60,23 +49,9 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     c2() shouldBe Success(false)
   }
 
-  ignore should "apply for a closure where the call-by-name parameter is itself a Closure" in {
-    //    val getPi: Product => String = { _: () => math.Pi.toString }
-    def getPi: String = math.Pi.toString
-
-    def isHello(s: => String): Boolean = s == "Hello"
-
-    val f1 = RenderableFunction(isHello _, "isHello", RenderableFunction.callByName(1))
-    val f2 = RenderableFunction(getPi _, "pi", Seq[Boolean]())
-    val c1 = Closure(f2)
-    val c2 = Closure(f1, Right(c1))
-    c2.arity shouldBe 0
-    c2() shouldBe Success(false)
-  }
-
   it should "implement bind" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
+    val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c1 = Closure[String, Boolean](f)
     c1.arity shouldBe 1
     val c2 = c1.bind(Left("Hello"))
@@ -86,7 +61,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
 
   it should "throw exception where there is no parameter" in {
     val name = "isHello"
-    val f = RenderableFunction({ s: String => s == "Hello" }, name, RenderableFunction.callByValue(1))
+    val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
     val c = Closure(f)
     c.arity shouldBe 1
     c() should matchPattern { case Failure(_) => }
@@ -96,7 +71,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   behavior of "createVarArgsClosure"
 
   it should "handle varargs of 0 elements" in {
-    val c = Closure.createVarArgsClosure()
+    val c = Closure.createVarArgsClosure[Any]()
     c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.immutable.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq())
@@ -117,7 +92,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "handle varargs of 1 variable elements sandwiched in 2 constant elements" in {
-    val f = RenderableFunction({ s: String => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
+    val f = RenderableFunction({ (s: String) => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
     val c = Closure.createVarArgsClosure(Left("l"), Right(Closure[String, String](f, Left("Hello"))), Left("K"))
     c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.collection.immutable.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
     c.arity shouldBe 0

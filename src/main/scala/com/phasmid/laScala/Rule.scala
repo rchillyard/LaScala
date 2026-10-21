@@ -221,7 +221,7 @@ case class Truth[T](b: Boolean) extends BaseRule[T](s"$b") {
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
-  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(Truth(b).asInstanceOf[Rule[U]])
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Success[Rule[U]] = Success(Truth(b).asInstanceOf[Rule[U]])
 }
 
 case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
@@ -242,7 +242,7 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
     * @tparam U the type of the resulting Rule
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
-  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]) = Success(InvalidRule(x).asInstanceOf[Rule[U]])
+  def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Success[Rule[U]] = Success(InvalidRule(x).asInstanceOf[Rule[U]])
 }
 
 object Rule {

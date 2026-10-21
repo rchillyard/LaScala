@@ -121,7 +121,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     * @return true if they are the same
     */
   def nodesAlike(x: Node[V], y: Node[V]): Boolean = x match {
-    case b@Branch(_, _) => (b like y).toBoolean(false)
+    case b: Tree[V] => (b like y).toBoolean(false)
     case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
@@ -164,6 +164,6 @@ object GeneralKVTree
 abstract class GeneralKVTreeBuilderWithScaffolding[K, V](implicit vo: ValueOps[K, V]) extends GeneralKVTreeBuilder[K, V] {
   implicit val scaffolding: mutable.HashMap[K, Node[V]] = mutable.HashMap[K, Node[V]]()
 
-  override def buildTree(maybeValue: Option[V], children: Seq[Node[V]]) = GeneralKVTreeWithScaffolding(maybeValue, children.toList.sorted)
+  override def buildTree(maybeValue: Option[V], children: Seq[Node[V]]): GeneralKVTreeWithScaffolding[K, V] = GeneralKVTreeWithScaffolding(maybeValue, children.toList.sorted)
 }
 

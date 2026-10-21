@@ -63,7 +63,7 @@ class RuleSpec extends AnyFlatSpec with Matchers {
     val r = parser.parseAll(parser.condition, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
     val variables = Map("x" -> 2000.0)
-    implicit val lookup = variables.apply _
+    implicit val lookup: String => Double = variables.apply _
     val rule = r.get.asRule
     val truth: Rule[Double] = rule.transform(lookup, _.toDouble)
     truth() should matchPattern { case Success(true) => }

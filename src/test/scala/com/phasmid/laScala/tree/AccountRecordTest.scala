@@ -176,7 +176,7 @@ object AccountRecordTest {
   def readAccountData(tester: AbstractTestDetails): Option[Seq[AccountRecord]] = {
     val uo = Option(getClass.getResource(tester.resourceName))
     val so = uo map (_.openStream)
-    val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines) yield for (w <- l.split("""\|""")) yield w
+    val wsso = for (s <- so) yield for (l <- Source.fromInputStream(s).getLines()) yield for (w <- l.split("""\|""")) yield w
     val aoso = for (wss <- wsso) yield for (ws <- wss) yield tester.createAccountRecord(ws)
 
     // NOTE Now, we flatten the options, resulting in None if there were any problems at all.

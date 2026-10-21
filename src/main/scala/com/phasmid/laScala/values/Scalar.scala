@@ -213,7 +213,7 @@ abstract class BaseDoubleScalar(x: Double, source: Any) extends BaseScalar(x, so
 case class RationalScalar(x: LongRational, source: Any) extends BaseRationalScalar(x, source)
 
 abstract class BaseRationalScalar(x: LongRational, source: Any) extends BaseScalar(x, source) {
-  override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n).asValuable; x2 <- DoubleScalar(x.d).asValuable; y <- Valuable[X].div(x1, x2).toOption) yield y
+  override def asValuable[X: Valuable]: Option[X] = for (x1 <- DoubleScalar(x.n.toDouble).asValuable; x2 <- DoubleScalar(x.d.toDouble).asValuable; y <- Valuable[X].div(x1, x2).toOption) yield y
 
   // CONSIDER this also needs fixing like DoubleScalar
   override def asFractional[X: Fractional]: Option[X] = Some(x.asInstanceOf[X])
@@ -343,7 +343,7 @@ object BooleanScalar {
 
   def apply(x: String): BooleanScalar = BooleanScalar(x.toBoolean, x)
 
-  def setDefaultFormat(format: String) {defaultFormat = format; Spy.log(s"BooleanScalar defaultFormat is now $defaultFormat")}
+  def setDefaultFormat(format: String): Unit = {defaultFormat = format; Spy.log(s"BooleanScalar defaultFormat is now $defaultFormat")}
 
   def getDefaultFormat: String = defaultFormat
 

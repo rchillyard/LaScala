@@ -39,7 +39,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     *
     * @return a RenderableFunction[R] wrapped in Try.
     */
-  def partiallyApply: Try[Closure[_, R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Parameter[_]]])) yield Closure(g)
+  def partiallyApply: Try[Closure[_, R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Either[_, Closure[_, _]]]])) yield Closure(g)
 
   /**
     * Method to determine if this Closure is fully applied. That's to say we can invoke apply() without
@@ -84,7 +84,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   * Companion object to Closure
   */
 object Closure {
-  private implicit val logger = LoggerFactory.getLogger(getClass)
+  private implicit val logger: org.slf4j.Logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
     case Success(r) => logger.debug(s"$w: $r"); ry
@@ -143,14 +143,14 @@ object Closure {
 
     val f = m match {
       case 0 =>
-        asFunctionType { _: Product => ??(tss.head).get }
+        asFunctionType { (_: Product) => ??(tss.head).get }
       case 1 =>
-        asFunctionType { x: Tuple1[T] => (tss.head ++: Some(x._1) +: ??(tss(1))).get }
+        asFunctionType { (x: Tuple1[T]) => (tss.head ++: Some(x._1) +: ??[T](tss(1))).get }
       case 2 =>
-        asFunctionType { x: (T, T) => (tss.head ++: Some(x._1) +: tss(1) ++: Some(x._2) +: ??(tss(2))).get }
+        asFunctionType { (x: (T, T)) => (tss.head ++: Some(x._1) +: tss(1) ++: Some(x._2) +: ??[T](tss(2))).get }
       case 3 =>
         logger.warn(s"getVarArgsFunction: used the highest supported value of n ($m)")
-        asFunctionType { x: (T, T, T) => (tss.head ++: Some(x._1) +: tss(1) ++: Some(x._2) +: tss(2) ++: Some(x._3) +: ??(tss(3))).get }
+        asFunctionType { (x: (T, T, T)) => (tss.head ++: Some(x._1) +: tss(1) ++: Some(x._2) +: tss(2) ++: Some(x._3) +: ??[T](tss(3))).get }
       case _ => throw RenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
     }
 

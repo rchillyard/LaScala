@@ -31,7 +31,7 @@ abstract class RNG_Java[+A](n: Long, f: Long => A) extends RNG[A] {
     *
     * @return A
     */
-  def apply: A = f(n)
+  def apply(): A = f(n)
 
   /**
     * Method to build a new instance of this RNG
@@ -88,22 +88,22 @@ object RNG_Java {
 }
 
 case class LongRNG(n: Long) extends RNG_Java[Long](n, identity) {
-  def buildNew(n: Long) = LongRNG(n)
+  def buildNew(n: Long): LongRNG = LongRNG(n)
 }
 
 case class DoubleRNG(n: Long) extends RNG_Java[Double](n, _.toDouble / Long.MaxValue) {
-  def buildNew(n: Long) = DoubleRNG(n)
+  def buildNew(n: Long): DoubleRNG = DoubleRNG(n)
 
-  override def toString = s"DoubleRNG: $n->$apply"
+  override def toString = s"DoubleRNG: $n->${apply()}"
 }
 
 /**
   * This class is a random-number-generator for values uniformly distributed in the range 0..1
   */
 case class UniformDoubleRNG(n: Long) extends RNG_Java[random.UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), ()) }) {
-  def buildNew(n: Long) = UniformDoubleRNG(n)
+  def buildNew(n: Long): UniformDoubleRNG = UniformDoubleRNG(n)
 
-  override def toString = s"UniformDoubleRNG: $n->$apply"
+  override def toString = s"UniformDoubleRNG: $n->${apply()}"
 }
 
 /**
@@ -114,11 +114,11 @@ case class UniformDoubleRNG(n: Long) extends RNG_Java[random.UniformDouble](n, {
   * </a>
   */
 case class GaussianRNG(n: Long) extends RNG_Java[(Double, Double)](n, GaussianRNG.values) {
-  def buildNew(n: Long) = GaussianRNG(n)
+  def buildNew(n: Long): GaussianRNG = GaussianRNG(n)
 
   override def nextSeed: Long = RNG_Java.nextSeed(GaussianRNG.logic(n)._2.state)
 
-  override def toString = s"GaussianRNG: $n->(${apply._1},${apply._2})"
+  override def toString = s"GaussianRNG: $n->(${apply()._1},${apply()._2})"
 }
 
 object RNG {
@@ -153,8 +153,8 @@ object GaussianRNG {
   private def logic(n: Long) = {
     val r1 = UniformDoubleRNG(n)
     val r2 = r1.next
-    val u = r1.apply.x
-    val v = r2.apply.x // ???
+    val u = r1.apply().x
+    val v = r2.apply().x // ???
     val k = if (u <= 0) 0 else math.sqrt(-2 * math.log(u))
     val tuple = (k * math.cos(2 * math.Pi * v), k * math.sin(2 * math.Pi * v))
     (tuple, r2)

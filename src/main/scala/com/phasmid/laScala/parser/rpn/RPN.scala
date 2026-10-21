@@ -19,7 +19,7 @@ case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] 
 
 case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
   // CONSIDER move this into implicit parameter
-  implicit val pattern = ""
+  implicit val pattern: String = ""
 
   def evaluate: Try[X] = Valuable[X].fromString(n)
 }
