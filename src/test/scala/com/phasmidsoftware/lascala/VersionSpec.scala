@@ -14,7 +14,7 @@ import scala.util._
 
 class VersionSpec extends AnyFlatSpec with Matchers with Inside {
   // TODO you must increment this every time version changes in order for the tests all to run correctly
-  val VERSION = "1.1.0"
+  val VERSION = "2.0.0"
 
   println(s"${Version.getVersion}")
 

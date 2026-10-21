@@ -21,8 +21,8 @@ jobs:
             - v2-dependencies-
 
       - run:
-          name: Compile (2.13 and 3.3)
-          command: sbt +Test/compile
+          name: Compile
+          command: sbt Test/compile
 
       - save_cache:
           paths:
@@ -32,8 +32,8 @@ jobs:
           key: v2-dependencies-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}
 
       - run:
-          name: Test (2.13 and 3.3)
-          command: sbt "+testOnly -- -l org.scalatest.tags.Slow"
+          name: Test (Scala 3.3)
+          command: sbt "testOnly -- -l org.scalatest.tags.Slow"
 
       - run:
           name: Test (current Scala 3 LTS)

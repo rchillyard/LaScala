@@ -1,6 +1,6 @@
 # Renderable for LaScala 2.0: design proposal
 
-Status: **proposal**, on branch `V2_0_0` (from `V1_1_0`). Nothing here is implemented yet.
+Status: **accepted** (2026-10-21), with the recommended answer to each decision in §4. Being implemented on branch `V2_0_0` (from `V1_1_0`), following the plan in §5.
 
 LaScala 2.0 would be Scala 3 only (see the Comparer playbook, §1). Its first piece of work is replacing the object-oriented `Renderable` trait with a type class, starting from the `Renderable[A]` that was on the old master branch (V1_0_11, dropped from 1.1.0).
 
@@ -123,7 +123,16 @@ A scratch prototype (not in the repo) of §2.1–2.2 compiled and ran on both ve
 - Overriding with `given Layout = …` works, but in a block it applies to the **whole** block, including statements written before it. That's a Scala 3 scoping rule, and the same one that broke `renderLimited` in 1.1.0. Document it, and put local overrides in an inner block (`locally:`).
 - **Constraint found:** the extension can't be `render(indent: Int = 0)`, because it erases to the same signature as the abstract `render(a, indent)`. So the extension is plain `render`, and indentation is internal. A caller who needs a starting indent calls `Renderable[A].render(a, indent)`.
 
-## 4. Decisions for you
+## 4. Decisions
+
+Decided on 2026-10-21. The recommended option was chosen in each case:
+- **D1:** the type class is `Renderable`, and the OO trait is removed.
+- **D2:** a type with no instance is a compile error; `fromToString` is the explicit opt-in.
+- **D3:** Strings are quoted inside structures.
+- **D4:** `import Renderable.given` gives `.render` on built-in types.
+- **D5:** 2.0 is Scala 3 only, and the rest of the playbook's 2.0 list follows Renderable.
+
+The options as they were proposed:
 
 1. **D1, the name.** The type class takes the name `Renderable` and the OO trait is removed (recommended). The alternative is to keep the trait, for example as `SelfRenderable` with a bridging given, so that classes outside LaScala that extend it keep compiling.
 2. **D2, types with no instance.** I recommend a compile error, with `Renderable.fromToString[A]` as the explicit way to opt in. The alternative is a low-priority `toString` fallback, which is the 1.x behaviour but makes it easy to miss an instance without noticing. This also decides how a `Tree[A]` renders values whose type has no instance.
