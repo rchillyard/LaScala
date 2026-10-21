@@ -1,4 +1,4 @@
-organization := "com.phasmid"
+organization := "com.phasmidsoftware"
 
 name := "lascala"
 
