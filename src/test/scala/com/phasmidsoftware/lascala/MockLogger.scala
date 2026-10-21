@@ -5,140 +5,35 @@
 
 package com.phasmidsoftware.lascala
 
-import org.slf4j.{Logger, Marker}
+import org.slf4j.Marker
+import org.slf4j.event.Level
+import org.slf4j.helpers.{LegacyAbstractLogger, MessageFormatter}
 
 /**
-  * MockLogger for unit testing log messages
+  * MockLogger for unit testing log messages.
   *
-  * TODO implement all of the unimplemented stuff
+  * Every message that is enabled for the given level is appended to sb as "name: level: message".
+  * LegacyAbstractLogger implements all the methods of Logger in terms of handleNormalizedLoggingCall.
   *
-  * @param name  the name of this logger
-  * @param level the level of this logger
-  * @param sb    a StringBuilder to which we append messages
+  * @param loggerName the name of this logger
+  * @param level      the level of this logger
+  * @param sb         a StringBuilder to which we append messages
   */
-//noinspection TypeAnnotation,NotImplementedCode
-case class MockLogger(name: String, level: String, sb: StringBuilder) extends Logger {
-  def getName = name
+case class MockLogger(loggerName: String, level: String, sb: StringBuilder) extends LegacyAbstractLogger {
+  name = loggerName
 
-  def debug(msg: String) = doLog(msg)
+  def isTraceEnabled: Boolean = level == "TRACE"
 
-  private def doLog(msg: String) = sb.append(s"$name: $level: $msg\n")
+  def isDebugEnabled: Boolean = level == "DEBUG" || isTraceEnabled
 
-  def debug(format: String, arg: scala.Any): Nothing = ???
+  def isInfoEnabled: Boolean = level == "INFO" || isDebugEnabled
 
-  def debug(format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
+  def isWarnEnabled: Boolean = level == "WARN" || isInfoEnabled
 
-  def debug(format: String, arguments: AnyRef*) = ???
+  def isErrorEnabled: Boolean = level == "ERROR" || isWarnEnabled
 
-  def debug(msg: String, t: Throwable): Nothing = ???
+  protected def getFullyQualifiedCallerName: String = null
 
-  def debug(marker: Marker, msg: String): Nothing = ???
-
-  def debug(marker: Marker, format: String, arg: scala.Any): Nothing = ???
-
-  def debug(marker: Marker, format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def debug(marker: Marker, format: String, arguments: AnyRef*) = ???
-
-  def debug(marker: Marker, msg: String, t: Throwable): Nothing = ???
-
-  def isWarnEnabled = level == "WARN" || isInfoEnabled
-
-  def isWarnEnabled(marker: Marker): Nothing = ???
-
-  def error(msg: String) = doLog(msg)
-
-  def error(format: String, arg: scala.Any): Nothing = ???
-
-  def error(format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def error(format: String, arguments: AnyRef*) = ???
-
-  def error(msg: String, t: Throwable): Nothing = ???
-
-  def error(marker: Marker, msg: String): Nothing = ???
-
-  def error(marker: Marker, format: String, arg: scala.Any): Nothing = ???
-
-  def error(marker: Marker, format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def error(marker: Marker, format: String, arguments: AnyRef*) = ???
-
-  def error(marker: Marker, msg: String, t: Throwable): Nothing = ???
-
-  def warn(msg: String) = doLog(msg)
-
-  def warn(format: String, arg: scala.Any): Nothing = ???
-
-  def warn(format: String, arguments: AnyRef*) = ???
-
-  def warn(format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def warn(msg: String, t: Throwable): Nothing = ???
-
-  def warn(marker: Marker, msg: String): Nothing = ???
-
-  def warn(marker: Marker, format: String, arg: scala.Any): Nothing = ???
-
-  def warn(marker: Marker, format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def warn(marker: Marker, format: String, arguments: AnyRef*) = ???
-
-  def warn(marker: Marker, msg: String, t: Throwable): Nothing = ???
-
-  def trace(msg: String) = doLog(msg)
-
-  def trace(format: String, arg: scala.Any): Nothing = ???
-
-  def trace(format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def trace(format: String, arguments: AnyRef*) = ???
-
-  def trace(msg: String, t: Throwable): Nothing = ???
-
-  def trace(marker: Marker, msg: String): Nothing = ???
-
-  def trace(marker: Marker, format: String, arg: scala.Any): Nothing = ???
-
-  def trace(marker: Marker, format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def trace(marker: Marker, format: String, argArray: AnyRef*) = ???
-
-  def trace(marker: Marker, msg: String, t: Throwable): Nothing = ???
-
-  def isInfoEnabled = level == "INFO" || isDebugEnabled
-
-  def isInfoEnabled(marker: Marker): Nothing = ???
-
-  def isErrorEnabled = level == "ERROR" || isWarnEnabled
-
-  def isErrorEnabled(marker: Marker): Nothing = ???
-
-  def isTraceEnabled = level == "TRACE"
-
-  def isTraceEnabled(marker: Marker): Nothing = ???
-
-  def isDebugEnabled = level == "DEBUG" || isTraceEnabled
-
-  def isDebugEnabled(marker: Marker): Nothing = ???
-
-  def info(msg: String) = doLog(msg)
-
-  def info(format: String, arg: scala.Any): Nothing = ???
-
-  def info(format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def info(format: String, arguments: AnyRef*) = ???
-
-  def info(msg: String, t: Throwable): Nothing = ???
-
-  def info(marker: Marker, msg: String): Nothing = ???
-
-  def info(marker: Marker, format: String, arg: scala.Any): Nothing = ???
-
-  def info(marker: Marker, format: String, arg1: scala.Any, arg2: scala.Any): Nothing = ???
-
-  def info(marker: Marker, format: String, arguments: AnyRef*) = ???
-
-  def info(marker: Marker, msg: String, t: Throwable): Nothing = ???
+  protected def handleNormalizedLoggingCall(l: Level, marker: Marker, messagePattern: String, arguments: Array[AnyRef], throwable: Throwable): Unit =
+    sb.append(s"$loggerName: $level: ${MessageFormatter.basicArrayFormat(messagePattern, arguments)}\n")
 }
