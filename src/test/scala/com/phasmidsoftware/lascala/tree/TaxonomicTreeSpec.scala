@@ -8,7 +8,7 @@ package com.phasmidsoftware.lascala.tree
 import com.phasmidsoftware.lascala.fp.Spy
 import com.phasmidsoftware.lascala.parser.{Header, TupleStream}
 import com.phasmidsoftware.lascala.values.Scalar
-import com.phasmidsoftware.lascala.{Prefix, Renderable, RenderableTraversable}
+import com.phasmidsoftware.lascala.{Prefix, SelfRenderable, RenderableTraversable}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
@@ -25,9 +25,9 @@ import scala.util.{Failure, Success, Try}
   * @param po   an alternative name, not normally used for matching, only for rendering.
   * @param taxa the ancestry (including this) of this taxon (two elements at least are required: self and parent, except top level).
   */
-case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q => P) extends Renderable {
+case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q => P) extends SelfRenderable {
 
-  implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
+  implicit def renderableTraversable(xs: Traversable[_]): SelfRenderable = RenderableTraversable(xs, "[-]", linear = true)
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = po.map(_.toString + ":").getOrElse("") + structuralKey
 

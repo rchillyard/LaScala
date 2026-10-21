@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter
 import com.phasmidsoftware.lascala.fp.{FP, Spy}
 import com.phasmidsoftware.lascala.parser.Valuable
 import com.phasmidsoftware.lascala.values.Orderable.OrderableLocalDate
-import com.phasmidsoftware.lascala.{Prefix, Renderable}
+import com.phasmidsoftware.lascala.{Prefix, SelfRenderable}
 
 import scala.language.implicitConversions
 import scala.util._
@@ -41,7 +41,7 @@ import scala.util._
   * Created by scalaprof on 8/4/16.
   *
   */
-trait Scalar extends Renderable {
+trait Scalar extends SelfRenderable {
   // CONSIDER seal this again once Value is in this module
 
   /**

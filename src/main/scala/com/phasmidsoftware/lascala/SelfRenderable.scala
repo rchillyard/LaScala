@@ -1,0 +1,185 @@
+/*
+ * LaScala
+ * Copyright (c) 2016, 2017. Phasmid Software
+ */
+
+package com.phasmidsoftware.lascala
+
+import scala.language.implicitConversions
+import scala.util.{Failure, Success, Try}
+
+/**
+  * This trait defines an aspect of an object as being able to be rendered as a String.
+  * The purposes of this alternative form of conversion to a String (in addition to the toString defined on Any),
+  * are:
+  * (1) to create a String explicitly for human-readability;
+  * (2) to allow for (relative) indentation of complex data structures such as trees.
+  *
+  * Created by scalaprof on 1/7/17.
+  */
+trait SelfRenderable {
+
+  /**
+    * Method to render this object in a human-legible manner.
+    *
+    * NOTE: implementations of render may invoke toString
+    *
+    * NOTE: toString may NOT call render
+    *
+    * @param indent the number of "tabs" before output should start (when writing on a new line).
+    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
+    *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
+    *               like on an old typewriter where the spacing is non-uniform.
+    * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
+    *         which is then followed by some human-legible rendition of *this*.
+    */
+  def render(indent: Int = 0)(implicit tab: Int => Prefix): String
+
+  /**
+    * Method to insert an indented (tabbed) newline
+    *
+    * @return a string which is a suitable replacement for newline character
+    */
+  def nl(indent: Int)(implicit tab: Int => Prefix): String = "\n" + tab(indent)
+}
+
+/**
+  * Case class which defines a SelfRenderable Traversable object.
+  *
+  * @param xs       the traversable to be rendered
+  * @param bookends the prefix, separator, and suffix
+  * @param linear   true if we want the results all on one line; default is false
+  */
+case class RenderableTraversable(xs: Traversable[_], bookends: String = "(,)", linear: Boolean = false, max: Option[Int] = None) extends SelfRenderable {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
+    val (p, q, r) =
+      if (linear || xs.size <= 1)
+        ("" + bookends.head, "" + bookends.tail.head, "" + bookends.last)
+      else
+        (bookends.head + nl(indent + 1), bookends.tail.head + nl(indent + 1), nl(indent) + bookends.last)
+    SelfRenderable.elemsToString(xs, indent, p, q, r, max)
+  }
+}
+
+/**
+  * Case class which defines a SelfRenderable Product object.
+  *
+  * @param p the product/tuple to be rendered
+  */
+case class RenderableProduct(p: Product) extends SelfRenderable {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = SelfRenderable.elemsToString(p.productIterator.toSeq, indent, s"${p.productPrefix}(", ",", ")")
+}
+
+/**
+  * Case class which defines a RenderableOption object.
+  *
+  * @param xo the optional value
+  */
+case class RenderableOption(xo: Option[_]) extends SelfRenderable {
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = xo match {
+    case Some(x) => s"Some(" + SelfRenderable.renderElem(x, indent) + ")"
+    case _ => "None"
+  }
+}
+
+/**
+  * Case class which defines a SelfRenderable Try object.
+  *
+  * @param xy the try value
+  */
+case class RenderableTry(xy: Try[_]) extends SelfRenderable {
+
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = xy match {
+    case Success(x) => s"Success(" + SelfRenderable.renderElem(x, indent) + ")"
+    case Failure(t) => s"Failure(${t.getLocalizedMessage})"
+  }
+}
+
+/**
+  * Case class which defines a SelfRenderable Either object.
+  *
+  * @param e the either value
+  */
+case class RenderableEither(e: Either[_, _]) extends SelfRenderable {
+
+  def render(indent: Int)(implicit tab: (Int) => Prefix): String = e match {
+    case Left(x) => s"Left(" + SelfRenderable.renderElem(x, indent) + ")"
+    case Right(x) => s"Right(" + SelfRenderable.renderElem(x, indent) + ")"
+  }
+}
+
+object SelfRenderable {
+
+  /**
+    * This is the default maximum number of elements that will be rendered by a Traversable (see renderableTraversable).
+    */
+  val MAX_ELEMENTS = 10
+
+  /**
+    * This default implementation of RenderableTraversable limits the number of elements to MAX_ELEMENTS.
+    *
+    * @param xs the Traversable to render
+    * @return a SelfRenderable
+    */
+  implicit def renderableTraversable(xs: Traversable[_]): SelfRenderable = RenderableTraversable(xs, max = Some(MAX_ELEMENTS))
+
+  implicit def renderableOption(xo: Option[_]): SelfRenderable = RenderableOption(xo)
+
+  implicit def renderableTry(xy: Try[_]): SelfRenderable = RenderableTry(xy)
+
+  implicit def renderableEither(e: Either[_, _]): SelfRenderable = RenderableEither(e)
+
+  implicit def renderableProduct(p: Product): SelfRenderable = RenderableProduct(p)
+
+  def renderElem(elem: Any, indent: Int)(implicit tab: (Int) => Prefix): String = elem match {
+    case xo: Option[_] => renderableOption(xo).render(indent + 1)
+    case xs: Traversable[_] => renderableTraversable(xs).render(indent + 1)
+    case xy: Try[_] => renderableTry(xy).render(indent + 1)
+    case e: Either[_, _] => renderableEither(e).render(indent + 1)
+    case s: String => s""""$s""""
+    case r: SelfRenderable => r.render(indent + 1)
+    case x => x.toString
+  }
+
+  def elemsToString(xs: Traversable[_], indent: Int, start: String, sep: String, end: String, max: Option[Int] = None)(implicit tab: (Int) => Prefix): String = {
+    var first = true
+    val b = new StringBuilder()
+    b append start
+    val z = max match {
+      case Some(n) => xs take n
+      case None => xs
+    }
+    for (x <- z) {
+      if (first) {
+        b append renderElem(x, indent)
+        first = false
+      }
+      else {
+        b append sep
+        b append renderElem(x, indent)
+      }
+    }
+    max match {
+      case Some(n) => if (n < xs.size) b append s"$sep...[${xs.size - n} more elements]"
+      case None =>
+    }
+    b append end
+    b.toString()
+  }
+
+}
+
+case class Prefix(s: String) {
+  override def toString: String = s
+}
+
+object Prefix {
+
+  /**
+    * The default tab method which translates indent uniformly into that number of double-spaces.
+    *
+    * @param indent the number of tabs before output should start on a new line.
+    * @return a String of white space.
+    */
+  implicit def tab(indent: Int): Prefix = Prefix(" " * indent * 2)
+}

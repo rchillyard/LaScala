@@ -39,7 +39,7 @@ class ProductStream2Spec extends AnyFlatSpec with Matchers {
 }
 
 //
-//case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends Renderable {
+//case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends SelfRenderable {
 //  def render(indent: Int)(implicit tab: (Int) => Prefix): String = name.render() + ": " + taxonomy.values.map(_.render()).mkString("--")
 //}
 //

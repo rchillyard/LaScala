@@ -6,7 +6,7 @@
 package com.phasmidsoftware.lascala.fp
 
 import com.phasmidsoftware.lascala.fp.RenderableFunction.{asFunctionType, callByValue}
-import com.phasmidsoftware.lascala.{Prefix, Renderable, RenderableTraversable}
+import com.phasmidsoftware.lascala.{Prefix, SelfRenderable, RenderableTraversable}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -22,7 +22,7 @@ import scala.util._
   * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
+case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with SelfRenderable {
 
   //  require(Closure.nonRecursive(this), "Closure is recursive")
 
@@ -72,7 +72,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   override def toString(): String = render()
 
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
-    implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
+    implicit def renderableTraversable(xs: Traversable[_]): SelfRenderable = RenderableTraversable(xs, " ,)")
 
     val z = ps.render(indent)
     s"Closure($f," + z

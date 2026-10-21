@@ -1,7 +1,7 @@
 package com.phasmidsoftware.lascala.parser
 
 import com.phasmidsoftware.lascala.values.Scalar
-import com.phasmidsoftware.lascala.{Prefix, Renderable}
+import com.phasmidsoftware.lascala.{Prefix, SelfRenderable}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -51,7 +51,7 @@ class ProductStreamSpec extends AnyFlatSpec with Matchers {
   //  }
 }
 
-case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends Renderable {
+case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends SelfRenderable {
   def render(indent: Int)(implicit tab: (Int) => Prefix): String = name.render() + ": " + taxonomy.values.map(_.render()).mkString("--")
 }
 

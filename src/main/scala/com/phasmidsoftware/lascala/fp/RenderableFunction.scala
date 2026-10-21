@@ -6,7 +6,7 @@
 package com.phasmidsoftware.lascala.fp
 
 import com.phasmidsoftware.lascala.values.Tuple0
-import com.phasmidsoftware.lascala.{Prefix, Renderable}
+import com.phasmidsoftware.lascala.{Prefix, SelfRenderable}
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -28,7 +28,7 @@ import scala.util._
   * @param f     the function itself (this field is not considered in the hashCode and equals methods)
   * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
-case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable with Serializable {
+case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with SelfRenderable with Serializable {
 
   implicit private val logger: org.slf4j.Logger = Spy.getLogger(getClass)
 
