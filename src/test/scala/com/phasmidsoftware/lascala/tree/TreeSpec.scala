@@ -3,6 +3,7 @@ package com.phasmidsoftware.lascala.tree
 import com.phasmidsoftware.lascala.Kleenean
 import com.phasmidsoftware.lascala.fp.Spy
 import com.phasmidsoftware.lascala.tree.AbstractBinaryTree._
+import com.phasmidsoftware.lascala.Renderable
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -22,12 +23,12 @@ class TreeSpec extends AnyFlatSpec with Matchers {
 
   behavior of "render"
   it should "work for leaf" in {
-    Leaf(42).render() shouldBe "42"
-    Leaf(42).render(1) shouldBe "42"
+    Leaf(42).render shouldBe "42"
+    Renderable[Leaf[Int]].render(Leaf(42), 1) shouldBe "42"
   }
   it should "work for GeneralTree" in {
     val tree = GeneralTree(0, List(Leaf(1), Leaf(2), Leaf(3)))
-    tree.render() shouldBe "0--(\n  1,\n  2,\n  3\n)"
+    tree.render shouldBe "0--(\n  1,\n  2,\n  3\n)"
   }
   behavior of "compare"
   it should "work for simple values" in {
@@ -345,7 +346,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     tree.includesValue(1) shouldBe true
     tree.depth shouldBe 3
-    tree.render() shouldBe "--(\n  --(\n    1,\n    3\n  ),\n  --(\n    5,\n    6\n  )\n)"
+    tree.render shouldBe "--(\n  --(\n    1,\n    3\n  ),\n  --(\n    5,\n    6\n  )\n)"
   }
 
   behavior of "createIndexedTree"

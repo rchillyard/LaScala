@@ -84,7 +84,7 @@ trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
   * @param v the value of this Subversioned
   * @tparam V the underlying type of the Subversioned, which is defined to implement Ordering
   */
-abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] with SelfRenderable {
+abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] {
 
   def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Repr
 
@@ -114,8 +114,6 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
     inner(Seq(), this)
   }
 
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = toSeq.mkString(".")
-
   def compare(x: Subversioned[V], y: Subversioned[V]): Int = implicitly[Ordering[V]].compare(x(), y())
 
   protected val cf: (Subversioned[V], Subversioned[V]) => Int = compare
@@ -124,6 +122,13 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
 }
 
 object Version {
+
+  /**
+    * Renders a Version as its version/subversions separated by ".", for example 1.0.11.
+    */
+  given versionRenderable[V]: Renderable[Version[V]] = new Renderable[Version[V]] {
+    def render(v: Version[V], indent: Int)(using Layout): String = v.toSeq.mkString(".")
+  }
 
   /**
     * This code relies on the sbt-buildinfo plugin which creates a source file called BuildInfo.scala in the following directory:

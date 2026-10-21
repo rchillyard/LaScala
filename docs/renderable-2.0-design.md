@@ -148,3 +148,15 @@ One commit per step, with the tests passing on 3.3 and 3.9 after each:
 3. Move `Scalar`, `Node`/`Tree`, `Version`, `Closure` and `RenderableFunction` to givens, and delete the wrappers and `Prefix`.
 4. Port the other specs, keeping their expected strings.
 5. README: a "Migrating from 1.x" table (playbook §8).
+
+## 6. Implementation notes (where the code differs from §2)
+
+- **`Layout.tab` is a function `Int => String`, not a width.** One 1.x test uses non-uniform tabs, "like an old typewriter". `Layout.uniform(n)` builds the usual kind. It's a field of `Layout`, so this doesn't create a given of function type.
+- **Instances for a hierarchy are written for its subtypes**, so `.render` works on any subclass without an import, in the same way as `iterableRenderable`:
+  - `scalarRenderable[S <: Scalar]` in `object Scalar`
+  - `nodeRenderable[A, N[X] <: Node[X]]` in `object Node`
+  - `versionRenderable`, `renderableFunctionRenderable` and `closureRenderable` in their companion objects
+- **`Closure`'s parameter values have no static type**, because they are `Either[T, Closure[_, T]]` with `T` unknown when rendering. So `Closure` renders them as 1.x did, privately: Strings quoted, Closures recursively, anything else by `toString`. This is local to `Closure`, not a general fallback, so D2 still holds.
+- **`IndexedLeaf`** used to render a value that wasn't `Renderable` as `tab + value + " [l:r]"`. Every value now has an instance, so an `IndexedLeaf` renders its value, like any other leaf. No test depended on the old form.
+- **Derived tuples**: the tuple instance summons its `Mirror` inside the given, not as a `using` parameter, so the extension search has fixed `T` by the time it looks.
+- `Punctuation(x)` is now `Punctuation(val x)`, so that the Node instance can read it.

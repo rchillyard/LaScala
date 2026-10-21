@@ -14,7 +14,7 @@ import scala.util.{Failure, Try}
 /**
   * Tests of the type class Renderable.
   *
-  * The expected strings of the 1.x tests (now in SelfRenderableSpec) are kept, with Sym in place of Scalar.
+  * The expected strings of the 1.x tests are kept, with Sym in place of Scalar (see ScalarSpec for Scalar itself).
   */
 class RenderableSpec extends AnyFlatSpec with Matchers {
 

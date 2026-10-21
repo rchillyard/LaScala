@@ -66,7 +66,7 @@ class KVTreeSpec extends AnyFlatSpec with Matchers {
     tree.depth shouldBe 2
     tree.iterator().toSeq shouldBe Seq(1, 0)
     tree.iterator(false).toSeq shouldBe Seq(0, 1)
-    tree.render() shouldBe "0--(1)"
+    tree.render shouldBe "0--(1)"
   }
 
   it should "work correctly for GeneralKVTree(2)" in {
@@ -76,7 +76,7 @@ class KVTreeSpec extends AnyFlatSpec with Matchers {
     tree.depth shouldBe 2
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 2)
     tree.iterator().toSeq shouldBe Seq(1, 2, 0)
-    tree.render() shouldBe "0--(\n  1,\n  2\n)"
+    tree.render shouldBe "0--(\n  1,\n  2\n)"
   }
 
   it should "work correctly for GeneralKVTree(3)" in {
@@ -86,7 +86,7 @@ class KVTreeSpec extends AnyFlatSpec with Matchers {
     tree shouldBe GeneralKVTree(Some(0), List(GeneralKVTree(Some(1), List(Leaf(12)))))
     tree.iterator(false).toSeq shouldBe Seq(0, 1, 12)
     tree.iterator().toSeq shouldBe Seq(12, 1, 0)
-    tree.render() shouldBe "0--(1--(12))"
+    tree.render shouldBe "0--(1--(12))"
   }
 
   behavior of "size"
