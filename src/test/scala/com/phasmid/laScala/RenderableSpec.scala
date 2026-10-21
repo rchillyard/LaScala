@@ -7,7 +7,9 @@ package com.phasmid.laScala
 
 import com.phasmid.laScala.fp.RenderableFunctionException
 import com.phasmid.laScala.values.Scalar
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 import scala.util.Try
@@ -17,7 +19,7 @@ import scala.util.Try
   *
   * @author scalaprof
   */
-class RenderableSpec extends FlatSpec with Matchers with Inside {
+class RenderableSpec extends AnyFlatSpec with Matchers with Inside {
   behavior of "Renderable"
   it should "render simple values like toString" in {
     Scalar("x").render(1) shouldBe "x"

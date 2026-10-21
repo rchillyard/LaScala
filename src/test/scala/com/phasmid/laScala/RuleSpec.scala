@@ -5,14 +5,15 @@ import java.time.LocalDate
 import com.phasmid.laScala.parser._
 import com.phasmid.laScala.predicate.Func
 import com.phasmid.laScala.values.Value
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util._
 
 /**
   * @author scalaprof
   */
-class RuleSpec extends FlatSpec with Matchers {
+class RuleSpec extends AnyFlatSpec with Matchers {
   "Truth" should "work for true" in {
     val c = Truth[Nothing](b = true)
     c() should matchPattern { case Success(true) => }

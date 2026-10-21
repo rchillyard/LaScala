@@ -3,6 +3,8 @@ package com.phasmid.laScala.cache
 import akka.event.LoggingAdapter
 import com.phasmid.laScala.fp.FP
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent._
 
 import scala.language.implicitConversions
@@ -12,7 +14,7 @@ import scala.util._
   * Created by scalaprof on 3/28/16.
   */
 
-class CacheSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class CacheSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   class MockLoggingAdapter extends LoggingAdapter {
     var debugCount = 0

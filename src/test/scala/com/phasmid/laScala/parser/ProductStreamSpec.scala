@@ -2,12 +2,13 @@ package com.phasmid.laScala.parser
 
 import com.phasmid.laScala.values.Scalar
 import com.phasmid.laScala.{Prefix, Renderable}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author scalaprof
   */
-class ProductStreamSpec extends FlatSpec with Matchers {
+class ProductStreamSpec extends AnyFlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
     val stream = Stream(Tuple1("Hello"), Tuple1("World!"))
     val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), stream)

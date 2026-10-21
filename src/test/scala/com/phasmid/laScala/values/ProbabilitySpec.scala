@@ -5,7 +5,9 @@
 
 package com.phasmid.laScala.values
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 
@@ -13,7 +15,7 @@ import scala.language.implicitConversions
 /**
   * @author scalaprof
   */
-class ProbabilitySpec extends FlatSpec with Matchers with Inside {
+class ProbabilitySpec extends AnyFlatSpec with Matchers with Inside {
 
   behavior of "apply"
   it should "work for favorable and total outcomes" in {
@@ -60,13 +62,13 @@ class ProbabilitySpec extends FlatSpec with Matchers with Inside {
   behavior of "!"
   it should "work for evens" in {
     val evens = Probability(1, 2)
-    (evens !) shouldBe evens
+    evens.! shouldBe evens
   }
   it should "work for Impossible" in {
-    (Probability.Impossible !) shouldBe Probability.Certain
+    Probability.Impossible.! shouldBe Probability.Certain
   }
   it should "work for Certain" in {
-    (Probability.Certain !) shouldBe Probability.Impossible
+    Probability.Certain.! shouldBe Probability.Impossible
   }
 
   behavior of "*"

@@ -2,7 +2,9 @@ package com.phasmid.laScala.values
 
 import java.time.LocalDate
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 import scala.util.{Success, Try}
@@ -11,7 +13,7 @@ import scala.util.{Success, Try}
 /**
   * @author scalaprof
   */
-class ValueSpec extends FlatSpec with Matchers with Inside {
+class ValueSpec extends AnyFlatSpec with Matchers with Inside {
 
   case class YMD(y: Int, m: Int, d: Int)
 

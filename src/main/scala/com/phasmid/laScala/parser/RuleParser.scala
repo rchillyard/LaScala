@@ -189,7 +189,7 @@ class RuleParser extends JavaTokenParsers {
       }
 
       val rpn: List[String] = ts.foldLeft(t.toRPN)(shunt)
-      rpn ++ stack.elems.reverse
+      rpn ++ stack.toList.reverse
     }
 
     def asString: String = ts.foldLeft(t.toString)(_ + _.toString)
@@ -206,7 +206,7 @@ class RuleParser extends JavaTokenParsers {
       }
 
       val rpn: List[String] = fs.foldLeft(f.toRPN)(shunt)
-      rpn ++ stack.elems.reverse
+      rpn ++ stack.toList.reverse
     }
 
     def asString: String = fs.foldLeft(f.toString)(_ + _.toString)

@@ -1,13 +1,14 @@
 package com.phasmid.laScala.parser
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 
 /**
   * @author scalaprof
   */
-class RuleParserSpec extends FlatSpec with Matchers {
+class RuleParserSpec extends AnyFlatSpec with Matchers {
   "expression" should """parse 1 as Number("1","1")""" in {
     val parser = new RuleParser()
     val r = parser.parseAll(parser.expr, "1")
@@ -207,7 +208,7 @@ class RuleParserSpec extends FlatSpec with Matchers {
   it should "not parse (1?2)" in {
     val parser = new RuleParser
     val r = parser.parseAll(parser.expr, "(1?2)")
-    r should matchPattern { case parser.Failure("`)' expected but `?' found", _) => }
+    r should matchPattern { case parser.Failure("')' expected but '?' found", _) => }
   }
   it should "not parse (" in {
     val parser = new RuleParser

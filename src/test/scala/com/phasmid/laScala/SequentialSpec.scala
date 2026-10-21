@@ -7,14 +7,15 @@ package com.phasmid.laScala
 
 import java.time.LocalDate
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Success, Try}
 
 /**
   * Created by scalaprof on 7/25/16.
   */
-class SequentialSpec extends FlatSpec with Matchers {
+class SequentialSpec extends AnyFlatSpec with Matchers {
 
   behavior of "next()"
   it should "work for Int" in {

@@ -6,12 +6,13 @@
 package com.phasmid.laScala.parser
 
 import com.phasmid.laScala.fp.Spy
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author scalaprof
   */
-class ProductStream2Spec extends FlatSpec with Matchers {
+class ProductStream2Spec extends AnyFlatSpec with Matchers {
   behavior of "TupleStream"
   it should "read taxonomy.txt correctly" in {
     val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(List(), allowPartial = true))

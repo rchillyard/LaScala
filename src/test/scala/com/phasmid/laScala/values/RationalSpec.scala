@@ -2,14 +2,15 @@ package com.phasmid.laScala.values
 
 // We really do need the following: import com.phasmid.laScala.values.Rational.RationalHelper
 import com.phasmid.laScala.values.Rational.RationalHelper
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
 /**
   * @author scalaprof
   */
-class RationalSpec extends FlatSpec with Matchers {
+class RationalSpec extends AnyFlatSpec with Matchers {
 
   import com.phasmid.laScala.values.FiniteIntegral.LongIsFiniteIntegral
 

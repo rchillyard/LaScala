@@ -1,11 +1,12 @@
 package com.phasmid.laScala.parser
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author scalaprof
   */
-class TupleStreamSpec extends FlatSpec with Matchers {
+class TupleStreamSpec extends AnyFlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via TupleStream" in {
     val tupleStream = TupleStream[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
     val wts = tupleStream.tuples

@@ -100,7 +100,7 @@ case class DoubleRNG(n: Long) extends RNG_Java[Double](n, _.toDouble / Long.MaxV
 /**
   * This class is a random-number-generator for values uniformly distributed in the range 0..1
   */
-case class UniformDoubleRNG(n: Long) extends RNG_Java[random.UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), Unit) }) {
+case class UniformDoubleRNG(n: Long) extends RNG_Java[random.UniformDouble](n, { n => UniformDouble(math.abs(n.toDouble / Long.MaxValue), ()) }) {
   def buildNew(n: Long) = UniformDoubleRNG(n)
 
   override def toString = s"UniformDoubleRNG: $n->$apply"

@@ -3,14 +3,15 @@ package com.phasmid.laScala.tree
 import com.phasmid.laScala.Kleenean
 import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.tree.AbstractBinaryTree._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 
 /**
   * Created by scalaprof on 10/19/16.
   */
-class TreeSpec extends FlatSpec with Matchers {
+class TreeSpec extends AnyFlatSpec with Matchers {
   private implicit val logger = Spy.getLogger(getClass)
 
   implicit object IntStringValueOps$ extends StringValueOps[Int] {

@@ -2,6 +2,8 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.FP._
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent._
 
 import scala.util._
@@ -10,7 +12,7 @@ import scala.util._
   *
   * @author scalaprof
   */
-class FP_CrossSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class FP_CrossSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   // CONSIDER need to do more thorough testing here
   // NOTE: map2lazy is only available with 2.11

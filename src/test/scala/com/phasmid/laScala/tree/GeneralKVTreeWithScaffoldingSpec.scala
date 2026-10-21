@@ -5,7 +5,8 @@
 
 package com.phasmid.laScala.tree
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 
@@ -14,7 +15,7 @@ import scala.util.Try
   *
   * Created by scalaprof on 10/19/16.
   */
-class GeneralKVTreeWithScaffoldingSpec extends FlatSpec with Matchers {
+class GeneralKVTreeWithScaffoldingSpec extends AnyFlatSpec with Matchers {
 
   implicit object IntStringValueOps$ extends StringValueOps[Int] {
     def getParentKey(t: Int): Option[String] = (for (i <- Try(t / 10); s = i.toString) yield s).toOption

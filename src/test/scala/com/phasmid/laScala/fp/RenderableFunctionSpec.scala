@@ -7,7 +7,9 @@ package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.fp.RenderableFunction.getPartialApplicationFunction
 import com.phasmid.laScala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
-import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
+import org.scalatest.PrivateMethodTester
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -17,7 +19,7 @@ import scala.util.{Left, _}
 /**
   * Created by scalaprof on 10/19/16.
   */
-class RenderableFunctionSpec extends FlatSpec with Matchers with PrivateMethodTester {
+class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMethodTester {
 
   behavior of "RenderableFunction"
 

@@ -2,7 +2,8 @@ package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.Kleenean
 import com.phasmid.laScala.fp._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.annotation.tailrec
 import scala.io.Source
@@ -69,7 +70,7 @@ abstract class AbstractTestDetails(val resourceName: String) extends BuildAccoun
 /**
   * Created by scalaprof on 10/19/16.
   */
-class AccountRecordTest extends FlatSpec with Matchers {
+class AccountRecordTest extends AnyFlatSpec with Matchers {
 
   behavior of "AccountDate"
 

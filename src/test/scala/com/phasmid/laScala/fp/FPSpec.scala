@@ -4,6 +4,8 @@ import java.net.URL
 
 import com.phasmid.laScala.fp.FP._
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent._
 import org.scalatest.tagobjects.Slow
 import org.slf4j.Logger
@@ -18,7 +20,7 @@ import scala.util.matching.Regex
   *
   * @author scalaprof
   */
-class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
     val uyf = Future(Try(new URL("http://www.google.com")))
@@ -36,7 +38,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
     // CONSIDER using traverse
-    whenReady(Future.sequence(ufs)) { us => Assertions.assert(us.length == 2) }
+    whenReady(Future.sequence(ufs): Future[List[URL]]) { us => Assertions.assert(us.length == 2) }
   }
 
   "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
@@ -122,10 +124,10 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "zippy" should "succeed" in {
     val as = List(1, 2, 3, 4, 5)
     val bs = List("a", "b", "c")
-    zippy(as, bs) should matchPattern { case (Stream((1, "a"), (2, "b"), (3, "c")), Stream(4, 5), Nil) => }
-    zippy(bs, as) should matchPattern { case (Stream(("a", 1), ("b", 2), ("c", 3)), Nil, Stream(4, 5)) => }
-    zippy(as drop 3, bs) should matchPattern { case (Stream((4, "a"), (5, "b")), Nil, Stream("c")) => }
-    zippy(Nil, bs) should matchPattern { case (Nil, Nil, Stream("a", "b", "c")) => }
+    zippy(as, bs) should matchPattern { case (Seq((1, "a"), (2, "b"), (3, "c")), Seq(4, 5), Seq()) => }
+    zippy(bs, as) should matchPattern { case (Seq(("a", 1), ("b", 2), ("c", 3)), Seq(), Seq(4, 5)) => }
+    zippy(as drop 3, bs) should matchPattern { case (Seq((4, "a"), (5, "b")), Seq(), Seq("c")) => }
+    zippy(Nil, bs) should matchPattern { case (Seq(), Seq(), Seq("a", "b", "c")) => }
     zippy(Nil, Nil) should matchPattern { case (Nil, Nil, Nil) => }
   }
   "optionToTry" should "succeed for Map" in {
@@ -295,13 +297,10 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
 
   "sequence[Option]" should "work" in {
-    it should "sequence" in {
-      FP.sequence(Seq(None)) shouldBe None
-      FP.sequence(Seq(Some(1), None)) shouldBe Some(Seq(1))
-      FP.sequence(Seq(Some(1), Some(2))) shouldBe Some(Seq(1, 2))
-    }
-
-    sequence(Seq(Some(1))) should matchPattern { case Some(1) => }
+    FP.sequence(Seq(None)) shouldBe None
+    FP.sequence(Seq(Some(1), None)) shouldBe None
+    FP.sequence(Seq(Some(1), Some(2))) shouldBe Some(Seq(1, 2))
+    sequence(Seq(Some(1))) should matchPattern { case Some(Seq(1)) => }
   }
 
   "renderLimited" should "work" in {
@@ -417,7 +416,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   behavior of "foldLeftShort"
   it should "show 0 and 1" in {
     val xs = Seq(0, 1, 2, 3)
-    val ml = mutable.MutableList[Int]()
+    val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
     }).toIterator
@@ -426,7 +425,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
   it should "show only 0" in {
     val xs = Seq(0, 1, 2, 3)
-    val ml = mutable.MutableList[Int]()
+    val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
     }).toIterator
@@ -435,7 +434,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   }
   it should "show only all" in {
     val xs = Seq(0, 1, 2, 3)
-    val ml = mutable.MutableList[Int]()
+    val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
     }).toIterator

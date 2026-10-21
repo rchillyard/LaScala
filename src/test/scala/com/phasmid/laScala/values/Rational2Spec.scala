@@ -6,14 +6,15 @@
 package com.phasmid.laScala.values
 
 // We really do need the following: import com.phasmid.laScala.values.Rational.RationalHelper
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
 /**
   * @author scalaprof
   */
-class Rational2Spec extends FlatSpec with Matchers {
+class Rational2Spec extends AnyFlatSpec with Matchers {
 
   "toString" should "be decimal when exact" in {
     val r = Rational(1, 2)

@@ -1,11 +1,12 @@
 package com.phasmid.laScala.fp
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by scalaprof on 9/7/16.
   */
-class ArgsSpec extends FlatSpec with Matchers {
+class ArgsSpec extends AnyFlatSpec with Matchers {
   behavior of "Args"
 
   it should "get arguments from a list" in {

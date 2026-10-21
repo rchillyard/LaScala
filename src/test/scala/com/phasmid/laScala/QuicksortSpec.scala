@@ -1,12 +1,13 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   *
   * @author scalaprof
   */
-class QuicksortSpec extends FlatSpec with Matchers {
+class QuicksortSpec extends AnyFlatSpec with Matchers {
   behavior of "qsort"
   it should "yield appropriate values and type" in {
     val l = List(1, -10, 12, 2)

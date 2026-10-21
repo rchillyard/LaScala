@@ -47,7 +47,7 @@ trait Comparer[T] extends (((T, T)) => Comparison) with Serializable {
     def apply(tt: (T, T)): Comparison = self(tt).orElse(o(tt))
   }
 
-  def invert: Comparer[T] = compose(_ flip)
+  def invert: Comparer[T] = compose((c: Comparison) => c.flip)
 }
 
 object Comparer {

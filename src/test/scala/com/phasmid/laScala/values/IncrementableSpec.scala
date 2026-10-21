@@ -3,14 +3,16 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 
 import com.phasmid.laScala.values.Incrementable.IncrementableLocalDate
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Success
 
 /**
   * @author scalaprof
   */
-class IncrementableSpec extends FlatSpec with Matchers with Inside {
+class IncrementableSpec extends AnyFlatSpec with Matchers with Inside {
 
   behavior of "zero"
   it should "yield 0 for Int" in {

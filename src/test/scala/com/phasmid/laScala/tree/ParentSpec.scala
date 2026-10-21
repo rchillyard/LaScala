@@ -4,7 +4,7 @@ package com.phasmid.laScala.tree
   * NOTE: this will only compile with 2.11
   * Created by scalaprof on 10/19/16.
   */
-//class ParentSpec extends FlatSpec with Matchers {
+//class ParentSpec extends AnyFlatSpec with Matchers {
 //
 //  behavior of "traverse"
 //

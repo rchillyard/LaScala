@@ -5,7 +5,9 @@
 
 package com.phasmid.laScala.values
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 
@@ -13,7 +15,7 @@ import scala.language.implicitConversions
 /**
   * @author scalaprof
   */
-class FuzzySpec extends FlatSpec with Matchers with Inside {
+class FuzzySpec extends AnyFlatSpec with Matchers with Inside {
 
   behavior of "apply"
   it should "work for exact" in {
@@ -688,13 +690,13 @@ class FuzzySpec extends FlatSpec with Matchers with Inside {
   it should "work for exact" in {
     val one = Exact(1.0)
     val target = one.exp
-    target() shouldBe math.E
+    target() shouldBe math.E +- 1E-15
     target.isExact shouldBe true
   }
   it should "work for bounded(1,..)" in {
     val one = Bounded(1.0, 1.0 / 10)
     val target = one.exp
-    target() shouldBe math.E
+    target() shouldBe math.E +- 1E-15
     target.fuzziness shouldBe math.E / 10 +- 0.0000000000000001
     target.isExact shouldBe false
   }

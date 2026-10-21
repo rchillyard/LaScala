@@ -6,7 +6,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.values.{IntScalar, Scalar, StringScalar}
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.Map
 import scala.util.Success
@@ -14,7 +16,7 @@ import scala.util.Success
 /**
   * @author scalaprof
   */
-class CSVSpec extends FlatSpec with Matchers with Inside {
+class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   val defaultParser = CsvParser()
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
     val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))

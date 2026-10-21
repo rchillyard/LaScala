@@ -553,6 +553,8 @@ object Rational {
     override def signum(x: Rational[N]): Int = i.signum(x.n)
 
     def negate(x: Rational[N]): Rational[N] = Rational(i.negate(x.n), x.d)
+
+    def parseString(str: String): Option[Rational[N]] = scala.util.Try(Rational[N](str)).toOption
   }
 
   /**

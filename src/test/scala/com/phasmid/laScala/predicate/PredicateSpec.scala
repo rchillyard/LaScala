@@ -2,7 +2,8 @@ package com.phasmid.laScala.predicate
 
 import com.phasmid.laScala.fp.NamedFunction
 import com.phasmid.laScala.parser._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.matching.Regex
 import scala.util.{Success, Try}
@@ -10,7 +11,7 @@ import scala.util.{Success, Try}
 /**
   * @author scalaprof
   */
-class PredicateSpec extends FlatSpec with Matchers {
+class PredicateSpec extends AnyFlatSpec with Matchers {
   "GT" should "be false for 2,3 and for 3,3" in {
     val p = GT(3)
     p(2) should matchPattern { case Success(false) => }

@@ -7,12 +7,13 @@ package com.phasmid.laScala.sort
 
 import com.phasmid.laScala.sort.Comparison._
 import org.scalatest.concurrent.{Futures, ScalaFutures}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author scalaprof
   */
-class SortedSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class SortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   behavior of "Sorted"
 

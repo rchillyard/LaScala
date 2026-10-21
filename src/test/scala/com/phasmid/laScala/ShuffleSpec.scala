@@ -5,11 +5,13 @@ package com.phasmid.laScala
   */
 
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.immutable.IndexedSeq
 import scala.language.postfixOps
 
-class ShuffleSpec extends FlatSpec with Matchers with Inside {
+class ShuffleSpec extends AnyFlatSpec with Matchers with Inside {
   "Shuffle" should "work for an List of 5 integers" in {
     Shuffle(0L)(Seq(1, 2, 3, 4, 5)) shouldBe Seq(5, 3, 2, 4, 1)
   }

@@ -1,13 +1,15 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * See https://en.wikipedia.org/wiki/Three-valued_logic#Logics
   *
   * @author scalaprof
   */
-class KleeneanSpec extends FlatSpec with Matchers with Inside {
+class KleeneanSpec extends AnyFlatSpec with Matchers with Inside {
   behavior of ":|"
   it should "combine properly" in {
     Kleenean() :| false should matchPattern { case Kleenean(None) => }

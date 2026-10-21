@@ -1,12 +1,13 @@
 package com.phasmid.laScala.parser.rpn
 
 import com.phasmid.laScala.parser.RuleParser
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 import scala.util._
 
-class RPNSpec extends FlatSpec with Matchers {
+class RPNSpec extends AnyFlatSpec with Matchers {
 
   import com.phasmid.laScala.parser.Valuable.ValuableInt
 
@@ -44,7 +45,7 @@ class RPNSpec extends FlatSpec with Matchers {
   it should "evaluate 1 exp correctly" in {
     import RPN.lookup
     val rpn: RPN[Double] = RPN("1 exp")
-    rpn.evaluate should matchPattern { case Success(math.E) => }
+    rpn.evaluate should matchPattern { case Success(x: Double) if math.abs(x - math.E) < 1E-15 => }
   }
   "Dyadic plus" should "evaluate 1 1 + correctly" in {
     val n: RPN[Int] = RPN().push(Number("1")).push(Number("1"))

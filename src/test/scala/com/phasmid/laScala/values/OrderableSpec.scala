@@ -3,7 +3,8 @@ package com.phasmid.laScala.values
 import java.time.LocalDate
 
 import com.phasmid.laScala.values.Orderable.{OrderableLocalDate, OrderableString}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 import scala.util.Success
@@ -11,7 +12,7 @@ import scala.util.Success
 /**
   * @author scalaprof
   */
-class OrderableSpec extends FlatSpec with Matchers {
+class OrderableSpec extends AnyFlatSpec with Matchers {
   private val lt = "lt"
   private val gt = "gt"
   private val eq = "eq"

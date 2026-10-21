@@ -1,13 +1,14 @@
 package com.phasmid.laScala.fp
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.LoggerFactory
 
 /**
   * TryWithSpec based on: http://codereview.stackexchange.com/questions/79267/scala-trywith-that-closes-resources-automatically
   * Created by scalaprof on 8/5/16.
   */
-class SmartLoggerSpec extends FlatSpec with Matchers {
+class SmartLoggerSpec extends AnyFlatSpec with Matchers {
 
   class ElephantLogger {
     private var memory = ""

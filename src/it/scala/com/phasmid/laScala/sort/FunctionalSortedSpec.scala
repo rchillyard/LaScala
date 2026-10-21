@@ -7,14 +7,15 @@ package com.phasmid.laScala.sort
 
 import com.phasmid.laScala.fp.Benchmark
 import org.scalatest.concurrent.{Futures, ScalaFutures}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Random
 
 /**
   * @author scalaprof
   */
-class FunctionalSortedSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class FunctionalSortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   case class Composite(i: Int, s: String)
 

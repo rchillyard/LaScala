@@ -1,13 +1,15 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util._
 
 /**
   * @author scalaprof
   */
-class TrialSpec extends FlatSpec with Matchers with Inside {
+class TrialSpec extends AnyFlatSpec with Matchers with Inside {
   "Lift" should "work" in {
     val toint = Lift[Any, Int] { case x: String => x.toInt }
     toint("10") should matchPattern { case Success(10) => }

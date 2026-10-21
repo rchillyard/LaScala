@@ -7,12 +7,14 @@ package com.phasmid.laScala
   */
 
 import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util._
 
-class VersionSpec extends FlatSpec with Matchers with Inside {
+class VersionSpec extends AnyFlatSpec with Matchers with Inside {
   // TODO you must increment this every time version changes in order for the tests all to run correctly
-  val VERSION = "1.0.11"
+  val VERSION = "1.1.0"
 
   println(s"${Version.getVersion}")
 

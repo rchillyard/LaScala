@@ -5,7 +5,8 @@
 
 package com.phasmid.laScala.tree
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Try
 
@@ -13,7 +14,7 @@ import scala.util.Try
   * The test contained here does not compile in 2.10 (in fact it crashes the compiler)
   * Created by scalaprof on 10/19/16.
   */
-class MPTT2Spec extends FlatSpec with Matchers {
+class MPTT2Spec extends AnyFlatSpec with Matchers {
 
   case class MyInt(x: Int, b: Boolean)
 

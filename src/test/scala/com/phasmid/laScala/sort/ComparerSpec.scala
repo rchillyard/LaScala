@@ -7,12 +7,13 @@ package com.phasmid.laScala.sort
 
 import com.phasmid.laScala.sort.Comparison._
 import org.scalatest.concurrent.{Futures, ScalaFutures}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author scalaprof
   */
-class ComparerSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
+class ComparerSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   behavior of "Comparison"
 
@@ -90,7 +91,7 @@ class ComparerSpec extends FlatSpec with Matchers with Futures with ScalaFutures
     comparer.!=(2, 1) shouldBe true
   }
   it should "compose with function" in {
-    val comparer: Comparer[Int] = Comparer.intComparer.compose(_ flip)
+    val comparer: Comparer[Int] = Comparer.intComparer.compose((c: Comparison) => c.flip)
     comparer((1, 2)) shouldBe Comparison.more
   }
   it should "invert" in {

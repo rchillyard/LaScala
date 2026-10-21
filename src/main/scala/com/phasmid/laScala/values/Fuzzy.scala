@@ -456,6 +456,8 @@ object Fuzzy {
     }
 
     def fromInt(x: Int): Fuzzy[Double] = Exact(x)
+
+    def parseString(str: String): Option[Fuzzy[Double]] = new FuzzyParser().parseFuzzy[Double](str).toOption
   }
 }
 

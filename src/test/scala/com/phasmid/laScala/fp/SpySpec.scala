@@ -1,7 +1,8 @@
 package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.MockLogger
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 
 import scala.concurrent.Future
@@ -11,7 +12,7 @@ import scala.util.{Failure, Success}
 /**
   * Created by scalaprof on 8/5/16.
   */
-class SpySpec extends FlatSpec with Matchers {
+class SpySpec extends AnyFlatSpec with Matchers {
 
   behavior of "Spy.spy"
   it should "work with implicit (logger) (with default logger) spy func" in {

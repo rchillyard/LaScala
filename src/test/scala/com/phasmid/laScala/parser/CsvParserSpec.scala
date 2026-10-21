@@ -5,14 +5,16 @@ import java.time.format.DateTimeFormatter
 
 import com.phasmid.laScala.Lift
 import com.phasmid.laScala.values._
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Success, Try}
 
 /**
   * Created by scalaprof on 8/3/16.
   */
-class CsvParserSpec extends FlatSpec with Matchers with Inside {
+class CsvParserSpec extends AnyFlatSpec with Matchers with Inside {
   val defaultParser = CsvParser()
 
   "term" should """parse "x",y """ in {

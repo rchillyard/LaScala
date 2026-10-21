@@ -2,7 +2,8 @@ package com.phasmid.laScala.fp
 
 import java.io.Closeable
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.{Failure, Success}
 
@@ -10,7 +11,7 @@ import scala.util.{Failure, Success}
   * TryWithSpec based on: http://codereview.stackexchange.com/questions/79267/scala-trywith-that-closes-resources-automatically
   * Created by scalaprof on 8/5/16.
   */
-class TryWithSpec extends WordSpec with Matchers {
+class TryWithSpec extends AnyWordSpec with Matchers {
   // Exceptions and errors here so we don't pay the stack trace creation cost multiple times
   val getResourceException = new RuntimeException
   val inFunctionException = new RuntimeException

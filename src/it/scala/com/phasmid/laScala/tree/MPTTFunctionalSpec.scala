@@ -1,7 +1,8 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.{FP, Spy}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.io.Source
 import scala.util.Try
@@ -9,7 +10,7 @@ import scala.util.Try
 /**
   * Created by scalaprof on 10/19/16.
   */
-class MPTTFunctionalSpec extends FlatSpec with Matchers {
+class MPTTFunctionalSpec extends AnyFlatSpec with Matchers {
 
   implicit object StringStringValueOps$ extends StringValueOps[String] {
     def getParentKey(a: String): Option[String] = Some(a.substring(0, a.length - 1))

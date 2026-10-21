@@ -7,7 +7,8 @@ package com.phasmid.laScala.values
 
 // We really do need the following: import com.phasmid.laScala.values.Rational.RationalHelper
 import com.phasmid.laScala.RenderableCaseClass
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
@@ -17,7 +18,7 @@ import scala.language.postfixOps
   *
   * TODO un-ignore these and find out why they don't work with 2.10
   */
-class CaseClassesSpec extends FlatSpec with Matchers {
+class CaseClassesSpec extends AnyFlatSpec with Matchers {
 
   behavior of "CaseClasses"
   ignore should "work for ordinary case class" in {

@@ -9,7 +9,8 @@ import com.phasmid.laScala.fp.Spy
 import com.phasmid.laScala.parser.{Header, TupleStream}
 import com.phasmid.laScala.values.Scalar
 import com.phasmid.laScala.{Prefix, Renderable, RenderableTraversable}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 
 import scala.annotation.tailrec
@@ -137,7 +138,7 @@ case object EmptyTaxonomy extends Exception("cannot get parentKey for taxon with
 /**
   * Created by scalaprof on 10/19/16.
   */
-class TaxonomicTreeSpec extends FlatSpec with Matchers {
+class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
 
   import Taxonomy._
 

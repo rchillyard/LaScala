@@ -92,6 +92,8 @@ object FuzzyParser {
     def toFloat(x: Int): Float = x.toFloat
 
     def toDouble(x: Int): Double = x.toDouble
+
+    def parseString(str: String): Option[Int] = str.toIntOption
   }
 
   implicit object FromStringInt extends FromString[Int] with IntIsIntegral {

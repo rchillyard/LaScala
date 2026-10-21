@@ -5,11 +5,12 @@
 
 package com.phasmid.laScala.fp
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.matching.Regex
 
-class NamedFunctionSpec extends FlatSpec with Matchers {
+class NamedFunctionSpec extends AnyFlatSpec with Matchers {
 
   behavior of "NamedFunction"
   it should "yield correct name" in {

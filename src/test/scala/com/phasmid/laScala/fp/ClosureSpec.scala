@@ -6,7 +6,8 @@
 package com.phasmid.laScala.fp
 
 import com.phasmid.laScala.values.Scalar
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
 
 import scala.collection.mutable
@@ -16,7 +17,7 @@ import scala.util.{Left, _}
 /**
   * Created by scalaprof on 10/19/16.
   */
-class ClosureSpec extends FlatSpec with Matchers {
+class ClosureSpec extends AnyFlatSpec with Matchers {
 
   behavior of "Closure"
   it should "apply for a simple closure with no params" in {
@@ -96,21 +97,21 @@ class ClosureSpec extends FlatSpec with Matchers {
 
   it should "handle varargs of 0 elements" in {
     val c = Closure.createVarArgsClosure()
-    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.immutable.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq())
   }
 
   it should "handle varargs of 1 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"))
-    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.immutable.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l"))
   }
 
   it should "handle varargs of 2 constant elements" in {
     val c = Closure.createVarArgsClosure(Left("l"), Left("K"))
-    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.Seq](0,  mkList), )"
+    c.render() shouldBe "Closure(RenderableFunction[List(),scala.collection.immutable.Seq](0,  mkList), )"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "K"))
   }
@@ -118,7 +119,7 @@ class ClosureSpec extends FlatSpec with Matchers {
   it should "handle varargs of 1 variable elements sandwiched in 2 constant elements" in {
     val f = RenderableFunction({ s: String => s.toUpperCase }, "upper", RenderableFunction.callByValue(1))
     val c = Closure.createVarArgsClosure(Left("l"), Right(Closure[String, String](f, Left("Hello"))), Left("K"))
-    c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.collection.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
+    c.render() shouldBe "Closure(RenderableFunction[List(java.lang.String),scala.collection.immutable.Seq](1,  mkList(a?)), Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  upper(a?)), Left(\"Hello\"))))"
     c.arity shouldBe 0
     c() shouldBe Success(Seq("l", "HELLO", "K"))
   }

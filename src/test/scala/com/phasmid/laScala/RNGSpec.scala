@@ -1,13 +1,14 @@
 package com.phasmid.laScala
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.postfixOps
 
 /**
   * @author scalaprof
   */
-class RNGSpec extends FlatSpec with Matchers {
+class RNGSpec extends AnyFlatSpec with Matchers {
 
   private def stdDev(xs: Seq[Double]): Double = math.sqrt(xs.reduceLeft((a, x) => a + x * x)) / xs.length
 

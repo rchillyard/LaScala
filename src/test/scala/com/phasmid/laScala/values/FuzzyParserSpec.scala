@@ -5,7 +5,9 @@
 
 package com.phasmid.laScala.values
 
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 import scala.util._
@@ -14,7 +16,7 @@ import scala.util._
 /**
   * @author scalaprof
   */
-class FuzzyParserSpec extends FlatSpec with Matchers with Inside {
+class FuzzyParserSpec extends AnyFlatSpec with Matchers with Inside {
 
   val parser = new FuzzyParser
 

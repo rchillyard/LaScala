@@ -1,7 +1,8 @@
 package com.phasmid.laScala.parser
 
 import com.phasmid.laScala.parser.Valuable._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util._
 
@@ -18,7 +19,7 @@ case class MyExpression(s: String) extends MyValue {
 /**
   * @author scalaprof
   */
-class ValuableSpec extends FlatSpec with Matchers {
+class ValuableSpec extends AnyFlatSpec with Matchers {
   "1" should "produce 1 for Int" in {
     val x = MyExpression("1")
     x.asValuable[Int] should matchPattern { case Success(1) => }

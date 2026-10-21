@@ -1,7 +1,8 @@
 package com.phasmid.laScala.tree
 
 import com.phasmid.laScala.fp.Spy
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util._
 
@@ -9,7 +10,7 @@ import scala.util._
 /**
   * Created by scalaprof on 10/19/16.
   */
-class FunctionalTest extends FlatSpec with Matchers {
+class FunctionalTest extends AnyFlatSpec with Matchers {
 
   behavior of "Recursive account lookup"
   it should "work for sampleTree.txt" in {

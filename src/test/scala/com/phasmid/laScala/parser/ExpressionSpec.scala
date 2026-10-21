@@ -1,6 +1,7 @@
 package com.phasmid.laScala.parser
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.language.implicitConversions
 import scala.util._
@@ -8,7 +9,7 @@ import scala.util._
 /**
   * @author scalaprof
   */
-class ExpressionSpec extends FlatSpec with Matchers {
+class ExpressionSpec extends AnyFlatSpec with Matchers {
 
   "expression" should """evaluate 1.0K as 1000.0""" in {
     val parser = new RuleParser()

@@ -228,7 +228,7 @@ object FP {
   def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Traversable[(A, B)], Traversable[A], Traversable[B]) = {
     val (nas, nbs) = (as.size, bs.size)
     val n = math.min(nas, nbs)
-    (((as.iterator take n) zip bs.iterator).toTraversable, (as.iterator drop n).toTraversable, (bs.iterator drop n).toTraversable)
+    ((as take n) zip bs, as drop n, bs drop n)
   }
 
   /**

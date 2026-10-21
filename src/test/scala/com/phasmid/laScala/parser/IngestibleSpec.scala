@@ -5,7 +5,8 @@
 
 package com.phasmid.laScala.parser
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.io.Source
 import scala.util._
@@ -13,7 +14,7 @@ import scala.util._
 /**
   * Created by scalaprof on 9/13/16.
   */
-class IngestibleSpec extends FlatSpec with Matchers {
+class IngestibleSpec extends AnyFlatSpec with Matchers {
 
   behavior of "ingest"
 
