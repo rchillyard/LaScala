@@ -44,7 +44,8 @@ For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
 ### Changes in V1_1_0
 * The organization (group id) is now _com.phasmidsoftware_ (formerly _com.phasmid_), like the other Phasmid libraries:
   _libraryDependencies += "com.phasmidsoftware" %% "lascala" % "1.1.0"_.
-  The package names (_com.phasmid.laScala_...) are unchanged.
+* The packages are renamed to match: _com.phasmid.laScala_ is now _com.phasmidsoftware.lascala_
+  (so, for example, _import com.phasmid.laScala.fp.FP.\__ becomes _import com.phasmidsoftware.lascala.fp.FP.\__).
 * Cross-built for Scala 2.13 and 3 (Scala 2.10, 2.11 and 2.12 are no longer supported); sbt 1.11.7
 * Current dependencies: scala-parser-combinators 2.4, scala-logging 3.9, ScalaTest 3.2 (tests)
 * API changes needed for Scala 2.13 and 3:

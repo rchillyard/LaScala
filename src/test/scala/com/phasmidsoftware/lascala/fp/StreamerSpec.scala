@@ -1,0 +1,34 @@
+/*
+ * LaScala
+ * Copyright (c) 2017. Phasmid Software
+ */
+
+package com.phasmidsoftware.lascala.fp
+
+import com.phasmidsoftware.lascala.{LongRNG, RNG}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+/**
+  * Created by scalaprof on 4/7/17.
+  */
+class StreamerSpec extends AnyFlatSpec with Matchers {
+  behavior of "apply"
+
+  it should "work with random number generator" in {
+    val lr = LongRNG(-4962768465676381896L)
+    val rs = RNG.values(lr)
+    rs.head == rs.head shouldBe true
+    val target = Streamer(rs)
+    target() shouldBe 4804307197456638271L
+    target() == target() shouldBe false
+  }
+
+  behavior of "take"
+
+  it should "work with random number generator" in {
+    val target = Streamer(RNG.values(LongRNG(0L)))
+    target.take(4) shouldBe Seq(-4962768465676381896L, 4804307197456638271L, -1034601897293430941L, 7848011421992302230L)
+  }
+
+}
