@@ -3,6 +3,7 @@ package com.phasmidsoftware.lascala.values
 import scala.annotation.tailrec
 import scala.language.implicitConversions
 import scala.math.BigDecimal
+import scala.util.{Failure, Try}
 
 
 /**
@@ -129,6 +130,13 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
   def invert(implicit builder: Builder): Rational[N] = builder(d, n)
 
   /**
+    * Method to invert this (a synonym for invert)
+    *
+    * @return this but with the numerator and denominator swapped
+    */
+  def reciprocal(implicit builder: Builder): Rational[N] = invert
+
+  /**
     * Raise this to the power of x. A tail-recursive method to perform x multiplications is used
     *
     * @param x the required exponent
@@ -174,18 +182,18 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     *
     * invokes toBigDecimal and converts that to Double
     *
-    * @return a Double corresponding to this Rational[N]
+    * @return a Double corresponding to this Rational[N] or Double.NaN if that is impossible
     */
-  def toDouble: Double = toBigDecimal.toDouble
+  def toDouble: Double = toBigDecimal map (_.toDouble) getOrElse Double.NaN
 
   /**
     * Method to convert this Rational[N] to a BigDecimal
     *
-    * @return a BigDecimal corresponding to this Rational[N]
+    * @return a BigDecimal corresponding to this Rational[N], or a Failure if this is infinite
     */
-  def toBigDecimal: BigDecimal = d match {
-    case 0 => throw new RationalException("value is infinite")
-    case _ => BigDecimal(i.toBigInt(n)) / BigDecimal(i.toBigInt(d))
+  def toBigDecimal: Try[BigDecimal] = d match {
+    case 0 => Failure(new RationalException("value is infinite"))
+    case _ => Try(BigDecimal(i.toBigInt(n)) / BigDecimal(i.toBigInt(d)))
   }
 
   // Other methods appropriate to Rational[N]

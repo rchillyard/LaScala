@@ -225,15 +225,13 @@ object AccountRecordTest {
     val keys = nodes map (_.key) zip (snodes map (_.key))
     import Benchmark._
     val fIncludes: (AccountRecord, AccountRecord) => (String, String, Boolean) = { (x, y) => (x.toString, y.toString, tree.includes(x, y)) }
-    10000.times(pairs map fIncludes.tupled)
-    val ns1 = 10000.times(pairs map fIncludes.tupled)
+    val ns1 = 10000.times(pairs map fIncludes.tupled).nanos
     println(s"Benchmark time for tree.includes (nanosecs) = $ns1")
     //    val r1 = pairs map fIncludes.tupled
     //    for (r <- r1) println(s"${r._1},${r._2},${r._3}")
 
     val fContains: (String, String) => (String, String, Boolean) = { (x, y) => (x, y, mptt.contains(x, y).get) }
-    10000.times(keys map fContains.tupled)
-    val ns2 = 10000.times(keys map fContains.tupled)
+    val ns2 = 10000.times(keys map fContains.tupled).nanos
     println(s"Benchmark time for mptt.contains (nanosecs) = $ns2")
     //    val r2 = keys map fContains.tupled
     //    for (r <- r2) println(s"${r._1},${r._2},${r._3}")

@@ -29,3 +29,4 @@ src/test/scala/com/phasmid/laScala/oldtree/
 src/test/scala/com/phasmid/laScala/values/MonoidSpec.scala
 project/project/
 !/project/plugins.sbt
+.bsp/

@@ -57,6 +57,9 @@ For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
       _RenderableFunction.getPartialApplicationFunction_)
     * The extractors _Branch_, _AbstractBinaryTree_ and _IndexedNode_ accept any _Node_
     * _FP.zippy_ returns strict collections
+* From the (superseded) V1_0_11 master branch:
+    * _Benchmark_: _n.times(f)_ now returns a _Benchmark[A]_ (formerly a _Long_); its _nanos_ is the average nano-seconds per run, after a warm-up of 20% of the runs
+    * _Rational_: _toBigDecimal_ returns a _Try[BigDecimal]_ (a _Failure_ for infinity, instead of throwing); _toDouble_ yields _Double.NaN_ for infinity; _reciprocal_ is a synonym for _invert_
 ### Changes in V1_0_8
 ### Changes in V1_0_8
 * RenderableFunction, Closure, etc.
