@@ -91,7 +91,7 @@ class AccountRecordTest extends FlatSpec with Matchers {
   it should "compare correctly" in {
     val ac1q3 = AccountRecord("Account#1", AccountDate(2016, 9, 31), "Account#0")
     val ac1q4 = AccountRecord("Account#1", AccountDate(2016, 12, 31), "Account#0")
-    implicit val ord = AccountRecord.OrderingAccountRecord
+    implicit val ord: AccountRecord.OrderingAccountRecord.type = AccountRecord.OrderingAccountRecord
     ord.compare(ac1q3, ac1q4) shouldBe -1
     ac1q3.key.compareTo(ac1q4.key) shouldBe -1
   }
@@ -180,6 +180,7 @@ object AccountRecordTest {
 
     // NOTE Now, we flatten the options, resulting in None if there were any problems at all.
     // CONSIDER May want to change the behavior of this later
+    // CONSIDER using traverse
     (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 

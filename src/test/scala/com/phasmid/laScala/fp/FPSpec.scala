@@ -35,6 +35,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
+    // CONSIDER using traverse
     whenReady(Future.sequence(ufs)) { us => Assertions.assert(us.length == 2) }
   }
 
@@ -99,6 +100,7 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
 
   "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
+    // CONSIDER using traverse
     val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
     for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true; case _ => Assertions.fail() }
   }
@@ -290,6 +292,16 @@ class FPSpec extends FlatSpec with Matchers with Futures with ScalaFutures {
   "sequence[Try]" should "work" in {
     sequence(Try("10".toInt)) should matchPattern { case Right(10) => }
     sequence(Try("x".toInt)) should matchPattern { case Left(_) => }
+  }
+
+  "sequence[Option]" should "work" in {
+    it should "sequence" in {
+      FP.sequence(Seq(None)) shouldBe None
+      FP.sequence(Seq(Some(1), None)) shouldBe Some(Seq(1))
+      FP.sequence(Seq(Some(1), Some(2))) shouldBe Some(Seq(1, 2))
+    }
+
+    sequence(Seq(Some(1))) should matchPattern { case Some(1) => }
   }
 
   "renderLimited" should "work" in {

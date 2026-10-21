@@ -28,6 +28,10 @@ case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T])
   def parSort(implicit ec: ExecutionContext): Future[Seq[T]] = Sorted.mergeSort(ts)
 }
 
+case class Sortable[X: Ordering](xs: Seq[X]) {
+  def sorted: Seq[X] = xs.sorted
+}
+
 object Sorted {
   def create[T: Ordering](ts: Seq[T]): Sorted[T] = Sorted(ts)(implicitly[Ordering[T]])
 
