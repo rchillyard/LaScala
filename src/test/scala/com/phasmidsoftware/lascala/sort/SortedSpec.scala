@@ -5,15 +5,21 @@
 
 package com.phasmidsoftware.lascala.sort
 
-import com.phasmidsoftware.lascala.sort.Comparison._
 import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.nowarn
+
 /**
+  * NOTE: this package is deprecated (since 2.1.0) and will be removed in 3.0; until then, these tests continue to check it.
+  *
   * @author scalaprof
   */
+@nowarn("cat=deprecation")
 class SortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
+
+  import com.phasmidsoftware.lascala.sort.Comparison._
 
   behavior of "Sorted"
 

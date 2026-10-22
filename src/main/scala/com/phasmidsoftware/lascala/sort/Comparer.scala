@@ -19,6 +19,7 @@ import scala.language.implicitConversions
   *
   * @tparam T the type of the objects to be compared
   */
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 trait Comparer[T] extends (((T, T)) => Comparison) with Serializable {
   self =>
 
@@ -50,6 +51,7 @@ trait Comparer[T] extends (((T, T)) => Comparison) with Serializable {
   def invert: Comparer[T] = compose((c: Comparison) => c.flip)
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 object Comparer {
 
   implicit val intComparer: Comparer[Int] = Ordering[Int]
@@ -60,6 +62,7 @@ object Comparer {
   }
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 trait Comparison extends (() => Option[Boolean]) {
 
   override def toString(): String = apply().toString
@@ -74,14 +77,17 @@ trait Comparison extends (() => Option[Boolean]) {
   def flip: Comparison = Comparison(for (v <- apply()) yield !v)
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 case class Different(less: Boolean) extends Comparison {
   def apply(): Option[Boolean] = Some(less)
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 case object Same extends Comparison {
   def apply(): Option[Boolean] = None
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 object Comparison {
   val more = Different(false)
   val less = Different(true)
