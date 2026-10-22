@@ -15,6 +15,7 @@ import scala.language.implicitConversions
   * @param f the Comparer
   * @tparam T the underlying value type
   */
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T]) {
 
   implicit val ordering: Ordering[T] = f.toOrdering
@@ -28,10 +29,12 @@ case class Sorted[T](ts: Seq[T])(implicit f: Comparer[T]) extends (() => Seq[T])
   def parSort(implicit ec: ExecutionContext): Future[Seq[T]] = Sorted.mergeSort(ts)
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 case class Sortable[X: Ordering](xs: Seq[X]) {
   def sorted: Seq[X] = xs.sorted
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 object Sorted {
   def create[T: Ordering](ts: Seq[T]): Sorted[T] = Sorted(ts)(implicitly[Ordering[T]])
 
@@ -57,6 +60,7 @@ object Sorted {
 
 }
 
+@deprecated("Use the Comparer library (\"com.phasmidsoftware\" %% \"comparer\"); com.phasmidsoftware.lascala.sort will be removed in LaScala 3.0", since = "2.1.0")
 object Test extends App {
 
   case class Composite(i: Int, d: Double)
