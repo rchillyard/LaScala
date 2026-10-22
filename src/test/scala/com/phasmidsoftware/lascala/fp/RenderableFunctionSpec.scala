@@ -7,6 +7,7 @@ package com.phasmidsoftware.lascala.fp
 
 import com.phasmidsoftware.lascala.fp.RenderableFunction.getPartialApplicationFunction
 import com.phasmidsoftware.lascala.values.{BooleanScalar, Scalar, StringScalar, Tuple0}
+import com.phasmidsoftware.lascala.Renderable
 import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -40,7 +41,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "yield Hello with arity 2" in {
-    def render(s1: Scalar, s2: Scalar) = s1.render() + ":" + s2.render()
+    def render(s1: Scalar, s2: Scalar) = s1.render + ":" + s2.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val r = f(Tuple2(Scalar("Hello"), Scalar(1)))
@@ -51,7 +52,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     // XXX Not sure why we have to set this here, but we do.
     BooleanScalar.setDefaultFormat("%b")
 
-    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
+    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val r = f(Tuple3(Scalar("Hello"), Scalar(1), Scalar(true)))
@@ -113,7 +114,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "give function string with tabs" in {
     val name = "isHello"
     val f = RenderableFunction({ (s: String) => s == "Hello" }, name, RenderableFunction.callByValue(1))
-    f.render(1) shouldBe s"$name(a?)"
+    Renderable[RenderableFunction[Boolean]].render(f, 1) shouldBe s"$name(a?)"
   }
 
   behavior of "Param"
@@ -249,7 +250,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "reduce arity 2 to 1" in {
-    def render(s1: Scalar, s2: Scalar) = s1.render() + ":" + s2.render()
+    def render(s1: Scalar, s2: Scalar) = s1.render + ":" + s2.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
     val g = f.partiallyApply(Some("Hello"))
@@ -258,7 +259,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "reduce arity 3 to 2" in {
-    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
+    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val g = f.partiallyApply(Some("Hello"))
@@ -267,7 +268,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "reduce arity 4 to 3" in {
-    def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
+    def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render + ":" + s2.render + ":" + s3.render + ":" + s4.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
     val g = f.partiallyApply(Some("Hello"))
@@ -325,7 +326,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "reduce arity 3 to 2" in {
-    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render()
+    def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
     val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))
@@ -334,7 +335,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "reduce arity 4 to 3" in {
-    def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render() + ":" + s2.render() + ":" + s3.render() + ":" + s4.render()
+    def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render + ":" + s2.render + ":" + s3.render + ":" + s4.render
 
     val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
     val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))

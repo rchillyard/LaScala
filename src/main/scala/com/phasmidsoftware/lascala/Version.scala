@@ -84,7 +84,7 @@ trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
   * @param v the value of this Subversioned
   * @tparam V the underlying type of the Subversioned, which is defined to implement Ordering
   */
-abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] with Renderable {
+abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V] {
 
   def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Repr
 
@@ -114,8 +114,6 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
     inner(Seq(), this)
   }
 
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = toSeq.mkString(".")
-
   def compare(x: Subversioned[V], y: Subversioned[V]): Int = implicitly[Ordering[V]].compare(x(), y())
 
   protected val cf: (Subversioned[V], Subversioned[V]) => Int = compare
@@ -124,6 +122,13 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
 }
 
 object Version {
+
+  /**
+    * Renders a Version as its version/subversions separated by ".", for example 1.0.11.
+    */
+  given versionRenderable[V]: Renderable[Version[V]] = new Renderable[Version[V]] {
+    def render(v: Version[V], indent: Int)(using Layout): String = v.toSeq.mkString(".")
+  }
 
   /**
     * This code relies on the sbt-buildinfo plugin which creates a source file called BuildInfo.scala in the following directory:
@@ -139,21 +144,25 @@ object Version {
 
   def parseLong(s: String): Option[Version[Long]] = parse(s)(longVersion)
 
+  /**
+    * Method to parse a String such as "1.0.11" as a Version.
+    *
+    * Each component is parsed by f, and the components are nested from the right:
+    * "1.0.11" is 1 with the subversion 0, which has the subversion 11.
+    *
+    * @param s the String to be parsed
+    * @param f a function to parse one component
+    * @tparam V the underlying type of the Version
+    * @return Some(version), or None if any component cannot be parsed by f
+    */
   def parse[V](s: String)(f: String => Version[V]): Option[Version[V]] = {
-    def inner(vo: Option[Version[V]], w: String, xs: List[String]): Option[Version[V]] = xs match {
-      case h :: t =>
-        val sb = new StringBuilder()
-        if (w.nonEmpty) sb.append(s"$w.")
-        sb.append(h)
-        val ss = sb.toString()
-        inner(vo match {
-          case Some(v) => v.subversions.find(x => x.toString() == ss)
-          case None => Try(f(h)).toOption
-        }, ss, t)
-      case Nil => vo
+    def inner(ws: List[String]): Option[Version[V]] = ws match {
+      case Nil => None
+      case h :: Nil => Try(f(h)).toOption
+      case h :: t => for (v <- Try(f(h)).toOption; sub <- inner(t)) yield v.build(v(), Some(sub), v.isSnapshot)
     }
 
-    inner(None, "", s.split("""\.""").toList)
+    inner(s.split("""\.""").toList)
   }
 }
 

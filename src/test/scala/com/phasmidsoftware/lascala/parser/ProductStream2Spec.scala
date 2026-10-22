@@ -26,7 +26,7 @@ class ProductStream2Spec extends AnyFlatSpec with Matchers {
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm)
     tsy.foreach(_.size shouldBe 15)
     Spy.spy("tsy", tsy)
-    val wst = for (ts <- tsy) yield for (t <- ts) yield t.render()
+    val wst = for (ts <- tsy) yield for (t <- ts) yield t.render
     for (ws <- wst) {
       ws.head shouldBe "animals: animalia"
       ws(6) shouldBe "golden eagle: animalia--chordata--aves--accipitriformes--accipitridae--buteoninae--aquila--chyrsaetos"
@@ -39,8 +39,8 @@ class ProductStream2Spec extends AnyFlatSpec with Matchers {
 }
 
 //
-//case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) extends Renderable {
-//  def render(indent: Int)(implicit tab: (Int) => Prefix): String = name.render() + ": " + taxonomy.values.map(_.render()).mkString("--")
+//case class Taxon(name: Scalar, taxonomy: Map[String, Scalar]) {
+//  def render(indent: Int)(implicit tab: (Int) => Prefix): String = name.render + ": " + taxonomy.values.map(_.render).mkString("--")
 //}
 //
 //object Taxon {

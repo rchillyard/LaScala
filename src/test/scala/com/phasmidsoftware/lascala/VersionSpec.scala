@@ -14,7 +14,7 @@ import scala.util._
 
 class VersionSpec extends AnyFlatSpec with Matchers with Inside {
   // TODO you must increment this every time version changes in order for the tests all to run correctly
-  val VERSION = "1.1.0"
+  val VERSION = "2.0.0"
 
   println(s"${Version.getVersion}")
 
@@ -70,6 +70,18 @@ class VersionSpec extends AnyFlatSpec with Matchers with Inside {
     v() shouldBe 1L
     v.subversion.get() shouldBe 10L
     v.subversion.get.subversion shouldBe None
+  }
+  it should "decode 1.0.11" in {
+    val vo = Version.parseLong("1.0.11")
+    vo.map(_.toSeq) shouldBe Some(Seq(1L, 0L, 11L))
+    vo.map(_.toString) shouldBe Some("1.0.11")
+    vo.map(_()) shouldBe Some(1L)
+    val subversions = for (v <- vo; v0 <- v.subversion; v11 <- v0.subversion) yield (v0(), v11(), v11.subversion)
+    subversions shouldBe Some((0L, 11L, None))
+  }
+  it should "not decode 1.x or an empty String" in {
+    Version.parseLong("1.x") shouldBe None
+    Version.parseLong("") shouldBe None
   }
   "next" should "work for LongVersion" in {
     val version = Version(1L)

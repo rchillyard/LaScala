@@ -2,13 +2,9 @@ organization := "com.phasmidsoftware"
 
 name := "lascala"
 
-// Build Scala 3 with the oldest supported LTS so that the artifact is usable from any later Scala 3 version.
+// Build with the oldest supported Scala 3 LTS so that the artifact is usable from any later Scala 3 version.
 // CircleCI also runs the tests on the current LTS (3.9).
-val scala213 = "2.13.18"
-val scala3 = "3.3.8"
-
-scalaVersion := scala213
-crossScalaVersions := Seq(scala213, scala3)
+scalaVersion := "3.3.8"
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -42,7 +38,6 @@ val scalaTestVersion = "3.2.19"
 
 libraryDependencies ++= Seq(
   scalaModules %% "scala-parser-combinators" % "2.4.0"
-  , scalaModules %% "scala-collection-compat" % "2.14.0"
   , "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
   , "com.typesafe" % "config" % "1.4.9"
   , "ch.qos.logback" % "logback-classic" % "1.5.38" % Runtime
@@ -53,9 +48,3 @@ libraryDependencies ++= Seq(
   // NOTE: only used for testing
   , "junit" % "junit" % "4.13.2" % Test
 )
-
-// Runtime reflection (used by RenderableCaseClass) exists only in Scala 2.
-libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-  case Some((2, _)) => Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-  case _ => Seq()
-})

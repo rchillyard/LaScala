@@ -8,7 +8,7 @@ package com.phasmidsoftware.lascala.tree
 import com.phasmidsoftware.lascala.fp.Spy
 import com.phasmidsoftware.lascala.parser.{Header, TupleStream}
 import com.phasmidsoftware.lascala.values.Scalar
-import com.phasmidsoftware.lascala.{Prefix, Renderable, RenderableTraversable}
+import com.phasmidsoftware.lascala.{Layout, Renderable}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
@@ -25,11 +25,7 @@ import scala.util.{Failure, Success, Try}
   * @param po   an alternative name, not normally used for matching, only for rendering.
   * @param taxa the ancestry (including this) of this taxon (two elements at least are required: self and parent, except top level).
   */
-case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q => P) extends Renderable {
-
-  implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[-]", linear = true)
-
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = po.map(_.toString + ":").getOrElse("") + structuralKey
+case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q => P, qr: Renderable[Q]) {
 
   private def values: Seq[Q] = for ((_, q) <- taxa) yield q
 
@@ -38,12 +34,11 @@ case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q =>
   /**
     * Method to form the "structural" key for this Taxon.
     * This is used when building a tree from many Taxa, but not when doing a lookup of a Taxon.
-    * We return a rendering of the values of the taxa (we ignore po), dropping the first and last characters,
-    * as what we want is enclosed in "[]"
+    * We return a rendering of the values of the taxa (we ignore po), separated by "-".
     *
     * @return the structural key for this taxon
     */
-  def structuralKey: String = values.toList.render().drop(1).dropRight(1)
+  def structuralKey: String = values.map(qr.render(_, 0)).mkString("-")
 
   /**
     * We return the key of the parent of this taxon.
@@ -63,10 +58,14 @@ case class Taxon[P, Q](po: Option[P], taxa: Seq[(String, Q)])(implicit q2p: Q =>
     Taxon(po, taxa.init)
   }
 
-  override def toString: String = render()
+  override def toString: String = Taxon.taxonRenderable[P, Q].render(this, 0)
 }
 
 object Taxon {
+
+  given taxonRenderable[P, Q]: Renderable[Taxon[P, Q]] = new Renderable[Taxon[P, Q]] {
+    def render(t: Taxon[P, Q], indent: Int)(using Layout): String = t.po.map(_.toString + ":").getOrElse("") + t.structuralKey
+  }
 
   import Taxonomy._
   def apply(xWs: Seq[(String, Scalar)]): MockTaxon = Taxon(Some(xWs.head._2.source.toString), xWs.tail)
@@ -147,8 +146,8 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
 
   behavior of "Taxon nodes"
   it should "render correctly" in {
-    taxonA.render() shouldBe "a:A"
-    taxonA1.render() shouldBe "a1:A-A1"
+    taxonA.render shouldBe "a:A"
+    taxonA1.render shouldBe "a1:A-A1"
   }
 
   behavior of "TaxonValueOps"
@@ -228,7 +227,7 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     n1y should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     val n2y = for (n1 <- n1y) yield n1 :+ taxonA1
     n2y should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(GeneralKVTreeWithScaffolding(Some(`taxonA`), List(Leaf(`taxonA1`)))))) => }
-    n2y.get.render() shouldBe "--(a:A--(a1:A-A1))"
+    n2y.get.render shouldBe "--(a:A--(a1:A-A1))"
   }
 
   it should "implement :+ as in leaf-only taxonomy" in {
@@ -269,13 +268,13 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     val zy: Try[IndexedNode[MockTaxon]] = for (y <- yy) yield Tree.createIndexedTree(y)
     zy should matchPattern { case Success(_) => }
     val tree = zy.get
-    println(tree.render())
+    println(tree.render)
     tree.depth shouldBe 9
     // TODO Figure out why the following no longer works...
     //    val mptt = MPTT(tree)
     //    val size1 = mptt.index.size
     //    size1 shouldBe 16
-    //    println(mptt.render())
+    //    println(mptt.render)
   }
 
   it should "work with leaves-only taxonomy" in {
@@ -287,12 +286,12 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     val zy: Try[IndexedNode[MockTaxon]] = for (y <- yy) yield Tree.createIndexedTree(y)
     zy should matchPattern { case Success(_) => }
     val tree = zy.get
-    println(tree.render())
+    println(tree.render)
     tree.depth shouldBe 9
     // TODO Figure out why the following no longer works...
     //    val mptt = MPTT(tree)
     //    val size1 = mptt.index.size
     //    size1 shouldBe 16
-    //    println(mptt.render())
+    //    println(mptt.render)
   }
 }

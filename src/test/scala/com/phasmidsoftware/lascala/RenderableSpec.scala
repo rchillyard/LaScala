@@ -1,114 +1,193 @@
 /*
  * LaScala
- * Copyright (c) 2017. Phasmid Software
+ * Copyright (c) 2017, 2026. Phasmid Software
  */
 
 package com.phasmidsoftware.lascala
 
 import com.phasmidsoftware.lascala.fp.RenderableFunctionException
-import com.phasmidsoftware.lascala.values.Scalar
-import org.scalatest.Inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 /**
-  * See https://en.wikipedia.org/wiki/Three-valued_logic#Logics
+  * Tests of the type class Renderable.
   *
-  * @author scalaprof
+  * The expected strings of the 1.x tests are kept, with Sym in place of Scalar (see ScalarSpec for Scalar itself).
   */
-class RenderableSpec extends AnyFlatSpec with Matchers with Inside {
+class RenderableSpec extends AnyFlatSpec with Matchers {
+
+  import Renderable.given
+  import RenderableSpec.*
+
   behavior of "Renderable"
+
   it should "render simple values like toString" in {
-    Scalar("x").render(1) shouldBe "x"
+    Sym("x").render shouldBe "x"
+    1.render shouldBe "1"
+  }
+  it should "render a String with quotes" in {
+    "Hello".render shouldBe "\"Hello\""
   }
   it should "render list values with indentation" in {
-    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
-    list.render() shouldBe "(\n  x,\n  y,\n  z\n)"
+    val list = Seq(Sym("x"), Sym("y"), Sym("z"))
+    list.render shouldBe "(\n  x,\n  y,\n  z\n)"
   }
   it should "render list of length one" in {
-    val list = Seq(Scalar("x"))
-    list.render() shouldBe "(x)"
+    val list = Seq(Sym("x"))
+    list.render shouldBe "(x)"
   }
-  it should "render list values with indentation (custom RenderableTraversable)" in {
-    implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, "[;]")
+  it should "render list values with indentation (custom bookends)" in {
+    given Layout = Layout(bookends = "[;]")
 
-    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"))
-    list.render() shouldBe "[\n  x;\n  y;\n  z\n]"
+    val list = Seq(Sym("x"), Sym("y"), Sym("z"))
+    list.render shouldBe "[\n  x;\n  y;\n  z\n]"
   }
-  it should "limit the rendering of elements to " + Renderable.MAX_ELEMENTS in {
-    import Renderable.renderableTraversable
-    val list: List[Int] = (Stream from 1 take 20).toList
-    list.render() shouldBe "(\n  1,\n  2,\n  3,\n  4,\n  5,\n  6,\n  7,\n  8,\n  9,\n  10,\n  ...[10 more elements]\n)"
+  it should "limit the rendering of elements to " + Layout.MAX_ELEMENTS in {
+    val list: List[Int] = (LazyList from 1 take 20).toList
+    list.render shouldBe "(\n  1,\n  2,\n  3,\n  4,\n  5,\n  6,\n  7,\n  8,\n  9,\n  10,\n  ...[10 more elements]\n)"
   }
   it should "render list values with a max" in {
-    implicit def r(xs: Traversable[_]): Renderable = RenderableTraversable(xs, max = Some(3))
+    given Layout = Layout(maxElements = Some(3))
 
-    val list = Seq(Scalar("x"), Scalar("y"), Scalar("z"), Scalar(""))
-    list.render() shouldBe "(\n  x,\n  y,\n  z,\n  ...[1 more elements]\n)"
+    val list = Seq(Sym("x"), Sym("y"), Sym("z"), Sym(""))
+    list.render shouldBe "(\n  x,\n  y,\n  z,\n  ...[1 more elements]\n)"
   }
   it should "render list values with double indentation" in {
-    val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
-    list.render() shouldBe "(\n  (\n    x0,\n    x1\n  ),\n  (\n    y0,\n    y1\n  ),\n  (\n    z0,\n    z1\n  )\n)"
+    val list = Seq(Seq(Sym("x0"), Sym("x1")), Seq(Sym("y0"), Sym("y1")), Seq(Sym("z0"), Sym("z1")))
+    list.render shouldBe "(\n  (\n    x0,\n    x1\n  ),\n  (\n    y0,\n    y1\n  ),\n  (\n    z0,\n    z1\n  )\n)"
   }
   it should "render list values with double indentation (custom tab)" in {
     val tabulator = Seq(" " * 1, " " * 2, " " * 3)
 
-    implicit def tab(indent: Int): Prefix = Prefix(tabulator(indent))
+    given Layout = Layout(tab = tabulator)
 
-    val list = Seq(Seq(Scalar("x0"), Scalar("x1")), Seq(Scalar("y0"), Scalar("y1")), Seq(Scalar("z0"), Scalar("z1")))
-    list.render() shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
+    val list = Seq(Seq(Sym("x0"), Sym("x1")), Seq(Sym("y0"), Sym("y1")), Seq(Sym("z0"), Sym("z1")))
+    list.render shouldBe "(\n  (\n   x0,\n   x1\n  ),\n  (\n   y0,\n   y1\n  ),\n  (\n   z0,\n   z1\n  )\n )"
+  }
+  it should "use the default Layout outside the block that declares another" in {
+    val list = Seq(Sym("x"), Sym("y"))
+    locally {
+      given Layout = Layout(tab = Layout.uniform(4))
+
+      list.render shouldBe "(\n    x,\n    y\n)"
+    }
+    list.render shouldBe "(\n  x,\n  y\n)"
   }
   it should "render Some" in {
-    val xo = Option(Scalar("x"))
-    xo.render() shouldBe "Some(x)"
+    val xo = Option(Sym("x"))
+    xo.render shouldBe "Some(x)"
   }
   it should "render None" in {
-    import Renderable.renderableOption
     val xo: Option[String] = Option(null)
-    xo.render() shouldBe "None"
+    xo.render shouldBe "None"
   }
   it should "render Success" in {
-    val xy = Try(Scalar("x"))
-    xy.render() shouldBe "Success(x)"
+    val xy = Try(Sym("x"))
+    xy.render shouldBe "Success(x)"
   }
   it should "render Failure" in {
-    import Renderable.renderableTry
-    val xy = Try(throw RenderableFunctionException("test"))
-    xy.render() shouldBe "Failure(test)"
+    val xy: Try[Sym] = Failure(RenderableFunctionException("test"))
+    xy.render shouldBe "Failure(test)"
   }
   it should "render either values (left)" in {
-    val e: Either[Scalar, Any] = Left(Scalar("x"))
-    e.render() shouldBe "Left(x)"
+    val e: Either[Sym, Int] = Left(Sym("x"))
+    e.render shouldBe "Left(x)"
   }
   it should "render either values (right)" in {
-    val e: Either[Any, Scalar] = Right(Scalar("x"))
-    e.render() shouldBe "Right(x)"
+    val e: Either[Int, Sym] = Right(Sym("x"))
+    e.render shouldBe "Right(x)"
   }
   it should "render Tuple2" in {
-    val t: Product = "x" -> "y"
-    import Renderable.renderableProduct
-    t.render() shouldBe """Tuple2("x","y")"""
+    val t = "x" -> "y"
+    t.render shouldBe """Tuple2("x","y")"""
   }
-  it should "render case class as a Product" in {
-    val p: Product = Z(1, Math.PI, Seq("Hello", "Goodbye"))
-    import Renderable.renderableProduct
-    p.render() shouldBe
-      s"""Z(1,3.141592653589793,(
+  it should "render a tuple containing a collection" in {
+    val t = (1, Math.PI, Seq("Hello", "Goodbye"))
+    t.render shouldBe
+      s"""Tuple3(1,3.141592653589793,(
     "Hello",
     "Goodbye"
   ))"""
   }
-  // NOTE: please note that this test will not work for 2.10 - it will throw an exception
-  // TODO refactor so that this test is not run for 2.10
-  ignore should "render case class as a Case Class" in {
+  it should "render a Map" in {
+    Map("x" -> 1, "y" -> 2).render shouldBe "(\n  \"x\"->1,\n  \"y\"->2\n)"
+  }
+  it should "render a collection of a different type, using the same instance" in {
+    Vector(1, 2).render shouldBe "(\n  1,\n  2\n)"
+    Set(1).render shouldBe "(1)"
+  }
+
+  behavior of "derived Renderable"
+
+  it should "render a case class with one field per line" in {
     val z = Z(1, Math.PI, Seq("Hello", "Goodbye"))
-    val r = RenderableCaseClass(z)
-    println(r.render())
-    r.render() shouldBe "Z(\n  x:1\n  y:3.141592653589793\n  z:(\n      \"Hello\",\n      \"Goodbye\"\n    )\n  )"
+    z.render shouldBe "Z(\n  x:1,\n  y:3.141592653589793,\n  z:(\n    \"Hello\",\n    \"Goodbye\"\n  )\n)"
+  }
+  it should "render a nested case class" in {
+    Line(Point(1, 2), Point(3, 4)).render shouldBe "Line(\n  from:Point(\n    x:1,\n    y:2\n  ),\n  to:Point(\n    x:3,\n    y:4\n  )\n)"
+  }
+  it should "render a recursive enum" in {
+    val tree = Tree.Node(Tree.Leaf, 1, Tree.Node(Tree.Leaf, 2, Tree.Leaf))
+    tree.render shouldBe "Node(\n  left:Leaf,\n  value:1,\n  right:Node(\n    left:Leaf,\n    value:2,\n    right:Leaf\n  )\n)"
+  }
+  it should "render the cases of a sealed trait" in {
+    val shapes: List[Shape] = List(Circle(1.0), Dot)
+    shapes.render shouldBe "(\n  Circle(\n    radius:1.0\n  ),\n  Dot\n)"
+  }
+  it should "use a case's own instance when it has one" in {
+    val coins: List[Coin] = List(Heads, Tails)
+    coins.render shouldBe "(\n  H,\n  T\n)"
+  }
+  it should "not compile for a type with no instance" in {
+    "NoInstance(1).render" shouldNot compile
+    "Renderable.fromToString[NoInstance].render(NoInstance(1), 0)" should compile
   }
 }
 
-case class Z(x: Int, y: Double, z: Seq[String])
+/**
+  * Types used by RenderableSpec (in an object so that their names do not clash with those of other specs).
+  */
+object RenderableSpec {
+  case class Sym(s: String)
+
+  object Sym {
+    given Renderable[Sym] = new Renderable[Sym] {
+      def render(sym: Sym, indent: Int)(using Layout): String = sym.s
+    }
+  }
+
+  case class Z(x: Int, y: Double, z: Seq[String]) derives Renderable
+
+  case class Point(x: Int, y: Int) derives Renderable
+
+  case class Line(from: Point, to: Point) derives Renderable
+
+  enum Tree derives Renderable {
+    case Leaf
+    case Node(left: Tree, value: Int, right: Tree)
+  }
+
+  sealed trait Shape derives Renderable
+
+  case class Circle(radius: Double) extends Shape
+
+  case object Dot extends Shape
+
+  sealed trait Coin derives Renderable
+
+  case object Heads extends Coin {
+    given Renderable[Heads.type] = new Renderable[Heads.type] {
+      def render(h: Heads.type, indent: Int)(using Layout): String = "H"
+    }
+  }
+
+  case object Tails extends Coin {
+    given Renderable[Tails.type] = new Renderable[Tails.type] {
+      def render(t: Tails.type, indent: Int)(using Layout): String = "T"
+    }
+  }
+
+  case class NoInstance(x: Int)
+}

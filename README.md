@@ -5,10 +5,10 @@ This package, developed by Phasmid Software and Dataflowage Inc. provides a smor
 utility libraries:
 
 * A set of functional programming methods to complement what's in the standard Scala library including:
-** map2, map3, etc.
-** lift2, lift3, etc.
+  * map2, map3, etc.
+  * lift2, lift3, etc.
 * (V1.0.1) a set of enhanced classes for composing functions together in such a way that they can be rendered;
-* a set of generic Tree-traversal classes, including an MPTT (modified pre-order tree traversal) class;
+* a set of generic Tree classes (with traversal);
 * a rules parser together with a set of Predicates;
 * a "Value" type which can be converted to several type classes:
   * Valuable (similar to Numeric);
@@ -23,24 +23,122 @@ utility libraries:
 * a utility to deal with command-line arguments (Args);
 * a smart logger (SmartLogger);
 * a simple "spy" utility for debugging via println statements (Spy);
-* a Renderable class which allows a prettier and better structured textual representation of objects (than toString);
+* a Renderable type class which gives a prettier and better structured textual representation of objects than toString (see below);
 * various other utilities, including a Version type.
 
-### Note on Scala Binary Versions
+## Installation
 
-LaScala 1.1.0 is cross-built for Scala 2.13 and Scala 3 (compiled with 3.3, so usable from any Scala 3.3+; also tested on 3.9).
-For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
+```scala
+libraryDependencies += "com.phasmidsoftware" %% "lascala" % "2.0.0"
+```
 
-#### Differences between the Scala 2.13 and Scala 3 builds
-* _RenderableCaseClass_: the Scala 3 version has no _TypeTag_ context bound (Scala 3 has no runtime reflection).
-  Parameter names come from _productElementNames_, and the parameter types in _getParameters_ are always _None_.
+LaScala 2.0 is for Scala 3 only. It is compiled with Scala 3.3, so it can be used from any Scala 3.3 or later (it is also tested on 3.9).
+* For Scala 2.13, use version 1.1.0 (which is cross-built for 2.13 and 3).
+* For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
+
+Version 2.0 has breaking changes: see [Migrating from 1.x](#migrating-from-1x).
+
+## Renderable
+
+`Renderable[A]` is a type class for rendering an `A` in a human-legible way, with nested structures indented.
+A case class, sealed trait or enum can simply write `derives Renderable`:
+
+```scala
+import com.phasmidsoftware.lascala.Renderable
+
+case class Player(name: String, rating: Double, games: List[Int]) derives Renderable
+
+Player("Robin", 1850.5, List(1, 2)).render
+// Player(
+//   name:"Robin",
+//   rating:1850.5,
+//   games:(
+//     1,
+//     2
+//   )
+// )
+```
+
+No import is needed to call `render` on a type with its own instance (as here, or `Scalar`, `Tree`, `Version`, `Closure` and `RenderableFunction`).
+For the built-in types, import the instances:
+
+```scala
+import com.phasmidsoftware.lascala.Renderable.given
+
+List(Some(1), None).render                // (\n  Some(1),\n  None\n)
+Map("x" -> 1).render                      // ("x"->1)
+("x", 42).render                          // Tuple2("x",42)
+```
+
+* There are instances for the basic types (`Int`, `Double`, `String`, etc.), `Option`, `Try`, `Either`, `Map`, tuples, and every collection.
+  A String is quoted, so that it stands out within a structure.
+* A collection with at least two elements has one element per line; at most 10 elements are shown, followed by `...[n more elements]`.
+* A type with no instance does not compile. To render a type with its `toString`, write `given Renderable[Foo] = Renderable.fromToString`.
+* Sealed traits and enums (including recursive ones) render the case. A case's own given instance is used if it has one.
+
+To write an instance yourself, implement `render(a, indent)`, where `indent` is the number of tabs for any lines after the first:
+
+```scala
+import com.phasmidsoftware.lascala.{Layout, Renderable}
+
+case class Temperature(celsius: Double)
+
+object Temperature {
+  given Renderable[Temperature] = new Renderable[Temperature] {
+    def render(t: Temperature, indent: Int)(using Layout): String = s"${t.celsius}°C"
+  }
+}
+
+Temperature(21.5).render                  // 21.5°C
+```
+
+The layout (the tab, the maximum number of elements, and the bookends of a collection) comes from a `Layout`, whose default needs no import.
+To change it, declare a given `Layout`. A given applies to the whole of its block, including any lines before it, so put it in an inner block:
+
+```scala
+locally {
+  given Layout = Layout(tab = Layout.uniform(4), bookends = "[;]")
+  List(1, 2).render                       // [\n    1;\n    2\n]
+}
+```
+
+### Notes on Scala 3
+
 * _RenderableFunction_ with call-by-name parameters (e.g. _def f(s: => String)_):
-  Scala 3 cannot infer a by-name type for a type parameter, so passing such a method to _RenderableFunction.apply_ compiles only for Scala 2.
+  Scala 3 cannot infer a by-name type for a type parameter, so passing such a method to _RenderableFunction.apply_ does not compile.
 * _Spy_: if you define your own implicit _spyFunc_ in a scope where you have also written _import Spy.\__,
   Scala 3 prefers the imported default (the logger-based one).
-  Write _import Spy.{spyFunc => \_, \_}_ instead (this works for Scala 2 too).
+  Write _import Spy.{spyFunc => \_, \_}_ instead.
+
+## Migrating from 1.x
+
+| 1.x | 2.0 |
+|---|---|
+| Scala 2.13 and 3 | Scala 3 only (3.3 or later) |
+| `trait Renderable` with `render(indent: Int = 0)(implicit tab: Int => Prefix)` | type class `Renderable[A]`: `a.render`, or `Renderable[A].render(a, indent)` for a starting indent |
+| `x.render()` | `x.render` (no parentheses) |
+| `x.render(indent)` | `Renderable[X].render(x, indent)`. **Beware:** `x.render(indent)` still compiles when `x` has an instance, but it means `x.render.apply(indent)`, the `Char` at position `indent`, which may then cause a confusing type error or none at all |
+| `class Foo extends Renderable { def render(indent: Int)(implicit tab: Int => Prefix) = … }` | `given Renderable[Foo]` in `object Foo` (or `derives Renderable` for a case class) |
+| `RenderableCaseClass(x)` | `case class X(…) derives Renderable` |
+| `RenderableTraversable`, `RenderableOption`, `RenderableTry`, `RenderableEither`, `RenderableProduct` and the implicit conversions in `object Renderable` | instances for `Iterable`, `Option`, `Try`, `Either` and tuples (`import Renderable.given` for `.render` on these) |
+| `RenderableTraversable(xs, bookends, max = …)` | `given Layout = Layout(bookends = …, maxElements = …)` |
+| `Prefix`, and an implicit `tab: Int => Prefix` | `Layout(tab = …)`; `Layout.uniform(n)` for n spaces per tab |
+| `Renderable.MAX_ELEMENTS` | `Layout.MAX_ELEMENTS` |
+| `Renderable.renderElem(x: Any, …)` (chosen at run time, with `toString` as a fallback) | the instance is chosen at compile time; there is no fallback (`Renderable.fromToString` to opt in) |
+| A String inside a structure: unquoted in a `Tree`, quoted elsewhere | always quoted |
+| `IndexedLeaf` of a value which is not `Renderable`: `value [l:r]` | rendered like any other leaf |
+| `Punctuation(x: String)` | `Punctuation(val x: String)` |
+| `RenderableFunction` and `Closure` tests with call-by-name parameters (Scala 2 only) | removed |
 
 ## Revision History
+### Changes in V2_0_0
+* Scala 3 only (compiled with 3.3.8; also tested on 3.9.0)
+* _Renderable_ is now a type class, with instances for the common types and derivation (_derives Renderable_)
+  for case classes, sealed traits and enums; _Layout_ replaces _Prefix_ and the implicit tab function.
+  See [Migrating from 1.x](#migrating-from-1x).
+* _Scalar_, _Node_/_Tree_, _Version_, _Closure_ and _RenderableFunction_ have _Renderable_ instances in their companion objects
+* Removed: the _Renderable_ trait and its wrapper classes, _Prefix_, _RenderableCaseClass_ and _CaseClasses_
+* _Version.parse_ (and _parseLong_) no longer hangs on a version with three or more components, such as 1.0.11, or with a component it cannot parse (which now yields None)
 ### Changes in V1_1_0
 * The organization (group id) is now _com.phasmidsoftware_ (formerly _com.phasmid_), like the other Phasmid libraries:
   _libraryDependencies += "com.phasmidsoftware" %% "lascala" % "1.1.0"_.
@@ -60,7 +158,6 @@ For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
 * From the (superseded) V1_0_11 master branch:
     * _Benchmark_: _n.times(f)_ now returns a _Benchmark[A]_ (formerly a _Long_); its _nanos_ is the average nano-seconds per run, after a warm-up of 20% of the runs
     * _Rational_: _toBigDecimal_ returns a _Try[BigDecimal]_ (a _Failure_ for infinity, instead of throwing); _toDouble_ yields _Double.NaN_ for infinity; _reciprocal_ is a synonym for _invert_
-### Changes in V1_0_8
 ### Changes in V1_0_8
 * RenderableFunction, Closure, etc.
     * forced Seq type to be List for parameters of any serializable classes

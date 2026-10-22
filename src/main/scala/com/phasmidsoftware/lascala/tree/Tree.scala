@@ -200,7 +200,7 @@ sealed trait Tree[+A] extends Node[A] {
   *
   * @tparam A the underlying type of the tree/node
   */
-sealed trait Node[+A] extends Renderable {
+sealed trait Node[+A] {
 
   /**
     * @return the value of this node, if any
@@ -304,25 +304,6 @@ sealed trait Node[+A] extends Renderable {
 
     inner(this, x, y)(f).asInstanceOf[Tree[B]] // CHECK this is OK
   }
-
-  /**
-    * Method to render this node
-    *
-    * @param indent the number of "tabs" before output should start (when writing on a new line).
-    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-    *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
-    *               like on an old typewriter where the spacing is non-uniform.
-    * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
-    *         which is then followed by some human-legible rendition of *this*.
-    */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = //get map (_.toString) getOrElse("")
-    get match {
-      case Some(a) => a match {
-        case r: Renderable => r.render(indent)
-        case _ => a.toString
-      }
-      case None => ""
-    }
 }
 
 /**
@@ -395,23 +376,6 @@ trait Branch[+A] extends Tree[A] {
     r.toIterator
   }
 
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * XXX not tail-recursive.
-    * CONSIDER make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
-    *
-    * @param indent the number of tabs before output should start on a new line.
-    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-    * @return a String.
-    */
-  override def render(indent: Int = 0)(implicit tab: (Int) => Prefix): String = {
-    val result = new StringBuilder(super.render(indent) + "--")
-    import Renderable.renderableTraversable
-    result.append(children.render(indent))
-    result.toString
-  }
 }
 
 /**
@@ -772,18 +736,6 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex with IndexedNode[A] {
   override def depth: Int = 1
 
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @param indent the number of tabs before output should start on a new line.
-    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-    * @return a String.
-    */
-  override def render(indent: Int)(implicit tab: (Int) => Prefix): String = value match {
-    case renderable: Renderable => renderable.render(indent)
-    case _ => s"""${tab(indent)}$value [$lIndex:$rIndex]"""
-  }
-
   override def toString: String = s"""L("$value")""" + map2(lIndex, rIndex)(_ + ":" + _).getOrElse("")
 
   /**
@@ -868,13 +820,6 @@ abstract class AbstractEmpty extends Tree[Nothing] {
     * @return the immediate descendants (children) of this branch
     */
   def children: List[Tree[Nothing]] = List.empty
-
-  /**
-    * Create a String which represents this Node and its subtree
-    *
-    * @return an appropriate String
-    */
-  override def render(indent: Int)(implicit tab: (Int) => Prefix) = s"ø"
 }
 
 /**
@@ -882,7 +827,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
   *
   * @param x the String that this punctuation will render as
   */
-abstract class Punctuation(x: String) extends Node[Nothing] {
+abstract class Punctuation(val x: String) extends Node[Nothing] {
 
   //noinspection NotImplementedCode
   def +[K, B >: Nothing : TreeBuilder](node: Node[B]): Tree[B] = throw TreeException("cannot add node to a Punctuation")
@@ -898,8 +843,6 @@ abstract class Punctuation(x: String) extends Node[Nothing] {
   def nodeIterator(depthFirst: Boolean): Iterator[Node[Nothing]] = Iterator.empty
 
   def get: Option[Nothing] = None
-
-  override def render(indent: Int)(implicit tab: (Int) => Prefix): String = x
 
   def depth: Int = 0
 }
@@ -927,6 +870,29 @@ object AbstractLeaf {
 object Leaf
 
 object Node {
+
+  /**
+    * Renders a node of any kind (a Leaf, a Tree, etc.) whose values have a Renderable instance.
+    * A leaf renders as its value; a branch renders as its value (if any), "--", and its children.
+    */
+  given nodeRenderable[A, N[X] <: Node[X]](using Renderable[A]): Renderable[N[A]] = new Renderable[N[A]] {
+    def render(n: N[A], indent: Int)(using Layout): String = Node.render(n, indent)
+  }
+
+  /**
+    * Create a String which represents this Node and its subtree.
+    *
+    * XXX not tail-recursive.
+    * CONSIDER make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
+    */
+  private def render[A](n: Node[A], indent: Int)(using ra: Renderable[A], layout: Layout): String = n match {
+    case _: AbstractEmpty => "ø"
+    case p: Punctuation => p.x
+    case b: Branch[A]@unchecked => renderValue(b, indent) + "--" + Renderable.renderElements(b.children.map(render(_, indent + 1)), indent)
+    case _ => renderValue(n, indent)
+  }
+
+  private def renderValue[A](n: Node[A], indent: Int)(using ra: Renderable[A], layout: Layout): String = n.get.fold("")(ra.render(_, indent))
 
   /**
     * Implicit definition of a Parent for the (type-parameterized, i.e. generic) type Node[A]

@@ -6,7 +6,7 @@
 package com.phasmidsoftware.lascala.fp
 
 import com.phasmidsoftware.lascala.values.Tuple0
-import com.phasmidsoftware.lascala.{Prefix, Renderable}
+import com.phasmidsoftware.lascala.{Layout, Renderable}
 
 import scala.annotation.tailrec
 import scala.language.{implicitConversions, postfixOps}
@@ -28,7 +28,7 @@ import scala.util._
   * @param f     the function itself (this field is not considered in the hashCode and equals methods)
   * @tparam R the ultimate return type of this RenderableFunction (must support ClassTag)
   */
-case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Renderable with Serializable {
+case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: List[Boolean], cs: ParamClasses)(f: (Product) => R) extends (Product => Try[R]) with Serializable {
 
   implicit private val logger: org.slf4j.Logger = Spy.getLogger(getClass)
 
@@ -167,17 +167,6 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     */
   def invert[T](n: Int): RenderableFunction[R] = RenderableFunction.invert(n, arity, func, w, cbn, cs)
 
-  /**
-    * Method to render this object in a human-legible manner.
-    *
-    * @param indent the number of "tabs" before output should start on a new line.
-    * @param tab    an implicit function to translate the tab number (i.e. indent) to a String of white space.
-    *               Typically (and by default) this will be uniform. But you're free to set up a series of tabs
-    *               like on an old typewriter where the spacing is non-uniform.
-    * @return a String that, if it has embedded newlines, will follow each newline with (possibly empty) white space,
-    *         which is then followed by some human-legible part of *this*.
-    */
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = w.toString
 
   /**
     * XXX in practice, the only real use for this, currently, is method evaluationStyle
@@ -324,6 +313,13 @@ case class FreeParam(s: String, cbn: Boolean) {
   * Companion object to RenderableFunction
   */
 object RenderableFunction {
+
+  /**
+    * Renders a RenderableFunction as its FunctionString.
+    */
+  given renderableFunctionRenderable[R]: Renderable[RenderableFunction[R]] = new Renderable[RenderableFunction[R]] {
+    def render(f: RenderableFunction[R], indent: Int)(using Layout): String = f.w.toString
+  }
 
   def toScala[T: ClassTag](t: Any): T = (t match {
     case q: java.lang.Boolean => Boolean.unbox(q)

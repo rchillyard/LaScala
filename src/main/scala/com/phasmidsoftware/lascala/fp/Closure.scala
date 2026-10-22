@@ -6,7 +6,7 @@
 package com.phasmidsoftware.lascala.fp
 
 import com.phasmidsoftware.lascala.fp.RenderableFunction.{asFunctionType, callByValue}
-import com.phasmidsoftware.lascala.{Prefix, Renderable, RenderableTraversable}
+import com.phasmidsoftware.lascala.{Layout, Renderable}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
@@ -22,7 +22,7 @@ import scala.util._
   * @tparam T the parameter type of the closure
   * @tparam R the result type of the closure
   */
-case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) with Renderable {
+case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) extends (() => Try[R]) {
 
   //  require(Closure.nonRecursive(this), "Closure is recursive")
 
@@ -69,14 +69,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     */
   lazy val arity: Int = ps.foldLeft(f.arity)(_ + Closure.parameterArity(_))
 
-  override def toString(): String = render()
-
-  def render(indent: Int)(implicit tab: (Int) => Prefix): String = {
-    implicit def renderableTraversable(xs: Traversable[_]): Renderable = RenderableTraversable(xs, " ,)")
-
-    val z = ps.render(indent)
-    s"Closure($f," + z
-  }
+  override def toString(): String = Closure.render(this, 0)
 }
 
 
@@ -84,6 +77,28 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
   * Companion object to Closure
   */
 object Closure {
+
+  /**
+    * Renders a Closure as its function followed by its parameters.
+    */
+  given closureRenderable[T, R]: Renderable[Closure[T, R]] = new Renderable[Closure[T, R]] {
+    def render(c: Closure[T, R], indent: Int)(using Layout): String = Closure.render(c, indent)
+  }
+
+  // NOTE: the type of a parameter's value is not known here, so (as in 1.x) a String is quoted, a Closure is rendered, and anything else uses toString.
+  private def render(c: Closure[?, ?], indent: Int)(using layout: Layout): String =
+    s"Closure(${c.f}," + Renderable.renderElements(c.ps.map(renderParameter(_, indent + 1)), indent)(using layout.copy(maxElements = None, bookends = " ,)"))
+
+  private def renderParameter(p: Either[?, Closure[?, ?]], indent: Int)(using Layout): String = p match {
+    case Left(x) => s"Left(${renderValue(x, indent)})"
+    case Right(c) => s"Right(${render(c, indent + 1)})"
+  }
+
+  private def renderValue(x: Any, indent: Int)(using Layout): String = x match {
+    case w: String => s""""$w""""
+    case c: Closure[?, ?] => render(c, indent + 1)
+    case _ => x.toString
+  }
   private implicit val logger: org.slf4j.Logger = LoggerFactory.getLogger(getClass)
 
   def logDebug[R](w: String, ry: => Try[R]): Try[R] = ry match {
