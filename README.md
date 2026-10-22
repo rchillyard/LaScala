@@ -1,4 +1,12 @@
-[![CircleCI](https://circleci.com/gh/rchillyard/LaScala.svg?style=svg)](https://circleci.com/gh/rchillyard/LaScala)
+![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/lascala_3/badge.svg?color=blue)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/master)
+![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)
+![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)
+![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/LaScala)
+![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/LaScala)
+![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/LaScala/bug)
+[![API Docs](https://javadoc.io/badge2/com.phasmidsoftware/lascala_3/javadoc.svg)](https://javadoc.io/doc/com.phasmidsoftware/lascala_3)
 
 # LaScala
 This package, developed by Phasmid Software and Dataflowage Inc. provides a smorgasbord of functional and general
