@@ -1,12 +1,31 @@
-organization := "com.phasmid"
+organization := "com.phasmidsoftware"
 
 name := "lascala"
 
-scalaVersion := "2.12.5"
-crossScalaVersions := Seq("2.10.6","2.11.8","2.12.5")
-lazy val lascala = (project in file(".")).
-  enablePlugins(BuildInfoPlugin).
-  settings(
+// Build Scala 3 with the oldest supported LTS so that the artifact is usable from any later Scala 3 version.
+// CircleCI also runs the tests on the current LTS (3.9).
+val scala213 = "2.13.18"
+val scala3 = "3.3.8"
+
+scalaVersion := scala213
+crossScalaVersions := Seq(scala213, scala3)
+
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-unchecked"
+)
+
+Global / excludeLintKeys ++= Set(pomIncludeRepository, publishMavenStyle)
+
+lazy val IT = config("it") extend Test
+
+lazy val lascala = (project in file("."))
+  .enablePlugins(BuildInfoPlugin)
+  .configs(IT)
+  .settings(
+    inConfig(IT)(Defaults.testSettings),
+    IT / scalaSource := baseDirectory.value / "src" / "it" / "scala",
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "lascalabuildinfo"
   )
@@ -18,69 +37,25 @@ buildInfoKeys ++= Seq[BuildInfoKey](
 )
 
 val scalaModules = "org.scala-lang.modules"
-val scalaModulesVersion = "1.0.4"
 
-val scalaTestGroup = "org.scalatest"
-val scalaTestArt = "scalatest"
-
-val scalaCheckGroup = "org.scalacheck"
-val scalaCheckArt = "scalacheck"
-
-val typesafeGroup = "com.typesafe"
-val configVersion = "1.3.1"
-// NOTE: Akka is used only for testing this package.
-val akkaGroup = "com.typesafe.akka"
-lazy val akkaVersion = SettingKey[String]("akkaVersion")
-lazy val scalaTestVersion = SettingKey[String]("scalaTestVersion")
-lazy val scalaCheckVersion = SettingKey[String]("scalaCheckVersion")
-
-akkaVersion := (scalaBinaryVersion.value match {
-  case "2.10" => "2.3.15"
-  case "2.11" => "2.4.1"
-  case "2.12" => "2.5.4"
-})
-scalaTestVersion := (scalaBinaryVersion.value match {
-  case "2.10" => "2.2.6"
-  case "2.11" => "3.0.1"
-  case "2.12" => "3.0.5"
-})
-scalaCheckVersion := (scalaBinaryVersion.value match {
-  case "2.10" => "1.12.6"
-  case "2.11" => "1.12.6"
-  case "2.12" => "1.13.5"
-})
-
-libraryDependencies ++= (scalaBinaryVersion.value match {
-  case "2.12" =>   Seq(
-    scalaModules %% "scala-parser-combinators" % scalaModulesVersion,
-    // NOTE: we don't need this but dependencies apparently use different versions:
-    scalaModules %% "scala-xml" % "1.0.6",
-    akkaGroup %% "akka-actor" % akkaVersion.value % "test",
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.7.0"
-  )
-    case "2.11" =>   Seq(
-      scalaModules %% "scala-parser-combinators" % scalaModulesVersion,
-      // NOTE: we don't need this but dependencies apparently use different versions:
-      scalaModules %% "scala-xml" % scalaModulesVersion,
-      // NOTE: only used for testing
-      akkaGroup %% "akka-actor" % akkaVersion.value % "test",
-      "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0"
-    )
-  case "2.10" =>   Seq(
-    akkaGroup %% "akka-actor" % akkaVersion.value % "test",
-    "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
-  )
-    case _ => Seq()
-  })
+val scalaTestVersion = "3.2.19"
 
 libraryDependencies ++= Seq(
-  typesafeGroup % "config" % configVersion,
-  "ch.qos.logback" %  "logback-classic" % "1.1.7" % "runtime",
-  scalaCheckGroup %% scalaCheckArt % scalaCheckVersion.value % "test",
-  scalaTestGroup %% scalaTestArt % scalaTestVersion.value % "test"
+  scalaModules %% "scala-parser-combinators" % "2.4.0"
+  , scalaModules %% "scala-collection-compat" % "2.14.0"
+  , "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
+  , "com.typesafe" % "config" % "1.4.9"
+  , "ch.qos.logback" % "logback-classic" % "1.5.38" % Runtime
+  // NOTE: Akka is used only for testing this package.
+  , "com.typesafe.akka" %% "akka-actor" % "2.6.21" % Test
+  , "org.scalacheck" %% "scalacheck" % "1.18.1" % Test
+  , "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+  // NOTE: only used for testing
+  , "junit" % "junit" % "4.13.2" % Test
 )
 
-releaseCrossBuild := true
-
-publishTo := Some(Resolver.file("file",  new File( "artifacts" )) )
+// Runtime reflection (used by RenderableCaseClass) exists only in Scala 2.
+libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+  case Some((2, _)) => Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+  case _ => Seq()
+})

@@ -28,11 +28,39 @@ utility libraries:
 
 ### Note on Scala Binary Versions
 
-LaScala (latest version of 1.0.0-SNAPSHOT and all later versions) is cross-built for 2.11 and 2.10. I have not built LaScala with 2.12 at the present time.
+LaScala 1.1.0 is cross-built for Scala 2.13 and Scala 3 (compiled with 3.3, so usable from any Scala 3.3+; also tested on 3.9).
+For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
+
+#### Differences between the Scala 2.13 and Scala 3 builds
+* _RenderableCaseClass_: the Scala 3 version has no _TypeTag_ context bound (Scala 3 has no runtime reflection).
+  Parameter names come from _productElementNames_, and the parameter types in _getParameters_ are always _None_.
+* _RenderableFunction_ with call-by-name parameters (e.g. _def f(s: => String)_):
+  Scala 3 cannot infer a by-name type for a type parameter, so passing such a method to _RenderableFunction.apply_ compiles only for Scala 2.
+* _Spy_: if you define your own implicit _spyFunc_ in a scope where you have also written _import Spy.\__,
+  Scala 3 prefers the imported default (the logger-based one).
+  Write _import Spy.{spyFunc => \_, \_}_ instead (this works for Scala 2 too).
 
 ## Revision History
-### Changes in V1_0_9 thru V1_0_11
-* Various changes which need to be documented here.
+### Changes in V1_1_0
+* The organization (group id) is now _com.phasmidsoftware_ (formerly _com.phasmid_), like the other Phasmid libraries:
+  _libraryDependencies += "com.phasmidsoftware" %% "lascala" % "1.1.0"_.
+* The packages are renamed to match: _com.phasmid.laScala_ is now _com.phasmidsoftware.lascala_
+  (so, for example, _import com.phasmid.laScala.fp.FP.\__ becomes _import com.phasmidsoftware.lascala.fp.FP.\__).
+* Cross-built for Scala 2.13 and 3 (Scala 2.10, 2.11 and 2.12 are no longer supported); sbt 1.11.7
+* Current dependencies: scala-parser-combinators 2.4, scala-logging 3.9, ScalaTest 3.2 (tests)
+* API changes needed for Scala 2.13 and 3:
+    * _Quicksort.qsort_ takes an implicit _Factory_ (formerly _CanBuildFrom_)
+    * _Rational_, _Fuzzy_ and _FuzzyParser.FractionalInt_ implement _Numeric.parseString_
+    * _RenderableFunction.partiallyApply(t)_ no longer has an (unused) _ClassTag_ context bound
+    * Some methods that were called with explicit evidence now declare an explicit implicit parameter list instead of a context bound
+      (_Exact_, _Exact.fromInt_, _Fuzzy.apply_, _Orderable.comparisonTyped_, _Rational.convertToM_, _Sorted.verify_,
+      _RenderableFunction.getPartialApplicationFunction_)
+    * The extractors _Branch_, _AbstractBinaryTree_ and _IndexedNode_ accept any _Node_
+    * _FP.zippy_ returns strict collections
+* From the (superseded) V1_0_11 master branch:
+    * _Benchmark_: _n.times(f)_ now returns a _Benchmark[A]_ (formerly a _Long_); its _nanos_ is the average nano-seconds per run, after a warm-up of 20% of the runs
+    * _Rational_: _toBigDecimal_ returns a _Try[BigDecimal]_ (a _Failure_ for infinity, instead of throwing); _toDouble_ yields _Double.NaN_ for infinity; _reciprocal_ is a synonym for _invert_
+### Changes in V1_0_8
 ### Changes in V1_0_8
 * RenderableFunction, Closure, etc.
     * forced Seq type to be List for parameters of any serializable classes
