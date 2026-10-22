@@ -144,21 +144,25 @@ object Version {
 
   def parseLong(s: String): Option[Version[Long]] = parse(s)(longVersion)
 
+  /**
+    * Method to parse a String such as "1.0.11" as a Version.
+    *
+    * Each component is parsed by f, and the components are nested from the right:
+    * "1.0.11" is 1 with the subversion 0, which has the subversion 11.
+    *
+    * @param s the String to be parsed
+    * @param f a function to parse one component
+    * @tparam V the underlying type of the Version
+    * @return Some(version), or None if any component cannot be parsed by f
+    */
   def parse[V](s: String)(f: String => Version[V]): Option[Version[V]] = {
-    def inner(vo: Option[Version[V]], w: String, xs: List[String]): Option[Version[V]] = xs match {
-      case h :: t =>
-        val sb = new StringBuilder()
-        if (w.nonEmpty) sb.append(s"$w.")
-        sb.append(h)
-        val ss = sb.toString()
-        inner(vo match {
-          case Some(v) => v.subversions.find(x => x.toString() == ss)
-          case None => Try(f(h)).toOption
-        }, ss, t)
-      case Nil => vo
+    def inner(ws: List[String]): Option[Version[V]] = ws match {
+      case Nil => None
+      case h :: Nil => Try(f(h)).toOption
+      case h :: t => for (v <- Try(f(h)).toOption; sub <- inner(t)) yield v.build(v(), Some(sub), v.isSnapshot)
     }
 
-    inner(None, "", s.split("""\.""").toList)
+    inner(s.split("""\.""").toList)
   }
 }
 

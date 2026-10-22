@@ -71,6 +71,21 @@ class VersionSpec extends AnyFlatSpec with Matchers with Inside {
     v.subversion.get() shouldBe 10L
     v.subversion.get.subversion shouldBe None
   }
+  it should "decode 1.0.11" in {
+    val vo = Version.parseLong("1.0.11")
+    vo should matchPattern { case Some(_) => }
+    val v = vo.get
+    v.toSeq shouldBe Seq(1L, 0L, 11L)
+    v.toString shouldBe "1.0.11"
+    v() shouldBe 1L
+    v.subversion.get() shouldBe 0L
+    v.subversion.get.subversion.get() shouldBe 11L
+    v.subversion.get.subversion.get.subversion shouldBe None
+  }
+  it should "not decode 1.x or an empty String" in {
+    Version.parseLong("1.x") shouldBe None
+    Version.parseLong("") shouldBe None
+  }
   "next" should "work for LongVersion" in {
     val version = Version(1L)
     version() shouldBe 1L

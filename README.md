@@ -117,6 +117,7 @@ locally {
 | Scala 2.13 and 3 | Scala 3 only (3.3 or later) |
 | `trait Renderable` with `render(indent: Int = 0)(implicit tab: Int => Prefix)` | type class `Renderable[A]`: `a.render`, or `Renderable[A].render(a, indent)` for a starting indent |
 | `x.render()` | `x.render` (no parentheses) |
+| `x.render(indent)` | `Renderable[X].render(x, indent)`. **Beware:** `x.render(indent)` still compiles when `x` has an instance, but it means `x.render.apply(indent)`, the `Char` at position `indent`, which may then cause a confusing type error or none at all |
 | `class Foo extends Renderable { def render(indent: Int)(implicit tab: Int => Prefix) = … }` | `given Renderable[Foo]` in `object Foo` (or `derives Renderable` for a case class) |
 | `RenderableCaseClass(x)` | `case class X(…) derives Renderable` |
 | `RenderableTraversable`, `RenderableOption`, `RenderableTry`, `RenderableEither`, `RenderableProduct` and the implicit conversions in `object Renderable` | instances for `Iterable`, `Option`, `Try`, `Either` and tuples (`import Renderable.given` for `.render` on these) |
@@ -137,6 +138,7 @@ locally {
   See [Migrating from 1.x](#migrating-from-1x).
 * _Scalar_, _Node_/_Tree_, _Version_, _Closure_ and _RenderableFunction_ have _Renderable_ instances in their companion objects
 * Removed: the _Renderable_ trait and its wrapper classes, _Prefix_, _RenderableCaseClass_ and _CaseClasses_
+* _Version.parse_ (and _parseLong_) no longer hangs on a version with three or more components, such as 1.0.11, or with a component it cannot parse (which now yields None)
 ### Changes in V1_1_0
 * The organization (group id) is now _com.phasmidsoftware_ (formerly _com.phasmid_), like the other Phasmid libraries:
   _libraryDependencies += "com.phasmidsoftware" %% "lascala" % "1.1.0"_.
