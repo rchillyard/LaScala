@@ -1,4 +1,4 @@
-![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/lascala_3/badge.svg?color=blue)
+[![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/lascala_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/lascala_3)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/master)
 ![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)
