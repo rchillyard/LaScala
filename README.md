@@ -37,7 +37,7 @@ utility libraries:
 ## Installation
 
 ```scala
-libraryDependencies += "com.phasmidsoftware" %% "lascala" % "2.1.0"
+libraryDependencies += "com.phasmidsoftware" %% "lascala" % "2.2.0"
 ```
 
 LaScala 2.0 is for Scala 3 only. Versions 2.0 and 2.1 are compiled with Scala 3.3, so they can be used from any Scala 3.3 or later.
@@ -141,6 +141,9 @@ Full Scaladoc is at <https://rchillyard.github.io/LaScala/latest/api/>.
 | `RenderableFunction` and `Closure` tests with call-by-name parameters (Scala 2 only) | removed |
 
 ## Revision History
+### Changes in V2_2_0
+* Built with Scala 3.9.0 (the current LTS), so it needs Scala 3.9 or later (for Scala 3.3, use 2.1.0).
+* sbt 1.12.13; Scaladoc on GitHub Pages.
 ### Changes in V2_1_0
 * The package _com.phasmidsoftware.lascala.sort_ (_Comparer_, _Comparison_, _Different_, _Same_, _Sorted_, _Sortable_) is deprecated,
   and will be removed in 3.0. It is an early version of what became the [Comparer](https://github.com/rchillyard/Comparer) library:
