@@ -2,17 +2,25 @@ organization := "com.phasmidsoftware"
 
 name := "lascala"
 
-// Build with the oldest supported Scala 3 LTS so that the artifact is usable from any later Scala 3 version.
-// CircleCI also runs the tests on the current LTS (3.9).
-scalaVersion := "3.3.8"
+// The current Scala 3 LTS. Code built with 3.9 can only be used from Scala 3.9 or later.
+scalaVersion := "3.9.0"
 
 scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
-  "-unchecked"
+  "-unchecked",
+  "-Wunused:all"
 )
 
+// sbt's lint wrongly reports these ThisBuild publish settings as unused
 Global / excludeLintKeys ++= Set(pomIncludeRepository, publishMavenStyle)
+
+// JUnit-style reports, collected by CircleCI
+Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports")
+
+// Scaladoc is published to https://rchillyard.github.io/LaScala/latest/api/ by `sbt ghpagesPushSite`
+enablePlugins(GhpagesPlugin, SiteScaladocPlugin)
+git.remoteRepo := "git@github.com:rchillyard/LaScala.git"
 
 lazy val IT = config("it") extend Test
 
