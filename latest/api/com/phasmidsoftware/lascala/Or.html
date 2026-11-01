@@ -1,0 +1,498 @@
+<!DOCTYPE html><html data-pathToRoot="../../../" data-rawLocation="com/phasmidsoftware/lascala/Or" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>Or</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/theme.js"></script><script type="text/javascript" src="../../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/searchbar.css"></link><link rel="stylesheet" href="../../../styles/social-links.css"></link><link rel="stylesheet" href="../../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../../styles/content-contributors.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../../" class="logo-container"><span class="project-name h300">lascala</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">lascala</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../lascala.html"><span class="micon pa"></span><span>com.phasmidsoftware.lascala</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="cache.html"><span class="micon pa"></span><span>cache</span></a></span><div class="ni n2 "><span class="nh "><a href="cache/AbstractExpiringCache.html"><span class="micon cl"></span><span>AbstractExpiringCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/AbstractFulfillingCache.html"><span class="micon cl"></span><span>AbstractFulfillingCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/BasicFulfillingCache.html"><span class="micon cl"></span><span>BasicFulfillingCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Cache.html"><span class="micon tr"></span><span>Cache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Cache$.html"><span class="micon ob"></span><span>Cache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/CacheMap.html"><span class="micon cl"></span><span>CacheMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Expiring.html"><span class="micon tr"></span><span>Expiring</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Fulfilling.html"><span class="micon tr"></span><span>Fulfilling</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/FutureFulfillingExpiringCache.html"><span class="micon cl"></span><span>FutureFulfillingExpiringCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/FutureHashMap.html"><span class="micon cl"></span><span>FutureHashMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/FutureWrapper.html"><span class="micon cl"></span><span>FutureWrapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Mappish.html"><span class="micon tr"></span><span>Mappish</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/NonExpiringCache.html"><span class="micon cl"></span><span>NonExpiringCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/OptionFulfillingExpiringCache.html"><span class="micon cl"></span><span>OptionFulfillingExpiringCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/OptionHashMap.html"><span class="micon cl"></span><span>OptionHashMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/TryFulfillingExpiringCache.html"><span class="micon cl"></span><span>TryFulfillingExpiringCache</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/TryHashMap.html"><span class="micon cl"></span><span>TryHashMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Wrapper$.html"><span class="micon ob"></span><span>Wrapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cache/Wrapper.html"><span class="micon tr"></span><span>Wrapper</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="fp.html"><span class="micon pa"></span><span>fp</span></a></span><div class="ni n2 "><span class="nh "><a href="fp/$qmark$qmark$$.html"><span class="micon ob"></span><span>??</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/$qmark$qmark$.html"><span class="micon cl"></span><span>??</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Args$.html"><span class="micon ob"></span><span>Args</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Args.html"><span class="micon cl"></span><span>Args</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/AssertingError.html"><span class="micon cl"></span><span>AssertingError</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Benchmark.html"><span class="micon tr"></span><span>Benchmark</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="fp/Benchmark$.html"><span class="micon ob"></span><span>Benchmark</span></a></span><div class="ni n3 "><span class="nh "><a href="fp/Benchmark$$Rep.html"><span class="micon cl"></span><span>Rep</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="fp/Closure.html"><span class="micon cl"></span><span>Closure</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Closure$.html"><span class="micon ob"></span><span>Closure</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FP$.html"><span class="micon ob"></span><span>FP</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FP_Cross$.html"><span class="micon ob"></span><span>FP_Cross</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FreeParam.html"><span class="micon cl"></span><span>FreeParam</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FreeParam$.html"><span class="micon ob"></span><span>FreeParam</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FunctionString$.html"><span class="micon ob"></span><span>FunctionString</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/FunctionString.html"><span class="micon cl"></span><span>FunctionString</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/HasKey.html"><span class="micon tr"></span><span>HasKey</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Lazy.html"><span class="micon tr"></span><span>Lazy</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Named.html"><span class="micon tr"></span><span>Named</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction$.html"><span class="micon ob"></span><span>NamedFunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction.html"><span class="micon cl"></span><span>NamedFunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction0$.html"><span class="micon ob"></span><span>NamedFunction0</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction0.html"><span class="micon cl"></span><span>NamedFunction0</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction2$.html"><span class="micon ob"></span><span>NamedFunction2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction2.html"><span class="micon cl"></span><span>NamedFunction2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction3.html"><span class="micon cl"></span><span>NamedFunction3</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction3$.html"><span class="micon ob"></span><span>NamedFunction3</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction4.html"><span class="micon cl"></span><span>NamedFunction4</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction4$.html"><span class="micon ob"></span><span>NamedFunction4</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction5$.html"><span class="micon ob"></span><span>NamedFunction5</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/NamedFunction5.html"><span class="micon cl"></span><span>NamedFunction5</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Param$.html"><span class="micon ob"></span><span>Param</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Param.html"><span class="micon cl"></span><span>Param</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/RenderableFunction$.html"><span class="micon ob"></span><span>RenderableFunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/RenderableFunction.html"><span class="micon cl"></span><span>RenderableFunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/RenderableFunctionException.html"><span class="micon cl"></span><span>RenderableFunctionException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLogger.html"><span class="micon tr"></span><span>SmartLogger</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerBasic$.html"><span class="micon ob"></span><span>SmartLoggerBasic</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerBasic.html"><span class="micon cl"></span><span>SmartLoggerBasic</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerException.html"><span class="micon cl"></span><span>SmartLoggerException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerSlf4JDebug.html"><span class="micon cl"></span><span>SmartLoggerSlf4JDebug</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerSlf4JDebug$.html"><span class="micon ob"></span><span>SmartLoggerSlf4JDebug</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerSlf4JInfo.html"><span class="micon cl"></span><span>SmartLoggerSlf4JInfo</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/SmartLoggerSlf4JInfo$.html"><span class="micon ob"></span><span>SmartLoggerSlf4JInfo</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Spy$.html"><span class="micon ob"></span><span>Spy</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Spy.html"><span class="micon tr"></span><span>Spy</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/Streamer.html"><span class="micon cl"></span><span>Streamer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/TryWith$.html"><span class="micon ob"></span><span>TryWith</span></a></span></div><div class="ni n2 "><span class="nh "><a href="fp/VarArgs.html"><span class="micon cl"></span><span>VarArgs</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="parser.html"><span class="micon pa"></span><span>parser</span></a></span><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="parser/rpn.html"><span class="micon pa"></span><span>rpn</span></a></span><div class="ni n3 "><span class="nh "><a href="parser/rpn/Comparand$.html"><span class="micon ob"></span><span>Comparand</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Comparand.html"><span class="micon cl"></span><span>Comparand</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Constant.html"><span class="micon cl"></span><span>Constant</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Dyadic.html"><span class="micon cl"></span><span>Dyadic</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Evaluable.html"><span class="micon tr"></span><span>Evaluable</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Invalid.html"><span class="micon cl"></span><span>Invalid</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Monadic.html"><span class="micon cl"></span><span>Monadic</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Number.html"><span class="micon cl"></span><span>Number</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/RPN.html"><span class="micon cl"></span><span>RPN</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/RPN$.html"><span class="micon ob"></span><span>RPN</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Token.html"><span class="micon tr"></span><span>Token</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/rpn/Token$.html"><span class="micon ob"></span><span>Token</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="parser/BooleanPredicateExpr.html"><span class="micon cl"></span><span>BooleanPredicateExpr</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/CSV.html"><span class="micon cl"></span><span>CSV</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/CSV$.html"><span class="micon ob"></span><span>CSV</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/ConcreteProductStream.html"><span class="micon cl"></span><span>ConcreteProductStream</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Condition.html"><span class="micon cl"></span><span>Condition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Conjunction.html"><span class="micon cl"></span><span>Conjunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/CsvParser$.html"><span class="micon ob"></span><span>CsvParser</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/CsvParser.html"><span class="micon cl"></span><span>CsvParser</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/CsvParserBase.html"><span class="micon cl"></span><span>CsvParserBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Disjunction.html"><span class="micon cl"></span><span>Disjunction</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Expression.html"><span class="micon tr"></span><span>Expression</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Header.html"><span class="micon cl"></span><span>Header</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Ingest$.html"><span class="micon ob"></span><span>Ingest</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Ingest.html"><span class="micon cl"></span><span>Ingest</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Ingestible.html"><span class="micon tr"></span><span>Ingestible</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/Parentheses.html"><span class="micon cl"></span><span>Parentheses</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/PredicateExpr.html"><span class="micon tr"></span><span>PredicateExpr</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/ProductStream.html"><span class="micon tr"></span><span>ProductStream</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/ProductStream$.html"><span class="micon ob"></span><span>ProductStream</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/ProductStreamBase.html"><span class="micon cl"></span><span>ProductStreamBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/RangePredicateExpr.html"><span class="micon cl"></span><span>RangePredicateExpr</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/RuleLike.html"><span class="micon tr"></span><span>RuleLike</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="parser/RuleParser.html"><span class="micon cl"></span><span>RuleParser</span></a></span><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$Expr.html"><span class="micon cl"></span><span>Expr</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$ExprFactor.html"><span class="micon cl"></span><span>ExprFactor</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$ExprParentheses.html"><span class="micon cl"></span><span>ExprParentheses</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$ExprTerm.html"><span class="micon cl"></span><span>ExprTerm</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$Literal.html"><span class="micon cl"></span><span>Literal</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$Number.html"><span class="micon cl"></span><span>Number</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/RuleParser$Variable.html"><span class="micon cl"></span><span>Variable</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="parser/RuleParser$.html"><span class="micon ob"></span><span>RuleParser</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/TruthValue.html"><span class="micon cl"></span><span>TruthValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/TupleStream$.html"><span class="micon ob"></span><span>TupleStream</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/TupleStream.html"><span class="micon cl"></span><span>TupleStream</span></a></span></div><div class="ni n2 "><span class="nh "><a href="parser/TupleStreamBase.html"><span class="micon cl"></span><span>TupleStreamBase</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="parser/Valuable$.html"><span class="micon ob"></span><span>Valuable</span></a></span><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableDouble$.html"><span class="micon ob"></span><span>ValuableDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableDouble.html"><span class="micon tr"></span><span>ValuableDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableException.html"><span class="micon cl"></span><span>ValuableException</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableInt$.html"><span class="micon ob"></span><span>ValuableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableInt.html"><span class="micon tr"></span><span>ValuableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableLong$.html"><span class="micon ob"></span><span>ValuableLong</span></a></span></div><div class="ni n3 "><span class="nh "><a href="parser/Valuable$$ValuableLong.html"><span class="micon tr"></span><span>ValuableLong</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="parser/Valuable.html"><span class="micon tr"></span><span>Valuable</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="predicate.html"><span class="micon pa"></span><span>predicate</span></a></span><div class="ni n2 "><span class="nh "><a href="predicate/Always$.html"><span class="micon ob"></span><span>Always</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/And.html"><span class="micon cl"></span><span>And</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/BasePredicate.html"><span class="micon cl"></span><span>BasePredicate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/EQ.html"><span class="micon cl"></span><span>EQ</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Func.html"><span class="micon cl"></span><span>Func</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/GE.html"><span class="micon cl"></span><span>GE</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/GT.html"><span class="micon cl"></span><span>GT</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/In.html"><span class="micon cl"></span><span>In</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/InBounds.html"><span class="micon cl"></span><span>InBounds</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/InRange.html"><span class="micon cl"></span><span>InRange</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/InvalidPredicate.html"><span class="micon cl"></span><span>InvalidPredicate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/LE.html"><span class="micon cl"></span><span>LE</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/LT.html"><span class="micon cl"></span><span>LT</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Matches.html"><span class="micon cl"></span><span>Matches</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/NE.html"><span class="micon cl"></span><span>NE</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Never$.html"><span class="micon ob"></span><span>Never</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Or.html"><span class="micon cl"></span><span>Or</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Pred.html"><span class="micon cl"></span><span>Pred</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Predicate$.html"><span class="micon ob"></span><span>Predicate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/Predicate.html"><span class="micon tr"></span><span>Predicate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="predicate/PredicateException.html"><span class="micon cl"></span><span>PredicateException</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="random.html"><span class="micon pa"></span><span>random</span></a></span><div class="ni n2 "><span class="nh "><a href="random/JavaRandomState.html"><span class="micon cl"></span><span>JavaRandomState</span></a></span></div><div class="ni n2 "><span class="nh "><a href="random/RandomState$.html"><span class="micon ob"></span><span>RandomState</span></a></span></div><div class="ni n2 "><span class="nh "><a href="random/RandomState.html"><span class="micon tr"></span><span>RandomState</span></a></span></div><div class="ni n2 "><span class="nh "><a href="random/UniformDouble.html"><span class="micon cl"></span><span>UniformDouble</span></a></span></div><div class="ni n2 "><span class="nh "><a href="random/UniformDoubleRandomState$.html"><span class="micon ob"></span><span>UniformDoubleRandomState</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="sort.html"><span class="micon pa"></span><span>sort</span></a></span><div class="ni n2 "><span class="nh "><a href="sort/Comparer.html"><span class="micon tr"></span><span>Comparer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Comparer$.html"><span class="micon ob"></span><span>Comparer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Comparison.html"><span class="micon tr"></span><span>Comparison</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Comparison$.html"><span class="micon ob"></span><span>Comparison</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Different.html"><span class="micon cl"></span><span>Different</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Same$.html"><span class="micon ob"></span><span>Same</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Sortable.html"><span class="micon cl"></span><span>Sortable</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Sorted.html"><span class="micon cl"></span><span>Sorted</span></a></span></div><div class="ni n2 "><span class="nh "><a href="sort/Sorted$.html"><span class="micon ob"></span><span>Sorted</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="sort/Test$.html"><span class="micon ob"></span><span>Test</span></a></span><div class="ni n3 "><span class="nh "><a href="sort/Test$$Composite.html"><span class="micon cl"></span><span>Composite</span></a></span></div><div class="ni n3"><span class="nh "><button class="ar icon-button "></button><a href="sort/Test$$Composite$.html"><span class="micon ob"></span><span>Composite</span></a></span><div class="ni n4 "><span class="nh "><a href="sort/Test$$Composite$$OrderingCompositeDouble$.html"><span class="micon ob"></span><span>OrderingCompositeDouble</span></a></span></div><div class="ni n4 "><span class="nh "><a href="sort/Test$$Composite$$OrderingCompositeInt$.html"><span class="micon ob"></span><span>OrderingCompositeInt</span></a></span></div></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="tree.html"><span class="micon pa"></span><span>tree</span></a></span><div class="ni n2 "><span class="nh "><a href="tree/AbstractBinaryTree$.html"><span class="micon ob"></span><span>AbstractBinaryTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/AbstractBinaryTree.html"><span class="micon cl"></span><span>AbstractBinaryTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/AbstractEmpty.html"><span class="micon cl"></span><span>AbstractEmpty</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/AbstractLeaf$.html"><span class="micon ob"></span><span>AbstractLeaf</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/AbstractLeaf.html"><span class="micon cl"></span><span>AbstractLeaf</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/BinaryTree.html"><span class="micon cl"></span><span>BinaryTree</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="tree/BinaryTree$.html"><span class="micon ob"></span><span>BinaryTree</span></a></span><div class="ni n3 "><span class="nh "><a href="tree/BinaryTree$$BinaryTreeBuilder.html"><span class="micon cl"></span><span>BinaryTreeBuilder</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/BinaryTree$$BinaryTreeBuilderInt$.html"><span class="micon ob"></span><span>BinaryTreeBuilderInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/BinaryTree$$BinaryTreeBuilderString$.html"><span class="micon ob"></span><span>BinaryTreeBuilderString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="tree/Branch.html"><span class="micon tr"></span><span>Branch</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Branch$.html"><span class="micon ob"></span><span>Branch</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Close$.html"><span class="micon ob"></span><span>Close</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Empty$.html"><span class="micon ob"></span><span>Empty</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/EmptyWithIndex$.html"><span class="micon ob"></span><span>EmptyWithIndex</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralKVTree.html"><span class="micon cl"></span><span>GeneralKVTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralKVTree$.html"><span class="micon ob"></span><span>GeneralKVTree</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="tree/GeneralKVTreeBuilder.html"><span class="micon cl"></span><span>GeneralKVTreeBuilder</span></a></span><div class="ni n3 "><span class="nh "><a href="tree/GeneralKVTreeBuilder$NodeOrdering$.html"><span class="micon ob"></span><span>NodeOrdering</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralKVTreeBuilderWithScaffolding.html"><span class="micon cl"></span><span>GeneralKVTreeBuilderWithScaffolding</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralKVTreeWithScaffolding.html"><span class="micon cl"></span><span>GeneralKVTreeWithScaffolding</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="tree/GeneralTree$.html"><span class="micon ob"></span><span>GeneralTree</span></a></span><div class="ni n3 "><span class="nh "><a href="tree/GeneralTree$$GeneralTreeBuilder.html"><span class="micon tr"></span><span>GeneralTreeBuilder</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/GeneralTree$$GeneralTreeBuilderInt$.html"><span class="micon ob"></span><span>GeneralTreeBuilderInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/GeneralTree$$GeneralTreeBuilderString$.html"><span class="micon ob"></span><span>GeneralTreeBuilderString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralTree.html"><span class="micon cl"></span><span>GeneralTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/GeneralTreeBuilder.html"><span class="micon tr"></span><span>GeneralTreeBuilder</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/IndexedLeaf.html"><span class="micon cl"></span><span>IndexedLeaf</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/IndexedNode.html"><span class="micon tr"></span><span>IndexedNode</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/IndexedNode$.html"><span class="micon ob"></span><span>IndexedNode</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/IndexedTree.html"><span class="micon tr"></span><span>IndexedTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/KVTree$.html"><span class="micon ob"></span><span>KVTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/KVTree.html"><span class="micon cl"></span><span>KVTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Leaf$.html"><span class="micon ob"></span><span>Leaf</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Leaf.html"><span class="micon cl"></span><span>Leaf</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/MutableGenericIndexedTree.html"><span class="micon cl"></span><span>MutableGenericIndexedTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Node$.html"><span class="micon ob"></span><span>Node</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Node.html"><span class="micon tr"></span><span>Node</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Open$.html"><span class="micon ob"></span><span>Open</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Parent$.html"><span class="micon ob"></span><span>Parent</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Parent.html"><span class="micon tr"></span><span>Parent</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Punctuation.html"><span class="micon cl"></span><span>Punctuation</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/StringValueOps.html"><span class="micon tr"></span><span>StringValueOps</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/StructuralNode.html"><span class="micon tr"></span><span>StructuralNode</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/StructuralTree$.html"><span class="micon ob"></span><span>StructuralTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/StructuralTree.html"><span class="micon tr"></span><span>StructuralTree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Tree$.html"><span class="micon ob"></span><span>Tree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/Tree.html"><span class="micon tr"></span><span>Tree</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/TreeBuilder$.html"><span class="micon ob"></span><span>TreeBuilder</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/TreeBuilder.html"><span class="micon tr"></span><span>TreeBuilder</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/TreeException.html"><span class="micon cl"></span><span>TreeException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/TreeIndex.html"><span class="micon tr"></span><span>TreeIndex</span></a></span></div><div class="ni n2 "><span class="nh "><a href="tree/UnvaluedBinaryTree.html"><span class="micon cl"></span><span>UnvaluedBinaryTree</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="tree/UnvaluedBinaryTree$.html"><span class="micon ob"></span><span>UnvaluedBinaryTree</span></a></span><div class="ni n3 "><span class="nh "><a href="tree/UnvaluedBinaryTree$$UnvaluedBinaryTreeBuilder.html"><span class="micon cl"></span><span>UnvaluedBinaryTreeBuilder</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/UnvaluedBinaryTree$$UnvaluedBinaryTreeBuilderInt$.html"><span class="micon ob"></span><span>UnvaluedBinaryTreeBuilderInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="tree/UnvaluedBinaryTree$$UnvaluedBinaryTreeBuilderString$.html"><span class="micon ob"></span><span>UnvaluedBinaryTreeBuilderString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="tree/ValueOps.html"><span class="micon tr"></span><span>ValueOps</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="values.html"><span class="micon pa"></span><span>values</span></a></span><div class="ni n2 "><span class="nh "><a href="values/Additive.html"><span class="micon tr"></span><span>Additive</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseBooleanScalar.html"><span class="micon cl"></span><span>BaseBooleanScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseDateScalar.html"><span class="micon cl"></span><span>BaseDateScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseDoubleScalar.html"><span class="micon cl"></span><span>BaseDoubleScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseIntScalar.html"><span class="micon cl"></span><span>BaseIntScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseNumericFuzzy$.html"><span class="micon ob"></span><span>BaseNumericFuzzy</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/BaseNumericFuzzy.html"><span class="micon cl"></span><span>BaseNumericFuzzy</span></a></span><div class="ni n3 "><span class="nh "><a href="values/BaseNumericFuzzy$MappedFuzzy.html"><span class="micon cl"></span><span>MappedFuzzy</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/BaseQuotedStringScalar.html"><span class="micon cl"></span><span>BaseQuotedStringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseRationalScalar.html"><span class="micon cl"></span><span>BaseRationalScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseScalar.html"><span class="micon cl"></span><span>BaseScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BaseStringScalar.html"><span class="micon cl"></span><span>BaseStringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BooleanScalar$.html"><span class="micon ob"></span><span>BooleanScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BooleanScalar.html"><span class="micon cl"></span><span>BooleanScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BooleanValue$.html"><span class="micon ob"></span><span>BooleanValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/BooleanValue.html"><span class="micon cl"></span><span>BooleanValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Bounded.html"><span class="micon cl"></span><span>Bounded</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Bounded$.html"><span class="micon ob"></span><span>Bounded</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DateScalar$.html"><span class="micon ob"></span><span>DateScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DateScalar.html"><span class="micon cl"></span><span>DateScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DateValue.html"><span class="micon cl"></span><span>DateValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DateValue$.html"><span class="micon ob"></span><span>DateValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DoubleScalar.html"><span class="micon cl"></span><span>DoubleScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DoubleScalar$.html"><span class="micon ob"></span><span>DoubleScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DoubleValue.html"><span class="micon cl"></span><span>DoubleValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/DoubleValue$.html"><span class="micon ob"></span><span>DoubleValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Exact.html"><span class="micon cl"></span><span>Exact</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Exact$.html"><span class="micon ob"></span><span>Exact</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/FiniteIntegral$.html"><span class="micon ob"></span><span>FiniteIntegral</span></a></span><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$BigIntIsFiniteIntegral$.html"><span class="micon ob"></span><span>BigIntIsFiniteIntegral</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$BigIntIsFiniteIntegral.html"><span class="micon tr"></span><span>BigIntIsFiniteIntegral</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$IntIsFiniteIntegral$.html"><span class="micon ob"></span><span>IntIsFiniteIntegral</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$IntIsFiniteIntegral.html"><span class="micon tr"></span><span>IntIsFiniteIntegral</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$LongIsFiniteIntegral$.html"><span class="micon ob"></span><span>LongIsFiniteIntegral</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FiniteIntegral$$LongIsFiniteIntegral.html"><span class="micon tr"></span><span>LongIsFiniteIntegral</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/FiniteIntegral.html"><span class="micon tr"></span><span>FiniteIntegral</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/FiniteIntegralException.html"><span class="micon cl"></span><span>FiniteIntegralException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/FiniteIntegralNumeric.html"><span class="micon tr"></span><span>FiniteIntegralNumeric</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/FractionalString.html"><span class="micon tr"></span><span>FractionalString</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/FromString.html"><span class="micon tr"></span><span>FromString</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Fuzziness.html"><span class="micon cl"></span><span>Fuzziness</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Fuzziness$.html"><span class="micon ob"></span><span>Fuzziness</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Fuzzy.html"><span class="micon tr"></span><span>Fuzzy</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/Fuzzy$.html"><span class="micon ob"></span><span>Fuzzy</span></a></span><div class="ni n3 "><span class="nh "><a href="values/Fuzzy$$FuzzyIsFractionalDouble$.html"><span class="micon ob"></span><span>FuzzyIsFractionalDouble</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/FuzzyException.html"><span class="micon cl"></span><span>FuzzyException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/FuzzyIsFractional.html"><span class="micon tr"></span><span>FuzzyIsFractional</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/FuzzyParser$.html"><span class="micon ob"></span><span>FuzzyParser</span></a></span><div class="ni n3 "><span class="nh "><a href="values/FuzzyParser$$FractionalInt$.html"><span class="micon ob"></span><span>FractionalInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FuzzyParser$$FractionalStringDouble$.html"><span class="micon ob"></span><span>FractionalStringDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FuzzyParser$$FractionalStringInt$.html"><span class="micon ob"></span><span>FractionalStringInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/FuzzyParser$$FromStringInt$.html"><span class="micon ob"></span><span>FromStringInt</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/FuzzyParser.html"><span class="micon cl"></span><span>FuzzyParser</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Gaussian.html"><span class="micon cl"></span><span>Gaussian</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/GenericProbability.html"><span class="micon cl"></span><span>GenericProbability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/GenericProbability$.html"><span class="micon ob"></span><span>GenericProbability</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/Incrementable$.html"><span class="micon ob"></span><span>Incrementable</span></a></span><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableException.html"><span class="micon cl"></span><span>IncrementableException</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableInt$.html"><span class="micon ob"></span><span>IncrementableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableInt.html"><span class="micon tr"></span><span>IncrementableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableLocalDate$.html"><span class="micon ob"></span><span>IncrementableLocalDate</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableLocalDate.html"><span class="micon tr"></span><span>IncrementableLocalDate</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableLong$.html"><span class="micon ob"></span><span>IncrementableLong</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableLong.html"><span class="micon tr"></span><span>IncrementableLong</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableString$.html"><span class="micon ob"></span><span>IncrementableString</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Incrementable$$IncrementableString.html"><span class="micon tr"></span><span>IncrementableString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/Incrementable.html"><span class="micon tr"></span><span>Incrementable</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/IntAdditionMonoid$.html"><span class="micon ob"></span><span>IntAdditionMonoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/IntScalar.html"><span class="micon cl"></span><span>IntScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/IntScalar$.html"><span class="micon ob"></span><span>IntScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/IntValue$.html"><span class="micon ob"></span><span>IntValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/IntValue.html"><span class="micon cl"></span><span>IntValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Monoid$.html"><span class="micon ob"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Monoid.html"><span class="micon tr"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/NumericFuzzy.html"><span class="micon tr"></span><span>NumericFuzzy</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/Orderable$.html"><span class="micon ob"></span><span>Orderable</span></a></span><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableBoolean$.html"><span class="micon ob"></span><span>OrderableBoolean</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableBoolean.html"><span class="micon tr"></span><span>OrderableBoolean</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableDouble$.html"><span class="micon ob"></span><span>OrderableDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableDouble.html"><span class="micon tr"></span><span>OrderableDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableException.html"><span class="micon cl"></span><span>OrderableException</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableInt$.html"><span class="micon ob"></span><span>OrderableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableInt.html"><span class="micon tr"></span><span>OrderableInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableLocalDate$.html"><span class="micon ob"></span><span>OrderableLocalDate</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableLocalDate.html"><span class="micon tr"></span><span>OrderableLocalDate</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableLong$.html"><span class="micon ob"></span><span>OrderableLong</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableLong.html"><span class="micon tr"></span><span>OrderableLong</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableRational$.html"><span class="micon ob"></span><span>OrderableRational</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableRational.html"><span class="micon tr"></span><span>OrderableRational</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableString$.html"><span class="micon ob"></span><span>OrderableString</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Orderable$$OrderableString.html"><span class="micon tr"></span><span>OrderableString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/Orderable.html"><span class="micon tr"></span><span>Orderable</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Probability.html"><span class="micon tr"></span><span>Probability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Probability$.html"><span class="micon ob"></span><span>Probability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Product0.html"><span class="micon tr"></span><span>Product0</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/QuotedStringScalar$.html"><span class="micon ob"></span><span>QuotedStringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/QuotedStringScalar.html"><span class="micon cl"></span><span>QuotedStringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/QuotedStringValue.html"><span class="micon cl"></span><span>QuotedStringValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/QuotedStringValue$.html"><span class="micon ob"></span><span>QuotedStringValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Rational.html"><span class="micon cl"></span><span>Rational</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="values/Rational$.html"><span class="micon ob"></span><span>Rational</span></a></span><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalHelper.html"><span class="micon cl"></span><span>RationalHelper</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalIsFractional.html"><span class="micon tr"></span><span>RationalIsFractional</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalIsFractionalAndFiniteNumeric.html"><span class="micon cl"></span><span>RationalIsFractionalAndFiniteNumeric</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalIsFractionalAndFiniteNumericBigInt$.html"><span class="micon ob"></span><span>RationalIsFractionalAndFiniteNumericBigInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalIsFractionalAndFiniteNumericInt$.html"><span class="micon ob"></span><span>RationalIsFractionalAndFiniteNumericInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="values/Rational$$RationalIsFractionalAndFiniteNumericLong$.html"><span class="micon ob"></span><span>RationalIsFractionalAndFiniteNumericLong</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="values/RationalException.html"><span class="micon cl"></span><span>RationalException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalProbability.html"><span class="micon cl"></span><span>RationalProbability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalProbability$.html"><span class="micon ob"></span><span>RationalProbability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalScalar$.html"><span class="micon ob"></span><span>RationalScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalScalar.html"><span class="micon cl"></span><span>RationalScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalValue.html"><span class="micon cl"></span><span>RationalValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/RationalValue$.html"><span class="micon ob"></span><span>RationalValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Rational_Cross$.html"><span class="micon ob"></span><span>Rational_Cross</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Scalar.html"><span class="micon tr"></span><span>Scalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Scalar$.html"><span class="micon ob"></span><span>Scalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/ScalarException.html"><span class="micon cl"></span><span>ScalarException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/ScalarMaker.html"><span class="micon tr"></span><span>ScalarMaker</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/SeqProduct.html"><span class="micon cl"></span><span>SeqProduct</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/SequenceValue.html"><span class="micon cl"></span><span>SequenceValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/SequenceValue$.html"><span class="micon ob"></span><span>SequenceValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/StringScalar.html"><span class="micon cl"></span><span>StringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/StringScalar$.html"><span class="micon ob"></span><span>StringScalar</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/StringValue.html"><span class="micon cl"></span><span>StringValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/StringValue$.html"><span class="micon ob"></span><span>StringValue</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Tuple0$.html"><span class="micon ob"></span><span>Tuple0</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Tuples$.html"><span class="micon ob"></span><span>Tuples</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Value$.html"><span class="micon ob"></span><span>Value</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/Value.html"><span class="micon tr"></span><span>Value</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/ValueException.html"><span class="micon cl"></span><span>ValueException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="values/ValueMaker.html"><span class="micon tr"></span><span>ValueMaker</span></a></span></div></div><div class="ni n1 "><span class="nh "><a href="ActorLike.html"><span class="micon tr"></span><span>ActorLike</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Agent.html"><span class="micon tr"></span><span>Agent</span></a></span></div><div class="ni n1 "><span class="nh "><a href="And.html"><span class="micon cl"></span><span>And</span></a></span></div><div class="ni n1 "><span class="nh "><a href="BaseRule.html"><span class="micon cl"></span><span>BaseRule</span></a></span></div><div class="ni n1 "><span class="nh "><a href="BaseVersion.html"><span class="micon cl"></span><span>BaseVersion</span></a></span></div><div class="ni n1 "><span class="nh "><a href="BoundPredicate.html"><span class="micon cl"></span><span>BoundPredicate</span></a></span></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="Counter$.html"><span class="micon ob"></span><span>Counter</span></a></span><div class="ni n2 "><span class="nh "><a href="Counter$$IntCounter.html"><span class="micon tr"></span><span>IntCounter</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Counter$$LongCounter.html"><span class="micon tr"></span><span>LongCounter</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Counter$$intCounter$.html"><span class="micon ob"></span><span>intCounter</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Counter$$longCounter$.html"><span class="micon ob"></span><span>longCounter</span></a></span></div></div><div class="ni n1 "><span class="nh "><a href="Counter.html"><span class="micon tr"></span><span>Counter</span></a></span></div><div class="ni n1 "><span class="nh "><a href="DoubleRNG.html"><span class="micon cl"></span><span>DoubleRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Factorial$.html"><span class="micon ob"></span><span>Factorial</span></a></span></div><div class="ni n1 "><span class="nh "><a href="GaussianRNG.html"><span class="micon cl"></span><span>GaussianRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="GaussianRNG$.html"><span class="micon ob"></span><span>GaussianRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="IncrementableSequential.html"><span class="micon cl"></span><span>IncrementableSequential</span></a></span></div><div class="ni n1 "><span class="nh "><a href="InvalidRule.html"><span class="micon cl"></span><span>InvalidRule</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Kleenean$.html"><span class="micon ob"></span><span>Kleenean</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Kleenean.html"><span class="micon cl"></span><span>Kleenean</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Layout.html"><span class="micon cl"></span><span>Layout</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Layout$.html"><span class="micon ob"></span><span>Layout</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Lift.html"><span class="micon cl"></span><span>Lift</span></a></span></div><div class="ni n1 "><span class="nh "><a href="LiftMatch.html"><span class="micon cl"></span><span>LiftMatch</span></a></span></div><div class="ni n1 "><span class="nh "><a href="LiftTrial.html"><span class="micon cl"></span><span>LiftTrial</span></a></span></div><div class="ni n1 "><span class="nh "><a href="LongRNG$.html"><span class="micon ob"></span><span>LongRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="LongRNG.html"><span class="micon cl"></span><span>LongRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Match.html"><span class="micon cl"></span><span>Match</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Maybe.html"><span class="micon tr"></span><span>Maybe</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Maybe$.html"><span class="micon ob"></span><span>Maybe</span></a></span></div><div class="ni n1 "><span class="nh "><a href="NoMatchingTrialException.html"><span class="micon cl"></span><span>NoMatchingTrialException</span></a></span></div><div class="ni n1 expanded"><span class="nh h100 selected"><a href="#"><span class="micon cl"></span><span>Or</span></a></span></div><div class="ni n1 "><span class="nh "><a href="OrderedSequential.html"><span class="micon tr"></span><span>OrderedSequential</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Queryable.html"><span class="micon tr"></span><span>Queryable</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Quicksort$.html"><span class="micon ob"></span><span>Quicksort</span></a></span></div><div class="ni n1 "><span class="nh "><a href="RNG.html"><span class="micon tr"></span><span>RNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="RNG$.html"><span class="micon ob"></span><span>RNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="RNG_Java.html"><span class="micon cl"></span><span>RNG_Java</span></a></span></div><div class="ni n1 "><span class="nh "><a href="RNG_Java$.html"><span class="micon ob"></span><span>RNG_Java</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Recursion$.html"><span class="micon ob"></span><span>Recursion</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Renderable.html"><span class="micon tr"></span><span>Renderable</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Renderable$.html"><span class="micon ob"></span><span>Renderable</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Rule$.html"><span class="micon ob"></span><span>Rule</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Rule.html"><span class="micon tr"></span><span>Rule</span></a></span></div><div class="ni n1 "><span class="nh "><a href="RuleException.html"><span class="micon cl"></span><span>RuleException</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Sequential.html"><span class="micon tr"></span><span>Sequential</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Shuffle.html"><span class="micon cl"></span><span>Shuffle</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Subversionable.html"><span class="micon tr"></span><span>Subversionable</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Subversioned.html"><span class="micon tr"></span><span>Subversioned</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Trial$.html"><span class="micon ob"></span><span>Trial</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Trial.html"><span class="micon cl"></span><span>Trial</span></a></span></div><div class="ni n1 "><span class="nh "><a href="TrialBase.html"><span class="micon cl"></span><span>TrialBase</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Truth.html"><span class="micon cl"></span><span>Truth</span></a></span></div><div class="ni n1 "><span class="nh "><a href="UniformDouble$.html"><span class="micon ob"></span><span>UniformDouble</span></a></span></div><div class="ni n1 "><span class="nh "><a href="UniformDouble.html"><span class="micon cl"></span><span>UniformDouble</span></a></span></div><div class="ni n1 "><span class="nh "><a href="UniformDoubleRNG$.html"><span class="micon ob"></span><span>UniformDoubleRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="UniformDoubleRNG.html"><span class="micon cl"></span><span>UniformDoubleRNG</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Version$.html"><span class="micon ob"></span><span>Version</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Version.html"><span class="micon cl"></span><span>Version</span></a></span></div><div class="ni n1 "><span class="nh "><a href="VersionException.html"><span class="micon cl"></span><span>VersionException</span></a></span></div><div class="ni n1 "><span class="nh "><a href="Versioned.html"><span class="micon tr"></span><span>Versioned</span></a></span></div><div class="ni n1 "><span class="nh "><a href="$up$up$$.html"><span class="micon ob"></span><span>^^</span></a></span></div></div><div class="ni n0"><span class="nh "><button class="ar icon-button "></button><a href="../../../lascalabuildinfo.html"><span class="micon pa"></span><span>lascalabuildinfo</span></a></span><div class="ni n1 "><span class="nh "><a href="../../../lascalabuildinfo/BuildInfo$.html"><span class="micon ob"></span><span>BuildInfo</span></a></span></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../../index.html">lascala</a>/<a href="../lascala.html">com.phasmidsoftware.lascala</a>/<a href="Or.html">Or</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <span class="icon"><span class="micon cl"></span></span>
+ <h1 class="h600 single">Or</h1>
+</div>
+<div class="fqname body-large">
+ <span>com.phasmidsoftware.lascala.Or</span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="signature-short"><span class="modifiers"></span><span class="kind"><span t="k">class </span></span><a href="Or.html" t="n" class="documentableName ">Or</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r1</span>: <a href="Rule.html" t="t">Rule</a>[<span data-unresolved-link="" t="t">T</span>], <span t="k"></span><span data-unresolved-link="" t="n">r2</span>: <span t="k">=&gt;</span> <a href="Rule.html" t="t">Rule</a>[<span data-unresolved-link="" t="t">T</span>])<span t="k"> extends </span><a href="BaseRule.html" t="t">BaseRule</a>[<span t="t">T</span>]</span><span class="signature-long"></span>
+ </div>
+</div>
+<div class="cover">
+ <div class="doc">
+  <p>"Or" sub-class of Rule giving the disjunction of r1 and r2. Not a case class so that we can have a call-by-name parameter</p>
+ </div>
+ <section id="attributes">
+  <h2 class="h500">Type parameters</h2>
+  <dl class="attributes">
+   <dt class="body-small">T</dt>
+   <dd class="body-medium">
+    <p>the underlying type of this Rule</p>
+   </dd>
+  </dl>
+  <h2 class="h500">Value parameters</h2>
+  <dl class="attributes">
+   <dt class="body-small">r1</dt>
+   <dd class="body-medium">
+    <p>the rule which is always evaluated</p>
+   </dd>
+   <dt class="body-small">r2</dt>
+   <dd class="body-medium">
+    <p>the rule which may not be evaluated</p>
+   </dd>
+  </dl>
+  <h2 class="h500">Attributes</h2>
+  <dl class="attributes">
+   <dt class="body-small">Graph</dt>
+   <dd class="body-medium">
+    <div id="inheritance-diagram" class="diagram-class showGraph">
+     <button type="button" class="label-only-button" onclick="zoomOut()">Reset zoom</button><button type="button" class="label-only-button" onclick="hideGraph()">Hide graph</button><button type="button" class="label-only-button" onclick="showGraph()">Show graph</button>
+     <svg id="graph"></svg>
+     <script type="text/dot" id="dot"> digraph g {
+ node0 [id=node0, label="<span style=\"color: #FFFFFF;\">class <a href=\"Or.html\" t=\"n\">Or</a>[<span t=\"t\">T</span>]</span>", class="class vertex"];
+node1 [id=node1, label="<span style=\"color: #FFFFFF;\">class <a href=\"BaseRule.html\" t=\"n\">BaseRule</a>[<span t=\"t\">T</span>]</span>", class="class vertex"];
+node2 [id=node2, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Object</span></span>", class="class vertex"];
+node3 [id=node3, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Any</span></span>", class="class vertex"];
+node4 [id=node4, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Matchable</span></span>", class="trait vertex"];
+node5 [id=node5, label="<span style=\"color: #FFFFFF;\">sealed trait <a href=\"Rule.html\" t=\"n\">Rule</a>[<span t=\"t\">T</span>]</span>", class="trait vertex"];
+node6 [id=node6, label="<span style=\"color: #FFFFFF;\">trait () <span t=\"k\">=&gt;</span> <span data-unresolved-link=\"\" t=\"t\">Try</span>[<span data-unresolved-link=\"\" t=\"t\">Boolean</span>]</span>", class="trait vertex"];
+node7 [id=node7, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">AnyRef</span></span>", class="class vertex"];
+
+
+ node0 -> node1;
+node1 -> node2;
+node2 -> node3;
+node2 -> node4;
+node4 -> node3;
+node1 -> node5;
+node5 -> node2;
+node5 -> node6;
+node6 -> node7;
+node7 -> node3;
+node7 -> node4;
+
+}
+</script>
+    </div>
+   </dd>
+   <dt class="body-small">Supertypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <div>
+      class <a href="BaseRule.html" t="n">BaseRule</a>[<span t="t">T</span>]
+     </div>
+     <div>
+      trait <a href="Rule.html" t="n">Rule</a>[<span t="t">T</span>]
+     </div>
+     <div>
+      trait () <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">Boolean</span>]
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Object</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Matchable</span>
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Any</span>
+     </div>
+     <span class="show-all-code show-content text-button h100">Show all</span>
+    </div>
+   </dd>
+  </dl>
+ </section>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Value-members">
+     <div data-togglable="Value members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Value members" class="h400">Value members</h3>
+      </div>
+      <section id="Concrete-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Concrete methods</h4>
+        </div>
+        <div class="documentableElement" id="apply-fffff957">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#apply-fffff957" t="n" class="documentableName ">apply</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">Boolean</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Applies the body of this function to the arguments.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Applies the body of this function to the arguments.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the result of function application.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="liftTransform-718">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#liftTransform-718" t="n" class="documentableName ">liftTransform</a>[<span t="k"></span><span data-unresolved-link="" t="t">U</span> : <span data-unresolved-link="" t="t">Ordering</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">lf</span>: <span t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">U</span>], <span t="k"></span><span data-unresolved-link="" t="n">rf</span>: <span t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">U</span>]): <span data-unresolved-link="" t="t">Try</span>[<a href="Or.html" t="t">Or</a>[<span data-unresolved-link="" t="t">U</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to transform this Rule[T] into a Try[Rule[U]]. Somewhat similar to flatMap.</p>
+              <p>The primary purpose of this method is to allow a lookup to occur (the xf functions). Typically, T will be String and U will be Double or Int.</p>
+              <p>CONSIDER it would be much nicer if there were only one function parameter to this method</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">U</dt>
+              <dd class="body-medium">
+               <p>the type of the resulting Rule</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">lf</dt>
+              <dd class="body-medium">
+               <p>T=&gt;Try[U] function to be applied to the lhs of the rule (the variable)</p>
+              </dd>
+              <dt class="body-small">rf</dt>
+              <dd class="body-medium">
+               <p>T=&gt;Try[U] function to be applied to the rhs of the rule (the predicate)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Try[Rule[T] which is equivalent (truth-wise) to this Rule.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="transform-490">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#transform-490" t="n" class="documentableName ">transform</a>[<span t="k"></span><span data-unresolved-link="" t="t">U</span> : <span data-unresolved-link="" t="t">Ordering</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">U</span>, <span t="k"></span><span data-unresolved-link="" t="n">g</span>: <span t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">U</span>): <a href="Rule.html" t="t">Rule</a>[<span data-unresolved-link="" t="t">U</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>TODO implement this method in terms of liftTransform</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>TODO implement this method in terms of liftTransform</p>
+              <p>Method to transform this Rule[T] into a Rule[U].</p>
+              <p>The primary purpose of this method is to allow a lookup to occur (the xf functions). Typically, T will be String and U will be Double or Int.</p>
+              <p>CONSIDER it would be much nicer if there were only one function parameter to this method</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">U</dt>
+              <dd class="body-medium">
+               <p>the type of the resulting Rule</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">lf</dt>
+              <dd class="body-medium">
+               <p>T=&gt;U function to be applied to the lhs of the rule (the variable)</p>
+              </dd>
+              <dt class="body-small">rf</dt>
+              <dd class="body-medium">
+               <p>T=&gt;U function to be applied to the rhs of the rule (the predicate)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Rule[T] which is equivalent (truth-wise) to this Rule.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+      <section id="Inherited-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Inherited methods</h4>
+        </div>
+        <div class="documentableElement" id="&amp;:-99f" data-f-inherited="Rule">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#&amp;:-99f" t="n" class="documentableName ">&amp;:</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span t="k">=&gt;</span> <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]): <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Conjunctive combination of self with another Rule.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Conjunctive combination of self with another Rule.</p>
+              <p>Associates to the right.</p>
+              <p>Self will not be evaluated if c evaluates as false</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the other Rule</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Rule which is the conjunctive (and) combination of r with self</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="Rule.html#&amp;:-99f">Rule</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id=":&amp;-99f" data-f-inherited="Rule">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#:&amp;-99f" t="n" class="documentableName ">:&amp;</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span t="k">=&gt;</span> <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]): <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Conjunctive combination of self with another Rule.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Conjunctive combination of self with another Rule.</p>
+              <p>Associates to the left.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the other Rule (r will not be evaluated if self evaluates as false)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Rule which is the conjunctive (and) combination of self with r</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="Rule.html#:&amp;-99f">Rule</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id=":|-99f" data-f-inherited="Rule">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#:|-99f" t="n" class="documentableName ">:|</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span t="k">=&gt;</span> <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]): <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Disjunctive combination of self with another Rule.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Disjunctive combination of self with another Rule.</p>
+              <p>Associates to the left.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the other Rule (r will not be evaluated if self evaluates as true)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Rule which is the disjunctive (or) combination of self with r</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="Rule.html#:|-99f">Rule</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toString-0" data-f-keywords="override" data-f-inherited="BaseRule">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">override </span></span><span class="kind"><span t="k">def </span></span><a href="Or.html#toString-0" t="n" class="documentableName ">toString</a>: <span data-unresolved-link="" t="t">String</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Returns a string representation of the object.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Returns a string representation of the object.</p>
+              <p>The default representation is platform dependent.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a string representation of the object.</p>
+              </dd>
+              <dt class="body-small">Definition Classes</dt>
+              <dd class="body-medium">
+               <div>
+                <a href="BaseRule.html#toString-0">BaseRule</a> -&gt; <span data-unresolved-link="">Function0</span> -&gt; <span data-unresolved-link="">Any</span>
+               </div>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="BaseRule.html#toString-0">BaseRule</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="|:-99f" data-f-inherited="Rule">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Or.html#|:-99f" t="n" class="documentableName ">|:</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span t="k">=&gt;</span> <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]): <a href="Rule.html" t="t">Rule</a>[<span t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Disjunctive combination of self with another Rule.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Disjunctive combination of self with another Rule.</p>
+              <p>Associates to the right.</p>
+              <p>Self will not be evaluated if r evaluates as true</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the other Rule</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Rule which is the disjunctive (or) combination of r with self</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="Rule.html#|:-99f">Rule</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#attributes">Type parameters</a></li><li><a href="#members-list">Members list</a><ul><li><a href="#Value-members">Value members</a><ul><li><a href="#Concrete-methods">Concrete methods</a></li><li><a href="#Inherited-methods">Inherited methods</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>
