@@ -1,12 +1,12 @@
 [![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/lascala_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/lascala_3)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/LaScala/latest/api/)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/master)
-![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)
-![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)
-![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/LaScala)
-![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/LaScala)
-![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/LaScala/bug)
-[![API Docs](https://javadoc.io/badge2/com.phasmidsoftware/lascala_3/javadoc.svg)](https://javadoc.io/doc/com.phasmidsoftware/lascala_3)
+[![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)](https://github.com/rchillyard/LaScala)
+[![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/blob/master/LICENSE.lic)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/issues)
+[![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/LaScala/bug)](https://github.com/rchillyard/LaScala/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
 # LaScala
 This package, developed by Phasmid Software and Dataflowage Inc. provides a smorgasbord of functional and general
@@ -40,7 +40,8 @@ utility libraries:
 libraryDependencies += "com.phasmidsoftware" %% "lascala" % "2.1.0"
 ```
 
-LaScala 2.0 is for Scala 3 only. It is compiled with Scala 3.3, so it can be used from any Scala 3.3 or later (it is also tested on 3.9).
+LaScala 2.0 is for Scala 3 only. Versions 2.0 and 2.1 are compiled with Scala 3.3, so they can be used from any Scala 3.3 or later.
+Later versions are compiled with Scala 3.9, the current LTS, and need Scala 3.9 or later.
 * For Scala 2.13, use version 1.1.0 (which is cross-built for 2.13 and 3).
 * For Scala 2.10, 2.11 or 2.12, use version 1.0.x.
 
@@ -117,6 +118,7 @@ locally {
 * _Spy_: if you define your own implicit _spyFunc_ in a scope where you have also written _import Spy.\__,
   Scala 3 prefers the imported default (the logger-based one).
   Write _import Spy.{spyFunc => \_, \_}_ instead.
+Full Scaladoc is at <https://rchillyard.github.io/LaScala/latest/api/>.
 
 ## Migrating from 1.x
 
