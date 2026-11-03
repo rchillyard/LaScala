@@ -26,7 +26,7 @@ utility libraries:
   * Incrementable;
 * a Rational type;
 * a set of self-fulfilling Cache classes;
-* a set of parsers which will take a CSV file and yield a Stream of tuples or maps;
+* a set of parsers which will take a CSV file and yield a LazyList of tuples or maps;
 * a three-valued-logic module (Kleenean);
 * a generic utility for implementing tail-recursive methods (Recursion);
 * a utility to deal with command-line arguments (Args);

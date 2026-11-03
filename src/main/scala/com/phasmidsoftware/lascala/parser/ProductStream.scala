@@ -206,7 +206,7 @@ case class CSV[X <: Product](parser: CsvParser, input: LazyList[String], givenHe
     * @return a LazyList of [X] objects
     */
   def tuples: LazyList[X] = {
-    val xts = getStream map stringToTuple(parser.elementParser)
+    val xts = dataLines map stringToTuple(parser.elementParser)
     // CONSIDER replacing with FP.toOption
     for (xt <- xts; x <- xt.recoverWith({ case t => carper(t.getLocalizedMessage); Failure(new Exception("logged already")) }).toOption) yield x
   }
@@ -229,7 +229,13 @@ case class CSV[X <: Product](parser: CsvParser, input: LazyList[String], givenHe
     if (i >= 0) Some(tuples map CSV.project[X, Y](i))
     else None
 
-  def getStream: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
+  /**
+    * @return the lines of the input that hold data: all of them, or all but the first if the header comes from the input.
+    */
+  def dataLines: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
+
+  @deprecated("Use dataLines", since = "2.3.0")
+  def getStream: LazyList[String] = dataLines
 }
 
 /**
@@ -243,11 +249,17 @@ case class TupleStream[X <: Product](parser: CsvParser, input: LazyList[String],
   def header: Header = getHeader(givenHeader)
 
   // CONSIDER replacing with FP.toOption
-  def tuplesPartial(allowPartial: Boolean = false): LazyList[X] = for (t <- getStream map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
+  def tuplesPartial(allowPartial: Boolean = false): LazyList[X] = for (t <- dataLines map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
 
   def tuples: LazyList[X] = tuplesPartial()
 
-  def getStream: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
+  /**
+    * @return the lines of the input that hold data: all of them, or all but the first if the header comes from the input.
+    */
+  def dataLines: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
+
+  @deprecated("Use dataLines", since = "2.3.0")
+  def getStream: LazyList[String] = dataLines
 
   /**
     * method to project ("slice") a ProductStream into a single column

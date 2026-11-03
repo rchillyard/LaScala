@@ -39,9 +39,12 @@ trait RandomState[T] {
   def flatMap[U](f: T => RandomState[U]): RandomState[U] = f(get)
 
   /**
-    * @return a stream of T values
+    * @return a LazyList of T values
     */
-  def toStream: LazyList[T] = LazyList.cons[T](get, next.toStream)
+  def toLazyList: LazyList[T] = LazyList.cons[T](get, next.toLazyList)
+
+  @deprecated("Use toLazyList", since = "2.3.0")
+  def toStream: LazyList[T] = toLazyList
 }
 
 /**
