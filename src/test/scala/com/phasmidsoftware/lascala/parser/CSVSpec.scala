@@ -1,6 +1,8 @@
 package com.phasmidsoftware.lascala.parser
 
+import com.sun.management.UnixOperatingSystemMXBean
 import java.io.{File, FileInputStream}
+import java.lang.management.ManagementFactory
 import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -132,6 +134,18 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
     iWts.size should be(8)
     (iWts take 8).toList(7) shouldBe("TGIF, Bruh", 8)
+  }
+  it should "leave no file open after reading it" in {
+    ManagementFactory.getOperatingSystemMXBean match {
+      case os: UnixOperatingSystemMXBean =>
+        val uri = getClass.getResource("sample.csv").toURI
+        val before = os.getOpenFileDescriptorCount
+        (1 to 50).foreach(_ => CSV[(String, Int)](uri).tuples.size shouldBe 8)
+        // Each read used to leave its file open, until the garbage collector closed it.
+        os.getOpenFileDescriptorCount should be < before + 10
+      case _ =>
+        cancel("open files can only be counted on Unix")
+    }
   }
   ignore should "be (String,Int) stream" in {
     val iWts = CSV[(String, Int)](new FileInputStream(new File("src/test/scala/com/phasmidsoftware/lascala/parser/sample.csv"))).tuples

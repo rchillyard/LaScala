@@ -290,19 +290,30 @@ object TupleStream {
 
   def apply[X <: Product](input: File, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): TupleStream[X] = apply(parser, TupleStream.readLines(Source.fromFile(input)), optionalHeader)
 
   def apply[X <: Product](input: URL): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URL, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromURL(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): TupleStream[X] = apply(parser, TupleStream.readLines(Source.fromURL(input)), optionalHeader)
 
   def apply[X <: Product](input: URI): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URI, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): TupleStream[X] = apply(parser, TupleStream.readLines(Source.fromFile(input)), optionalHeader)
+
+  /**
+    * Read all the lines of a source, and close it, so that no file or connection is left open.
+    * The lines are read eagerly: a lazy list would need the source to stay open until the list had been consumed.
+    * (An InputStream belongs to the caller, so the InputStream methods don't use this.)
+    *
+    * @param source the source, which is opened here.
+    * @return the lines, as a LazyList[String].
+    */
+  private[parser] def readLines(source: => Source): LazyList[String] =
+    Using.resource(source)(_.getLines().toList).to(LazyList)
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
@@ -338,19 +349,19 @@ object CSV {
 
   def apply[X <: Product](input: File, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): CSV[X] = apply(parser, TupleStream.readLines(Source.fromFile(input)), optionalHeader)
 
   def apply[X <: Product](input: URL): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URL, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): CSV[X] = apply(parser, Source.fromURL(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): CSV[X] = apply(parser, TupleStream.readLines(Source.fromURL(input)), optionalHeader)
 
   def apply[X <: Product](input: URI): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URI, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): CSV[X] = apply(parser, TupleStream.readLines(Source.fromFile(input)), optionalHeader)
 
   def project[X <: Product, Y](i: Int)(x: X): Y = x.productElement(i).asInstanceOf[Y]
 }
