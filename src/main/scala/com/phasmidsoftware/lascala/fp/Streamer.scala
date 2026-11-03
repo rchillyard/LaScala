@@ -16,7 +16,7 @@ import scala.annotation.tailrec
   */
 case class Streamer[X](private var s: LazyList[X]) extends (()=>X) {
 
-  apply() // We need to skip over the first value
+  apply(): Unit // We need to skip over the first value
 
   /**
     * This method mutates this Streamer by resetting the value of s to its tail and returning its head.

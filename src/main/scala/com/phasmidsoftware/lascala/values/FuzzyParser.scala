@@ -7,6 +7,7 @@ package com.phasmidsoftware.lascala.values
 
 import com.phasmidsoftware.lascala.predicate.PredicateException
 
+import scala.annotation.nowarn
 import scala.language.implicitConversions
 import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 import scala.util.Try
@@ -29,6 +30,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
   */
 class FuzzyParser extends JavaTokenParsers {
 
+  @nowarn("msg=unused implicit parameter") // the Fractional bound stays so that the signature of parseFuzzy does not change
   def parseFuzzy[T: Fractional](s: String): Try[Fuzzy[T]] = {
     parseAll(fuzzy, s) match {
       // CHECK that the following cast is OK. I don't really think it is.

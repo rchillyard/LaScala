@@ -373,7 +373,7 @@ trait Branch[+A] extends Tree[A] {
     val z = for (n1 <- children; n2 <- n1.nodeIterator(depthFirst)) yield n2
     val r = if (depthFirst) z :+ this
     else this +: z
-    r.toIterator
+    r.iterator
   }
 
 }
@@ -494,7 +494,6 @@ trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
     */
   protected[tree] def addNode[B >: A : TreeBuilder](node: Node[B])(implicit bKv: ValueOps[K, B]): StructuralTree[K, B] = node.get match {
     case Some(b) =>
-      implicit val spyLogger: Logger = null // Spy.getLogger(getClass)
       // b is the content of the node to be added to this Tree
       val tb = TreeBuilder[B]
 
@@ -521,7 +520,6 @@ trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
               Tree.logger.info(s"cannot get value for new parent of node so we add said node at the root of this tree: node value = ${node.get}")
               replaceNode(this, addNodes(this, node))((_, _) => true).asInstanceOf[StructuralTree[K, B]]
           }
-        case p => throw TreeException(s"Parent $p is not a StructuralNode")
       }
     // we cannot use this method to add a node which has no content
     case None => throw TreeException("cannot add node without value")
@@ -529,7 +527,7 @@ trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
 
   private def addNodes[B >: A : TreeBuilder](x: Node[B], y: Node[B]) = x match {
     case l: Leaf[B] => TreeBuilder[B].buildTree(l.get, Nil) + y
-    case n: Tree[B] => n + y
+    case n: Tree[B] @unchecked => n + y
     case z => throw TreeException(s"cannot add to parent $z")
   }
 
@@ -653,7 +651,7 @@ trait GeneralTreeBuilder[A] extends TreeBuilder[A] {
   def buildLeaf(a: A): Node[A] = Leaf(a)
 
   def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
-    case b: Tree[A] => (b like y).toBoolean(false)
+    case b: Tree[?] => (b like y).toBoolean(false)
     case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
@@ -736,7 +734,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
 case class IndexedLeaf[A](lIndex: Option[Long], rIndex: Option[Long], value: A) extends AbstractLeaf[A](value) with TreeIndex with IndexedNode[A] {
   override def depth: Int = 1
 
-  override def toString: String = s"""L("$value")""" + map2(lIndex, rIndex)(_ + ":" + _).getOrElse("")
+  override def toString: String = s"""L("$value")""" + map2(lIndex, rIndex)((l, r) => s"$l:$r").getOrElse("")
 
   /**
     * Method to add the given node to this node specifically
@@ -907,7 +905,7 @@ object Node {
       * @return the children as a Seq of Nodes
       */
     def children(t: Node[A]): Seq[Node[A]] = t match {
-      case tl: Tree[A] => tl.children
+      case tl: Tree[A] @unchecked => tl.children
       case _ => Seq.empty
     }
   }
@@ -996,7 +994,7 @@ object GeneralTree {
     def buildLeaf(a: A): Node[A] = Leaf(a)
 
     def nodesAlike(x: Node[A], y: Node[A]): Boolean = x match {
-      case b: Tree[A] => (b like y).toBoolean(false)
+      case b: Tree[?] => (b like y).toBoolean(false)
       case AbstractLeaf(a) => FP.contains(y.get, a)
       case _ => x == y
     }
@@ -1188,10 +1186,7 @@ object StructuralTree {
     * @return an optional tuple of two children.
     */
   def unapply[K, A](t: StructuralTree[K, A]): Option[StructuralTree[K, A]] =
-    t match {
-      case x: StructuralTree[K, A]@unchecked => Some(x)
-      case _ => None
-    }
+    Option(t)
 }
 
 object AbstractBinaryTree {
@@ -1272,8 +1267,10 @@ object AbstractBinaryTree {
       case AbstractLeaf(b) => compare(b, ans).map(-_)
       case Branch(_, bns) => compare(ans, bns)
       case Empty => Seq(0)
+      case x => throw TreeException(s"compare: cannot compare with $x")
     }
     case Empty => Seq(0)
+    case x => throw TreeException(s"compare: cannot compare $x")
   }
 
   /**
@@ -1340,14 +1337,14 @@ object AbstractBinaryTree {
 
 object Branch {
   def unapply[A](n: Node[A]): Option[(Option[A], NodeSeq[A])] = n match {
-    case e: Tree[A] => Some((e.get, e.children))
+    case e: Tree[A] @unchecked => Some((e.get, e.children))
     case _ => None
   }
 }
 
 object IndexedNode {
   def unapply[A](n: Node[A]): Option[(Node[A], Long, Long)] = n match {
-    case x: IndexedNode[A] => for (l <- x.lIndex; r <- x.rIndex) yield (x, l, r)
+    case x: IndexedNode[A] @unchecked => for (l <- x.lIndex; r <- x.rIndex) yield (x, l, r)
     case _ => None
   }
 }

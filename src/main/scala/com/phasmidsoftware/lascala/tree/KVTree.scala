@@ -31,7 +31,7 @@ abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] wi
   }
 
   def asTree[W >: V](n: Node[W])(implicit treeBuilder: TreeBuilder[W]): KVTree[K, W] = n match {
-    case t: KVTree[K, W] => t
+    case t: KVTree[K, W] @unchecked => t
     // TODO refactor the following to avoid instanceOf
     case _ => treeBuilder.buildTree(n.get, Seq()).asInstanceOf[KVTree[K, W]]
   }
@@ -121,7 +121,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     * @return true if they are the same
     */
   def nodesAlike(x: Node[V], y: Node[V]): Boolean = x match {
-    case b: Tree[V] => (b like y).toBoolean(false)
+    case b: Tree[?] => (b like y).toBoolean(false)
     case AbstractLeaf(a) => FP.contains(y.get, a)
     case _ => x == y
   }
@@ -135,7 +135,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     */
   def getParent(tree: Tree[V], a: V): Option[Node[V]] =
     tree match {
-      case x: StructuralTree[K, V] =>
+      case x: StructuralTree[K, V] @unchecked =>
         // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
         for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(using vo)) yield n
       case _ => None

@@ -1,7 +1,7 @@
 package com.phasmidsoftware.lascala.parser
 
 import java.io.{File, FileInputStream}
-import java.net.URL
+import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -10,6 +10,7 @@ import org.scalatest.Inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.collection.Map
 import scala.util.Success
 
@@ -41,7 +42,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   }
   it should "have column x of type String" in {
     //noinspection ScalaUnusedSymbol
-    val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
+    @unused val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     // NOTE: this works only with 2.11
     //    c column "x" match {
     //      case Some(xs) =>
@@ -164,7 +165,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   }
   // NOTE: you may have to ignore this if you are behind a firewall
   ignore should "work from URL stream" in {
-    val url = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=AAPL&f=nl1d1r&e=.csv")
+    val url = URI("http://download.finance.yahoo.com/d/quotes.csv?s=AAPL&f=nl1d1r&e=.csv").toURL
     val csv = CSV[(String, Double, LocalDate, Double)](url, Header(List("name", "lastTradePrice", "lastTradeDate", "P/E ratio")))
     val x = csv.tuples
     x.size shouldBe 1

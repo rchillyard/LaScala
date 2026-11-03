@@ -9,6 +9,8 @@ import com.phasmidsoftware.lascala.fp.Spy
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
+
 /**
   * @author scalaprof
   */
@@ -18,9 +20,9 @@ class ProductStream2Spec extends AnyFlatSpec with Matchers {
     val ps = TupleStream[Product](getClass.getResource("taxonomy.txt"), Header(List(), allowPartial = true))
     //noinspection ScalaUnusedSymbol
     //    for (t <- ps.input) println(x)
-    val header = ps.header
+    @unused val header = ps.header
     //noinspection ScalaUnusedSymbol
-    val tuples = ps.tuplesPartial(true)
+    @unused val tuples = ps.tuplesPartial(true)
     //    for (t <- tuples) println(x)
     import Spy._
     val tsy = for (xWms <- ps.asMaps) yield for (xWm <- xWms) yield Taxon(xWm)

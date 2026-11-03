@@ -2,6 +2,7 @@ package com.phasmidsoftware.lascala.cache
 
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.{nowarn, unused}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -149,7 +150,7 @@ abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluatio
   * @tparam V the value type
   * @tparam M a container (a monad) such as Try, Option, Future.
   */
-abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends Cache[K, V, M] with Mappish[K, V, M] with Fulfilling[K, V, M] {
+abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit @unused carper: String => Unit) extends Cache[K, V, M] with Mappish[K, V, M] with Fulfilling[K, V, M] {
 
   /**
     * Return a V value for the given K value. This method is not normally called by users of a cache
@@ -389,6 +390,7 @@ object Wrapper {
   * @tparam V value type
   * @tparam M a container which is a monad, such as Option, Future, Try.
   */
+@nowarn("cat=deprecation") // CacheMap is a mutable.HashMap (inheriting from which is deprecated); changing that would change the API
 abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.HashMap[K, V] {
   //  abstract class CacheMap[K, V, M[_], H[_,_] <: mutable.MapLike[K,V,H]](val wrapper: Wrapper[M]) extends H[K, V] {
   self =>
@@ -403,7 +405,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.Has
     */
   def getOrElseUpdateM(k: K, f: K => M[V]): M[V] = {
     def doUpdate(v: V): M[V] = {
-      self.put(k, v); wrapper.unit(v)
+      self.put(k, v): Unit; wrapper.unit(v)
     }
 
     get(k) match {

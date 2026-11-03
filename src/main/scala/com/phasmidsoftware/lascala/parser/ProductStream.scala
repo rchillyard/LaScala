@@ -13,8 +13,7 @@ import com.phasmidsoftware.lascala.values.{DateScalar, Scalar, Tuples}
 //import org.joda.time._
 //import org.joda.time.format._
 
-import scala.annotation.tailrec
-import scala.collection.GenTraversableOnce
+import scala.annotation.{tailrec, unused}
 import scala.io.Source
 import scala.util._
 import scala.util.parsing.combinator._
@@ -66,7 +65,7 @@ trait ProductStream[X <: Product] {
     * @param f function to be applied to each tuple
     * @return a ProductStream of transformed tuples
     */
-  def flatMap[Y <: Product](f: X => GenTraversableOnce[Y]): ProductStream[Y] =
+  def flatMap[Y <: Product](f: X => IterableOnce[Y]): ProductStream[Y] =
     ConcreteProductStream[Y](header, tuples flatMap f)
 
   /**
@@ -124,7 +123,7 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
     */
   def asMaps: Try[LazyList[Map[String, Scalar]]] = {
     def m(t: X): Try[Map[String, Scalar]] = {
-      val xWys = t.productIterator zip header.columns.toIterator map {
+      val xWys = t.productIterator zip header.columns.iterator map {
         case (v, k) => Scalar.tryScalarTuple(k, v)
       }
       for (xWs <- FP.sequence(xWys.toSeq)) yield FP.toMap(xWs)
@@ -138,7 +137,7 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
 /**
   * Abstract class for ProductStream which additionally derives their header and tuples from parsing a LazyList of Strings (one per row).
   */
-abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: LazyList[String]) extends ProductStreamBase[X] {
+abstract class TupleStreamBase[X <: Product](parser: CsvParser, @unused input: LazyList[String]) extends ProductStreamBase[X] {
 
   /**
     * May print to the SysErr stream as a side-effect if wsy is a Failure
@@ -159,14 +158,14 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: LazyList[
     * @param s the (row/line) String to be parsed
     * @return a Option[X]
     */
-  def stringToTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = stringToTryTuple(f, allowPartial)(s)
+  def stringToTuple(f: String => Try[Scalar], @unused allowPartial: Boolean = false)(s: String): Try[X] = stringToTryTuple(f)(s)
 
   protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
   protected def headerRow: String
 
   // CONSIDER inlining this method
-  private def stringToTryTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = {
+  private def stringToTryTuple(f: String => Try[Scalar])(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isValidRow(ws.size)
 
     for {

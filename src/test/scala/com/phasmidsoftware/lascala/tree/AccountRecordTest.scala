@@ -5,7 +5,7 @@ import com.phasmidsoftware.lascala.fp._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.io.Source
 import scala.util._
 
@@ -128,7 +128,7 @@ class AccountRecordTest extends AnyFlatSpec with Matchers {
         allTrue shouldBe true
         val values = Spy.noSpy(tree.iterator().toList)
         //noinspection ScalaUnusedSymbol
-        val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key), tree.includes(x, y))))
+        @unused val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key), tree.includes(x, y))))
         Spy.log(s"checking for disagreement between tree and MPTT:")
         // NOTE: The following part of the test only works with Scala 2.11
         //          val badResults = results filter (!_._3)
@@ -169,7 +169,7 @@ object AccountRecordTest {
     def createValueFromKey(k: String, vo: => Option[AccountRecord]): Option[AccountRecord] = Some(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
   }
 
-  implicit object `AccountRecordValueOps$` extends AccountRecordValueOps {
+  implicit object DefaultAccountRecordValueOps extends AccountRecordValueOps {
     override def getKeyFromValue(v: AccountRecord): String = v.key
   }
 
@@ -185,7 +185,7 @@ object AccountRecordTest {
     (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 
-  def checkAccountTree(size: Int, depth: Int, before: Int, iteratorSize: Int, mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int, Int, Int, Int, Int, Option[Node[AccountRecord]], Tree[AccountRecord], MPTT[AccountRecord])] = {
+  def checkAccountTree(@unused size: Int, @unused depth: Int, @unused before: Int, @unused iteratorSize: Int, @unused mpttSize: Int, aso: Option[Seq[AccountRecord]]): Try[(Int, Int, Int, Int, Int, Option[Node[AccountRecord]], Tree[AccountRecord], MPTT[AccountRecord])] = {
     aso match {
       case Some(as) =>
         createAccountRecordTree(as) match {

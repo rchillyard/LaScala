@@ -5,7 +5,7 @@
 
 package com.phasmidsoftware.lascala.sort
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
@@ -46,16 +46,17 @@ object Sorted {
 
   def merge[T: Ordering](ts1: Seq[T], ts2: Seq[T]): Seq[T] = {
     val ordering = implicitly[Ordering[T]]
-    @tailrec def inner(r: Seq[T], xs: Seq[T], ys: Seq[T]): Seq[T] = (xs, ys) match {
+    @tailrec def inner(r: Seq[T], xs: List[T], ys: List[T]): Seq[T] = (xs, ys) match {
       case (_, Nil) => r ++ xs
       case (Nil, _) => r ++ ys
       case (x :: xs1, y :: ys1) =>
         if (ordering.lt(x, y)) inner(r :+ x, xs1, ys)
         else inner(r :+ y, xs, ys1)
     }
-    inner(Nil, ts1, ts2)
+    inner(Nil, ts1.toList, ts2.toList)
   }
 
+  @nowarn("msg=unused implicit parameter") // the Ordering bound stays so that the signature of map2 does not change
   def map2[T: Ordering](t1f: Future[Seq[T]], t2f: Future[Seq[T]])(f: (Seq[T], Seq[T]) => Seq[T])(implicit ec: ExecutionContext): Future[Seq[T]] = for {t1 <- t1f; t2 <- t2f} yield f(t1, t2)
 
 }

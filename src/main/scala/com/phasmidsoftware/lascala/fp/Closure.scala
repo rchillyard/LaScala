@@ -9,7 +9,7 @@ import com.phasmidsoftware.lascala.fp.RenderableFunction.{asFunctionType, callBy
 import com.phasmidsoftware.lascala.{Layout, Renderable}
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag
 import scala.util._
@@ -62,7 +62,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     *          which is to say, if index is not specified, the new parameter will be appended to the list).
     * @return a new Closure with the same function but with the expanded list
     */
-  def bind(p: Parameter[T], i: Int = ps.size): Closure[T, R] = Closure(f, ps :+ p*)
+  def bind(p: Parameter[T], @unused i: Int = ps.size): Closure[T, R] = Closure(f, ps :+ p*)
 
   /**
     * The arity of this Closure.

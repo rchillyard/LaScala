@@ -133,7 +133,7 @@ object FP {
     * @return a Try of Seq[X]
     *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
-  def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xys) {
+  def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = xys.foldLeft(Try(Seq[X]())) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
 
@@ -156,7 +156,7 @@ object FP {
     * @return a sequence of X values wrapped in Option
     *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
-  def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = (Option(Seq[X]()) /: xos) {
+  def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = xos.foldLeft(Option(Seq[X]())) {
     (xso, xo) => for (xs <- xso; x <- xo) yield xs :+ x
   }
 
@@ -167,7 +167,7 @@ object FP {
     * @tparam X the underlying type
     * @return an X value wrapped inside Option
     */
-  def sequence[X](xe: Either[Throwable, X]): Option[X] = xe.right.toOption
+  def sequence[X](xe: Either[Throwable, X]): Option[X] = xe.toOption
 
   /**
     * Perform recover on a sequence of Try objects.
@@ -225,7 +225,7 @@ object FP {
     * @tparam B the underlying type of bs
     * @return a Tuple3 which contains: the zip of as and bs; the remaining elements of as (if any); the remaining elements of bs (if any)
     */
-  def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Traversable[(A, B)], Traversable[A], Traversable[B]) = {
+  def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Iterable[(A, B)], Iterable[A], Iterable[B]) = {
     val (nas, nbs) = (as.size, bs.size)
     val n = math.min(nas, nbs)
     ((as take n) zip bs, as drop n, bs drop n)

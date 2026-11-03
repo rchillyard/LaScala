@@ -2,6 +2,8 @@ package com.phasmidsoftware.lascala
 
 import java.util.Random
 
+import scala.annotation.unused
+
 /**
   * Very primitive implementation of a state-based random number generator
   *
@@ -164,7 +166,7 @@ object GaussianRNG {
 }
 
 object UniformDouble {
-  def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
+  def apply(x: Double, @unused y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
 
   def +(x: Double, y: random.UniformDouble): Double = y + x
 }

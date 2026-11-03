@@ -368,7 +368,7 @@ object DoubleScalar {
 object RationalScalar {
   def apply(x: LongRational): RationalScalar = RationalScalar(x, x)
 
-  def apply(x: String): RationalScalar = RationalScalar(x)
+  def apply(x: String): RationalScalar = RationalScalar(Rational[Long](x), x)
 }
 
 object StringScalar {

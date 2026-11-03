@@ -6,6 +6,7 @@ import com.phasmidsoftware.lascala.values.Orderable.{OrderableLocalDate, Orderab
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.language.postfixOps
 import scala.util.Success
 
@@ -47,14 +48,12 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
     xt.get.compare(1) shouldBe -1
   }
   "2016-01-01" should "result in OrderableString" in {
-    implicit val pattern = ""
     val dt = OrderableString.unit("2016-01-01")
     dt shouldBe "2016-01-01"
   }
   "zero string" should "result in OrderableString of length zero" in {
-    implicit val pattern = ""
     //noinspection ScalaUnusedSymbol
-    val dt = OrderableString.zero
+    @unused val dt = OrderableString.zero
     // TODO put a test here
   }
   "string1" should "be the string string1" in {
@@ -67,13 +66,11 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
   }
   "01/01/2016" should "result in string using via" in {
     val m: Map[String, String] = Map("k" -> "v")
-    implicit val pattern = "MM/dd/uuuu"
     val st = OrderableString.viaLookup("k", m get)
     st should matchPattern { case Success("v") => }
   }
   // CONSIDER we should move and modify the date-specific tests to IncrementableSpec
   "2016-01-01" should "result in OrderableDate" in {
-    implicit val pattern = ""
     val dt = LocalDate.of(2016, 2, 1)
     val dt2 = OrderableLocalDate.unit(dt)
     dt2 shouldBe dt
@@ -91,12 +88,10 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
   it should "result in LocalDate using via" in {
     val dt = LocalDate.of(2016, 2, 1)
     val m: Map[String, LocalDate] = Map("k" -> dt)
-    implicit val pattern = "MM/dd/uuuu"
     val dt2 = OrderableLocalDate.viaLookup("k", m get)
     dt2 should matchPattern { case Success(_) => }
   }
   "zero" should "result in date now" in {
-    implicit val pattern = ""
     val dt1 = OrderableLocalDate zero
     val dt2 = LocalDate.now()
     dt1 shouldBe dt2

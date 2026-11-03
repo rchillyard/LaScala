@@ -142,7 +142,6 @@ class ValueSpec extends AnyFlatSpec with Matchers with Inside {
   }
   "SequenceValue" should "work" in {
     val xs = Seq("2016-07-10", 1, """Hello""")
-    implicit val pattern = ""
     val x: SequenceValue = SequenceValue(xs)
     x.source shouldBe xs
     x.asBoolean should matchPattern { case None => }
@@ -150,7 +149,6 @@ class ValueSpec extends AnyFlatSpec with Matchers with Inside {
   }
   it should "work with embedded sequence" in {
     val xs = Seq("2016-07-10", 1, """Hello""", List(1, 2))
-    implicit val pattern = ""
     val x: SequenceValue = SequenceValue(xs)
     x.source shouldBe xs
     x.asBoolean should matchPattern { case None => }
@@ -164,7 +162,6 @@ class ValueSpec extends AnyFlatSpec with Matchers with Inside {
       }
     }
     val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
-    implicit val pattern = ""
     val x = Value.sequence(xs)
     for (vs <- x.asSequence) yield vs.size shouldBe 14
   }
@@ -194,7 +191,6 @@ class ValueSpec extends AnyFlatSpec with Matchers with Inside {
     }
     val xs = List(YMD(2016, 7, 15), YMD(2016, 7, 22), YMD(2016, 7, 29), YMD(2016, 8, 5), YMD(2016, 8, 12), YMD(2016, 8, 19), YMD(2016, 8, 26), YMD(2016, 9, 16), YMD(2016, 10, 21), YMD(2017, 1, 20), YMD(2017, 3, 17), YMD(2017, 4, 21), YMD(2017, 6, 16), YMD(2018, 1, 19))
     val wWm = Map("expirations" -> xs)
-    implicit val pattern = ""
     val x = Value.sequence(wWm)
     for (vs <- x.values; v <- vs.asSequence) yield v.size shouldBe 14
   }

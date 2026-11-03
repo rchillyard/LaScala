@@ -56,7 +56,7 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
     * @param ns the Seq of Node keys
     * @return an Iterator of Option of MPTTEntry[T]
     */
-  def mpttEntryIterator(ns: Seq[String]): Iterator[Option[MPTTEntry[T]]] = ns.toIterator.map(get)
+  def mpttEntryIterator(ns: Seq[String]): Iterator[Option[MPTTEntry[T]]] = ns.iterator.map(get)
 
   /**
     * Method to determine if given node is within given subtree

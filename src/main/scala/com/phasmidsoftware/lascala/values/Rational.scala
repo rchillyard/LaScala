@@ -1,6 +1,6 @@
 package com.phasmidsoftware.lascala.values
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.language.implicitConversions
 import scala.math.BigDecimal
 import scala.util.{Failure, Try}
@@ -203,7 +203,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     *
     * @return the signum of n (we assume that d is always positive)
     */
-  def signum: Int = i.signum(n)
+  def signum: Int = i.toInt(i.sign(n))
 
   def isNaN: Boolean = isZero && isInfinity
 
@@ -252,10 +252,13 @@ object Rational {
 
   def half[N: FiniteIntegral]: Rational[N] = one / 2
 
+  @nowarn("msg=unused implicit parameter") // the FiniteIntegral bound stays so that the signature of NaN does not change
   def NaN[N: FiniteIntegral] = new Rational(0, 0)
 
+  @nowarn("msg=unused implicit parameter") // the FiniteIntegral bound stays so that the signature of max does not change
   def max[N: FiniteIntegral](r1: Rational[N], r2: Rational[N]): Rational[N] = if (r1 >= r2) r1 else r2
 
+  @nowarn("msg=unused implicit parameter") // the FiniteIntegral bound stays so that the signature of min does not change
   def min[N: FiniteIntegral](r1: Rational[N], r2: Rational[N]): Rational[N] = if (r1 <= r2) r1 else r2
 
   def convertToM[N, M](n: N)(implicit fn: FiniteIntegral[N], fm: FiniteIntegral[M]): M = fm.fromBigInt(fn.toBigInt(n))
@@ -296,6 +299,7 @@ object Rational {
     */
   def apply[N: FiniteIntegral](x: Double): Rational[N] = apply(BigDecimal.valueOf(x))
 
+  @nowarn("msg=unused implicit parameter") // the Fractional bound stays so that the signature of fromFractional does not change
   def fromFractional[N: FiniteIntegral, M: Fractional](x: M): Rational[N] = x match {
     case r@Rational(_, _) => r.toRational
     case x: Int => Rational[N](x)
@@ -341,12 +345,12 @@ object Rational {
         val s = strings.next()
         if (s.isEmpty) {
           if (expressions.hasNext)
-            sb.append(expressions.next())
+            sb.append(expressions.next()): Unit
           else
             throw new RationalException("r: logic error: missing expression")
         }
         else
-          sb.append(s)
+          sb.append(s): Unit
       }
       if (expressions.hasNext)
         throw new RationalException(s"r: ignored: ${expressions.next()}")
@@ -392,6 +396,7 @@ object Rational {
     * @param y the second Rational[N]
     * @return (x-y).signum
     */
+  @nowarn("msg=unused implicit parameter") // the FiniteIntegral bound stays so that the signature of compare does not change
   def compare[N: FiniteIntegral](x: Rational[N], y: Rational[N]): Int = if (x.isInfinity && y.isInfinity) 0 else (x - y).signum
 
   /**
@@ -434,7 +439,7 @@ object Rational {
       case 0 =>
         builder(i.zero, i.zero)
       case _ =>
-        val f = i.fromInt(i.signum(d))
+        val f = i.sign(d)
         val numerator = i.quot(i.times(n, f), g)
         val denominator = i.quot(i.times(d, f), g)
         // If the numerator or denominator gets too big for N, we will just throw an exception.
@@ -489,7 +494,7 @@ object Rational {
 
   private def is[N: FiniteIntegral](x: N, y: Int): Boolean = cf(x, y) == 0
 
-  private def narrowWhole[N: FiniteIntegral, M](x: Rational[N])(f: N => M): M = if (x.isWhole) f(x.n) else throw new RationalException(s"$x is not Whole")
+  private def narrowWhole[N, M](x: Rational[N])(f: N => M): M = if (x.isWhole) f(x.n) else throw new RationalException(s"$x is not Whole")
 
   /**
     * Implicit conversion method from Int=>Rational.
@@ -558,7 +563,7 @@ object Rational {
 
     override def abs(x: Rational[N]): Rational[N] = Rational(i.abs(x.n), x.d)
 
-    override def signum(x: Rational[N]): Int = i.signum(x.n)
+    override def signum(x: Rational[N]): Int = i.toInt(i.sign(x.n))
 
     def negate(x: Rational[N]): Rational[N] = Rational(i.negate(x.n), x.d)
 

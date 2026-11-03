@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.typesafe.config.ConfigFactory
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
@@ -49,7 +50,7 @@ object Spy {
     * @param x ignored
     * @return a new Spy instance
     */
-  def apply(x: Unit): Spy = new Spy() {}
+  def apply(@unused x: Unit): Spy = new Spy() {}
 
   lazy private val configuration = ConfigFactory.load()
 
@@ -84,7 +85,7 @@ object Spy {
     */
   def spy[X](message: => String, x: => X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): X = {
     val xy = Try(x) // evaluate x inside Try
-    if (b && spying && isEnabledFunc(mySpy)) doSpy(message, xy, b, spyFunc) // if spying is turned on, log an appropriate message
+    if (b && spying && isEnabledFunc(mySpy)) doSpy(message, xy, b, spyFunc): Unit // if spying is turned on, log an appropriate message
     xy.get // return the X value or throw the appropriate exception
   }
 
@@ -156,7 +157,7 @@ object Spy {
     * @param logger an (implicit) logger (if null, then this method returns false)
     * @return true if the logger is debugEnabled
     */
-  implicit def isEnabledFunc(x: Spy)(implicit logger: Logger): Boolean = logger != null && logger.isDebugEnabled
+  implicit def isEnabledFunc(@unused x: Spy)(implicit logger: Logger): Boolean = logger != null && logger.isDebugEnabled
 
   /**
     * Convenience method to get a logger for a class.

@@ -6,6 +6,7 @@ import com.phasmidsoftware.lascala.fp.FP
 import com.phasmidsoftware.lascala.values.Incrementable
 import lascalabuildinfo.BuildInfo
 
+import scala.annotation.unused
 import scala.util.{Success, Try}
 
 /**
@@ -88,7 +89,7 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
 
   def build(v: V, vso: Option[Subversioned[V]], isSnapshot: Boolean): Repr
 
-  def next(isSnapshot: Boolean = false): Try[Repr] = for (x <- implicitly[Incrementable[V]].increment(v)) yield build(x, None, isSnapshot = false)
+  def next(@unused isSnapshot: Boolean = false): Try[Repr] = for (x <- implicitly[Incrementable[V]].increment(v)) yield build(x, None, isSnapshot = false)
 
   def subversions: LazyList[Version[V]] = {
     def s(v: V): LazyList[V] = implicitly[Incrementable[V]].increment(v) match {

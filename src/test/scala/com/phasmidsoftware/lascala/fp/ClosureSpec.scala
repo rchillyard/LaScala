@@ -5,7 +5,6 @@
 
 package com.phasmidsoftware.lascala.fp
 
-import com.phasmidsoftware.lascala.values.Scalar
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
@@ -131,11 +130,6 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "work for fourStringFunction" in {
-    case class Converter[R](f: Scalar => Option[R], name: String) extends (Scalar => Option[R]) {
-      def apply(s: Scalar): Option[R] = f(s)
-
-      override def toString: String = name
-    }
 
     def mapLookup(m: => Map[String, String]): String => Try[String] = { s => FP.optionToTry(m.get(s)) }
 
@@ -191,11 +185,6 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
 
   it should "work for fourStringFunction when variables specified at last moment" in {
     implicit val logger: Logger = Spy.getLogger(getClass)
-    case class Converter[R](f: Scalar => Option[R], name: String) extends (Scalar => Option[R]) {
-      def apply(s: Scalar): Option[R] = f(s)
-
-      override def toString: String = name
-    }
 
     val function = "fourStringFunction"
     val sArg1 = "p1"

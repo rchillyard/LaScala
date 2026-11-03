@@ -531,7 +531,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     g2y should matchPattern { case Success(_) => }
     g2y.get.arity shouldBe arity - 1
     println(g2y.get.callByName())
-    if (arity == 1) g2y.get.callByName() should matchPattern { case Success(`expected`) => }
+    if (arity == 1) (g2y.get.callByName() should matchPattern { case Success(`expected`) => }): Unit
   }
 
   it should "work for partiallyApply1" in {

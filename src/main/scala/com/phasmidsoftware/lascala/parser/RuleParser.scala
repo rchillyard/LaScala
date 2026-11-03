@@ -291,12 +291,11 @@ class RuleParser extends JavaTokenParsers {
   }
 
   def exprFactor: Parser[ExprFactor] = (qualifiedNumber | quotedString | lookup | "(" ~ expr ~ ")" | failure("exprFactor")) ^^ {
-    case "(" ~ e ~ ")" => e match {
+    case _ ~ e ~ _ => e match {
       case x: Expr => ExprParentheses(x)
     }
     case s: String => Variable(s)
-    case n: Number => n
-    case q: Literal => q
+    case f: ExprFactor => f
   }
 
   def qualifiedNumber: Parser[Number] = number ~ opt(suffix) ^^ {

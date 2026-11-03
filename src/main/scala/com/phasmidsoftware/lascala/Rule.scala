@@ -6,6 +6,7 @@ import com.phasmidsoftware.lascala.parser.Valuable
 import com.phasmidsoftware.lascala.parser.rpn.{Comparand, RPN}
 import com.phasmidsoftware.lascala.values.Orderable
 
+import scala.annotation.unused
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -253,10 +254,9 @@ object Rule {
     for (r <- rt; z <- r.liftTransform(stringToTriedX, evaluateExpression)) yield z
   }
 
-  def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit pattern: String): Try[Rule[X]] = {
+  def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit @unused pattern: String): Try[Rule[X]] = {
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
-    implicit val pattern = ""
     val evaluateExpression: (String) => Try[X] = { s => Comparand.evaluate[X](s) }
     for (r <- rt; z <- r.liftTransform(stringToTriedX, evaluateExpression)) yield z
   }

@@ -31,7 +31,6 @@ class TupleStreamSpec extends AnyFlatSpec with Matchers {
     val iIts = wWts map { case (x, y) => (x.toInt, y.toInt) }
     iIts.tuples.head match {
       case (x, y) => assert(x == 3 && y == 5)
-      case _ => fail("no match")
     }
   }
 }

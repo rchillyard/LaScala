@@ -4,6 +4,7 @@ import com.phasmidsoftware.lascala.RuleException
 import com.phasmidsoftware.lascala.fp.FP
 import com.phasmidsoftware.lascala.values.Orderable
 
+import scala.annotation.nowarn
 import scala.language.implicitConversions
 import scala.util._
 
@@ -14,6 +15,7 @@ import scala.util._
   * @param xt the value of X wrapped in Try
   * @tparam X the underlying type
   */
+@nowarn("msg=unused implicit parameter") // the Orderable bound stays so that the signature of Comparand does not change
 case class Comparand[X: Orderable](xt: Try[X]) extends Evaluable[X] {
   def evaluate: Try[X] = xt
 }
