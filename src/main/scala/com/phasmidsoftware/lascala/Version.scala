@@ -67,13 +67,16 @@ trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
     *
     * @return a LazyList of V
     */
-  def asStream: LazyList[V] = {
+  def asLazyList: LazyList[V] = {
     LazyList.cons(apply(),
       subversion match {
-        case Some(vv) => vv.asStream
+        case Some(vv) => vv.asLazyList
         case None => LazyList.empty[V]
       })
   }
+
+  @deprecated("Use asLazyList", since = "2.3.0")
+  def asStream: LazyList[V] = asLazyList
 }
 
 /**
