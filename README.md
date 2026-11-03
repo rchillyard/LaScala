@@ -2,10 +2,10 @@
 [![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/LaScala/latest/api/)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard)
 [![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/main)
 [![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)](https://github.com/rchillyard/LaScala)
-[![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/blob/master/LICENSE.lic)
-[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/commits/master)
+[![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/blob/main/LICENSE.lic)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/issues)
 [![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/LaScala/bug)](https://github.com/rchillyard/LaScala/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
