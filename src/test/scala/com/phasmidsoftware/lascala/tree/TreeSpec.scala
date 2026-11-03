@@ -1,21 +1,19 @@
 package com.phasmidsoftware.lascala.tree
 
 import com.phasmidsoftware.lascala.Kleenean
-import com.phasmidsoftware.lascala.fp.Spy
 import com.phasmidsoftware.lascala.tree.AbstractBinaryTree._
 import com.phasmidsoftware.lascala.Renderable
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.util.Try
 
 /**
   * Created by scalaprof on 10/19/16.
   */
 class TreeSpec extends AnyFlatSpec with Matchers {
-  private implicit val logger: org.slf4j.Logger = Spy.getLogger(getClass)
-
-  implicit object IntStringValueOps$ extends StringValueOps[Int] {
+  implicit object IntStringValueOps extends StringValueOps[Int] {
     def getParentKey(v: Int): Option[String] = Some((v / 10).toString)
 
     def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption
@@ -175,7 +173,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
     tree shouldBe UnvaluedBinaryTree(Leaf(0), UnvaluedBinaryTree(Leaf(1), UnvaluedBinaryTree(Leaf(2), Leaf(4))))
   }
   it should "work correctly for GeneralTree with parent insertion" in {
-    implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int] {
+    @unused implicit object GeneralTreeBuilderInt extends GeneralTreeBuilder[Int] {
       def getParent(tree: Tree[Int], t: Int): Option[Node[Int]] = tree.find(t / 10)
     }
   }
@@ -228,9 +226,9 @@ class TreeSpec extends AnyFlatSpec with Matchers {
     val tree1 = GeneralTree(1, List(Leaf(2), Leaf(3)))
     val tree2 = GeneralTree(1, List(Leaf(5), Leaf(6)))
     //noinspection ScalaUnusedSymbol
-    val tree3 = GeneralTree(1, List(GeneralTree(4, List(Leaf(5), Leaf(6)))))
+    @unused val tree3 = GeneralTree(1, List(GeneralTree(4, List(Leaf(5), Leaf(6)))))
     //noinspection ScalaUnusedSymbol
-    val tree4 = GeneralTree(1, List(GeneralTree(4, List(Leaf(10), Leaf(11)))))
+    @unused val tree4 = GeneralTree(1, List(GeneralTree(4, List(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
     // CONSIDER understand why this doesn't work. At appears to yield Some(true)
     //    tree3.like(tree4) should matchPattern {case Kleenean(Some(true)) => }

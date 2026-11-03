@@ -1,6 +1,6 @@
 package com.phasmidsoftware.lascala.fp
 
-import java.net.URL
+import java.net.{URI, URL}
 
 import com.phasmidsoftware.lascala.fp.FP._
 import org.scalatest._
@@ -8,7 +8,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent._
 import org.scalatest.tagobjects.Slow
-import org.slf4j.Logger
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,27 +22,27 @@ import scala.util.matching.Regex
 class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   "lift(Future[Try[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
-    val uyf = Future(Try(new URL("http://www.google.com")))
+    val uyf = Future(Try(URI("http://www.google.com").toURL))
     val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "lift(Try[Future[T]])" should "succeed for http://www.google.com" taggedAs Slow in {
-    val ufy = Try(Future(new URL("http://www.google.com")))
+    val ufy = Try(Future(URI("http://www.google.com").toURL))
     val uf = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
-    val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val ufs = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
     // CONSIDER using traverse
     whenReady(Future.sequence(ufs): Future[List[URL]]) { us => Assertions.assert(us.length == 2) }
   }
 
   "sequence(Seq[Try[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
-    val uys = for {w <- ws; url = Try(new URL(w))} yield url
+    val uys = for {w <- ws; url = Try(URI(w).toURL)} yield url
     sequence(uys) match {
       case Success(us) => Assertions.assert(us.length == 2)
       case _ => Failed
@@ -52,7 +51,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   it should "fail for www.google.com, etc." taggedAs Slow in {
     val ws = List("www.google.com", "http://www.microsoft.com")
-    val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
+    val uys = for {w <- ws; uy = Try(URI(w).toURL)} yield uy
     sequence(uys) match {
       case Failure(_) => Succeeded
       case _ => Failed
@@ -60,7 +59,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   }
 
   it should "succeed for empty list" in {
-    val uys = for {w <- List[String](); uy = Try(new URL(w))} yield uy
+    val uys = for {w <- List[String](); uy = Try(URI(w).toURL)} yield uy
     sequence(uys) match {
       case Success(us) => Assertions.assert(us.isEmpty)
       case _ => Failed
@@ -74,14 +73,14 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   it should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
-    val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val ufs = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
     val usfs = List(Future.sequence(ufs))
     whenReady(flatten(usfs)) { us => Assertions.assert(us.length == 2) }
   }
 
   it should "succeed for empty list" in {
     val ws = List[String]()
-    val urls = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val urls = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
     val usfs = List(Future.sequence(urls))
     whenReady(flatten(usfs)) { us => Assertions.assert(us.isEmpty) }
   }
@@ -92,7 +91,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   }
   "sequence" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
-    val ufs = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val ufs = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
     val uefs = for {uf <- ufs} yield sequence(uf)
     val uesf = Future.sequence(uefs)
     whenReady(uesf) { ues => Assertions.assert(ues.length == 3) }
@@ -103,8 +102,8 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
     // CONSIDER using traverse
-    val uefs = for {w <- ws; uf = Future(new URL(w))} yield sequence(uf)
-    for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true; case _ => Assertions.fail() }
+    val uefs = for {w <- ws; uf = Future(URI(w).toURL)} yield sequence(uf)
+    for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true }
   }
 
   "Sequence[Either]" should "succeed" in {
@@ -159,7 +158,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   "liftOptionTry" should "succeed" in {
     val map = Map("a" -> 1)
-    val convertStringToInt = map.apply _
+    val convertStringToInt = map.apply
     val fOptionToTry = liftOptionTry(convertStringToInt)
     fOptionToTry(Some("a")) should matchPattern { case Success(1) => }
     fOptionToTry(None) should matchPattern { case Failure(_) => }
@@ -192,9 +191,9 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    def ss(x: Int, y: Int) = x.signum == y.signum
+    def ss(x: Int, y: Int) = x.sign == y.sign
 
-    def ssf(x: Int, y: Int) = Some(x.signum == y.signum)
+    def ssf(x: Int, y: Int) = Some(x.sign == y.sign)
 
     map2g(one, two)(sum, ss) should matchPattern { case Some(3) => }
     flatMap2g(one, two)(sum, ssf) should matchPattern { case Some(3) => }
@@ -207,9 +206,9 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    def ss(x: Int, y: Int) = x.signum == y.signum
+    def ss(x: Int, y: Int) = x.sign == y.sign
 
-    def ssf(x: Int, y: Int) = Some(x.signum == y.signum)
+    def ssf(x: Int, y: Int) = Some(x.sign == y.sign)
 
     map2g(one, two)(sum, ss) should matchPattern { case None => }
     flatMap2g(one, two)(sum, ssf) should matchPattern { case None => }
@@ -221,7 +220,6 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
     def sum(x: Int, y: Int) = x + y
 
-    implicit val logger: Logger = Spy.getLogger(getClass)
     map2(one, two)(sum) should matchPattern { case Success(3) => }
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -408,7 +406,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   behavior of "nextOption"
   it should "work" in {
-    val xi = Seq(1, 2, 3).toIterator
+    val xi = Seq(1, 2, 3).iterator
     FP.nextOption(xi) should matchPattern { case Some(1) => }
     FP.nextOption(xi) should matchPattern { case Some(2) => }
     FP.nextOption(xi) should matchPattern { case Some(3) => }
@@ -421,7 +419,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
-    }).toIterator
+    }).iterator
     foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ > 0) shouldBe true
     ml.toList shouldBe List(0, 1)
   }
@@ -430,7 +428,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
-    }).toIterator
+    }).iterator
     foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ >= 0) shouldBe true
     ml.toList shouldBe List(0)
   }
@@ -439,7 +437,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     val ml = mutable.ListBuffer[Int]()
     val xi = xs.view.map(x => {
       ml += x; x
-    }).toIterator
+    }).iterator
     foldLeftShort[Int, Boolean](xi, false, b => b)(_ || _ < 0) shouldBe false
     ml.toList shouldBe xs
   }
@@ -529,7 +527,7 @@ case class Principal(name: Name, facebookLikes: Int) {
 case class Name(first: String, middle: Option[String], last: String, suffix: Option[String]) {
   override def toString: String = {
     case class Result(r: StringBuffer) {
-      def append(s: String): Unit = r.append(" " + s)
+      def append(s: String): Unit = r.append(" " + s): Unit
 
       override def toString: String = r.toString
     }

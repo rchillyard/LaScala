@@ -143,4 +143,4 @@ object FiniteIntegral {
 
 import scala.language.existentials
 
-case class FiniteIntegralException(r: BigInt, c: Class[_]) extends Exception(s"$r is out of range for $c")
+case class FiniteIntegralException(r: BigInt, c: Class[?]) extends Exception(s"$r is out of range for $c")

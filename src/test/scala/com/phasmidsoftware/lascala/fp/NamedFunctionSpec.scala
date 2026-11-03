@@ -8,8 +8,6 @@ package com.phasmidsoftware.lascala.fp
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.matching.Regex
-
 class NamedFunctionSpec extends AnyFlatSpec with Matchers {
 
   behavior of "NamedFunction"
@@ -108,7 +106,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g match {
       // NOTE: do not try to use syntactic sugar here and similar places
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g(2)(3) shouldBe 8.0 +- 0.001
     g match {
@@ -126,7 +123,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g((2, 3)) shouldBe 8.0 +- 0.001
     g match {
@@ -167,7 +163,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g("10")(2)(3) shouldBe 80.0 +- 0.001
     g match {
@@ -185,7 +180,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g(("10", 2, 3)) shouldBe 80.0 +- 0.001
     g match {
@@ -226,7 +220,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g("10")(2)(3)(Math.PI) shouldBe 251.327 +- 0.001
     g match {
@@ -244,7 +237,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g(("10", 2, 3, Math.PI)) shouldBe 251.327 +- 0.001
     g match {
@@ -285,7 +277,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test!!!>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g("10")(2)(3)(Math.PI)(false) shouldBe 0.0 +- 0.001
     g match {
@@ -303,7 +294,6 @@ class NamedFunctionSpec extends AnyFlatSpec with Matchers {
     g.toString shouldBe "<function1: test###>"
     g match {
       case _: Function1[_, _] =>
-      case _ => fail()
     }
     g(("10", 2, 3, Math.PI, false)) shouldBe 0.0 +- 0.001
     g match {

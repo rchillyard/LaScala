@@ -12,7 +12,6 @@ import org.scalatest.PrivateMethodTester
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.mutable
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.{Left, _}
@@ -27,7 +26,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "yield true with arity 0" in {
     def render() = true
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(0))
+    val f = RenderableFunction((() => render()), "render", RenderableFunction.callByValue(0))
     val r = f(Tuple0)
     r should matchPattern { case Success(true) => }
   }
@@ -35,7 +34,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "yield Hello with arity 1" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
     val r = f(Tuple1("Hello"))
     r should matchPattern { case Success(true) => }
   }
@@ -43,7 +42,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "yield Hello with arity 2" in {
     def render(s1: Scalar, s2: Scalar) = s1.render + ":" + s2.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(2))
     val r = f(Tuple2(Scalar("Hello"), Scalar(1)))
     r should matchPattern { case Success("Hello:1") => }
   }
@@ -54,7 +53,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
 
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(3))
     val r = f(Tuple3(Scalar("Hello"), Scalar(1), Scalar(true)))
 
     // NOTE: this has failed (rarely) with true in all caps.
@@ -68,7 +67,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     def lookup(s: String): Try[String] = FP.optionToTry(map.get(s))
 
     // CONSIDER this should use a call-by-name parameter
-    val f = RenderableFunction(lookup _, "lookup", RenderableFunction.callByName(1))
+    val f = RenderableFunction(lookup, "lookup", RenderableFunction.callByName(1))
     val r = f(Tuple1("x"))
     r should matchPattern { case Success("X") => }
   }
@@ -89,7 +88,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
 
     def render(s1: String, s2: String) = s1 + ":" + s2
 
-    val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
+    val f = RenderableFunction(render, name, RenderableFunction.callByValue(2))
     f.w shouldBe FunctionString(name, arity)
     f.arity shouldBe arity
     f.func(("Hello", "Goodbye")) shouldBe "Hello:Goodbye"
@@ -101,7 +100,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
 
     def render(s1: String, s2: String) = s1 + ":" + s2
 
-    val f = RenderableFunction(render _, name, RenderableFunction.callByValue(2))
+    val f = RenderableFunction(render, name, RenderableFunction.callByValue(2))
     val g1y: Try[RenderableFunction[String]] = f.partiallyApply("Hello")
     for (g1 <- g1y) yield g1.arity should matchPattern { case Success(1) => }
     val g2y: Try[RenderableFunction[String]] = for (g <- g1y; h <- g.partiallyApply("Goodbye")) yield h
@@ -243,7 +242,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 1 to 0" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 0
@@ -252,7 +251,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 2 to 1" in {
     def render(s1: Scalar, s2: Scalar) = s1.render + ":" + s2.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(2))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 1
@@ -261,7 +260,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 3 to 2" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(3))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 2
@@ -270,7 +269,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 4 to 3" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render + ":" + s2.render + ":" + s3.render + ":" + s4.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(4))
     val g = f.partiallyApply(Some("Hello"))
     g should matchPattern { case Success(_) => }
     g.get.arity shouldBe 3
@@ -289,8 +288,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 1 to 0 (1)" in {
     def render(s: String) = s == "Hello"
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("k")))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("k")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
   }
@@ -298,8 +297,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 1 to 0 (2)" in {
     def render(s: String) = s
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("K")))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("K")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName() shouldBe Success("K")
@@ -308,8 +307,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 2 to 0 (a)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("k"), Left("l")))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(2))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("k"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName() shouldBe Success("k:l")
@@ -318,8 +317,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 2 to 0 (b)" in {
     def render(s1: String, s2: String) = s"$s1:$s2"
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(2))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("K"), Left("l")))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(2))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("K"), Left("l")))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName() shouldBe Success("K:l")
@@ -328,8 +327,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 3 to 2" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(3))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(3))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left(Scalar("k"))))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 2
   }
@@ -337,8 +336,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "reduce arity 4 to 3" in {
     def render(s1: Scalar, s2: Scalar, s3: Scalar, s4: Scalar) = s1.render + ":" + s2.render + ":" + s3.render + ":" + s4.render
 
-    val f = RenderableFunction(render _, "render", RenderableFunction.callByValue(4))
-    val gy = f.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left(Scalar("k"))))
+    val f = RenderableFunction(render, "render", RenderableFunction.callByValue(4))
+    val gy = f.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left(Scalar("k"))))
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 3
   }
@@ -349,8 +348,8 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "deal with not" in {
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
 
-    val f = RenderableFunction(fNot _, "not", RenderableFunction.callByValue(1))
-    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
+    val f = RenderableFunction(fNot, "not", RenderableFunction.callByValue(1))
+    val gy = f.partiallyApplyParameters(List[Parameter[Boolean]](Left(true.booleanValue)).asInstanceOf[Seq[Either[?, Closure[?, ?]]]])
     gy should matchPattern { case Success(_) => }
     gy.get.arity shouldBe 0
     gy.get.callByName() shouldBe Success(false)
@@ -365,11 +364,11 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     }, "IN", RenderableFunction.callByValue(2))
     g_2.arity shouldBe 2
     val g_2i = g_2.invert(2)
-    val g__1y = g_2i.partiallyApplyParameters(Seq[Parameter[List[String]]](Left(List("x", "y", "z"))).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
+    val g__1y = g_2i.partiallyApplyParameters(Seq[Parameter[List[String]]](Left(List("x", "y", "z"))).asInstanceOf[Seq[Either[?, Closure[?, ?]]]])
     g__1y should matchPattern { case Success(_) => }
     val g__1 = g__1y.get
     g__1.arity shouldBe 1
-    val fg_2y = f_1.partiallyApplyParameters(Seq[Parameter[Boolean]](Right(Closure(g__1, Left("x")))).asInstanceOf[Seq[Either[_, Closure[_, _]]]])
+    val fg_2y = f_1.partiallyApplyParameters(Seq[Parameter[Boolean]](Right(Closure(g__1, Left("x")))).asInstanceOf[Seq[Either[?, Closure[?, ?]]]])
     fg_2y should matchPattern { case Success(_) => }
     val fg_2 = fg_2y.get
     fg_2.callByName() shouldBe Success(false)
@@ -380,16 +379,16 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "yield the same value for two simple functions" in {
     def render(s: String) = s
 
-    val f1 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val f2 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f1 = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
+    val f2 = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
     f1.hashCode shouldEqual f2.hashCode
     f1 shouldEqual f2
   }
   it should "yield the same value when partially applied" in {
     def render(s: String) = s
 
-    val f1 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
-    val f2 = RenderableFunction(render _, "render", RenderableFunction.callByValue(1))
+    val f1 = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
+    val f2 = RenderableFunction(render, "render", RenderableFunction.callByValue(1))
     val rf1y: Try[RenderableFunction[String]] = f1.partiallyApply("k")
     rf1y should matchPattern { case Success(_) => }
     val rf2y: Try[RenderableFunction[String]] = f2.partiallyApply("k")
@@ -456,7 +455,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "handle varargs of cardinality 0" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs(0)
     rf1.arity shouldBe 0
-    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]]())
+    val rf2y = rf1.partiallyApplyParameters(List[Either[?, Closure[?, ?]]]())
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName() shouldBe Success(List())
   }
@@ -464,7 +463,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "handle varargs of cardinality 1" in {
     val rf1: RenderableFunction[Seq[Seq[String]]] = RenderableFunction.varargs(1)
     rf1.arity shouldBe 1
-    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("l")))
+    val rf2y = rf1.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("l")))
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName() shouldBe Success(List("l"))
   }
@@ -472,7 +471,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   it should "handle varargs of cardinality 2" in {
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](2)
     rf1.arity shouldBe 2
-    val rf2y = rf1.partiallyApplyParameters(List[Either[_, Closure[_, _]]](Left("l"), Left("K")))
+    val rf2y = rf1.partiallyApplyParameters(List[Either[?, Closure[?, ?]]](Left("l"), Left("K")))
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName() shouldBe Success(List("l", "K"))
   }
@@ -486,7 +485,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     val rf1: RenderableFunction[Seq[String]] = RenderableFunction.varargs[String](args)
     rf1.arity shouldBe args
     val values = (for (i <- 1 to args) yield i.toString).toList
-    val params: List[Either[_, Closure[_, _]]] = for (x <- values) yield Left(x)
+    val params: List[Either[?, Closure[?, ?]]] = for (x <- values) yield Left(x)
     val rf2y = rf1.partiallyApplyParameters(params)
     rf2y should matchPattern { case Success(_) => }
     rf2y.get.callByName() shouldBe Success(values)
@@ -532,7 +531,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     g2y should matchPattern { case Success(_) => }
     g2y.get.arity shouldBe arity - 1
     println(g2y.get.callByName())
-    if (arity == 1) g2y.get.callByName() should matchPattern { case Success(`expected`) => }
+    if (arity == 1) (g2y.get.callByName() should matchPattern { case Success(`expected`) => }): Unit
   }
 
   it should "work for partiallyApply1" in {

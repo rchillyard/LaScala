@@ -4,6 +4,7 @@ import com.phasmidsoftware.lascala.RuleException
 import com.phasmidsoftware.lascala.fp.FP
 import com.phasmidsoftware.lascala.parser.Valuable
 
+import scala.annotation.nowarn
 import scala.language.implicitConversions
 import scala.util._
 
@@ -13,6 +14,7 @@ trait Evaluable[X] {
 
 sealed trait Token[X]
 
+@nowarn("msg=unused implicit parameter") // the Valuable bound stays so that the signature of Constant does not change
 case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] {
   def evaluate: Try[X] = xt
 }
@@ -24,8 +26,10 @@ case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
   def evaluate: Try[X] = Valuable[X].fromString(n)
 }
 
+@nowarn("msg=unused implicit parameter") // the Valuable bound stays so that the signature of Monadic does not change
 case class Monadic[X: Valuable](f: X => Try[X]) extends Token[X]
 
+@nowarn("msg=unused implicit parameter") // the Valuable bound stays so that the signature of Dyadic does not change
 case class Dyadic[X: Valuable](f: (X, X) => Try[X]) extends Token[X]
 
 case class Invalid[X](t: Throwable) extends Token[X] with Evaluable[X] {

@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
   */
 class TupleStreamSpec extends AnyFlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via TupleStream" in {
-    val tupleStream = TupleStream[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    val tupleStream = TupleStream[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     val wts = tupleStream.tuples
     wts.head match {
       case Tuple1(s) => assert(s == "Hello")
@@ -18,7 +18,7 @@ class TupleStreamSpec extends AnyFlatSpec with Matchers {
     }
   }
   """"3,5", "8,13"""" should "be (String,String) stream via TupleStream" in {
-    val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13")).tuples
+    val wWts = TupleStream[(String, String)](LazyList("x,y", "3,5", "8,13")).tuples
     wWts.head match {
       case (x, y) => assert(x == "3" && y == "5")
     }
@@ -27,11 +27,10 @@ class TupleStreamSpec extends AnyFlatSpec with Matchers {
     }
   }
   it should "map into (Int,Int) via TupleStream" in {
-    val wWts = TupleStream[(String, String)](Stream("x,y", "3,5", "8,13"))
+    val wWts = TupleStream[(String, String)](LazyList("x,y", "3,5", "8,13"))
     val iIts = wWts map { case (x, y) => (x.toInt, y.toInt) }
     iIts.tuples.head match {
       case (x, y) => assert(x == 3 && y == 5)
-      case _ => fail("no match")
     }
   }
 }

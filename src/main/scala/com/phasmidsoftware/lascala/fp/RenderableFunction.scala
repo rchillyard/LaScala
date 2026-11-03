@@ -8,7 +8,7 @@ package com.phasmidsoftware.lascala.fp
 import com.phasmidsoftware.lascala.values.Tuple0
 import com.phasmidsoftware.lascala.{Layout, Renderable}
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec, unused}
 import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag
 import scala.util._
@@ -38,7 +38,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
   require(cbn.size == arity, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
 
   private val rc = implicitly[ClassTag[R]]
-  private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
+  private val returnIsTry = rc.runtimeClass == classOf[Try[?]]
 
 
   /**
@@ -90,8 +90,8 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     * @param tps the list of parameters
     * @return a RenderableFunction[R] (wrapped in Try)
     */
-  def partiallyApplyParameters(tps: Seq[Either[_, Closure[_, _]]]): Try[RenderableFunction[R]] = {
-    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Either[_, Closure[_, _]], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
+  def partiallyApplyParameters(tps: Seq[Either[?, Closure[?, ?]]]): Try[RenderableFunction[R]] = {
+    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Either[?, Closure[?, ?]]): Try[RenderableFunction[R]] = tp match {
       case Left(t) => // t: T
         rfy flatMap (_.partiallyApply(t))
       case Right(c) => // c: Closure[_,_]
@@ -99,10 +99,10 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     }
 
     @tailrec
-    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Either[_, Closure[_, _]], ClassTag[_])]): Try[RenderableFunction[R]] =
+    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Either[?, Closure[?, ?]], ClassTag[?])]): Try[RenderableFunction[R]] =
       work match {
         case Nil => rfy
-        case (tp, c) :: _tps => inner(partiallyApplyParameter(rfy, tp, c), _tps)
+        case (tp, _) :: _tps => inner(partiallyApplyParameter(rfy, tp), _tps)
       }
 
     inner(Try(this), tps zip cs)
@@ -114,15 +114,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     * @return
     */
   def asFunction: () => R = if (arity == 0)
-    () => {
-      val f = func(Tuple0)
-      f match {
-        case r: R => r
-        case g: Function[Unit, _]@unchecked => RenderableFunction.toScala[R](g(()))
-        // NOTE: this could result in the throwing of an exception
-        case x => RenderableFunction.toScala[R](x)
-      }
-    }
+    () => func(Tuple0)
   else throw RenderableFunctionException(s"asFunction: arity is not zero ($arity) for $this")
 
   /**
@@ -280,21 +272,21 @@ case class FunctionString(f: String, ps: List[Param]) {
 
 case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
 
-  def bind(w: String): Param = p match {
+  infix def bind(w: String): Param = p match {
     case Left(_) => this // already bound
     case Right(Left(_)) => Param(w) // was a free param
     case Right(Right(f)) => Param(f.partiallyApply(w))
   }
 
-  def bind(w: FunctionString): Param = p match {
+  infix def bind(w: FunctionString): Param = p match {
     case Left(_) => this // already bound
     case Right(Left(_)) => Param(w) // was a free param
     case Right(Right(f)) => Param(f.partiallyApply(w))
   }
 
-  def isBound: Boolean = p.isLeft || p.isRight && right.isRight && right.right.get.arity == 0
+  def isBound: Boolean = p.isLeft || p.isRight && right.isRight && right.toOption.get.arity == 0
 
-  private def right = p.right.get
+  private def right = p.toOption.get
 
   def isFree: Boolean = !isBound && right.isLeft
 
@@ -321,6 +313,7 @@ object RenderableFunction {
     def render(f: RenderableFunction[R], indent: Int)(using Layout): String = f.w.toString
   }
 
+  @nowarn("msg=unused implicit parameter") // the ClassTag stays so that the signature of toScala does not change
   def toScala[T: ClassTag](t: Any): T = (t match {
     case q: java.lang.Boolean => Boolean.unbox(q)
     case q: java.lang.Integer => Int.unbox(q)
@@ -423,9 +416,9 @@ object RenderableFunction {
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn.toList)
 
 
-  def callByName(n: Int): List[Boolean] = (Stream.continually(true) take n).toList
+  def callByName(n: Int): List[Boolean] = (LazyList.continually(true) take n).toList
 
-  def callByValue(n: Int): List[Boolean] = (Stream.continually(false) take n).toList
+  def callByValue(n: Int): List[Boolean] = (LazyList.continually(false) take n).toList
 
   /**
     * Method to create a varargs function.
@@ -442,9 +435,9 @@ object RenderableFunction {
   def varargs[T: ClassTag](n: Int): RenderableFunction[Seq[T]] = {
     val mkList = "mkList"
     val cbn = callByValue(n)
-    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n).toList
+    val cs: ParamClasses = (LazyList.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n).toList
 
-    def emptyList(p: Product) = Seq[T]()
+    val emptyList: Product => Seq[T] = _ => Seq[T]()
 
     /**
       * Method to take a product of any arity and return a Seq[T]
@@ -476,7 +469,7 @@ object RenderableFunction {
       else throw RenderableFunctionException(s"$f is not a Function1[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]")
   }
 
-  def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
+  def asFunctionType[R](f: Function[?, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
 
   def asTupledFunctionType[R](f: () => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ (_: Product) => f() }))
 
@@ -540,7 +533,7 @@ object RenderableFunction {
     */
   /** private */
   def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
-    val g = getPartialApplicationFunction(n, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
+    val g = getPartialApplicationFunction(n, f, t, cbn.head)(using cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
     RenderableFunction(n - 1, w.partiallyApply(t), cbn.tail.toList, cs.tail)(g)
   }
 
@@ -552,9 +545,9 @@ object RenderableFunction {
     */
   private def partiallyApplyFunction[T, R: ClassTag](n: Int, f: (Product) => R, tf: () => T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
     val g = if (cbn.head)
-      getPartialApplicationFunction(n, f, tf, cbn = false)(cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
+      getPartialApplicationFunction(n, f, tf, cbn = false)(using cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
     else
-      getPartialApplicationFunctionCallByName(n, f, tf)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
+      getPartialApplicationFunctionCallByName(n, f, tf)(using cs.head.asInstanceOf[ClassTag[T]])
     RenderableFunction(n - 1, w, cbn.tail.toList, cs.tail)(g)
   }
 
@@ -571,7 +564,7 @@ object RenderableFunction {
     * @return a function of arity n-1 which is the result of applying t to f
     */
   // private
-  def getPartialApplicationFunction[T, R](n: Int, f: (Product) => R, t: T, cbn: Boolean)(implicit tt: ClassTag[T], rt: ClassTag[R]): (Product) => R =
+  def getPartialApplicationFunction[T, R](n: Int, f: (Product) => R, t: T, cbn: Boolean)(implicit @unused tt: ClassTag[T], rt: ClassTag[R]): (Product) => R =
   if (cbn) getPartialApplicationFunction(n, f, { () => t }, false)
   else
     n match {
@@ -579,13 +572,13 @@ object RenderableFunction {
         asFunctionType { (_: Product) => f(Tuple1(t)) }
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        asFunctionType { (x: Tuple1[_]) => f2.curried(t)(x._1) }
+        asFunctionType { (x: Tuple1[?]) => f2.curried(t)(x._1) }
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        asFunctionType { (x: (_, _)) => f3.curried(t)(x._1)(x._2) }
+        asFunctionType { (x: (?, ?)) => f3.curried(t)(x._1)(x._2) }
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        asFunctionType { (x: (_, _, _)) => f4.curried(t)(x._1)(x._2)(x._3) }
+        asFunctionType { (x: (?, ?, ?)) => f4.curried(t)(x._1)(x._2)(x._3) }
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
         asFunctionType { (x: (T, T, T, T)) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
@@ -602,7 +595,7 @@ object RenderableFunction {
   /**
     * Called by PartiallyApplyParameters (via class.partiallyApplyParameter and object.partiallyApplyFunction)
     */
-  private def getPartialApplicationFunctionCallByName[T, R](n: Int, f: (Product) => R, t: () => T)(implicit tt: ClassTag[T], rt: ClassTag[R]): (Product) => R =
+  private def getPartialApplicationFunctionCallByName[T, R](n: Int, f: (Product) => R, t: () => T)(implicit tt: ClassTag[T]): (Product) => R =
     n match {
       case 1 =>
         val f1: Tuple1[T] => R = f
@@ -611,15 +604,15 @@ object RenderableFunction {
         g0
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        val g1 = asFunctionType { (x: Tuple1[_]) => f2.curried(extract[T](t()))(x._1) }
+        val g1 = asFunctionType { (x: Tuple1[?]) => f2.curried(extract[T](t()))(x._1) }
         g1
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        val g2 = asFunctionType { (x: (_, _)) => f3.curried(extract[T](t()))(x._1)(x._2) }
+        val g2 = asFunctionType { (x: (?, ?)) => f3.curried(extract[T](t()))(x._1)(x._2) }
         g2
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        val g3 = asFunctionType { (x: (_, _, _)) => f4.curried(extract[T](t()))(x._1)(x._2)(x._3) }
+        val g3 = asFunctionType { (x: (?, ?, ?)) => f4.curried(extract[T](t()))(x._1)(x._2)(x._3) }
         g3
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
@@ -720,14 +713,14 @@ object FreeParam {
 object FunctionString {
   private val params = "abcdefghijklmnopqrstuvwxyz".toList
 
-  private def stream(xs: Seq[(Char, Boolean)]): Stream[FreeParam] = xs match {
-    case h :: t => Stream.cons(FreeParam(h), stream(t))
-    case Nil => Stream.empty
+  private def stream(xs: Seq[(Char, Boolean)]): LazyList[FreeParam] = xs match {
+    case h :: t => LazyList.cons(FreeParam(h), stream(t))
+    case Nil => LazyList.empty
   }
 
-  def apply(f: String, n: Int, cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, stream(params zip cbn) take n map (Param(_)) toList)
+  def apply(f: String, n: Int, cbn: Seq[Boolean] = LazyList.continually(false)): FunctionString = FunctionString(f, stream(params zip cbn) take n map (Param(_)) toList)
 
-  def custom(f: String, cs: Seq[String], cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, (cs.toList zip cbn) map { case (s, b) => Param(FreeParam(s, b)) })
+  def custom(f: String, cs: Seq[String], cbn: Seq[Boolean] = LazyList.continually(false)): FunctionString = FunctionString(f, (cs.toList zip cbn) map { case (s, b) => Param(FreeParam(s, b)) })
 
   private def nones = Iterator.continually(None)
 }

@@ -10,11 +10,14 @@ import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.nowarn
 import scala.util.Random
 
 /**
   * @author scalaprof
   */
+// These are tests of the deprecated Sorted, which stays until it's removed.
+@nowarn("cat=deprecation")
 class FunctionalSortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   case class Composite(i: Int, s: String)

@@ -133,18 +133,18 @@ object FP {
     * @return a Try of Seq[X]
     *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
-  def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xys) {
+  def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = xys.foldLeft(Try(Seq[X]())) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
 
   /**
     * TODO unit test
     *
-    * @param xys a Stream of Try[X] values
+    * @param xys a LazyList of Try[X] values
     * @tparam X the underlying type
-    * @return a Stream[X] wrapped in a Try
+    * @return a LazyList[X] wrapped in a Try
     */
-  def sequence[X](xys: Stream[Try[X]]): Try[Stream[X]] = (Try(Stream[X]()) /: xys) {
+  def sequence[X](xys: LazyList[Try[X]]): Try[LazyList[X]] = xys.foldLeft(Try(LazyList[X]())) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
 
@@ -156,7 +156,7 @@ object FP {
     * @return a sequence of X values wrapped in Option
     *         NOTE: that the output collection type will be Seq, regardless of the input type
     */
-  def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = (Option(Seq[X]()) /: xos) {
+  def sequence[X](xos: Seq[Option[X]]): Option[Seq[X]] = xos.foldLeft(Option(Seq[X]())) {
     (xso, xo) => for (xs <- xso; x <- xo) yield xs :+ x
   }
 
@@ -167,7 +167,7 @@ object FP {
     * @tparam X the underlying type
     * @return an X value wrapped inside Option
     */
-  def sequence[X](xe: Either[Throwable, X]): Option[X] = xe.right.toOption
+  def sequence[X](xe: Either[Throwable, X]): Option[X] = xe.toOption
 
   /**
     * Perform recover on a sequence of Try objects.
@@ -225,7 +225,7 @@ object FP {
     * @tparam B the underlying type of bs
     * @return a Tuple3 which contains: the zip of as and bs; the remaining elements of as (if any); the remaining elements of bs (if any)
     */
-  def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Traversable[(A, B)], Traversable[A], Traversable[B]) = {
+  def zippy[A, B](as: Iterable[A], bs: Iterable[B]): (Iterable[(A, B)], Iterable[A], Iterable[B]) = {
     val (nas, nbs) = (as.size, bs.size)
     val n = math.min(nas, nbs)
     ((as take n) zip bs, as drop n, bs drop n)
@@ -253,7 +253,7 @@ object FP {
     * @return a String representing the first "limit" elements of as
     */
   def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
-    val iterator = as.toStream.toIterator
+    val iterator = as.iterator
     val buffer = new StringBuilder("(")
     while (iterator.hasNext && buffer.length < limit) {
       if (buffer.length > 1) buffer append ", "
@@ -498,7 +498,7 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map2lazy(ty1, ty2)(f)(g, default)
+    FP_Cross.map2lazy(ty1, ty2)(f)(using g, default)
 
   /**
     * NOTE: not available with 2.10
@@ -517,7 +517,7 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(g, default)
+    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(using g, default)
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
@@ -846,7 +846,7 @@ object FP {
     * @tparam V the underlying "value" type
     * @return a ListMap[K,V]
     */
-  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
+  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs*)
 
   /**
     * Method to get the next element from an iterator, as an Option.

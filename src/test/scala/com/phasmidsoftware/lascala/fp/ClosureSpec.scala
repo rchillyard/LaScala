@@ -5,7 +5,6 @@
 
 package com.phasmidsoftware.lascala.fp
 
-import com.phasmidsoftware.lascala.values.Scalar
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.Logger
@@ -112,7 +111,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     def fStringToInt(arg1: String): Int = arg1.toInt
 
     val wFunction = FunctionString.custom("stringToInt", List(sArg1))
-    val fFunction: RenderableFunction[Int] = Spy.spy("fFunction", RenderableFunction(fStringToInt _, wFunction, RenderableFunction.callByValue(1)))
+    val fFunction: RenderableFunction[Int] = Spy.spy("fFunction", RenderableFunction(fStringToInt, wFunction, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
     val p1: Parameter[String] = Spy.spy("p1", Left(col1))
@@ -131,11 +130,6 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "work for fourStringFunction" in {
-    case class Converter[R](f: Scalar => Option[R], name: String) extends (Scalar => Option[R]) {
-      def apply(s: Scalar): Option[R] = f(s)
-
-      override def toString: String = name
-    }
 
     def mapLookup(m: => Map[String, String]): String => Try[String] = { s => FP.optionToTry(m.get(s)) }
 
@@ -158,9 +152,9 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     def concat(p1: String): String = p1
 
     val wFunction = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
-    val fFunction: RenderableFunction[String] = RenderableFunction(fourStringFunction _, wFunction, RenderableFunction.callByValue(4))
+    val fFunction: RenderableFunction[String] = RenderableFunction(fourStringFunction, wFunction, RenderableFunction.callByValue(4))
     val wConcat = FunctionString.custom("concat", Seq("x"))
-    val fConcat = RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1))
+    val fConcat = RenderableFunction(concat, wConcat, RenderableFunction.callByValue(1))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]]
     val p1 = Left(col1)
@@ -178,7 +172,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     val p7 = Left(val4)
     val c = Closure[String, String](fFunction, p4, p5, p6, p7)
     c.render shouldBe "Closure(RenderableFunction[List(java.lang.String, java.lang.String, java.lang.String, java.lang.String),java.lang.String](4,  fourStringFunction(p1?)(p2?)(p3?)(p4?)), \n  Right(Closure(RenderableFunction[List(java.lang.String),java.lang.String](1,  concat(x?)), Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"c1\"))))),\n  Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"c2\"))),\n  Left(\"v3\"),\n  Left(\"v4\")\n)"
-    val dy: Try[Closure[_, String]] = for (d <- c partiallyApply) yield d
+    val dy: Try[Closure[?, String]] = for (d <- c partiallyApply) yield d
     dy match {
       case Success(x) => x.render shouldBe "Closure(RenderableFunction[List(),java.lang.String](0,  fourStringFunction(concat(lookup(\"c1\")))(lookup(\"c2\"))(\"v3\")(\"v4\")), )"
       case _ => fail("invalid partial apply")
@@ -191,11 +185,6 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
 
   it should "work for fourStringFunction when variables specified at last moment" in {
     implicit val logger: Logger = Spy.getLogger(getClass)
-    case class Converter[R](f: Scalar => Option[R], name: String) extends (Scalar => Option[R]) {
-      def apply(s: Scalar): Option[R] = f(s)
-
-      override def toString: String = name
-    }
 
     val function = "fourStringFunction"
     val sArg1 = "p1"
@@ -217,9 +206,9 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     def concat(p1: String): String = p1
 
     val wFunction = FunctionString.custom(function, List(sArg1, sArg2, sArg3, sArg4))
-    val fFunction: RenderableFunction[String] = Spy.spy("fFunction", RenderableFunction(fourStringFunction _, wFunction, RenderableFunction.callByValue(4)))
+    val fFunction: RenderableFunction[String] = Spy.spy("fFunction", RenderableFunction(fourStringFunction, wFunction, RenderableFunction.callByValue(4)))
     val wConcat = Spy.spy("wConcat", FunctionString.custom("concat", Seq("x")))
-    val fConcat = Spy.spy("fConcat", RenderableFunction(concat _, wConcat, RenderableFunction.callByValue(1)))
+    val fConcat = Spy.spy("fConcat", RenderableFunction(concat, wConcat, RenderableFunction.callByValue(1)))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = Spy.spy("fLookup", RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]])
     val p1 = Spy.spy("p1", Left(col1))
@@ -254,7 +243,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     def fStringToInt(arg1: String): Int = arg1.toInt
 
     val wFunction = FunctionString.custom("stringToInt", List(sArg1))
-    val fFunction = RenderableFunction(fStringToInt _, wFunction, RenderableFunction.callByValue(1))
+    val fFunction = RenderableFunction(fStringToInt, wFunction, RenderableFunction.callByValue(1))
     // NOTE: that we have to cast the renderable fourStringFunction because internally it always replaces Try[Try[R]] with Try[R]
     val fLookup = RenderableFunction(lookup, "lookup", Seq(false)).asInstanceOf[RenderableFunction[String]]
     val p1 = Left(col1)

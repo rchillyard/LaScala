@@ -8,6 +8,7 @@ package com.phasmidsoftware.lascala.tree
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.util.Try
 
 /**
@@ -20,7 +21,7 @@ class MPTT2Spec extends AnyFlatSpec with Matchers {
 
   behavior of "MPTT"
   it should "support containsConditions correctly" in {
-    implicit object StringMyIntValueOps$ extends StringValueOps[MyInt] {
+    implicit object StringMyIntValueOps extends StringValueOps[MyInt] {
       def getParentKey(a: MyInt): Option[String] = Some(a.x./(10).toString)
 
       override def getKeyAsParent(v: MyInt): String = v.x.toString
@@ -46,5 +47,5 @@ class MPTT2Spec extends AnyFlatSpec with Matchers {
     mptt.containsConditionalF("0", "11")(checkF) should matchPattern { case Some(true) => }
   }
 
-  def testMpttLookup(mPTT: MPTT[String], x: String, y: String): Boolean = x.contains(y) == (x.compareTo(y) < 1)
+  def testMpttLookup(@unused mPTT: MPTT[String], x: String, y: String): Boolean = x.contains(y) == (x.compareTo(y) < 1)
 }

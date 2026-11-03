@@ -292,7 +292,7 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
 
     //noinspection ConvertibleToMethodValue
     // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
-    val p = func1 _ &^: Func(func2)
+    val p = func1 &^: Func(func2)
     p(3) should matchPattern { case Success(true) => }
     s.toString shouldBe "func1 evaluated. func2 evaluated. "
     s.clear()
@@ -323,7 +323,7 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
 
     //noinspection ConvertibleToMethodValue
     // NOTE: don't be tempted to do syntactic simplification here: those redundant placeholders are necessary
-    val _ = func1 _ |^: Func(func2)
+    val _ = func1 |^: Func(func2)
     // NOTE: works only with 2.11
     //    p(3) should matchPattern { case Success(true) => }
     //    s.toString shouldBe "func1 evaluated. "

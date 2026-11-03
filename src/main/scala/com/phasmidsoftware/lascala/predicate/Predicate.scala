@@ -45,7 +45,7 @@ trait Predicate[T] extends (T => Try[Boolean]) {
     * @tparam U the underlying type of the resulting Predicate
     * @return a Try[Predicate[U]
     **/
-  def tryMap[U: Ordering](f: T => Try[U]): Try[Predicate[U]]
+  infix def tryMap[U: Ordering](f: T => Try[U]): Try[Predicate[U]]
 
   def asFunction: T => Try[Boolean] = self
 
@@ -178,7 +178,7 @@ abstract class BasePredicate[T](name: String) extends Predicate[T] {
   * @tparam T the underlying type of the Predicate
   */
 case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ && _)({ x => x }, Success(false))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ && _)(using { x => x }, Success(false))
 
 
   /**
@@ -202,7 +202,7 @@ case class And[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s
   * @tparam T the underlying type of the Predicate
   */
 case class Or[T](p1: Predicate[T], p2: Predicate[T]) extends BasePredicate[T](s"($p1)&($p2)") {
-  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ || _)({ x => !x }, Success(true))
+  def apply(t: T): Try[Boolean] = map2lazy(p1(t), p2(t))(_ || _)(using { x => !x }, Success(true))
 
   /**
     * The tryMap function for Predicate. Note that for operators such as >, <=, etc. it is essential

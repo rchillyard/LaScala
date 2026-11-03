@@ -7,6 +7,7 @@ import org.scalatest.Inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.language.implicitConversions
 import scala.util.{Success, Try}
 
@@ -100,7 +101,7 @@ class ScalarSpec extends AnyFlatSpec with Matchers with Inside {
     val formatter = DateTimeFormatter.ofPattern(pattern)
     //noinspection ScalaUnusedSymbol
     // CONSIDER something with this
-    val gloriousTwelfth = formatter.parse("12-Aug-16")
+    @unused val gloriousTwelfth = formatter.parse("12-Aug-16")
     val x = DateScalar("12-Aug-16")
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
   }

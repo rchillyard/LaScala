@@ -13,14 +13,13 @@ import com.phasmidsoftware.lascala.values.{DateScalar, Scalar, Tuples}
 //import org.joda.time._
 //import org.joda.time.format._
 
-import scala.annotation.tailrec
-import scala.collection.GenTraversableOnce
+import scala.annotation.{tailrec, unused}
 import scala.io.Source
 import scala.util._
 import scala.util.parsing.combinator._
 
 /**
-  * ProductStream is a monadic trait which provides a Stream of Tuples (tuples) and a Header (header).
+  * ProductStream is a monadic trait which provides a LazyList of Tuples (tuples) and a Header (header).
   * Thus it is well-suited for use as an ingest mechanism of CSV files.
   *
   * The polymorphic type X is a Tuple of some count.
@@ -42,9 +41,9 @@ trait ProductStream[X <: Product] {
   def carper(s: String): Unit
 
   /**
-    * @return a Stream of tuples
+    * @return a LazyList of tuples
     */
-  def tuples: Stream[X]
+  def tuples: LazyList[X]
 
   /**
     * @return a materialized (non-lazy) List version of the tuples.
@@ -66,7 +65,7 @@ trait ProductStream[X <: Product] {
     * @param f function to be applied to each tuple
     * @return a ProductStream of transformed tuples
     */
-  def flatMap[Y <: Product](f: X => GenTraversableOnce[Y]): ProductStream[Y] =
+  def flatMap[Y <: Product](f: X => IterableOnce[Y]): ProductStream[Y] =
     ConcreteProductStream[Y](header, tuples flatMap f)
 
   /**
@@ -92,10 +91,10 @@ trait ProductStream[X <: Product] {
   def get(i: Int): Option[X] = if (i >= 0 && i < asList.size) Some(asList(i)) else None
 
   /**
-    * @return a Try of a Stream of Maps, each map corresponding to a row, such that the keys are the column names (from the header)
+    * @return a Try of a LazyList of Maps, each map corresponding to a row, such that the keys are the column names (from the header)
     *         and the values are the tuple values
     */
-  def asMaps: Try[Stream[Map[String, Scalar]]]
+  def asMaps: Try[LazyList[Map[String, Scalar]]]
 }
 
 case class Header(columns: List[String], allowPartial: Boolean = false) {
@@ -117,14 +116,14 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
   override def carper(s: String): Unit = System.err.println(s)
 
   /**
-    * Method asMaps converts this ProductStream into a Stream of Map[String,Scalar] objects, one per row.
+    * Method asMaps converts this ProductStream into a LazyList of Map[String,Scalar] objects, one per row.
     * The keys for the map are derived from the header and the values from the tuple elements.
     *
-    * @return a Stream of Map[String,Scalar] objects
+    * @return a LazyList of Map[String,Scalar] objects
     */
-  def asMaps: Try[Stream[Map[String, Scalar]]] = {
+  def asMaps: Try[LazyList[Map[String, Scalar]]] = {
     def m(t: X): Try[Map[String, Scalar]] = {
-      val xWys = t.productIterator zip header.columns.toIterator map {
+      val xWys = t.productIterator zip header.columns.iterator map {
         case (v, k) => Scalar.tryScalarTuple(k, v)
       }
       for (xWs <- FP.sequence(xWys.toSeq)) yield FP.toMap(xWs)
@@ -136,9 +135,9 @@ abstract class ProductStreamBase[X <: Product] extends ProductStream[X] {
 }
 
 /**
-  * Abstract class for ProductStream which additionally derives their header and tuples from parsing a Stream of Strings (one per row).
+  * Abstract class for ProductStream which additionally derives their header and tuples from parsing a LazyList of Strings (one per row).
   */
-abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[String]) extends ProductStreamBase[X] {
+abstract class TupleStreamBase[X <: Product](parser: CsvParser, @unused input: LazyList[String]) extends ProductStreamBase[X] {
 
   /**
     * May print to the SysErr stream as a side-effect if wsy is a Failure
@@ -159,14 +158,14 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
     * @param s the (row/line) String to be parsed
     * @return a Option[X]
     */
-  def stringToTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = stringToTryTuple(f, allowPartial)(s)
+  def stringToTuple(f: String => Try[Scalar], @unused allowPartial: Boolean = false)(s: String): Try[X] = stringToTryTuple(f)(s)
 
   protected lazy val wsy: Try[Seq[String]] = parser.parseRow(headerRow)
 
   protected def headerRow: String
 
   // CONSIDER inlining this method
-  private def stringToTryTuple(f: String => Try[Scalar], allowPartial: Boolean = false)(s: String): Try[X] = {
+  private def stringToTryTuple(f: String => Try[Scalar])(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isValidRow(ws.size)
 
     for {
@@ -183,19 +182,19 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, input: Stream[St
   * Case class which implements ProductStream where the header and tuples are specified directly
   *
   * @param header the header (names of columns)
-  * @param tuples the tuples, as a Stream
+  * @param tuples the tuples, as a LazyList
   * @tparam X the tuple type
   */
-case class ConcreteProductStream[X <: Product](header: Header, tuples: Stream[X]) extends ProductStreamBase[X]
+case class ConcreteProductStream[X <: Product](header: Header, tuples: LazyList[X]) extends ProductStreamBase[X]
 
 /**
   * Case class which implements ProductStream where the header and tuples are specified indirectly, by providing
-  * a parser and Stream[String] such that the element types of the resulting tuples will be inferred from their representative
+  * a parser and LazyList[String] such that the element types of the resulting tuples will be inferred from their representative
   * Strings.
   *
   * @tparam X a Tuple which should correspond with the number of (and types inferred from) the values.
   */
-case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHeader: Header) extends TupleStreamBase[X](parser, input) {
+case class CSV[X <: Product](parser: CsvParser, input: LazyList[String], givenHeader: Header) extends TupleStreamBase[X](parser, input) {
 
   def header: Header = getHeader(givenHeader)
 
@@ -204,9 +203,9 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHead
   /**
     * Method to define the tuples of this TupleStreamBase object.
     *
-    * @return a Stream of [X] objects
+    * @return a LazyList of [X] objects
     */
-  def tuples: Stream[X] = {
+  def tuples: LazyList[X] = {
     val xts = getStream map stringToTuple(parser.elementParser)
     // CONSIDER replacing with FP.toOption
     for (xt <- xts; x <- xt.recoverWith({ case t => carper(t.getLocalizedMessage); Failure(new Exception("logged already")) }).toOption) yield x
@@ -216,55 +215,55 @@ case class CSV[X <: Product](parser: CsvParser, input: Stream[String], givenHead
     * method to project ("slice") a ProductStream into a single column
     *
     * @param key the name of the column
-    * @return an Option of Stream[Y] where Y is the type of the column
+    * @return an Option of LazyList[Y] where Y is the type of the column
     */
-  def column[Y](key: String): Option[Stream[Y]] = column(header.columns.indexOf(key))
+  def column[Y](key: String): Option[LazyList[Y]] = column(header.columns.indexOf(key))
 
   /**
     * method to project ("slice") a ProductStream into a single column
     *
     * @param i the index of the column (0 on the left, n-1 on the right)
-    * @return an Option of Stream[Y] where Y is the type of the column
+    * @return an Option of LazyList[Y] where Y is the type of the column
     */
-  def column[Y](i: Int): Option[Stream[Y]] =
+  def column[Y](i: Int): Option[LazyList[Y]] =
     if (i >= 0) Some(tuples map CSV.project[X, Y](i))
     else None
 
-  def getStream: Stream[String] = if (givenHeader.columns.isEmpty) input.tail else input
+  def getStream: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
 }
 
 /**
   * Case class which implements ProductStream where the header and tuples are specified indirectly, by providing
-  * a parser and Stream[String] such that the element types of the resulting tuples will be Strings.
+  * a parser and LazyList[String] such that the element types of the resulting tuples will be Strings.
   *
   * @tparam X a Tuple which should correspond with the number of values (all types of the tuple should be String).
   */
-case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], givenHeader: Header, allowPartial: Boolean = false) extends TupleStreamBase[X](parser, input) {
+case class TupleStream[X <: Product](parser: CsvParser, input: LazyList[String], givenHeader: Header, allowPartial: Boolean = false) extends TupleStreamBase[X](parser, input) {
 
   def header: Header = getHeader(givenHeader)
 
   // CONSIDER replacing with FP.toOption
-  def tuplesPartial(allowPartial: Boolean = false): Stream[X] = for (t <- getStream map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
+  def tuplesPartial(allowPartial: Boolean = false): LazyList[X] = for (t <- getStream map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
 
-  def tuples: Stream[X] = tuplesPartial()
+  def tuples: LazyList[X] = tuplesPartial()
 
-  def getStream: Stream[String] = if (givenHeader.columns.isEmpty) input.tail else input
+  def getStream: LazyList[String] = if (givenHeader.columns.isEmpty) input.tail else input
 
   /**
     * method to project ("slice") a ProductStream into a single column
     *
     * @param key the name of the column
-    * @return an Option of Stream[String]
+    * @return an Option of LazyList[String]
     */
-  def column(key: String): Option[Stream[String]] = column(header.columns.indexOf(key))
+  def column(key: String): Option[LazyList[String]] = column(header.columns.indexOf(key))
 
   /**
     * method to project ("slice") a ProductStream into a single column
     *
     * @param i the index of the column (0 on the left, n-1 on the right)
-    * @return an Option of Stream[String]
+    * @return an Option of LazyList[String]
     */
-  def column(i: Int): Option[Stream[String]] =
+  def column(i: Int): Option[LazyList[String]] =
     if (i >= 0) Some(tuples map TupleStream.project[X](i))
     else None
 
@@ -275,35 +274,35 @@ case class TupleStream[X <: Product](parser: CsvParser, input: Stream[String], g
 object TupleStream {
   val emptyHeader = Header(List())
 
-  def apply[X <: Product](input: Stream[String]): TupleStream[X] = apply(input, emptyHeader)
+  def apply[X <: Product](input: LazyList[String]): TupleStream[X] = apply(input, emptyHeader)
 
-  def apply[X <: Product](input: Stream[String], optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
+  def apply[X <: Product](input: LazyList[String], optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  //  def apply[X <: Product](parser: CsvParser, input: Stream[String], optionalHeader: Header): TupleStream[X] = apply(parser, input, optionalHeader)
+  //  def apply[X <: Product](parser: CsvParser, input: LazyList[String], optionalHeader: Header): TupleStream[X] = apply(parser, input, optionalHeader)
 
   def apply[X <: Product](input: InputStream): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: InputStream, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromInputStream(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: File): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: File, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: URL): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URL, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromURL(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromURL(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: URI): TupleStream[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URI, optionalHeader: Header): TupleStream[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): TupleStream[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
 
   def project[X <: Product](i: Int)(x: X): String = x.productElement(i).asInstanceOf[String]
 
@@ -323,35 +322,35 @@ object TupleStream {
 object CSV {
   val emptyHeader = Header(List())
 
-  def apply[X <: Product](input: Stream[String]): CSV[X] = apply(input, emptyHeader)
+  def apply[X <: Product](input: LazyList[String]): CSV[X] = apply(input, emptyHeader)
 
-  def apply[X <: Product](input: Stream[String], optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
+  def apply[X <: Product](input: LazyList[String], optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  //  def apply[X <: Product](parser: CsvParser, input: Stream[String], optionalHeader: Header): CSV[X] = apply(parser, input, optionalHeader)
+  //  def apply[X <: Product](parser: CsvParser, input: LazyList[String], optionalHeader: Header): CSV[X] = apply(parser, input, optionalHeader)
 
   def apply[X <: Product](input: InputStream): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: InputStream, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Header): CSV[X] = apply(parser, Source.fromInputStream(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: InputStream, optionalHeader: Header): CSV[X] = apply(parser, Source.fromInputStream(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: File): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: File, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: File, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: URL): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URL, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): CSV[X] = apply(parser, Source.fromURL(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URL, optionalHeader: Header): CSV[X] = apply(parser, Source.fromURL(input).getLines().to(LazyList), optionalHeader)
 
   def apply[X <: Product](input: URI): CSV[X] = apply(input, emptyHeader)
 
   def apply[X <: Product](input: URI, optionalHeader: Header): CSV[X] = apply(CsvParser(), input, optionalHeader)
 
-  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().toStream, optionalHeader)
+  def apply[X <: Product](parser: CsvParser, input: URI, optionalHeader: Header): CSV[X] = apply(parser, Source.fromFile(input).getLines().to(LazyList), optionalHeader)
 
   def project[X <: Product, Y](i: Int)(x: X): Y = x.productElement(i).asInstanceOf[Y]
 }
@@ -388,7 +387,7 @@ case class CsvParser(
 object CsvParser {
   val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s", "d-MMM-yy")
   // etc.
-  val dateParser: Trial[String, Scalar] = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
+  val dateParser: Trial[String, Scalar] = Trial[String, Scalar](parseDate(dateFormatStrings))
 
   /**
     * The default parser will parse most dates, will parse quoted strings, integers, booleans and floating point values (as Double).

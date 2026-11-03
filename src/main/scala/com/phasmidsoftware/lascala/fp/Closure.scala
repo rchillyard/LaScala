@@ -9,7 +9,7 @@ import com.phasmidsoftware.lascala.fp.RenderableFunction.{asFunctionType, callBy
 import com.phasmidsoftware.lascala.{Layout, Renderable}
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 import scala.language.{implicitConversions, postfixOps}
 import scala.reflect.ClassTag
 import scala.util._
@@ -39,7 +39,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     *
     * @return a RenderableFunction[R] wrapped in Try.
     */
-  def partiallyApply: Try[Closure[_, R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Either[_, Closure[_, _]]]])) yield Closure(g)
+  def partiallyApply: Try[Closure[?, R]] = for (g <- f.partiallyApplyParameters(ps.toList.asInstanceOf[Seq[Either[?, Closure[?, ?]]]])) yield Closure(g)
 
   /**
     * Method to determine if this Closure is fully applied. That's to say we can invoke apply() without
@@ -62,7 +62,7 @@ case class Closure[T, R: ClassTag](f: RenderableFunction[R], ps: Parameter[T]*) 
     *          which is to say, if index is not specified, the new parameter will be appended to the list).
     * @return a new Closure with the same function but with the expanded list
     */
-  def bind(p: Parameter[T], i: Int = ps.size): Closure[T, R] = Closure(f, ps :+ p: _*)
+  def bind(p: Parameter[T], @unused i: Int = ps.size): Closure[T, R] = Closure(f, ps :+ p*)
 
   /**
     * The arity of this Closure.
@@ -141,7 +141,7 @@ object Closure {
     */
   def createVarArgsClosure[T: ClassTag](tps: Parameter[T]*): Closure[T, Seq[T]] = {
 
-    val (tss: Seq[Seq[T]], _tps: Seq[Parameter[T]]) = VarArgs[T, T, Closure[_, T]](tps.toList, identity).split
+    val (tss: Seq[Seq[T]], _tps: Seq[Parameter[T]]) = VarArgs[T, T, Closure[?, T]](tps.toList, identity).split
 
     /**
       * Get the number of variables/functions
@@ -169,8 +169,8 @@ object Closure {
       case _ => throw RenderableFunctionException(s"getVarArgsFunction: the maximum number of non-constant args is 3 but $m requested")
     }
 
-    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m).toList
-    Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps: _*)
+    val cs: ParamClasses = (LazyList.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take m).toList
+    Closure(RenderableFunction.apply(m, FunctionString("mkList", m), callByValue(m), cs)(f), _tps*)
   }
 
   //  private def nonRecursive[T,R](closure: Closure[T, R]): Boolean = closure.ps.find(_.equals(closure)).isEmpty

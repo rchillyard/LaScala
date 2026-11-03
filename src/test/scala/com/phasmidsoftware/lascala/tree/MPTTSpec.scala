@@ -3,6 +3,7 @@ package com.phasmidsoftware.lascala.tree
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.util.Try
 
 /**
@@ -47,7 +48,7 @@ class MPTTSpec extends AnyFlatSpec with Matchers {
     // NOTE: that we should only see Aardvark because is is included and so we don't need to look at the Story of B
     m1.containsAny(Seq(Some(m2), Some(m3)).view.map(x => {
       println(x); x
-    }).toIterator) shouldBe true
+    }).iterator) shouldBe true
   }
   it should "only look at both entries" in {
     val m1 = MPTTEntry("A")(0, 3)
@@ -55,7 +56,7 @@ class MPTTSpec extends AnyFlatSpec with Matchers {
     val m3 = MPTTEntry("The Story of B")(4, 5)
     m1.containsAny(Seq(Some(m3), Some(m2)).view.map(x => {
       println(x); x
-    }).toIterator) shouldBe true
+    }).iterator) shouldBe true
   }
 
   behavior of "MPTTEntry.containedByAny"
@@ -67,8 +68,8 @@ class MPTTSpec extends AnyFlatSpec with Matchers {
     // NOTE: that we should only see A because is is included and so we don't need to look at the Story of B
     m2.containedByAny(Seq(Some(m0), Some(m1)).view.map(x => {
       println(x); x
-    }).toIterator) shouldBe true
-    m3.containedByAny(Seq(Some(m0), Some(m1)).view.toIterator) shouldBe true
+    }).iterator) shouldBe true
+    m3.containedByAny(Seq(Some(m0), Some(m1)).view.iterator) shouldBe true
   }
   it should " should show A and B" in {
     val m0 = MPTTEntry("A")(0, 3)
@@ -77,10 +78,10 @@ class MPTTSpec extends AnyFlatSpec with Matchers {
     val m4 = MPTTEntry("C food diet")(8, 9)
     m2.containedByAny(Seq(Some(m1), Some(m0)).view.map(x => {
       println(x); x
-    }).toIterator) shouldBe true
+    }).iterator) shouldBe true
     m4.containedByAny(Seq(Some(m1), Some(m0)).view.map(x => {
       println(x); x
-    }).toIterator) shouldBe false
+    }).iterator) shouldBe false
   }
 
   behavior of "real-life GeneralTree"
@@ -186,5 +187,5 @@ class MPTTSpec extends AnyFlatSpec with Matchers {
   //    r shouldBe None
   //  }
 
-  def testMpttLookup(mPTT: MPTT[String], x: String, y: String): Boolean = x.contains(y) == (x.compareTo(y) < 1)
+  def testMpttLookup(@unused mPTT: MPTT[String], x: String, y: String): Boolean = x.contains(y) == (x.compareTo(y) < 1)
 }

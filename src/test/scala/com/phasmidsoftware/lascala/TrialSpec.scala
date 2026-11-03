@@ -4,6 +4,7 @@ import org.scalatest.Inside
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.util._
 
 /**
@@ -144,9 +145,9 @@ class TrialSpec extends AnyFlatSpec with Matchers with Inside {
     trialDoubleIntString("10.0X") should matchPattern { case Success("10.0X") => }
   }
   ":|" should "keep the Failures correctly" in {
-    def failure1(x: String): Try[String] = Failure(new Exception("1"))
+    def failure1(@unused x: String): Try[String] = Failure(new Exception("1"))
 
-    def failure2(x: String): Try[String] = Failure(new Exception("2"))
+    def failure2(@unused x: String): Try[String] = Failure(new Exception("2"))
 
     val r = Trial(failure1) :| Trial(failure2)
     val r1 = r("")
@@ -156,13 +157,12 @@ class TrialSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   "|:" should "keep the Failures correctly" in {
-    def failure1(x: String): Try[String] = Failure(new Exception("1"))
+    def failure1(@unused x: String): Try[String] = Failure(new Exception("1"))
 
-    def failure2(x: String): Try[String] = Failure(new Exception("2"))
+    def failure2(@unused x: String): Try[String] = Failure(new Exception("2"))
 
     //noinspection ConvertibleToMethodValue,ConvertibleToMethodValue
-    // XXX we actually need the place-holders here
-    val r = failure1 _ |: failure2 _ |: Trial.none
+    val r = failure1 |: failure2 |: Trial.none
     val r1 = r("x")
     r1 should matchPattern { case Failure(_) => }
     inside(r1) {

@@ -16,7 +16,7 @@ class ArgsSpec extends AnyFlatSpec with Matchers {
       val (y, a3) = a2.get(classOf[java.lang.Boolean]).get
       a3.isEmpty shouldBe true
       x shouldBe "hello"
-      y shouldBe true
+      (y shouldBe true): Unit
     }
 
     mainMethod(List("hello", true))

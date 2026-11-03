@@ -6,6 +6,7 @@ import com.phasmidsoftware.lascala.values.Orderable.{OrderableLocalDate, Orderab
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.language.postfixOps
 import scala.util.Success
 
@@ -47,18 +48,16 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
     xt.get.compare(1) shouldBe -1
   }
   "2016-01-01" should "result in OrderableString" in {
-    implicit val pattern = ""
     val dt = OrderableString.unit("2016-01-01")
     dt shouldBe "2016-01-01"
   }
   "zero string" should "result in OrderableString of length zero" in {
-    implicit val pattern = ""
     //noinspection ScalaUnusedSymbol
-    val dt = OrderableString.zero
+    @unused val dt = OrderableString.zero
     // TODO put a test here
   }
   "string1" should "be the string string1" in {
-    OrderableString compare("string", "string") shouldBe 0
+    OrderableString.compare("string", "string") shouldBe 0
   }
   "string" should "be the string from string" in {
     implicit val pattern = ""
@@ -67,14 +66,12 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
   }
   "01/01/2016" should "result in string using via" in {
     val m: Map[String, String] = Map("k" -> "v")
-    implicit val pattern = "MM/dd/uuuu"
     val st = OrderableString.viaLookup("k", m get)
     st should matchPattern { case Success("v") => }
   }
   // CONSIDER we should move and modify the date-specific tests to IncrementableSpec
   "2016-01-01" should "result in OrderableDate" in {
-    implicit val pattern = ""
-    val dt = LocalDate of(2016, 2, 1)
+    val dt = LocalDate.of(2016, 2, 1)
     val dt2 = OrderableLocalDate.unit(dt)
     dt2 shouldBe dt
   }
@@ -89,22 +86,20 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
     dt should matchPattern { case Success(_) => }
   }
   it should "result in LocalDate using via" in {
-    val dt = LocalDate of(2016, 2, 1)
+    val dt = LocalDate.of(2016, 2, 1)
     val m: Map[String, LocalDate] = Map("k" -> dt)
-    implicit val pattern = "MM/dd/uuuu"
     val dt2 = OrderableLocalDate.viaLookup("k", m get)
     dt2 should matchPattern { case Success(_) => }
   }
   "zero" should "result in date now" in {
-    implicit val pattern = ""
     val dt1 = OrderableLocalDate zero
     val dt2 = LocalDate.now()
     dt1 shouldBe dt2
   }
   "compare LocalDates 2016/02/01 2016/02/01 " should "result zero" in {
-    val dt1 = LocalDate of(2016, 2, 1)
-    val dt2 = LocalDate of(2016, 2, 1)
-    OrderableLocalDate compare(dt1, dt2) shouldBe 0
+    val dt1 = LocalDate.of(2016, 2, 1)
+    val dt2 = LocalDate.of(2016, 2, 1)
+    OrderableLocalDate.compare(dt1, dt2) shouldBe 0
   }
   "parse" should "transform 1 into orderable 1" in {
     implicit val pattern = ""
@@ -123,7 +118,7 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
   val z: Any = "2"
   it should "evaluate " + gt + " correctly" in {
     Orderable.comparison(gt, x, y) should matchPattern { case Success(false) => }
-    Orderable.comparison(gt, LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(false) => }
+    Orderable.comparison(gt, LocalDate.of(2017, 2, 1), LocalDate.of(2017, 2, 28)) should matchPattern { case Success(false) => }
     Orderable.comparison(gt, "Aardvark", "Abracadabra") should matchPattern { case Success(false) => }
   }
   it should "evaluate lt correctly" in {
@@ -132,7 +127,7 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
     Orderable.comparison(lt, 9, "10") should matchPattern { case Success(true) => }
     Orderable.comparison(lt, "9", 10) should matchPattern { case Success(true) => }
     Orderable.comparison(lt, "9", "10") should matchPattern { case Success(true) => }
-    Orderable.comparison(lt, LocalDate of(2017, 2, 1), LocalDate of(2017, 2, 28)) should matchPattern { case Success(true) => }
+    Orderable.comparison(lt, LocalDate.of(2017, 2, 1), LocalDate.of(2017, 2, 28)) should matchPattern { case Success(true) => }
     Orderable.comparison(lt, "Aardvark", "Abracadabra") should matchPattern { case Success(true) => }
   }
   it should "evaluate " + eq + " correctly" in {

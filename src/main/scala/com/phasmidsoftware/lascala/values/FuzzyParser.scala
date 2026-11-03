@@ -7,6 +7,7 @@ package com.phasmidsoftware.lascala.values
 
 import com.phasmidsoftware.lascala.predicate.PredicateException
 
+import scala.annotation.nowarn
 import scala.language.implicitConversions
 import scala.math.Numeric.{DoubleIsFractional, IntIsIntegral}
 import scala.util.Try
@@ -29,6 +30,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
   */
 class FuzzyParser extends JavaTokenParsers {
 
+  @nowarn("msg=unused implicit parameter") // the Fractional bound stays so that the signature of parseFuzzy does not change
   def parseFuzzy[T: Fractional](s: String): Try[Fuzzy[T]] = {
     parseAll(fuzzy, s) match {
       // CHECK that the following cast is OK. I don't really think it is.
@@ -38,13 +40,13 @@ class FuzzyParser extends JavaTokenParsers {
     }
   }
 
-  def fuzzy: Parser[Fuzzy[_]] = ((fractionalNumber ~ opt(fuzziness)) | wholeNumber) ^^ {
+  def fuzzy: Parser[Fuzzy[?]] = ((fractionalNumber ~ opt(fuzziness)) | wholeNumber) ^^ {
     case x ~ fo => fo match {
-      case Some(f: String) => Fuzzy[Double](x.toString, Fuzziness(f))(FuzzyParser.FractionalStringDouble, FuzzyParser.FractionalStringDouble)
-      case _ => Exact(x.toString.toDouble)(FuzzyParser.FractionalStringDouble)
+      case Some(f: String) => Fuzzy[Double](x.toString, Fuzziness(f))(using FuzzyParser.FractionalStringDouble, FuzzyParser.FractionalStringDouble)
+      case _ => Exact(x.toString.toDouble)(using FuzzyParser.FractionalStringDouble)
     }
 
-    case w => Exact.fromInt[Int](w.toString.toInt)(FuzzyParser.FractionalInt)
+    case w => Exact.fromInt[Int](w.toString.toInt)(using FuzzyParser.FractionalInt)
   }
 
   def fuzziness: Parser[String] = """~""" | """(""" ~> wholeNumber <~ """)"""

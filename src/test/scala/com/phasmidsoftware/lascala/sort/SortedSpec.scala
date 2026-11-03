@@ -19,8 +19,6 @@ import scala.annotation.nowarn
 @nowarn("cat=deprecation")
 class SortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
-  import com.phasmidsoftware.lascala.sort.Comparison._
-
   behavior of "Sorted"
 
   it should "sort List[Int]" in {
@@ -41,21 +39,21 @@ class SortedSpec extends AnyFlatSpec with Matchers with Futures with ScalaFuture
   it should "sort List[Char] given an explicit Comparer" in {
     val charComparer: Comparer[Char] = Ordering[Char]
     val list = List('b', 'c', 'a')
-    val sorted = Sorted(list)(charComparer.invert)
+    val sorted = Sorted(list)(using charComparer.invert)
     sorted() shouldBe List('c', 'b', 'a')
   }
   ignore should "sort List[Composite] by Int then String" in {
     val list = List(Composite(3, "c"), Composite(1, "a"), Composite(1, "z"), Composite(2, "b"))
     val comparer1: Comparer[Composite] = Composite.OrderingCompositeInt
     val comparer2: Comparer[Composite] = Composite.OrderingCompositeString
-    val sorted = Sorted(list)(comparer1).sort(comparer2)
+    val sorted = Sorted(list)(using comparer1).sort(comparer2)
     sorted() shouldBe List(Composite(1, "a"), Composite(1, "z"), Composite(2, "b"), Composite(3, "c"))
   }
   ignore should "sort List[Composite] by String then Int" in {
     val list = List(Composite(3, "c"), Composite(1, "a"), Composite(1, "z"), Composite(2, "b"))
     val comparer1: Comparer[Composite] = Composite.OrderingCompositeString
     val comparer2: Comparer[Composite] = Composite.OrderingCompositeInt
-    val sorted = Sorted(list)(comparer1).sort(comparer2)
+    val sorted = Sorted(list)(using comparer1).sort(comparer2)
     sorted() shouldBe List(Composite(1, "a"), Composite(2, "b"), Composite(3, "c"), Composite(1, "z"))
   }
   it should "sort asynchronously" in {

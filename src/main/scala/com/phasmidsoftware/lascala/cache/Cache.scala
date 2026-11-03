@@ -2,6 +2,7 @@ package com.phasmidsoftware.lascala.cache
 
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.{nowarn, unused}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -55,7 +56,7 @@ trait Expiring[K] {
   * @tparam K they key type
   * @tparam V the value type
   */
-case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(carper) {
+case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(using carper) {
   /**
     * method to remove a key from the cache
     *
@@ -82,7 +83,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
   * @tparam K they key type
   * @tparam V the value type
   */
-case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit) extends TryFulfillingExpiringCache[K, V](evaluate)(carper) {
+case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit) extends TryFulfillingExpiringCache[K, V](evaluate)(using carper) {
   /**
     * method to remove a key from the cache
     *
@@ -123,7 +124,7 @@ case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String
   * @tparam V the value type
   * @tparam M a container (a monad) such as Try, Option, Future.
   */
-abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends AbstractFulfillingCache[K, V, M](m, evaluationFunc)(carper) with Expiring[K]
+abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends AbstractFulfillingCache[K, V, M](m, evaluationFunc)(using carper) with Expiring[K]
 
 /**
   * This abstract class implements a (mutable, obviously) Cache (aka Memoization) of K,V key-value pairs.
@@ -149,7 +150,7 @@ abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluatio
   * @tparam V the value type
   * @tparam M a container (a monad) such as Try, Option, Future.
   */
-abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends Cache[K, V, M] with Mappish[K, V, M] with Fulfilling[K, V, M] {
+abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit @unused carper: String => Unit) extends Cache[K, V, M] with Mappish[K, V, M] with Fulfilling[K, V, M] {
 
   /**
     * Return a V value for the given K value. This method is not normally called by users of a cache
@@ -202,7 +203,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](), evaluationFunc)(carper) {
+abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](), evaluationFunc)(using carper) {
 
   /**
     * Define T as Option[V]
@@ -389,6 +390,7 @@ object Wrapper {
   * @tparam V value type
   * @tparam M a container which is a monad, such as Option, Future, Try.
   */
+@nowarn("cat=deprecation") // CacheMap is a mutable.HashMap (inheriting from which is deprecated); changing that would change the API
 abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.HashMap[K, V] {
   //  abstract class CacheMap[K, V, M[_], H[_,_] <: mutable.MapLike[K,V,H]](val wrapper: Wrapper[M]) extends H[K, V] {
   self =>
@@ -403,7 +405,7 @@ abstract class CacheMap[K, V, M[_]](val wrapper: Wrapper[M]) extends mutable.Has
     */
   def getOrElseUpdateM(k: K, f: K => M[V]): M[V] = {
     def doUpdate(v: V): M[V] = {
-      self.put(k, v); wrapper.unit(v)
+      self.put(k, v): Unit; wrapper.unit(v)
     }
 
     get(k) match {

@@ -6,6 +6,7 @@ import com.phasmidsoftware.lascala.parser.Valuable
 import com.phasmidsoftware.lascala.parser.rpn.{Comparand, RPN}
 import com.phasmidsoftware.lascala.values.Orderable
 
+import scala.annotation.unused
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -116,7 +117,7 @@ abstract class BaseRule[T](name: String) extends Rule[T] {
   * @tparam T the underlying type of this Rule
   */
 class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
-  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1 transform(f, g), r2 transform(f, g))
+  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new And[U](r1.transform(f, g), r2.transform(f, g))
 
   def apply(): Try[Boolean] = map2(r1(), r2())(_ && _)
 
@@ -134,7 +135,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[And[U]] =
-    for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new And[U](s1, s2)
+    for (s1 <- r1.liftTransform(lf, rf); s2 <- r2.liftTransform(lf, rf)) yield new And[U](s1, s2)
 }
 
 /**
@@ -146,7 +147,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
   * @tparam T the underlying type of this Rule
   */
 class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
-  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new Or[U](r1 transform(f, g), r2 transform(f, g))
+  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new Or[U](r1.transform(f, g), r2.transform(f, g))
 
   def apply(): Try[Boolean] = map2(r1(), r2())(_ || _)
 
@@ -164,7 +165,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
     * @return a Try[Rule[T] which is equivalent (truth-wise) to this Rule.
     **/
   def liftTransform[U: Ordering](lf: (T) => Try[U], rf: (T) => Try[U]): Try[Or[U]] =
-    for (s1 <- r1 liftTransform(lf, rf); s2 <- r2 liftTransform(lf, rf)) yield new Or[U](s1, s2)
+    for (s1 <- r1.liftTransform(lf, rf); s2 <- r2.liftTransform(lf, rf)) yield new Or[U](s1, s2)
 }
 
 /**
@@ -176,7 +177,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
   */
 class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $p)") {
   self =>
-  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new BoundPredicate[U](f(t), p map g)
+  def transform[U: Ordering](f: (T) => U, g: (T) => U): Rule[U] = new BoundPredicate[U](f(t), p.map(g))
 
   def apply(): Try[Boolean] = p(t)
 
@@ -250,15 +251,14 @@ object Rule {
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
     val evaluateExpression: (String) => Try[X] = { s => RPN.evaluate[X](s) }
-    for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
+    for (r <- rt; z <- r.liftTransform(stringToTriedX, evaluateExpression)) yield z
   }
 
-  def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit pattern: String): Try[Rule[X]] = {
+  def convertFromStringRuleToOrderableRule[X: Orderable](rt: Try[Rule[String]], lookup: String => Option[X])(implicit @unused pattern: String): Try[Rule[X]] = {
     val stringToTriedX: (String) => Try[X] = { s => FP.optionToTry(lookup(s), new RuleException(s"cannot lookup value for $s")) }
     implicit val f = lookup
-    implicit val pattern = ""
     val evaluateExpression: (String) => Try[X] = { s => Comparand.evaluate[X](s) }
-    for (r <- rt; z <- r liftTransform(stringToTriedX, evaluateExpression)) yield z
+    for (r <- rt; z <- r.liftTransform(stringToTriedX, evaluateExpression)) yield z
   }
 
   def lift[T, U](f: T => U): T => Try[U] = { t => Try(f(t)) }

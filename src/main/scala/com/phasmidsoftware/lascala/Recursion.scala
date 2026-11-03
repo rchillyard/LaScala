@@ -2,7 +2,7 @@ package com.phasmidsoftware.lascala
 
 import com.phasmidsoftware.lascala.values.Orderable
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, unused}
 
 /**
   * Type class Counter.
@@ -132,7 +132,7 @@ object Recursion {
 //}
 
 object Factorial {
-  def f(x: Int, y: Int): Int = x
+  def f(x: Int, @unused y: Int): Int = x
 
   def g(x: BigInt, y: Int): BigInt = x * y
 

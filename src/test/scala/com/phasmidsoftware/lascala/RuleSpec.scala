@@ -55,7 +55,7 @@ class RuleSpec extends AnyFlatSpec with Matchers {
   ignore should "work with lookup function" in {
     val vars = Map("x" -> 0)
     val p: Rule[String] = new BoundPredicate("x", Func[String](_ == "0"))
-    val q: Rule[Int] = p transform(vars.apply, _.toInt)
+    val q: Rule[Int] = p.transform(vars.apply, _.toInt)
     q() should matchPattern { case Success(true) => }
   }
   ignore should """evaluate x>1.0K as true""" in {
@@ -63,7 +63,7 @@ class RuleSpec extends AnyFlatSpec with Matchers {
     val r = parser.parseAll(parser.condition, "x>1.0K")
     r should matchPattern { case parser.Success(_, _) => }
     val variables = Map("x" -> 2000.0)
-    implicit val lookup: String => Double = variables.apply _
+    implicit val lookup: String => Double = variables.apply
     val rule = r.get.asRule
     val truth: Rule[Double] = rule.transform(lookup, _.toDouble)
     truth() should matchPattern { case Success(true) => }

@@ -4,6 +4,7 @@ import com.phasmidsoftware.lascala.fp.{FP, Spy}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.unused
 import scala.io.Source
 import scala.util.Try
 
@@ -12,13 +13,13 @@ import scala.util.Try
   */
 class MPTTFunctionalSpec extends AnyFlatSpec with Matchers {
 
-  implicit object StringStringValueOps$ extends StringValueOps[String] {
+  implicit object StringStringValueOps extends StringValueOps[String] {
     def getParentKey(a: String): Option[String] = Some(a.substring(0, a.length - 1))
 
     def createValueFromKey(k: String, vo: => Option[String]): Option[String] = Some(k)
   }
 
-  implicit object StringIntValueOps$ extends StringValueOps[Int] {
+  implicit object StringIntValueOps extends StringValueOps[Int] {
     def getParentKey(a: Int): Option[String] = Some(a./(10).toString)
 
     def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption
@@ -30,13 +31,14 @@ class MPTTFunctionalSpec extends AnyFlatSpec with Matchers {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }
     val so = uo map (_.openStream)
-    val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines; w <- l.split("""\W+""")) yield w).toList
+    val wso = for (s <- so) yield (for (l <- Source.fromInputStream(s).getLines(); w <- l.split("""\W+""")) yield w).toList
     import scala.language.postfixOps
     val z: Seq[String] = wso match {
       case Some(ws) => ws map (_.toLowerCase) filterNot (_.isEmpty) distinct
       case _ => Seq[String]()
     }
     import UnvaluedBinaryTree._
+    @unused // The test that will use it is ignored for now.
     trait OrderingValueString extends Ordering[String] {
       def compare(x: String, y: String): Int = x.compareTo(y)
     }

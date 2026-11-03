@@ -174,7 +174,7 @@ object DateValue {
 }
 
 object SequenceValue {
-  def apply(xs: Seq[Any])(implicit conv: ValueMaker): SequenceValue = SequenceValue(Value.sequence(xs)(conv), xs)
+  def apply(xs: Seq[Any])(implicit conv: ValueMaker): SequenceValue = SequenceValue(Value.sequence(xs)(using conv), xs)
 }
 
 object Value {
@@ -227,7 +227,7 @@ object Value {
     * @return a sequence of Values
     */
   def sequence(ws: Seq[Any])(implicit conv: ValueMaker): Seq[Value] = {
-    trySequence(ws)(conv) match {
+    trySequence(ws)(using conv) match {
       case Success(as) => as
       case Failure(x) => throw new ValueException(s"cannot form sequence of Values from given sequence $ws", x)
     }

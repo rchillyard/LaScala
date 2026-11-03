@@ -68,15 +68,16 @@ object Orderable {
 
   def comparison(op: String, x: Any, y: Any): Try[Boolean] = {
     (x, y) match {
-      case (i: Int, j: Int) => comparisonTyped[Int](op, Success(i), Success(j))(OrderableInt)
-      case (i: LocalDate, j: LocalDate) => comparisonTyped[LocalDate](op, Success(i), Success(j))(OrderableLocalDate)
+      case (i: Int, j: Int) => comparisonTyped[Int](op, Success(i), Success(j))(using OrderableInt)
+      case (i: LocalDate, j: LocalDate) => comparisonTyped[LocalDate](op, Success(i), Success(j))(using OrderableLocalDate)
       case (i: Int, j: String) =>
-        comparisonTyped[Int](op, Success(i), Try(j.toInt))(OrderableInt)
+        comparisonTyped[Int](op, Success(i), Try(j.toInt))(using OrderableInt)
       case (i: String, j: Int) =>
-        comparisonTyped[Int](op, Try(i.toInt), Success(j))(OrderableInt)
+        comparisonTyped[Int](op, Try(i.toInt), Success(j))(using OrderableInt)
       case (i: String, j: String) =>
         // CONSIDER dates in the following
-        comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(OrderableString)
+        comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(using OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(using OrderableString)
+      case _ => Failure(new OrderableException(s"cannot compare $x with $y"))
     }
   }
 
@@ -86,12 +87,12 @@ object Orderable {
     def notEqual(x: X, y: X): Boolean = !orderable.equiv(x, y)
 
     val cfy = op match {
-      case "lt" => Success(orderable.lt _)
-      case "le" => Success(orderable.lteq _)
-      case "eq" => Success(orderable.equiv _)
-      case "ne" => Success(notEqual _)
-      case "ge" => Success(orderable.gteq _)
-      case "gt" => Success(orderable.gt _)
+      case "lt" => Success(orderable.lt)
+      case "le" => Success(orderable.lteq)
+      case "eq" => Success(orderable.equiv)
+      case "ne" => Success(notEqual)
+      case "ge" => Success(orderable.gteq)
+      case "gt" => Success(orderable.gt)
       case _ => Failure(new OrderableException(s"cannot compare using op: $op (not supported)"))
     }
     for (cf <- cfy; b <- FP.map2(x, y)(cf)) yield b

@@ -41,7 +41,7 @@ trait RandomState[T] {
   /**
     * @return a stream of T values
     */
-  def toStream: Stream[T] = Stream.cons[T](get, next.toStream)
+  def toStream: LazyList[T] = LazyList.cons[T](get, next.toStream)
 }
 
 /**

@@ -8,7 +8,7 @@ package com.phasmidsoftware.lascala.values
 import com.phasmidsoftware.lascala.fp.FP
 import com.phasmidsoftware.lascala.values.Fuzzy.{toFractional, zero}
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 
 /**
   * Typeclass Fuzzy which adds fuzzy behavior to any type.
@@ -97,7 +97,6 @@ case class Exact[T](t: T)(implicit fractionalT: Fractional[T]) extends BaseNumer
 
 case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy[T](nominal) {
 
-  import Fuzzy._
   import Probability._
 
   private val frT: Fractional[T] = implicitly[Fractional[T]]
@@ -295,6 +294,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
     * @tparam V the V type
     * @return the equivalent function of f but with parameters flipped so that it is of type (U, T) => V
     */
+  @nowarn("msg=unused implicit parameter") // the Fractional bounds stay so that the signature of flip does not change
   protected def flip[U: Fractional, V: Fractional](f: (T, U) => V): (U, T) => V = Function.uncurried(FP.invert2(f.curried))
 
   /**
@@ -305,6 +305,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
     * @param isExact is Exact
     * @tparam U the underlying type of the result
     */
+  @nowarn("msg=unused implicit parameter") // the Fractional bound stays so that the signature of MappedFuzzy does not change
   class MappedFuzzy[U: Fractional](f_ : T => U, g_ : T => U, val isExact: Boolean) extends NumericFuzzy[U] {
 
     def getP(u: U): Option[Probability] = ???
@@ -391,7 +392,7 @@ object Fuzzy {
   }
 
 
-  private def makeFuzzyString[T: FromString](x: String, i: String, n: Int) = (x replaceAll("""\d""", "0")).substring(0, x.length - i.length + n) + i
+  private def makeFuzzyString(x: String, i: String, n: Int) = x.replaceAll("""\d""", "0").substring(0, x.length - i.length + n) + i
 
   val comparisonProbabilityThreshold = 0.5
 
@@ -403,6 +404,7 @@ object Fuzzy {
     * @tparam N the output type
     * @return the value converted to the output type
     */
+  @nowarn("msg=unused implicit parameter") // the Fractional bounds stay so that the signature of toFractional does not change
   def toFractional[M: Fractional, N: Fractional](m: M): N = m.asInstanceOf[N]
 
   def abs[T: Fractional](t: T): T = implicitly[Fractional[T]].abs(t)

@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.typesafe.config.ConfigFactory
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
@@ -49,7 +50,7 @@ object Spy {
     * @param x ignored
     * @return a new Spy instance
     */
-  def apply(x: Unit): Spy = new Spy() {}
+  def apply(@unused x: Unit): Spy = new Spy() {}
 
   lazy private val configuration = ConfigFactory.load()
 
@@ -84,7 +85,7 @@ object Spy {
     */
   def spy[X](message: => String, x: => X, b: Boolean = true)(implicit spyFunc: String => Spy, isEnabledFunc: Spy => Boolean): X = {
     val xy = Try(x) // evaluate x inside Try
-    if (b && spying && isEnabledFunc(mySpy)) doSpy(message, xy, b, spyFunc) // if spying is turned on, log an appropriate message
+    if (b && spying && isEnabledFunc(mySpy)) doSpy(message, xy, b, spyFunc): Unit // if spying is turned on, log an appropriate message
     xy.get // return the X value or throw the appropriate exception
   }
 
@@ -156,7 +157,7 @@ object Spy {
     * @param logger an (implicit) logger (if null, then this method returns false)
     * @return true if the logger is debugEnabled
     */
-  implicit def isEnabledFunc(x: Spy)(implicit logger: Logger): Boolean = logger != null && logger.isDebugEnabled
+  implicit def isEnabledFunc(@unused x: Spy)(implicit logger: Logger): Boolean = logger != null && logger.isDebugEnabled
 
   /**
     * Convenience method to get a logger for a class.
@@ -165,7 +166,7 @@ object Spy {
     * @param clazz class for which the logger is required
     * @return a Logger
     */
-  def getLogger(clazz: Class[_]): Logger = LoggerFactory.getLogger(clazz)
+  def getLogger(clazz: Class[?]): Logger = LoggerFactory.getLogger(clazz)
 
   /**
     * Get a println-type spyFunc that can be made an implicit val at the point of the spy method invocation so that spy invokes println statements instead of logging.
@@ -185,15 +186,15 @@ object Spy {
       case Success(x) => formatMessage(x, b)
       case Failure(t) => s"<<Exception thrown: ${t.getLocalizedMessage}>>"
     }
-    val msg = if (message contains brackets) message else message + ": " + brackets
+    val msg = if (message.contains(brackets)) message else message + ": " + brackets
     spyFunc(msg.replace(brackets, w))
   }
 
   private def formatMessage[X](x: X, b: Boolean): String = x match {
     case () => "()"
-    // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
+    // NOTE: If the value to be spied on is a LazyList, we arbitrarily show the first 5 items
     // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
-    case s: Stream[_] => s"[Stream showing at most 5 items] ${s.take(5).toList}"
+    case s: LazyList[?] => s"[LazyList showing at most 5 items] ${s.take(5).toList}"
     // NOTE: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
     case Success(z) =>
       val sb = new StringBuilder("")

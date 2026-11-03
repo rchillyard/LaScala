@@ -229,11 +229,11 @@ case class StringScalar(x: String, source: Any) extends BaseStringScalar(x, sour
 }
 
 abstract class BaseStringScalar(x: String, source: Any) extends BaseScalar(x, source) {
-  override def asValuable[X: Valuable]: Option[X] = Valuable[X].fromString(x)("").toOption
+  override def asValuable[X: Valuable]: Option[X] = Valuable[X].fromString(x)(using "").toOption
 
-  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Orderable[X].fromString(x)(pattern).toOption
+  override def asOrderable[X: Orderable](implicit pattern: String): Option[X] = Orderable[X].fromString(x)(using pattern).toOption
 
-  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Incrementable[X].fromString(x)(pattern).toOption
+  override def asIncrementable[X: Incrementable](implicit pattern: String = ""): Option[X] = Incrementable[X].fromString(x)(using pattern).toOption
 
   // CONSIDER this also needs fixing...
   override def asFractional[X: Fractional]: Option[X] = Try(x.toDouble.asInstanceOf[X]).toOption
@@ -368,7 +368,7 @@ object DoubleScalar {
 object RationalScalar {
   def apply(x: LongRational): RationalScalar = RationalScalar(x, x)
 
-  def apply(x: String): RationalScalar = RationalScalar(x)
+  def apply(x: String): RationalScalar = RationalScalar(Rational[Long](x), x)
 }
 
 object StringScalar {

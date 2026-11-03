@@ -50,7 +50,7 @@ class TryWithSpec extends AnyWordSpec with Matchers {
       })(_ => throw ex)
 
       result shouldBe Failure(ex)
-      val Failure(returnedException) = result
+      val Failure(returnedException) = result.runtimeChecked
       returnedException.getSuppressed shouldBe Array(inCloseException)
     }
 

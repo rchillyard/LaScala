@@ -2,6 +2,8 @@ package com.phasmidsoftware.lascala
 
 import java.util.Random
 
+import scala.annotation.unused
+
 /**
   * Very primitive implementation of a state-based random number generator
   *
@@ -122,13 +124,13 @@ case class GaussianRNG(n: Long) extends RNG_Java[(Double, Double)](n, GaussianRN
 }
 
 object RNG {
-  type SRNG[A] = Stream[RNG[A]]
+  type SRNG[A] = LazyList[RNG[A]]
 
-  def rngs[A](ar: RNG[A]): SRNG[A] = Stream.cons(ar, rngs(ar.next))
+  def rngs[A](ar: RNG[A]): SRNG[A] = LazyList.cons(ar, rngs(ar.next))
 
-  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map ( _() )
+  def values[A](ar: RNG[A]): LazyList[A] = rngs(ar) map ( _() )
 
-  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x()._1, x()._2) }
+  def values2[A](aAr: RNG[(A, A)]): LazyList[A] = rngs(aAr) flatMap { x => LazyList(x()._1, x()._2) }
 }
 
 object LongRNG {
@@ -164,7 +166,7 @@ object GaussianRNG {
 }
 
 object UniformDouble {
-  def apply(x: Double, y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
+  def apply(x: Double, @unused y: Unit): random.UniformDouble = if (x >= 0 && x <= 1) random.UniformDouble(x) else throw new IllegalArgumentException(s"$x is not in range 0..1")
 
   def +(x: Double, y: random.UniformDouble): Double = y + x
 }

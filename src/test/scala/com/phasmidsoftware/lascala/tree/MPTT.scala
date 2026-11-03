@@ -56,7 +56,7 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
     * @param ns the Seq of Node keys
     * @return an Iterator of Option of MPTTEntry[T]
     */
-  def mpttEntryIterator(ns: Seq[String]): Iterator[Option[MPTTEntry[T]]] = ns.toIterator.map(get)
+  def mpttEntryIterator(ns: Seq[String]): Iterator[Option[MPTTEntry[T]]] = ns.iterator.map(get)
 
   /**
     * Method to determine if given node is within given subtree
@@ -125,7 +125,7 @@ object MPTT {
       case EmptyWithIndex => None
       case IndexedNode(n, l, r) => n.get match {
         // NOTE: the extra annotation [T] and explicit reference to vo in the following is only necessary when compiling against 2.10
-        case Some(v) => Some(MPTTEntry[T](vo.getKeyFromValue(v), v)(l, r)(vo))
+        case Some(v) => Some(MPTTEntry[T](vo.getKeyFromValue(v), v)(l, r)(using vo))
         case _ => None
       }
       case _ => throw TreeException(s"cannot build MPTT from non-indexed node: $node")
