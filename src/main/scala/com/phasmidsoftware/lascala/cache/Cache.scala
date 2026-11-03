@@ -55,7 +55,7 @@ trait Expiring[K] {
   * @tparam K they key type
   * @tparam V the value type
   */
-case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(carper) {
+case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends SelfFulfillingExpiringCache[K, V](evaluationFunc)(using carper) {
   /**
     * method to remove a key from the cache
     *
@@ -82,7 +82,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
   * @tparam K they key type
   * @tparam V the value type
   */
-case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit) extends TryFulfillingExpiringCache[K, V](evaluate)(carper) {
+case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String => Unit) extends TryFulfillingExpiringCache[K, V](evaluate)(using carper) {
   /**
     * method to remove a key from the cache
     *
@@ -123,7 +123,7 @@ case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String
   * @tparam V the value type
   * @tparam M a container (a monad) such as Try, Option, Future.
   */
-abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends AbstractFulfillingCache[K, V, M](m, evaluationFunc)(carper) with Expiring[K]
+abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluationFunc: K => M[V])(implicit carper: String => Unit) extends AbstractFulfillingCache[K, V, M](m, evaluationFunc)(using carper) with Expiring[K]
 
 /**
   * This abstract class implements a (mutable, obviously) Cache (aka Memoization) of K,V key-value pairs.
@@ -202,7 +202,7 @@ abstract class AbstractFulfillingCache[K, V, M[_]](m: CacheMap[K, V, M], evaluat
   * @tparam K they key type
   * @tparam V the value type
   */
-abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](), evaluationFunc)(carper) {
+abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V])(implicit carper: String => Unit) extends AbstractExpiringCache[K, V, Option](new OptionHashMap[K, V](), evaluationFunc)(using carper) {
 
   /**
     * Define T as Option[V]

@@ -24,7 +24,7 @@ class ProductStreamSpec extends AnyFlatSpec with Matchers {
   }
   it should "support filter" in {
     val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), Stream(Tuple1("Hello"), Tuple1("World!")))
-    val d = c filter (_._1 startsWith "W")
+    val d = c.filter(_._1.startsWith("W"))
     val wts = d.tuples
     wts.size shouldBe 1
     wts.head match {

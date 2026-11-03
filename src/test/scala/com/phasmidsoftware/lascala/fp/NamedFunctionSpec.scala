@@ -8,8 +8,6 @@ package com.phasmidsoftware.lascala.fp
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.matching.Regex
-
 class NamedFunctionSpec extends AnyFlatSpec with Matchers {
 
   behavior of "NamedFunction"

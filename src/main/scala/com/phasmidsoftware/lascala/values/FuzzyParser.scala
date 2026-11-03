@@ -38,13 +38,13 @@ class FuzzyParser extends JavaTokenParsers {
     }
   }
 
-  def fuzzy: Parser[Fuzzy[_]] = ((fractionalNumber ~ opt(fuzziness)) | wholeNumber) ^^ {
+  def fuzzy: Parser[Fuzzy[?]] = ((fractionalNumber ~ opt(fuzziness)) | wholeNumber) ^^ {
     case x ~ fo => fo match {
-      case Some(f: String) => Fuzzy[Double](x.toString, Fuzziness(f))(FuzzyParser.FractionalStringDouble, FuzzyParser.FractionalStringDouble)
-      case _ => Exact(x.toString.toDouble)(FuzzyParser.FractionalStringDouble)
+      case Some(f: String) => Fuzzy[Double](x.toString, Fuzziness(f))(using FuzzyParser.FractionalStringDouble, FuzzyParser.FractionalStringDouble)
+      case _ => Exact(x.toString.toDouble)(using FuzzyParser.FractionalStringDouble)
     }
 
-    case w => Exact.fromInt[Int](w.toString.toInt)(FuzzyParser.FractionalInt)
+    case w => Exact.fromInt[Int](w.toString.toInt)(using FuzzyParser.FractionalInt)
   }
 
   def fuzziness: Parser[String] = """~""" | """(""" ~> wholeNumber <~ """)"""

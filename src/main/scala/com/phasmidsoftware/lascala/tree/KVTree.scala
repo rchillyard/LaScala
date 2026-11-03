@@ -137,7 +137,7 @@ abstract class GeneralKVTreeBuilder[K, V](implicit vo: ValueOps[K, V]) extends T
     tree match {
       case x: StructuralTree[K, V] =>
         // XXX: the following is somewhat ugly but it is necessary to explicitly pass the vo parameter
-        for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(vo)) yield n
+        for (k <- vo.getParentKey(a); n <- x.findByParentKey(k)(using vo)) yield n
       case _ => None
     }
 

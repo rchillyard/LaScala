@@ -159,7 +159,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   "liftOptionTry" should "succeed" in {
     val map = Map("a" -> 1)
-    val convertStringToInt = map.apply _
+    val convertStringToInt = map.apply
     val fOptionToTry = liftOptionTry(convertStringToInt)
     fOptionToTry(Some("a")) should matchPattern { case Success(1) => }
     fOptionToTry(None) should matchPattern { case Failure(_) => }

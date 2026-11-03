@@ -229,7 +229,7 @@ class Rational[N: FiniteIntegral](numerator: N, denominator: N) extends Ordered[
     * @tparam M the underlying type of the result
     * @return a Rational[M] that is equal in value to this
     */
-  def toRational[M: FiniteIntegral]: Rational[M] = Rational(Rational.convertToM(numerator)(implicitly[FiniteIntegral[N]], implicitly[FiniteIntegral[M]]), Rational.convertToM(denominator)(implicitly[FiniteIntegral[N]], implicitly[FiniteIntegral[M]]))
+  def toRational[M: FiniteIntegral]: Rational[M] = Rational(Rational.convertToM(numerator)(using implicitly[FiniteIntegral[N]], implicitly[FiniteIntegral[M]]), Rational.convertToM(denominator)(using implicitly[FiniteIntegral[N]], implicitly[FiniteIntegral[M]]))
 }
 
 class RationalException(s: String, x: Exception = null) extends Exception(s, x)

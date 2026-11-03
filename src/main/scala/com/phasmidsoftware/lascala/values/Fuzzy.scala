@@ -97,7 +97,6 @@ case class Exact[T](t: T)(implicit fractionalT: Fractional[T]) extends BaseNumer
 
 case class Bounded[T: Fractional](nominal: T, bound: T) extends BaseNumericFuzzy[T](nominal) {
 
-  import Fuzzy._
   import Probability._
 
   private val frT: Fractional[T] = implicitly[Fractional[T]]
@@ -391,7 +390,7 @@ object Fuzzy {
   }
 
 
-  private def makeFuzzyString[T: FromString](x: String, i: String, n: Int) = (x replaceAll("""\d""", "0")).substring(0, x.length - i.length + n) + i
+  private def makeFuzzyString[T: FromString](x: String, i: String, n: Int) = x.replaceAll("""\d""", "0").substring(0, x.length - i.length + n) + i
 
   val comparisonProbabilityThreshold = 0.5
 

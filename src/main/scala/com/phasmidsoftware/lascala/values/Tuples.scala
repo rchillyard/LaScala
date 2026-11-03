@@ -26,8 +26,8 @@ case class SeqProduct(elems: Any*) extends Product {
 }
 
 object Tuples {
-  private[this] val ctors = {
-    val ab = Array.newBuilder[java.lang.reflect.Constructor[_]]
+  private val ctors = {
+    val ab = Array.newBuilder[java.lang.reflect.Constructor[?]]
     for (i <- 1 to 22) {
       val tupleClass = Class.forName("scala.Tuple" + i)
       ab += tupleClass.getConstructors.apply(0)
@@ -39,7 +39,7 @@ object Tuples {
     case 0 => Tuple0
     case size if size <= 22 =>
       val refs = for (e <- elems) yield e.asInstanceOf[AnyRef]
-      ctors(size - 1).newInstance(refs: _*).asInstanceOf[Product]
-    case size if size > 22 => SeqProduct(elems: _*)
+      ctors(size - 1).newInstance(refs*).asInstanceOf[Product]
+    case size if size > 22 => SeqProduct(elems*)
   }
 }

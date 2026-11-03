@@ -169,7 +169,7 @@ object AccountRecordTest {
     def createValueFromKey(k: String, vo: => Option[AccountRecord]): Option[AccountRecord] = Some(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
   }
 
-  implicit object AccountRecordValueOps$ extends AccountRecordValueOps {
+  implicit object `AccountRecordValueOps$` extends AccountRecordValueOps {
     override def getKeyFromValue(v: AccountRecord): String = v.key
   }
 
@@ -200,8 +200,8 @@ object AccountRecordTest {
               case _ => false
             }
 
-            val onDate = compareWithDate(eq) _
-            val beforeDate = compareWithDate(lt) _
+            val onDate = compareWithDate(eq)
+            val beforeDate = compareWithDate(lt)
             val indexedTree = Tree.createIndexedTree(tree)
             val mptt = MPTT(indexedTree)
             Success((tree.size, tree.depth, tree.filter(beforeDate(AccountDate(2014, 9, 30))).size, indexedTree.nodeIterator().size, mptt.index.size, tree.find(onDate(AccountDate(2014, 9, 30))), tree, mptt))

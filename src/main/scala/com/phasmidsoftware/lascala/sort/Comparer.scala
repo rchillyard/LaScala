@@ -5,8 +5,6 @@
 
 package com.phasmidsoftware.lascala.sort
 
-import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -44,7 +42,7 @@ trait Comparer[T] extends (((T, T)) => Comparison) with Serializable {
     def apply(tt: (T, T)): Comparison = f(self(tt))
   }
 
-  def orElse(o: Comparer[T]): Comparer[T] = new Comparer[T]() {
+  infix def orElse(o: Comparer[T]): Comparer[T] = new Comparer[T]() {
     def apply(tt: (T, T)): Comparison = self(tt).orElse(o(tt))
   }
 
@@ -72,7 +70,7 @@ trait Comparison extends (() => Option[Boolean]) {
     case _ => 0
   }
 
-  def orElse(c: => Comparison): Comparison = Comparison(apply().orElse(c()))
+  infix def orElse(c: => Comparison): Comparison = Comparison(apply().orElse(c()))
 
   def flip: Comparison = Comparison(for (v <- apply()) yield !v)
 }

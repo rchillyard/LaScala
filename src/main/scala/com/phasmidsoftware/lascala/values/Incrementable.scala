@@ -49,10 +49,10 @@ object Incrementable {
   trait IncrementableLocalDate extends Orderable.OrderableLocalDate with Incrementable[LocalDate] {
     def increment(x: LocalDate, y: Int = 1, by: String = ""): Try[LocalDate] = Try {
       val f = by match {
-        case "d" | "" => x.plusDays _
-        case "w" => x.plusWeeks _
-        case "m" => x.plusMonths _
-        case "y" => x.plusYears _
+        case "d" | "" => x.plusDays
+        case "w" => x.plusWeeks
+        case "m" => x.plusMonths
+        case "y" => x.plusYears
         case _ => throw new IncrementableException(s"unit: $by is not supported")
       }
       f(y)

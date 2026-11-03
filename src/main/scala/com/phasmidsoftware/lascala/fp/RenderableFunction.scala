@@ -38,7 +38,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
   require(cbn.size == arity, s"cbn sequence: has size ${cbn.size} which is not equal to $arity")
 
   private val rc = implicitly[ClassTag[R]]
-  private val returnIsTry = rc.runtimeClass == classOf[Try[_]]
+  private val returnIsTry = rc.runtimeClass == classOf[Try[?]]
 
 
   /**
@@ -90,8 +90,8 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     * @param tps the list of parameters
     * @return a RenderableFunction[R] (wrapped in Try)
     */
-  def partiallyApplyParameters(tps: Seq[Either[_, Closure[_, _]]]): Try[RenderableFunction[R]] = {
-    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Either[_, Closure[_, _]], x: ClassTag[_]): Try[RenderableFunction[R]] = tp match {
+  def partiallyApplyParameters(tps: Seq[Either[?, Closure[?, ?]]]): Try[RenderableFunction[R]] = {
+    def partiallyApplyParameter(rfy: Try[RenderableFunction[R]], tp: Either[?, Closure[?, ?]], x: ClassTag[?]): Try[RenderableFunction[R]] = tp match {
       case Left(t) => // t: T
         rfy flatMap (_.partiallyApply(t))
       case Right(c) => // c: Closure[_,_]
@@ -99,7 +99,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
     }
 
     @tailrec
-    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Either[_, Closure[_, _]], ClassTag[_])]): Try[RenderableFunction[R]] =
+    def inner(rfy: Try[RenderableFunction[R]], work: Seq[(Either[?, Closure[?, ?]], ClassTag[?])]): Try[RenderableFunction[R]] =
       work match {
         case Nil => rfy
         case (tp, c) :: _tps => inner(partiallyApplyParameter(rfy, tp, c), _tps)
@@ -280,13 +280,13 @@ case class FunctionString(f: String, ps: List[Param]) {
 
 case class Param(p: Either[String, Either[FreeParam, FunctionString]]) {
 
-  def bind(w: String): Param = p match {
+  infix def bind(w: String): Param = p match {
     case Left(_) => this // already bound
     case Right(Left(_)) => Param(w) // was a free param
     case Right(Right(f)) => Param(f.partiallyApply(w))
   }
 
-  def bind(w: FunctionString): Param = p match {
+  infix def bind(w: FunctionString): Param = p match {
     case Left(_) => this // already bound
     case Right(Left(_)) => Param(w) // was a free param
     case Right(Right(f)) => Param(f.partiallyApply(w))
@@ -476,7 +476,7 @@ object RenderableFunction {
       else throw RenderableFunctionException(s"$f is not a Function1[${implicitly[ClassTag[T1]]},${implicitly[ClassTag[R]]}]")
   }
 
-  def asFunctionType[R](f: Function[_, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
+  def asFunctionType[R](f: Function[?, R]): Product => R = asserting(f != null, "f is null", cast[Product => R](f))
 
   def asTupledFunctionType[R](f: () => R): Product => R = asserting(f != null, "f is null", asFunctionType[R]({ (_: Product) => f() }))
 
@@ -540,7 +540,7 @@ object RenderableFunction {
     */
   /** private */
   def partiallyApply[T, R: ClassTag](n: Int, f: (Product) => R, t: T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
-    val g = getPartialApplicationFunction(n, f, t, cbn.head)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
+    val g = getPartialApplicationFunction(n, f, t, cbn.head)(using cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
     RenderableFunction(n - 1, w.partiallyApply(t), cbn.tail.toList, cs.tail)(g)
   }
 
@@ -552,9 +552,9 @@ object RenderableFunction {
     */
   private def partiallyApplyFunction[T, R: ClassTag](n: Int, f: (Product) => R, tf: () => T, w: FunctionString, cbn: Seq[Boolean], cs: ParamClasses): Try[RenderableFunction[R]] = Try {
     val g = if (cbn.head)
-      getPartialApplicationFunction(n, f, tf, cbn = false)(cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
+      getPartialApplicationFunction(n, f, tf, cbn = false)(using cs.head.asInstanceOf[ClassTag[() => T]], implicitly[ClassTag[R]])
     else
-      getPartialApplicationFunctionCallByName(n, f, tf)(cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
+      getPartialApplicationFunctionCallByName(n, f, tf)(using cs.head.asInstanceOf[ClassTag[T]], implicitly[ClassTag[R]])
     RenderableFunction(n - 1, w, cbn.tail.toList, cs.tail)(g)
   }
 
@@ -579,13 +579,13 @@ object RenderableFunction {
         asFunctionType { (_: Product) => f(Tuple1(t)) }
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        asFunctionType { (x: Tuple1[_]) => f2.curried(t)(x._1) }
+        asFunctionType { (x: Tuple1[?]) => f2.curried(t)(x._1) }
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        asFunctionType { (x: (_, _)) => f3.curried(t)(x._1)(x._2) }
+        asFunctionType { (x: (?, ?)) => f3.curried(t)(x._1)(x._2) }
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        asFunctionType { (x: (_, _, _)) => f4.curried(t)(x._1)(x._2)(x._3) }
+        asFunctionType { (x: (?, ?, ?)) => f4.curried(t)(x._1)(x._2)(x._3) }
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)
         asFunctionType { (x: (T, T, T, T)) => f5.curried(t)(x._1)(x._2)(x._3)(x._4) }
@@ -611,15 +611,15 @@ object RenderableFunction {
         g0
       case 2 =>
         val f2 = Function.untupled[T, Any, R](f)
-        val g1 = asFunctionType { (x: Tuple1[_]) => f2.curried(extract[T](t()))(x._1) }
+        val g1 = asFunctionType { (x: Tuple1[?]) => f2.curried(extract[T](t()))(x._1) }
         g1
       case 3 =>
         val f3 = Function.untupled[T, Any, Any, R](f)
-        val g2 = asFunctionType { (x: (_, _)) => f3.curried(extract[T](t()))(x._1)(x._2) }
+        val g2 = asFunctionType { (x: (?, ?)) => f3.curried(extract[T](t()))(x._1)(x._2) }
         g2
       case 4 =>
         val f4 = Function.untupled[T, Any, Any, Any, R](f)
-        val g3 = asFunctionType { (x: (_, _, _)) => f4.curried(extract[T](t()))(x._1)(x._2)(x._3) }
+        val g3 = asFunctionType { (x: (?, ?, ?)) => f4.curried(extract[T](t()))(x._1)(x._2)(x._3) }
         g3
       case 5 =>
         val f5 = Function.untupled[T, T, T, T, T, R](f)

@@ -17,7 +17,7 @@ import scala.util.Try
   */
 class GeneralKVTreeWithScaffoldingSpec extends AnyFlatSpec with Matchers {
 
-  implicit object IntStringValueOps$ extends StringValueOps[Int] {
+  implicit object `IntStringValueOps$` extends StringValueOps[Int] {
     def getParentKey(t: Int): Option[String] = (for (i <- Try(t / 10); s = i.toString) yield s).toOption
 
     def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption

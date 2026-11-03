@@ -15,7 +15,7 @@ import scala.util.Try
 class TreeSpec extends AnyFlatSpec with Matchers {
   private implicit val logger: org.slf4j.Logger = Spy.getLogger(getClass)
 
-  implicit object IntStringValueOps$ extends StringValueOps[Int] {
+  implicit object `IntStringValueOps$` extends StringValueOps[Int] {
     def getParentKey(v: Int): Option[String] = Some((v / 10).toString)
 
     def createValueFromKey(k: String, vo: => Option[Int]): Option[Int] = Try(k.toInt).toOption

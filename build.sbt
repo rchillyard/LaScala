@@ -5,12 +5,18 @@ name := "lascala"
 // The current Scala 3 LTS. Code built with 3.9 can only be used from Scala 3.9 or later.
 scalaVersion := "3.9.0"
 
+// The compiler options that all the Phasmid libraries share.
 scalacOptions ++= Seq(
+  "-encoding", "UTF-8",
   "-deprecation",
   "-feature",
   "-unchecked",
-  "-Wunused:all"
+  "-Wunused:all",
+  "-Wvalue-discard",
+  "-Wnonunit-statement"
 )
+// Tests may use a value as a statement (for example, in a matcher), so they skip -Wnonunit-statement.
+Test / scalacOptions ~= (_.filterNot(_ == "-Wnonunit-statement"))
 
 // sbt's lint wrongly reports these ThisBuild publish settings as unused
 Global / excludeLintKeys ++= Set(pomIncludeRepository, publishMavenStyle)

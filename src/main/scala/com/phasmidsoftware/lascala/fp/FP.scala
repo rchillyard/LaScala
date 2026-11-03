@@ -498,7 +498,7 @@ object FP {
     * @return a Try[U]
     */
   def map2lazy[T, U](ty1: Try[T], ty2: => Try[T])(f: (T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map2lazy(ty1, ty2)(f)(g, default)
+    FP_Cross.map2lazy(ty1, ty2)(f)(using g, default)
 
   /**
     * NOTE: not available with 2.10
@@ -517,7 +517,7 @@ object FP {
     * @return a Try[U]
     */
   def map3lazy[T, U](ty1: Try[T], ty2: => Try[T], ty3: => Try[T])(f: (T, T, T) => U)(implicit g: T => Boolean = { (_: T) => true }, default: Try[U] = Failure[U](new Exception("no default result specified"))): Try[U] =
-    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(g, default)
+    FP_Cross.map3lazy(ty1, ty2, ty3)(f)(using g, default)
 
   /**
     * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
@@ -846,7 +846,7 @@ object FP {
     * @tparam V the underlying "value" type
     * @return a ListMap[K,V]
     */
-  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs: _*)
+  def toMap[K, V](vKs: Seq[(K, V)]): Map[K, V] = ListMap(vKs*)
 
   /**
     * Method to get the next element from an iterator, as an Option.

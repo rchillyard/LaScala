@@ -91,7 +91,7 @@ sealed trait Tree[+A] extends Node[A] {
     * @tparam B the underlying type of n
     * @return true if node n is found in the sub-tree defined by this
     */
-  def like[B >: A](node: Node[B]): Maybe = node match {
+  infix def like[B >: A](node: Node[B]): Maybe = node match {
     case Branch(_, ns) =>
       def cf(t: (Node[B], Node[B])): Maybe = t._1.compareValues(t._2)
 
@@ -222,7 +222,7 @@ sealed trait Node[+A] {
     * @tparam B the underlying type of n
     * @return true if this is "like" n
     */
-  def compareValues[B >: A](n: Node[B]): Maybe = Kleenean(map2(get, n.get)(_ == _))
+  infix def compareValues[B >: A](n: Node[B]): Maybe = Kleenean(map2(get, n.get)(_ == _))
 
   /**
     * Method to determine if this Node is a leaf or a branch node
@@ -259,7 +259,7 @@ sealed trait Node[+A] {
     * @tparam B the underlying type of n
     * @return true if node n is found in the sub-tree defined by this
     */
-  def includes[B >: A](node: Node[B]): Boolean
+  infix def includes[B >: A](node: Node[B]): Boolean
 
   /**
     * Determine if this subtree includes a value equal to b

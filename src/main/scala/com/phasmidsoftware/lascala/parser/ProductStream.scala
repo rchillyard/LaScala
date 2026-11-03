@@ -388,7 +388,7 @@ case class CsvParser(
 object CsvParser {
   val dateFormatStrings = Seq("y-M-d", "M/d/y", "y-M-d-h:m:s.s", "d-MMM-yy")
   // etc.
-  val dateParser: Trial[String, Scalar] = Trial[String, Scalar]((parseDate _) (dateFormatStrings))
+  val dateParser: Trial[String, Scalar] = Trial[String, Scalar](parseDate(dateFormatStrings))
 
   /**
     * The default parser will parse most dates, will parse quoted strings, integers, booleans and floating point values (as Double).

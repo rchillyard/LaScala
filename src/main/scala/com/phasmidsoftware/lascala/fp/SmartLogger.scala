@@ -42,7 +42,7 @@ trait SmartLogger {
     * @param name   the name of this milestone
     * @param values the values to be shown for this milestone (0, 1, or N values)
     */
-  def milestone(name: String)(values: Any*): Unit = logFunc(milestoneFormatter(name)(values: _*))
+  def milestone(name: String)(values: Any*): Unit = logFunc(milestoneFormatter(name)(values*))
 
   /**
     * log a milestone with this number and values
@@ -50,7 +50,7 @@ trait SmartLogger {
     * @param x      the number of this milestone
     * @param values the values to be shown for this milestone (0, 1, or N values)
     */
-  def milestone(x: Int)(values: Any*): Unit = logFunc(milestoneFormatter(x.toString)(values: _*))
+  def milestone(x: Int)(values: Any*): Unit = logFunc(milestoneFormatter(x.toString)(values*))
 
   /**
     * log a milestone with the next sequential number and the given values
@@ -59,7 +59,7 @@ trait SmartLogger {
     */
   def milestone()(values: Any*): Unit = logFunc(milestoneFormatter({
     ms = ms + 1; ms.toString
-  })(values: _*))
+  })(values*))
 
   /**
     * The function to be used for logging the start and end. Normally this will be something like the debug method of
@@ -162,13 +162,13 @@ case class SmartLoggerSlf4JDebug(logger: Logger) extends SmartLogger {
 }
 
 object SmartLoggerSlf4JInfo {
-  def apply(clazz: Class[_]): SmartLogger = apply(LoggerFactory.getLogger(clazz))
+  def apply(clazz: Class[?]): SmartLogger = apply(LoggerFactory.getLogger(clazz))
 
   implicit def logAround(logger: Logger): SmartLogger = SmartLoggerSlf4JInfo(logger)
 }
 
 object SmartLoggerSlf4JDebug {
-  def apply(clazz: Class[_]): SmartLogger = apply(LoggerFactory.getLogger(clazz))
+  def apply(clazz: Class[?]): SmartLogger = apply(LoggerFactory.getLogger(clazz))
 
   implicit def logAround(logger: Logger): SmartLogger = SmartLoggerSlf4JDebug(logger)
 }

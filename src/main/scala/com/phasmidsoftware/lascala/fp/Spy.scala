@@ -165,7 +165,7 @@ object Spy {
     * @param clazz class for which the logger is required
     * @return a Logger
     */
-  def getLogger(clazz: Class[_]): Logger = LoggerFactory.getLogger(clazz)
+  def getLogger(clazz: Class[?]): Logger = LoggerFactory.getLogger(clazz)
 
   /**
     * Get a println-type spyFunc that can be made an implicit val at the point of the spy method invocation so that spy invokes println statements instead of logging.
@@ -185,7 +185,7 @@ object Spy {
       case Success(x) => formatMessage(x, b)
       case Failure(t) => s"<<Exception thrown: ${t.getLocalizedMessage}>>"
     }
-    val msg = if (message contains brackets) message else message + ": " + brackets
+    val msg = if (message.contains(brackets)) message else message + ": " + brackets
     spyFunc(msg.replace(brackets, w))
   }
 

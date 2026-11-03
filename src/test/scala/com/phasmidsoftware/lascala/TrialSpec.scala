@@ -161,8 +161,7 @@ class TrialSpec extends AnyFlatSpec with Matchers with Inside {
     def failure2(x: String): Try[String] = Failure(new Exception("2"))
 
     //noinspection ConvertibleToMethodValue,ConvertibleToMethodValue
-    // XXX we actually need the place-holders here
-    val r = failure1 _ |: failure2 _ |: Trial.none
+    val r = failure1 |: failure2 |: Trial.none
     val r1 = r("x")
     r1 should matchPattern { case Failure(_) => }
     inside(r1) {
