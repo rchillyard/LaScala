@@ -1,6 +1,7 @@
 [![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/lascala_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/lascala_3)
 [![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/LaScala/latest/api/)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/8a78af8cecb64a25b509a0ab5109e7c0)](https://app.codacy.com/gh/rchillyard/LaScala/dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/LaScala/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/LaScala/tree/master)
 [![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/LaScala)](https://github.com/rchillyard/LaScala)
 [![GitHub](https://img.shields.io/github/license/rchillyard/LaScala)](https://github.com/rchillyard/LaScala/blob/master/LICENSE.lic)
