@@ -167,15 +167,15 @@ class SpySpec extends AnyFlatSpec with Matchers {
     Spy.spy("success", Future(1))
     spyMessage shouldBe "Hello: success: to be provided in the future\n"
   }
-  it should "work with a Stream" in {
+  it should "work with a LazyList" in {
     implicit val logger: Logger = Spy.getLogger(getClass)
     Spy.spying = true
     var spyMessage: String = ""
 
     implicit def spyFunc(s: String): Spy = Spy(spyMessage += s"Hello: $s\n")
 
-    Spy.spy("Stream", Stream(1, 2, 3, 4, 5, 6))
-    spyMessage shouldBe "Hello: Stream: [Stream showing at most 5 items] List(1, 2, 3, 4, 5)\n"
+    Spy.spy("LazyList", LazyList(1, 2, 3, 4, 5, 6))
+    spyMessage shouldBe "Hello: LazyList: [LazyList showing at most 5 items] List(1, 2, 3, 4, 5)\n"
   }
   behavior of "Spy.log"
   it should "work with explicit spy func" in {

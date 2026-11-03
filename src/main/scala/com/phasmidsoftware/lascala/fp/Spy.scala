@@ -191,9 +191,9 @@ object Spy {
 
   private def formatMessage[X](x: X, b: Boolean): String = x match {
     case () => "()"
-    // NOTE: If the value to be spied on is a Stream, we arbitrarily show the first 5 items
+    // NOTE: If the value to be spied on is a LazyList, we arbitrarily show the first 5 items
     // (Be Careful: potential side-effect: if the actual invoker doesn't evaluate as many as 5 items, we will have evaluated more than are necessary)
-    case s: Stream[_] => s"[Stream showing at most 5 items] ${s.take(5).toList}"
+    case s: LazyList[?] => s"[LazyList showing at most 5 items] ${s.take(5).toList}"
     // NOTE: If the value to be spied on is Success(_) then we invoke spy on the underlying value and capture the message generated
     case Success(z) =>
       val sb = new StringBuilder("")

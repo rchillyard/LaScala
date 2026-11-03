@@ -32,17 +32,17 @@ case class Version[V: Incrementable](v: V, subversion: Option[Subversioned[V]], 
 }
 
 /**
-  * Trait which defines a Stream of subversions based on this instance of Subversionable.
+  * Trait which defines a LazyList of subversions based on this instance of Subversionable.
   *
   * @tparam T the underlying type
   */
 trait Subversionable[T] {
   /**
-    * Method to create a Stream of Ts based on this instance of Subversionable.
+    * Method to create a LazyList of Ts based on this instance of Subversionable.
     *
-    * @return a Stream of Ts.
+    * @return a LazyList of Ts.
     */
-  def subversions: Stream[T]
+  def subversions: LazyList[T]
 }
 
 /**
@@ -62,15 +62,15 @@ trait Subversioned[V] extends (() => V) with Ordering[Subversioned[V]] {
   def subversion: Option[Subversioned[V]]
 
   /**
-    * Method to get this Subversioned and all its subversions, as a Stream of V values.
+    * Method to get this Subversioned and all its subversions, as a LazyList of V values.
     *
-    * @return a Stream of V
+    * @return a LazyList of V
     */
-  def asStream: Stream[V] = {
-    Stream.cons(apply(),
+  def asStream: LazyList[V] = {
+    LazyList.cons(apply(),
       subversion match {
         case Some(vv) => vv.asStream
-        case None => Stream.empty[V]
+        case None => LazyList.empty[V]
       })
   }
 }
@@ -90,10 +90,10 @@ abstract class BaseVersion[V: Incrementable, Repr](v: V) extends Subversioned[V]
 
   def next(isSnapshot: Boolean = false): Try[Repr] = for (x <- implicitly[Incrementable[V]].increment(v)) yield build(x, None, isSnapshot = false)
 
-  def subversions: Stream[Version[V]] = {
-    def s(v: V): Stream[V] = implicitly[Incrementable[V]].increment(v) match {
-      case Success(w) => Stream.cons(v, s(w))
-      case _ => Stream.cons(v, Stream.empty)
+  def subversions: LazyList[Version[V]] = {
+    def s(v: V): LazyList[V] = implicitly[Incrementable[V]].increment(v) match {
+      case Success(w) => LazyList.cons(v, s(w))
+      case _ => LazyList.cons(v, LazyList.empty)
     }
 
     s(implicitly[Incrementable[V]].zero) map { z => Version(v, Some(Version(z, None))) }

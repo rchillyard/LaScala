@@ -112,7 +112,7 @@ object Taxonomy {
 
   implicit object GeneralKVTreeBuilderTaxon extends GeneralKVTreeBuilderWithScaffolding[String, MockTaxon]
 
-  def buildTaxonomy(ts: Stream[MockTaxon]): Try[Node[MockTaxon]] = {
+  def buildTaxonomy(ts: LazyList[MockTaxon]): Try[Node[MockTaxon]] = {
 
     implicit val spyLogger: Logger = Spy.getLogger(getClass)
 

@@ -423,9 +423,9 @@ object RenderableFunction {
   def apply[T1: ClassTag, T2: ClassTag, T3: ClassTag, T4: ClassTag, T5: ClassTag, T6: ClassTag, T7: ClassTag, T8: ClassTag, T9: ClassTag, R: ClassTag](f: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => R, w: String, cbn: List[Boolean]): RenderableFunction[R] = apply(f, FunctionString(w, 9, cbn), cbn.toList)
 
 
-  def callByName(n: Int): List[Boolean] = (Stream.continually(true) take n).toList
+  def callByName(n: Int): List[Boolean] = (LazyList.continually(true) take n).toList
 
-  def callByValue(n: Int): List[Boolean] = (Stream.continually(false) take n).toList
+  def callByValue(n: Int): List[Boolean] = (LazyList.continually(false) take n).toList
 
   /**
     * Method to create a varargs function.
@@ -442,7 +442,7 @@ object RenderableFunction {
   def varargs[T: ClassTag](n: Int): RenderableFunction[Seq[T]] = {
     val mkList = "mkList"
     val cbn = callByValue(n)
-    val cs: ParamClasses = (Stream.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n).toList
+    val cs: ParamClasses = (LazyList.continually(implicitly[ClassTag[T]].asInstanceOf[ClassTag[Any]]) take n).toList
 
     def emptyList(p: Product) = Seq[T]()
 
@@ -720,14 +720,14 @@ object FreeParam {
 object FunctionString {
   private val params = "abcdefghijklmnopqrstuvwxyz".toList
 
-  private def stream(xs: Seq[(Char, Boolean)]): Stream[FreeParam] = xs match {
-    case h :: t => Stream.cons(FreeParam(h), stream(t))
-    case Nil => Stream.empty
+  private def stream(xs: Seq[(Char, Boolean)]): LazyList[FreeParam] = xs match {
+    case h :: t => LazyList.cons(FreeParam(h), stream(t))
+    case Nil => LazyList.empty
   }
 
-  def apply(f: String, n: Int, cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, stream(params zip cbn) take n map (Param(_)) toList)
+  def apply(f: String, n: Int, cbn: Seq[Boolean] = LazyList.continually(false)): FunctionString = FunctionString(f, stream(params zip cbn) take n map (Param(_)) toList)
 
-  def custom(f: String, cs: Seq[String], cbn: Seq[Boolean] = Stream.continually(false)): FunctionString = FunctionString(f, (cs.toList zip cbn) map { case (s, b) => Param(FreeParam(s, b)) })
+  def custom(f: String, cs: Seq[String], cbn: Seq[Boolean] = LazyList.continually(false)): FunctionString = FunctionString(f, (cs.toList zip cbn) map { case (s, b) => Param(FreeParam(s, b)) })
 
   private def nones = Iterator.continually(None)
 }

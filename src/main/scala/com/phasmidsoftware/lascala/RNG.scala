@@ -122,13 +122,13 @@ case class GaussianRNG(n: Long) extends RNG_Java[(Double, Double)](n, GaussianRN
 }
 
 object RNG {
-  type SRNG[A] = Stream[RNG[A]]
+  type SRNG[A] = LazyList[RNG[A]]
 
-  def rngs[A](ar: RNG[A]): SRNG[A] = Stream.cons(ar, rngs(ar.next))
+  def rngs[A](ar: RNG[A]): SRNG[A] = LazyList.cons(ar, rngs(ar.next))
 
-  def values[A](ar: RNG[A]): Stream[A] = rngs(ar) map ( _() )
+  def values[A](ar: RNG[A]): LazyList[A] = rngs(ar) map ( _() )
 
-  def values2[A](aAr: RNG[(A, A)]): Stream[A] = rngs(aAr) flatMap { x => Stream(x()._1, x()._2) }
+  def values2[A](aAr: RNG[(A, A)]): LazyList[A] = rngs(aAr) flatMap { x => LazyList(x()._1, x()._2) }
 }
 
 object LongRNG {

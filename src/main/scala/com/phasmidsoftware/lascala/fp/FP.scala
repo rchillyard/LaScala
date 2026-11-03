@@ -140,11 +140,11 @@ object FP {
   /**
     * TODO unit test
     *
-    * @param xys a Stream of Try[X] values
+    * @param xys a LazyList of Try[X] values
     * @tparam X the underlying type
-    * @return a Stream[X] wrapped in a Try
+    * @return a LazyList[X] wrapped in a Try
     */
-  def sequence[X](xys: Stream[Try[X]]): Try[Stream[X]] = (Try(Stream[X]()) /: xys) {
+  def sequence[X](xys: LazyList[Try[X]]): Try[LazyList[X]] = xys.foldLeft(Try(LazyList[X]())) {
     (xsy, xy) => for (xs <- xsy; x <- xy) yield xs :+ x
   }
 
@@ -253,7 +253,7 @@ object FP {
     * @return a String representing the first "limit" elements of as
     */
   def renderLimited[A](as: => Seq[A])(implicit limit: Int = as.length * 5): String = {
-    val iterator = as.toStream.toIterator
+    val iterator = as.iterator
     val buffer = new StringBuilder("(")
     while (iterator.hasNext && buffer.length < limit) {
       if (buffer.length > 1) buffer append ", "

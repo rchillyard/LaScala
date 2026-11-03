@@ -10,7 +10,7 @@ import org.scalatest.matchers.should.Matchers
   */
 class ProductStreamSpec extends AnyFlatSpec with Matchers {
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
-    val stream = Stream(Tuple1("Hello"), Tuple1("World!"))
+    val stream = LazyList(Tuple1("Hello"), Tuple1("World!"))
     val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), stream)
     c.header shouldBe Header(List("word"))
     val wts = c.tuples
@@ -23,7 +23,7 @@ class ProductStreamSpec extends AnyFlatSpec with Matchers {
     }
   }
   it should "support filter" in {
-    val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), Stream(Tuple1("Hello"), Tuple1("World!")))
+    val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), LazyList(Tuple1("Hello"), Tuple1("World!")))
     val d = c.filter(_._1.startsWith("W"))
     val wts = d.tuples
     wts.size shouldBe 1
@@ -32,7 +32,7 @@ class ProductStreamSpec extends AnyFlatSpec with Matchers {
     }
   }
   it should "support map" in {
-    val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), Stream(Tuple1("Hello"), Tuple1("World!")))
+    val c = ConcreteProductStream[Tuple1[String]](Header(List("word")), LazyList(Tuple1("Hello"), Tuple1("World!")))
     val d = c map { t => Tuple1(t._1.toLowerCase) }
     val wts = d.tuples
     wts.size shouldBe 2
@@ -41,7 +41,7 @@ class ProductStreamSpec extends AnyFlatSpec with Matchers {
     }
   }
   //  it should "support flatMap" in {
-  //    val c = ConcreteProductStream[Tuple1[String]](Seq("word"), Stream(Tuple1("Hello"), Tuple1("World!")))
+  //    val c = ConcreteProductStream[Tuple1[String]](Seq("word"), LazyList(Tuple1("Hello"), Tuple1("World!")))
   //    val d = c flatMap {_._1.iterator.toTuple}
   //    val wts = d.tuples
   //    wts.size shouldBe 1

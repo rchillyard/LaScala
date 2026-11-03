@@ -8,19 +8,19 @@ package com.phasmidsoftware.lascala.fp
 import scala.annotation.tailrec
 
 /**
-  * This class is based on a mutable Stream.
+  * This class is based on a mutable LazyList.
   * Its purpose is like a one-time-pad: each value is yielded by the Streamer once and once only.
  *
-  * @param s the Stream
+  * @param s the LazyList
   * @tparam X the underlying type and the type of the result
   */
-case class Streamer[X](private var s: Stream[X]) extends (()=>X) {
+case class Streamer[X](private var s: LazyList[X]) extends (()=>X) {
 
   apply() // We need to skip over the first value
 
   /**
     * This method mutates this Streamer by resetting the value of s to its tail and returning its head.
-    * @return the head of the Stream
+    * @return the head of the LazyList
     */
   override def apply(): X = s match {
     case x #:: tail => s = tail; x

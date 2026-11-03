@@ -19,7 +19,7 @@ import scala.util.Success
 class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   val defaultParser = CsvParser()
   """"Hello", "World!"""" should "be (String) stream via CSV" in {
-    val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     c.header shouldBe Header(List("x"))
     val wts = c.tuples
     wts.head match {
@@ -30,18 +30,18 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   it should "convert to list properly" in {
-    val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     val wts = c.asList
     wts.size should be(2)
   }
   it should "convert to map properly" in {
-    val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     val wtIm = c toMap { case Tuple1(s) => s.hashCode }
     wtIm.get("Hello".hashCode) should matchPattern { case Some(Tuple1("Hello")) => }
   }
   it should "have column x of type String" in {
     //noinspection ScalaUnusedSymbol
-    val c = CSV[Tuple1[String]](Stream("x",""""Hello"""", """"World!""""))
+    val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
     // NOTE: this works only with 2.11
     //    c column "x" match {
     //      case Some(xs) =>
@@ -52,7 +52,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     //    }
   }
   """"3,5", "8,13"""" should "be (Int,Int) stream" in {
-    val iIts = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).tuples
+    val iIts = CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13")).tuples
     iIts.head match {
       case (x, y) => assert(x == 3 && y == 5)
     }
@@ -62,7 +62,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   }
   it should "have column y of type Int" in {
     // NOTE: this only works with Scala 2.11
-    //    CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")) column "y" match {
+    //    CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13")) column "y" match {
     //      case Some(ys) =>
     //        ys.take(2).toList.size should be(2)
     //        ys.head shouldBe 5
@@ -71,12 +71,12 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     //    }
   }
   it should "convert to map properly" in {
-    val c = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13"))
+    val c = CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13"))
     val iItIm = c toMap { case (x, _) => x }
     iItIm.get(8) should matchPattern { case Some((8, 13)) => }
   }
   it should "map into (Double,Double) properly" in {
-    val c = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13"))
+    val c = CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13"))
     val doubles = c map { case (x, y) => (x.toDouble, y.toDouble) }
     val dDts = doubles.tuples
     dDts.head match {
@@ -84,7 +84,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   it should "convert into maps properly (1)" in {
-    val zWmsy = CSV[(Int, Int)](Stream("x,y", "3,5", "8,13")).asMaps
+    val zWmsy = CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13")).asMaps
     zWmsy should matchPattern { case Success(_) => }
     inside(zWmsy) {
       case Success(zWms) =>
@@ -93,7 +93,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   it should "convert into maps properly (2)" in {
-    val zWmsy = CSV[(Int, Int)](Stream("y,x", "3,5", "8,13")).asMaps
+    val zWmsy = CSV[(Int, Int)](LazyList("y,x", "3,5", "8,13")).asMaps
     zWmsy should matchPattern { case Success(_) => }
     inside(zWmsy) {
       case Success(zWms) =>
@@ -102,7 +102,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   """"3,5.0", "8,13.5"""" should "be (Int,Double) stream" in {
-    val dIts = CSV[(Int, Double)](Stream("x,y", "3,5.0", "8,13.5")).tuples
+    val dIts = CSV[(Int, Double)](LazyList("x,y", "3,5.0", "8,13.5")).tuples
     dIts.head match {
       case (x, y) => assert(x == 3 && y == 5.0)
     }
@@ -111,7 +111,7 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   """"milestone 1, 2016-3-8", "milestone 2, 2016-3-15"""" should "be (String,Datetime) stream" in {
-    val dIts = CSV[(String, LocalDate)](Stream("event,date", """"milestone 1",2016-3-8""", """"milestone 2",2016-3-15""")).tuples
+    val dIts = CSV[(String, LocalDate)](LazyList("event,date", """"milestone 1",2016-3-8""", """"milestone 2",2016-3-15""")).tuples
     dIts.head match {
       case (x, y) => assert(x == "milestone 1" && y == LocalDate.parse("2016-03-08"))
     }
