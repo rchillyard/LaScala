@@ -1,11 +1,10 @@
 package com.phasmidsoftware.lascala
 
 /**
-  * NOTE: you will need to change the value of VERSION before doing a release
-  *
   * Created by scalaprof on 7/31/16.
   */
 
+import lascalabuildinfo.BuildInfo
 import org.scalatest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -13,9 +12,6 @@ import org.scalatest.matchers.should.Matchers
 import scala.util._
 
 class VersionSpec extends AnyFlatSpec with Matchers with Inside {
-  // TODO you must increment this every time version changes in order for the tests all to run correctly
-  val VERSION = "2.2.0"
-
   println(s"${Version.getVersion}")
 
   behavior of "next"
@@ -34,12 +30,11 @@ class VersionSpec extends AnyFlatSpec with Matchers with Inside {
   behavior of "getVersion"
   it should "match version" in {
     println(Version.getVersion)
-    Version.getVersion.startsWith(s"lascala $VERSION") shouldBe true
-  }
-  // The following unit test works correctly, but it requires too much maintenance to have it run all the time
-  // Also, it is specific to one Scala binary and therefore, as is, would interfere with the release process
-  ignore should "match" in {
-    Version.getVersion shouldBe s"lascala $VERSION (compiled with 2.11.8 at 2017-06-03T14:40:43.200 UTC)"
+    // Derived from BuildInfo rather than a literal: version.sbt is the single source of
+    // truth, and a hand-copied mirror here could only ever detect that someone forgot to
+    // update the mirror. This tests the actual contract — that getVersion renders name and
+    // version in the expected shape.
+    Version.getVersion.startsWith(s"${BuildInfo.name} ${BuildInfo.version}") shouldBe true
   }
   behavior of "parse"
   it should "decode 1" in {
