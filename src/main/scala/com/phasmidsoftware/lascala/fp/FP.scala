@@ -484,7 +484,6 @@ object FP {
   /**
     * TODO unit test (#31)
     *
-    * NOTE: not available with 2.10
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *
@@ -501,7 +500,6 @@ object FP {
     FP_Cross.map2lazy(ty1, ty2)(f)(using g, default)
 
   /**
-    * NOTE: not available with 2.10
     *
     * method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *

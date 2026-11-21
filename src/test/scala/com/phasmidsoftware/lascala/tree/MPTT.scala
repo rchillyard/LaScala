@@ -124,7 +124,8 @@ object MPTT {
     def f(node: Node[T]): Option[MPTTEntry[T]] = node match {
       case EmptyWithIndex => None
       case IndexedNode(n, l, r) => n.get match {
-        // NOTE: the extra annotation [T] and explicit reference to vo in the following is only necessary when compiling against 2.10
+        // CONSIDER the explicit [T] and `using vo` below were needed for Scala 2.10. Whether Scala 3
+        // still requires them has not been established, so they stay until someone checks (#141).
         case Some(v) => Some(MPTTEntry[T](vo.getKeyFromValue(v), v)(l, r)(using vo))
         case _ => None
       }

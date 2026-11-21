@@ -4,7 +4,8 @@ import scala.language.{higherKinds, postfixOps}
 import scala.util._
 
 /**
-  * This is an 2.11-specific appendix to FP
+  * An appendix to FP, holding what used to differ between Scala versions.
+  * CONSIDER folding this back into FP: the build targets one Scala version now (#142).
   *
   * @author scalaprof
   */

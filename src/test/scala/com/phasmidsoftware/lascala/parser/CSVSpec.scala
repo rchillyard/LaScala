@@ -45,7 +45,6 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
   it should "have column x of type String" in {
     //noinspection ScalaUnusedSymbol
     @unused val c = CSV[Tuple1[String]](LazyList("x",""""Hello"""", """"World!""""))
-    // NOTE: this works only with 2.11
     //    c column "x" match {
     //      case Some(xs) =>
     //        xs.take(2).toList.size should be(2)
@@ -64,7 +63,6 @@ class CSVSpec extends AnyFlatSpec with Matchers with Inside {
     }
   }
   it should "have column y of type Int" in {
-    // NOTE: this only works with Scala 2.11
     //    CSV[(Int, Int)](LazyList("x,y", "3,5", "8,13")) column "y" match {
     //      case Some(ys) =>
     //        ys.take(2).toList.size should be(2)

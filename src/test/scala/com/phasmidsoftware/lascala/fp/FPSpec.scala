@@ -232,7 +232,6 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     def sum(x: Int, y: Int) = x + y
 
     implicit val continue: Int => Boolean = _ => true
-    // NOTE: map2lazy is only available with 2.11 but it's implemented as map2 otherwise
     map2lazy(one, two)(sum) should matchPattern { case Success(3) => }
     map2lazy(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
@@ -257,7 +256,6 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     def sum(x: Int, y: Int, z: Int) = x + y + z
 
     implicit val continue: Int => Boolean = _ => true
-    // NOTE: map3lazy is only available with 2.11, but it's implemented as map3 otherwise
     map3lazy(one, two, three)(sum) should matchPattern { case Success(6) => }
     map3lazy(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
