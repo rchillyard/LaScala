@@ -12,7 +12,7 @@ import scala.language.implicitConversions
   *
   * It is a type class
   *
-  * CONSIDER: renaming this trait as Orderable. The only problem is that we already have an Orderable in LaScala.
+  * CONSIDER: renaming this trait as Orderable. The only problem is that we already have an Orderable in LaScala. (#84)
   * Probably we should merge the two concepts.
   *
   * @tparam T the type of the objects to be compared

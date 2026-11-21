@@ -53,7 +53,7 @@ class ScalarSpec extends AnyFlatSpec with Matchers with Inside {
     val x: Scalar = true
     x.render shouldBe "true"
     BooleanScalar.setDefaultFormat("%B")
-    // TODO well, this is something of a mystery why this is failing.
+    // TODO well, this is something of a mystery why this is failing. (#127)
     //    x.render shouldBe "TRUE"
   }
   "IntScalar" should "work" in {
@@ -100,7 +100,7 @@ class ScalarSpec extends AnyFlatSpec with Matchers with Inside {
     implicit val pattern = "dd-MMM-yy"
     val formatter = DateTimeFormatter.ofPattern(pattern)
     //noinspection ScalaUnusedSymbol
-    // CONSIDER something with this
+    // CONSIDER something with this (#128)
     @unused val gloriousTwelfth = formatter.parse("12-Aug-16")
     val x = DateScalar("12-Aug-16")
     x.asOrderable[LocalDate] should matchPattern { case Some(_) => }
@@ -163,7 +163,7 @@ class ScalarSpec extends AnyFlatSpec with Matchers with Inside {
     x.source shouldBe "1/2"
     x.asFractional[LongRational] should matchPattern { case None => }
   }
-  // TODO restore this test
+  // TODO restore this test (#129)
   ignore should "render correctly" in {
     import Rational.RationalHelper
     val x: Scalar = r"1/2"

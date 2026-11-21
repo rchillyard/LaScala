@@ -36,7 +36,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
   "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." taggedAs Slow in {
     val ws = List("http://www.google.com", "http://www.microsoft.com")
     val ufs = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
-    // CONSIDER using traverse
+    // CONSIDER using traverse (#46)
     whenReady(Future.sequence(ufs): Future[List[URL]]) { us => Assertions.assert(us.length == 2) }
   }
 
@@ -101,7 +101,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
   "sequence(Future=>Future(Either))" should "succeed for http://www.google.com, www.microsoft.com" taggedAs Slow in {
     val ws = Seq("http://www.google.com", "http://www.microsoft.com", "www.microsoft.com")
-    // CONSIDER using traverse
+    // CONSIDER using traverse (#46)
     val uefs = for {w <- ws; uf = Future(URI(w).toURL)} yield sequence(uf)
     for {uef <- uefs} whenReady(uef) { case Right(_) => true; case Left(_) => true }
   }
@@ -140,7 +140,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     optionToTry(map.get("a"), t) should matchPattern { case Success("A") => }
     optionToTry(map.get("x"), t) should matchPattern { case Failure(`t`) => }
   }
-  // CONSIDER what does this have to do with lift?
+  // CONSIDER what does this have to do with lift? (#111)
   "lift" should "succeed" in {
     def double(x: Int) = 2 * x
 
@@ -224,7 +224,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     map2(one, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // CONSIDER need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here (#47)
   "map2lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)
@@ -248,7 +248,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
     map3(one, two, Failure(new Exception("bad")))(sum) should matchPattern { case Failure(_) => }
   }
 
-  // CONSIDER need to do more thorough testing here
+  // CONSIDER need to do more thorough testing here (#47)
   "map3lazy" should "succeed" in {
     val one = Success(1)
     val two = Success(2)

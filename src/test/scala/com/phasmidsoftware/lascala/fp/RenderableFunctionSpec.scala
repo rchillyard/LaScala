@@ -48,7 +48,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "yield Hello with arity 3" in {
-    // XXX Not sure why we have to set this here, but we do.
+    // NOTE Not sure why we have to set this here, but we do.
     BooleanScalar.setDefaultFormat("%b")
 
     def render(s1: Scalar, s2: Scalar, s3: Scalar) = s1.render + ":" + s2.render + ":" + s3.render
@@ -66,7 +66,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
 
     def lookup(s: String): Try[String] = FP.optionToTry(map.get(s))
 
-    // CONSIDER this should use a call-by-name parameter
+    // CONSIDER this should use a call-by-name parameter (#112)
     val f = RenderableFunction(lookup, "lookup", RenderableFunction.callByName(1))
     val r = f(Tuple1("x"))
     r should matchPattern { case Success("X") => }
@@ -229,7 +229,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   it should "partiallyApplyFunction correctly" in {
-    // CONSIDER understand why this is a bit flaky
+    // CONSIDER understand why this is a bit flaky (#113)
     val f = FunctionString("f", 1)
     val g = FunctionString("g", 1)
     val h = g.partiallyApplyFunction(f)
@@ -343,7 +343,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
   }
 
   /**
-    * CONSIDER figure out how to avoid using asInstanceOf in this and other unit tests
+    * CONSIDER figure out how to avoid using asInstanceOf in this and other unit tests (#114)
     */
   it should "deal with not" in {
     def fNot(p1: Boolean): Boolean = {println(s"call NOT $p1"); !p1}
@@ -523,7 +523,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
     val functionString = FunctionString(w, arity, cbn)
     val classTags = List(implicitly[ClassTag[T1]])
     assert(classTags.length == arity)
-    // CONSIDER use the private method mechanism
+    // CONSIDER use the private method mechanism (#49)
     //    val privateMethod = PrivateMethod[Try[RenderableFunction[R]]]('partiallyApply)
     //    val h = RenderableFunction invokePrivate privateMethod(arity, f, t1, functionString, cbn, classTags)
     //    println(h)
@@ -542,7 +542,7 @@ class RenderableFunctionSpec extends AnyFlatSpec with Matchers with PrivateMetho
 
   private def testGetPartialApplicationFunction1[T1: ClassTag](expected: String, t1: T1, f: Product => String, cbn: Boolean) = {
     val arity = 1
-    // CONSIDER use the private method mechanism
+    // CONSIDER use the private method mechanism (#49)
     //    val _g = PrivateMethod[Product=>String]('getPartialApplicationFunction)
     //    val h = RenderableFunction invokePrivate _g(arity, f, t1, cbn)
     //    h(Tuple0) shouldBe expected

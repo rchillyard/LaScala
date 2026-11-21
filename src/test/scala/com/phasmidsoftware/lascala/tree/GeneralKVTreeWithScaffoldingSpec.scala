@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Try
 
 /**
-  * CONSIDER there's a lot of redundant tests here -- clean them out
+  * CONSIDER there's a lot of redundant tests here -- clean them out (#48)
   *
   * Created by scalaprof on 10/19/16.
   */

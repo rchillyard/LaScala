@@ -34,7 +34,7 @@ trait Cache[K, V, M[_]] extends (K => V) {
   * This trait defines the mechanism for expiring a value from the cache, that's to say the removal of the value.
   * It doesn't say anything about scheduling an expiration.
   *
-  * CONSIDER renaming this trait to MutableCache, or some such name.
+  * CONSIDER renaming this trait to MutableCache, or some such name. (#59)
   *
   * @tparam K the key for this expiring object
   */
@@ -76,7 +76,7 @@ case class BasicFulfillingCache[K, V](evaluationFunc: K => Option[V])(implicit c
 /**
   * Basic self-fulfilling cache that uses Try
   *
-  * CONSIDER extending a different superclass since we don't want a cache that even has an expire method.
+  * CONSIDER extending a different superclass since we don't want a cache that even has an expire method. (#60)
   *
   * @param evaluate the evaluationFunc function of type K=>Try[V] which will get the V value when it is otherwise unknown.
   * @param carper   the function to carp about a problem, of type String=>Unit
@@ -114,7 +114,7 @@ case class NonExpiringCache[K, V](evaluate: K => Try[V])(implicit carper: String
   * an exception to be thrown when calling apply(k).
   * The advantage is that we will only ever try to evaluationFunc a key at most once per expiration period.
   *
-  * CONSIDER do we really need the carper method now that we return a Try[V] from apply?
+  * CONSIDER do we really need the carper method now that we return a Try[V] from apply? (#41)
   *
   * Created by scalaprof on 4/5/16.
   *
@@ -140,7 +140,7 @@ abstract class AbstractExpiringCache[K, V, M[_]](m: CacheMap[K, V, M], evaluatio
   * an exception to be thrown when calling apply(k).
   * The advantage is that we will only ever try to evaluationFunc a key at most once per expiration period.
   *
-  * CONSIDER do we really need the carper method now that we return a Try[V] from apply?
+  * CONSIDER do we really need the carper method now that we return a Try[V] from apply? (#41)
   *
   * Created by scalaprof on 4/5/16.
   *
@@ -211,7 +211,7 @@ abstract class OptionFulfillingExpiringCache[K, V](evaluationFunc: K => Option[V
   type T = Option[V]
 
   /**
-    * CONSIDER making this generic and putting in its own trait: Fulfilling
+    * CONSIDER making this generic and putting in its own trait: Fulfilling (#61)
     * but note that it's tricky because T is known only to this class
     *
     * @param k the key of the element to be fulfilled
@@ -307,7 +307,7 @@ trait Wrapper[M[_]] {
   /**
     * Return an M[V], given an M[V] and a V=>M[V] function
     *
-    * CONSIDER defining this as flatMap[V,W] etc.
+    * CONSIDER defining this as flatMap[V,W] etc. (#62)
     *
     * @param m the M[V] to be mapped
     * @tparam V the value type
@@ -367,7 +367,7 @@ object Wrapper {
 
     def get[V](m: Try[V]): V = m.get
   }
-  // XXX The following import of scala.concurrent.ExecutionContext.Implicits.global may look unnecessary --
+  // NOTE The following import of scala.concurrent.ExecutionContext.Implicits.global may look unnecessary --
   // and will be removed by Organize Imports. But we do need it!
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
@@ -377,7 +377,7 @@ object Wrapper {
 }
 
 /**
-  * CONSIDER using WeakHashMap instead of HashMap
+  * CONSIDER using WeakHashMap instead of HashMap (#63)
   *
   * Abstract base class CacheMap which is a subclass of mutable.WeakHashMap with the same key, value types
   * but with an additional parametric type: M (the wrapper/container type).
@@ -448,7 +448,7 @@ class FutureHashMap[K, V]() extends CacheMap[K, V, Future](Wrapper.futureWrapper
   */
 trait Mappish[K, V, M[_]] {
 
-  // CONSIDER a different scope for this method
+  // CONSIDER a different scope for this method (#64)
   private[cache] def mutableMap: CacheMap[K, V, M]
 
   def clear(): Unit = mutableMap.clear()

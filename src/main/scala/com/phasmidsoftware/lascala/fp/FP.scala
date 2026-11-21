@@ -15,13 +15,13 @@ import scala.util.control.NonFatal
   * This is a collection of general functional-programming-style methods.
   * We could probably get these from ScalaZ but I'd rather have no dependencies.
   *
-  * TODO flesh out the unit tests (coverage is low).
+  * TODO flesh out the unit tests (coverage is low). (#31)
   *
-  * TODO replace as an output type with type based on CanBuildFrom
+  * TODO replace as an output type with type based on CanBuildFrom (#65)
   *
-  * CONSIDER replace Seq with Iterator in signatures
+  * CONSIDER replace Seq with Iterator in signatures (#66)
   *
-  * CONSIDER use higher-kinded monad types in order to implement methods for Try and Option at the same time
+  * CONSIDER use higher-kinded monad types in order to implement methods for Try and Option at the same time (#67)
   *
   * @author scalaprof
   */
@@ -63,7 +63,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param esf      the collection to process
     * @param f        the function to process left-hand-sides
@@ -93,7 +93,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param xy a Try[X] value
     * @tparam X the underlying type
@@ -138,7 +138,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param xys a LazyList of Try[X] values
     * @tparam X the underlying type
@@ -149,7 +149,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param xos a sequence of Option[X] values
     * @tparam X the underlying type
@@ -161,7 +161,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param xe an Either[Throwable,X] object
     * @tparam X the underlying type
@@ -181,7 +181,7 @@ object FP {
   def recoverWith[X](xys: Seq[Try[X]], t: Throwable = new java.util.NoSuchElementException): Seq[Try[X]] = xys map (xy => xy.recoverWith({ case NonFatal(x) => System.err.println(x.getLocalizedMessage); Failure(t) }))
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     * zip two options into an option of a tuple
     *
     * @param ao an A wrapped inside Option
@@ -193,7 +193,7 @@ object FP {
   def zip[A, B](ao: Option[A], bo: Option[B]): Option[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     * zip two try values into a Try of a tuple
     *
     * @param ao an A wrapped inside Try
@@ -205,7 +205,7 @@ object FP {
   def zip[A, B](ao: Try[A], bo: Try[B]): Try[(A, B)] = for (a <- ao; b <- bo) yield (a, b)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     * zip two Future values into a Future of a tuple
     *
     * @param af an A wrapped inside Future
@@ -232,7 +232,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param f a function which transforms an X into a Y
     * @param x an X value
@@ -245,7 +245,7 @@ object FP {
   implicit val limit: Int = 25
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param as    a sequence of As
     * @param limit the limit of how many you want to show
@@ -265,7 +265,7 @@ object FP {
   }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * @param f a function which transforms a T into an R
     * @tparam T the underlying source type
@@ -358,7 +358,7 @@ object FP {
 
 
   //  /**
-  //    * TODO unit test
+  //    * TODO unit test (#31)
   //    *
   //    * method to map a pair of Option values (of same underlying type) into an Option value of another type (which could be the same of course)
   //    *
@@ -482,7 +482,7 @@ object FP {
     } yield f(t1, t2, t3, t4, t5, t6, t7)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * NOTE: not available with 2.10
     *
@@ -569,7 +569,7 @@ object FP {
   def lift7[T1, T2, T3, T4, T5, T6, T7, R](f: (T1, T2, T3, T4, T5, T6, T7) => R): (Try[T1], Try[T2], Try[T3], Try[T4], Try[T5], Try[T6], Try[T7]) => Try[R] = map7(_, _, _, _, _, _, _)(f)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * A true "lift" method which takes a function f (T=>U) and returns a Try[T]=>Try[T]
     *
@@ -581,7 +581,7 @@ object FP {
   def liftTry[T, U](f: T => U): Try[T] => Try[U] = _ map f
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * A pure lift method to lift a function into Try
     *
@@ -593,7 +593,7 @@ object FP {
   def lift2Try[T, U](f: (T, T) => U): (Try[T], Try[T]) => Try[U] = map2(_, _)(f)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * A pure lift method to lift a function into Option
     *
@@ -605,7 +605,7 @@ object FP {
   def liftOption[T, U](f: T => U): Option[T] => Option[U] = _ map f
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * A pure lift method to lift a function into Future
     *

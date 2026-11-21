@@ -28,14 +28,14 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
   self =>
 
   /**
-    * TODO implement this method in terms of liftTransform
+    * TODO implement this method in terms of liftTransform (#58)
     *
     * Method to transform this Rule[T] into a Rule[U].
     *
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>U function to be applied to the lhs of the rule (the variable)
     * @param rf T=>U function to be applied to the rhs of the rule (the predicate)
@@ -50,7 +50,7 @@ sealed trait Rule[T] extends (() => Try[Boolean]) {
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
@@ -127,7 +127,7 @@ class And[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"$r1 & $r2") {
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
@@ -157,7 +157,7 @@ class Or[T](r1: Rule[T], r2: => Rule[T]) extends BaseRule[T](s"($r1 | $r2)") {
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
@@ -187,7 +187,7 @@ class BoundPredicate[T](t: => T, p: => Predicate[T]) extends BaseRule[T](s"($t $
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
@@ -215,7 +215,7 @@ case class Truth[T](b: Boolean) extends BaseRule[T](s"$b") {
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)
@@ -236,7 +236,7 @@ case class InvalidRule[T](x: Throwable) extends BaseRule[T](s"invalid: $x") {
     * The primary purpose of this method is to allow a lookup to occur (the xf functions).
     * Typically, T will be String and U will be Double or Int.
     *
-    * CONSIDER it would be much nicer if there were only one function parameter to this method
+    * CONSIDER it would be much nicer if there were only one function parameter to this method (#32)
     *
     * @param lf T=>Try[U] function to be applied to the lhs of the rule (the variable)
     * @param rf T=>Try[U] function to be applied to the rhs of the rule (the predicate)

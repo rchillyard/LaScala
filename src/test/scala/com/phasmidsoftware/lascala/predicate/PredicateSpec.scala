@@ -197,7 +197,7 @@ class PredicateSpec extends AnyFlatSpec with Matchers {
     p("six") should matchPattern { case Success(false) => }
   }
   "Always" should "be true" in {
-    // CONSIDER Figure out why we get a warning here and fix it!
+    // CONSIDER Figure out why we get a warning here and fix it! (#117)
     val p = Always
     p(()) should matchPattern { case Success(true) => }
   }

@@ -26,7 +26,7 @@ class MPTTFunctionalSpec extends AnyFlatSpec with Matchers {
   }
 
   behavior of "real-life UnvaluedBinaryTree"
-  // FIXME resuscitate this test
+  // FIXME resuscitate this test (#52)
   ignore should "build correctly" in {
     val uo = Option(getClass.getResource("flatland.txt"))
     uo should matchPattern { case Some(_) => }

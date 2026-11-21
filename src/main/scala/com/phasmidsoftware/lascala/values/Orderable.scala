@@ -15,7 +15,7 @@ import scala.util._
   *
   * This has been split off from Valuable by scalaprof on 7/10/16.
   *
-  * CONSIDER extending Ordered instead of Ordering
+  * CONSIDER extending Ordered instead of Ordering (#98)
   */
 trait Orderable[X] extends Ordering[X] {
   /**
@@ -24,7 +24,7 @@ trait Orderable[X] extends Ordering[X] {
     *
     * @param x the value to be introduced
     * @return x as an X
-    *         CONSIDER make unit return Try[X]
+    *         CONSIDER make unit return Try[X] (#99)
     */
   def unit(x: X): X
 
@@ -75,7 +75,7 @@ object Orderable {
       case (i: String, j: Int) =>
         comparisonTyped[Int](op, Try(i.toInt), Success(j))(using OrderableInt)
       case (i: String, j: String) =>
-        // CONSIDER dates in the following
+        // CONSIDER dates in the following (#100)
         comparisonTyped[Int](op, Try(i.toInt), Try(j.toInt))(using OrderableInt) orElse comparisonTyped[String](op, Success(i), Success(j))(using OrderableString)
       case _ => Failure(new OrderableException(s"cannot compare $x with $y"))
     }

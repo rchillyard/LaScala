@@ -90,7 +90,7 @@ case class MPTT[T](index: Map[String, MPTTEntry[T]]) extends (String => MPTTEntr
 }
 
 /**
-  * CONSIDER should we collapse the two parameter sets into one?
+  * CONSIDER should we collapse the two parameter sets into one? (#120)
   *
   * @param t    the value
   * @param pre  the pre-index

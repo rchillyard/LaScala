@@ -57,7 +57,7 @@ class TrialSpec extends AnyFlatSpec with Matchers with Inside {
     trialIntDoubleString("10.0X") should matchPattern { case Success("10.0X") => }
   }
   it should "be composable using :| and work in correct order (1)" in {
-    // XXX for convenience we can use LiftMatch here but it's equivalent to Lift({case x:String => x.toInt})
+    // ASIDE for convenience we can use LiftMatch here but it's equivalent to Lift({case x:String => x.toInt})
     val toInt = LiftMatch { case x: String => x.toInt }
     val trialStringInt = Trial(Lift[String, Any] { (x: String) => x }) :| toInt
     trialStringInt("10.0") should matchPattern { case Success("10.0") => }
@@ -123,7 +123,7 @@ class TrialSpec extends AnyFlatSpec with Matchers with Inside {
     trialIntDoubleString("10.0X") should matchPattern { case Success("10.0X") => }
   }
   it should "be composable using :| and work in correct order (1)" in {
-    // XXX for convenience we can use Match (or LiftMatch) here
+    // ASIDE for convenience we can use Match (or LiftMatch) here
     val toInt = LiftMatch { case x: String => x.toInt }
     val trialStringInt = Trial[String, Any] { (x: String) => Success(x) } :| toInt
     trialStringInt("10.0") should matchPattern { case Success("10.0") => }

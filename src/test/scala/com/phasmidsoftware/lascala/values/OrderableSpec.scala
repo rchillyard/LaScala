@@ -54,7 +54,7 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
   "zero string" should "result in OrderableString of length zero" in {
     //noinspection ScalaUnusedSymbol
     @unused val dt = OrderableString.zero
-    // TODO put a test here
+    // TODO put a test here (#125)
   }
   "string1" should "be the string string1" in {
     OrderableString.compare("string", "string") shouldBe 0
@@ -69,7 +69,7 @@ class OrderableSpec extends AnyFlatSpec with Matchers {
     val st = OrderableString.viaLookup("k", m get)
     st should matchPattern { case Success("v") => }
   }
-  // CONSIDER we should move and modify the date-specific tests to IncrementableSpec
+  // CONSIDER we should move and modify the date-specific tests to IncrementableSpec (#126)
   "2016-01-01" should "result in OrderableDate" in {
     val dt = LocalDate.of(2016, 2, 1)
     val dt2 = OrderableLocalDate.unit(dt)

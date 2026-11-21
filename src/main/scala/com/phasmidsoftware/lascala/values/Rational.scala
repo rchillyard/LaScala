@@ -321,9 +321,9 @@ object Rational {
     val rDec = """(?i)^(-?)(\d|(\d+,?\d+))*(\.\d+)?(E\d+)?$""".r
     x match {
       case rRat(n) => apply(i.fromString(n))
-      // XXX I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
+      // NOTE I don't understand why we need this line -- but it IS necessary -- the regex looks good but apparently isn't
       case rRat(n, _, null) => apply(i.fromString(n))
-      // XXX we need to watch out for NotNumber exceptions
+      // NOTE we need to watch out for NotNumber exceptions
       case rRat(n, _, d) => Rational.normalize[N](i.fromString(n), i.fromString(d))
       case rDec(s, w, _, f, null) => Rational(BigDecimal(s + w + f))
       case rDec(s, w, _, f, e) => Rational(BigDecimal(s + w + f + e))

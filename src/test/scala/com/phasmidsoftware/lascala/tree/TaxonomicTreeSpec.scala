@@ -270,7 +270,7 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     val tree = zy.get
     println(tree.render)
     tree.depth shouldBe 9
-    // TODO Figure out why the following no longer works...
+    // TODO Figure out why the following no longer works... (#50)
     //    val mptt = MPTT(tree)
     //    val size1 = mptt.index.size
     //    size1 shouldBe 16
@@ -288,7 +288,7 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     val tree = zy.get
     println(tree.render)
     tree.depth shouldBe 9
-    // TODO Figure out why the following no longer works...
+    // TODO Figure out why the following no longer works... (#50)
     //    val mptt = MPTT(tree)
     //    val size1 = mptt.index.size
     //    size1 shouldBe 16

@@ -3,7 +3,7 @@ package com.phasmidsoftware.lascala.fp
 /**
   * Type class trait to define something that has a key.
   *
-  * CONSIDER try to generalize this so that return value implements Ordering, rather than being any particular type like String.
+  * CONSIDER try to generalize this so that return value implements Ordering, rather than being any particular type like String. (#68)
   *
   * Created by scalaprof on 11/17/16.
   */

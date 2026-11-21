@@ -108,7 +108,7 @@ case class StringValue(x: String, source: Any) extends BaseStringScalar(x, sourc
   * @param source the source (normally a String but might be enclosed in quotation marks)
   */
 case class QuotedStringValue(x: String, source: Any) extends BaseQuotedStringScalar(x, source) with Value {
-  // CONSIDER creating a sequence of Char?
+  // CONSIDER creating a sequence of Char? (#107)
   override def asSequence: Option[Seq[Value]] = None
 }
 
@@ -140,7 +140,7 @@ case class SequenceValue(xs: Seq[Value], source: Any) extends BaseScalar(xs, sou
 
 class ValueException(s: String, t: scala.Throwable = null) extends Exception(s, t)
 
-// CONSIDER how do we re-use the code from Scalar in the following methods?
+// CONSIDER how do we re-use the code from Scalar in the following methods? (#108)
 object BooleanValue {
   def apply(x: Boolean): BooleanValue = BooleanValue(x, x)
 }
@@ -202,7 +202,7 @@ object Value {
 
   /**
     * Method to convert any of several types of object into a Value.
-    * XXX Surely the implicits mechanism should be doing this for us!
+    * ASIDE Surely the implicits mechanism should be doing this for us!
     *
     * @param x an Any
     * @return a Try[Value] where the value is the result of applying one of the several apply methods in this Value object.
@@ -215,7 +215,7 @@ object Value {
     case w: String => Try(apply(w))
     case d: LocalDate => Try(apply(d))
     case xs: Seq[Any] => Try(apply(xs))
-    // XXX shouldn't really need the following...
+    // ASIDE shouldn't really need the following...
     case v: Value => Success(v)
     case _ => Failure(new ValueException(s"cannot form Value from type ${x.getClass}"))
   }
@@ -236,14 +236,14 @@ object Value {
   /**
     * Transform a Map of Strings into a Map of corresponding Values.
     *
-    * XXX note that there is no native Value which is a Map.
+    * NOTE there is no native Value which is a Map.
     *
     * @param kWm a map of Strings
     * @tparam K the key type
     * @return a map of Values
     */
   def sequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Map[K, Value] = {
-    // CONSIDER using mapValues
+    // CONSIDER using mapValues (#43)
     val vtKs = (for ((k, v) <- kWm) yield (k, conv(v))).toSeq
     FP.sequence(for ((k, vt) <- vtKs) yield for (v <- vt) yield (k, v)) match {
       case Success(m) => m.toMap
@@ -267,7 +267,7 @@ object Value {
     * @return a map of Values
     */
   def trySequence[K](kWm: Map[K, Any])(implicit conv: ValueMaker): Try[Map[K, Value]] = for (
-    // CONSIDER using mapValues
+    // CONSIDER using mapValues (#43)
     kVs <- FP.sequence((for ((k, v) <- kWm) yield for (z <- conv(v)) yield (k, z)).toSeq)
   ) yield kVs.toMap
 

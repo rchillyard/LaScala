@@ -106,7 +106,7 @@ class AccountRecordTest extends AnyFlatSpec with Matchers {
     }
     checkTreeFromResource(TestDetailsMiniSample, 9, 3, 5, 9, 9)
   }
-  // XXX we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
+  // ASIDE we ignore this because I have not committed the sampleTree.txt file to the repository (and, in any case, this is more of a functional test)
   ignore should "work for sampleTree.txt" in {
     case object TestDetailsSample extends AbstractTestDetails("sampleTree.txt") {
       def createAccountRecord(ws: Array[String]): Option[AccountRecord] = AccountRecord.parse(ws(7), ws(5), ws(6))
@@ -165,7 +165,7 @@ object AccountRecordTest {
 
     override def getKeyAsParent(v: AccountRecord): String = v.account
 
-    // CONSIDER using the value of vo instead of an arbitrary AccountRecord
+    // CONSIDER using the value of vo instead of an arbitrary AccountRecord (#118)
     def createValueFromKey(k: String, vo: => Option[AccountRecord]): Option[AccountRecord] = Some(AccountRecord(k, AccountDate(1900, 1, 1), "root"))
   }
 
@@ -180,8 +180,8 @@ object AccountRecordTest {
     val aoso = for (wss <- wsso) yield for (ws <- wss) yield tester.createAccountRecord(ws)
 
     // NOTE Now, we flatten the options, resulting in None if there were any problems at all.
-    // CONSIDER May want to change the behavior of this later
-    // CONSIDER using traverse
+    // CONSIDER May want to change the behavior of this later (#119)
+    // CONSIDER using traverse (#46)
     (for (aos <- aoso) yield FP.sequence(aos.toSeq)).flatten
   }
 

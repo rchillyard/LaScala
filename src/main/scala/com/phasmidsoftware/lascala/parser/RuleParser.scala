@@ -90,7 +90,7 @@ case class Condition(subject: String, predicate: PredicateExpr) extends RuleLike
 case class TruthValue(b: Boolean) extends RuleLike {
   def asRule: Rule[String] = Truth(b)
 
-  // XXX: this is somewhat experimental
+  // ASIDE: this is somewhat experimental
   override def toString: String = if (b) "always" else "never"
 }
 
@@ -172,7 +172,7 @@ class RuleParser extends JavaTokenParsers {
   def rangePredicate: Parser[RangePredicateExpr] = "in" ~ expr ~ "..." ~ expr ^^ { case _ ~ l ~ _ ~ h => RangePredicateExpr(l, h) }
 
   private val booleanOp = regex(""">|>=|<|<=|=|!=""".r)
-  // CONSIDER implement this...
+  // CONSIDER implement this... (#80)
   //  private val lesserOp = regex("""<|<=""".r)
   private val identifier = regex("""\w+""".r)
   private val identifierWithPeriods = regex("""[\w\.]+""".r)
@@ -256,7 +256,7 @@ class RuleParser extends JavaTokenParsers {
   }
 
   /**
-    * XXX this appears not to be tested
+    * TESTME this appears not to be tested (#130)
     *
     * @param e the expression inside the parentheses
     */
@@ -307,7 +307,7 @@ class RuleParser extends JavaTokenParsers {
 
   def suffix: Parser[String] = ("""[BMK%]""".r | """@""".r ~ identifier | failure("problem with suffix")) ^^ { case _ ~ id => id.toString; case s => s.toString; }
 
-  // CONSIDER: this works for variables on RHS, but we can't have something like {x.y} on the LHS of the condition. We could allow for that
+  // CONSIDER: this works for variables on RHS, but we can't have something like {x.y} on the LHS of the condition. We could allow for that (#81)
   def lookup: Parser[String] = ("""${""" ~ identifierWithPeriods <~ """}""" | "$" ~ identifier) ^^ { case _ ~ x => x }
 
   def quotedString: Parser[Literal] = doubleQuote ~> """[^"]*""".r <~ doubleQuote ^^ { s => Literal(s) }

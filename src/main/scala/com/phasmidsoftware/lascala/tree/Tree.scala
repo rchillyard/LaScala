@@ -119,7 +119,7 @@ sealed trait Tree[+A] extends Node[A] {
   /**
     * Determine if this subtree includes a value equal to b
     *
-    * CONSIDER renaming this back to just includes (as it was previously)
+    * CONSIDER renaming this back to just includes (as it was previously) (#37)
     *
     * @param b the value to be searched
     * @tparam B the type of b
@@ -264,7 +264,7 @@ sealed trait Node[+A] {
   /**
     * Determine if this subtree includes a value equal to b
     *
-    * CONSIDER renaming this as includes
+    * CONSIDER renaming this as includes (#37)
     *
     * @param b the value to be searched
     * @tparam B the type of b
@@ -275,7 +275,7 @@ sealed trait Node[+A] {
   /**
     * Method to replace a particular node in this tree with another node, but otherwise return a copy of this tree.
     *
-    * CONSIDER moving this into Tree since it isn't really a Node method
+    * CONSIDER moving this into Tree since it isn't really a Node method (#37)
     *
     * @param x the node to be replaced with y
     * @param y the node to replace x
@@ -310,7 +310,7 @@ sealed trait Node[+A] {
   * Defines a Node in a tree where the value of any node determines its place within
   * the tree.
   *
-  * CONSIDER do we really need A to be covariant?
+  * CONSIDER do we really need A to be covariant? (#38)
   *
   * @tparam K the key type
   * @tparam A the underlying type of the tree/node
@@ -399,7 +399,7 @@ trait IndexedTree[A] extends IndexedNode[A] with Tree[A]
   * This parameter allows for the values themselves to imply a position within the tree,
   * in other words a tree which could be faithfully rebuilt from itself.
   *
-  * CONSIDER requiring that the ValueOps parameter be a property of the StructuralTree itself.
+  * CONSIDER requiring that the ValueOps parameter be a property of the StructuralTree itself. (#86)
   *
   * @tparam K the key type
   * @tparam A the underlying type of the tree/node
@@ -463,12 +463,12 @@ trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
     }
 
   /**
-    * CONSIDER making this tail-recursive, given that the parent key is structure-based
+    * CONSIDER making this tail-recursive, given that the parent key is structure-based (#36)
     *
     * Method to find a Node in a tree by its structural key.
     * NOTE: this method is not tail-recursive.
     *
-    * FIXME: this must be made much more efficient because building an N-node tree is currently an O(N2) problem
+    * FIXME: this must be made much more efficient because building an N-node tree is currently an O(N2) problem (#35)
     * ... we can reduce that to N log N
     *
     * @param k  the (structural) key for the desired node
@@ -535,7 +535,7 @@ trait StructuralTree[K, +A] extends Tree[A] with StructuralNode[K, A] {
 
 /**
   * Trait to define a method for building a tree from a Node.
-  * CONSIDER making this trait covariant in A
+  * CONSIDER making this trait covariant in A (#38)
   *
   * @tparam A the underlying type of the Node(s) and Tree
   */
@@ -681,7 +681,7 @@ case class Leaf[+A](a: A) extends AbstractLeaf[A](a) {
   /**
     * Method to add the given node to this node specifically
     *
-    * CONSIDER this looks incorrect because it defines its own K
+    * CONSIDER this looks incorrect because it defines its own K (#34)
     *
     * @param node the node to add
     * @tparam B the underlying type of the new node (and the resulting tree)
@@ -718,7 +718,7 @@ case class BinaryTree[+A: Ordering](a: A, left: Node[A], right: Node[A]) extends
   /**
     * @return None
     */
-  // TODO this looks wrong!
+  // TODO this looks wrong! (#34)
   def get: None.type = None
 
 }
@@ -821,7 +821,7 @@ abstract class AbstractEmpty extends Tree[Nothing] {
 }
 
 /**
-  * CONSIDER extending AbstractEmpty
+  * CONSIDER extending AbstractEmpty (#87)
   *
   * @param x the String that this punctuation will render as
   */
@@ -852,7 +852,7 @@ abstract class Punctuation(val x: String) extends Node[Nothing] {
 case object Empty extends AbstractEmpty
 
 object TreeBuilder {
-  // CONSIDER: this is a rather strange construction -- might want to refactor
+  // CONSIDER: this is a rather strange construction -- might want to refactor (#88)
   def apply[A: TreeBuilder]: TreeBuilder[A] = implicitly[TreeBuilder[A]]
 }
 
@@ -880,8 +880,8 @@ object Node {
   /**
     * Create a String which represents this Node and its subtree.
     *
-    * XXX not tail-recursive.
-    * CONSIDER make this tail-recursive, preferably by using traverse... (see renderRecursively in comments)
+    * NOTE not tail-recursive.
+    * CONSIDER make this tail-recursive, preferably by using traverse... (see renderRecursively in comments) (#36)
     */
   private def render[A](n: Node[A], indent: Int)(using ra: Renderable[A], layout: Layout): String = n match {
     case _: AbstractEmpty => "ø"
@@ -914,8 +914,8 @@ object Node {
 object Tree {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  // CONSIDER we want the key value to implement ordering, not the value itself
-  // CONSIDER implement this like for general tree (below)
+  // CONSIDER we want the key value to implement ordering, not the value itself (#39)
+  // CONSIDER implement this like for general tree (below) (#39)
 
   /**
     * Method to populate an ordered tree.
@@ -937,7 +937,7 @@ object Tree {
               result = result :+ Leaf(w)
             }
             Some(result)
-          // FIXME we need to implement this case
+          // FIXME we need to implement this case (#34)
           case x: Tree[A] => throw TreeException(s"buildTree produced a Tree which isn't a StructuralTree: $x") // Option(t.foldLeft(x)(_ + _))
         }
     }
@@ -999,11 +999,11 @@ object GeneralTree {
       case _ => x == y
     }
 
-    // CONSIDER, for a generic getParent, using getParentKey from HasParent and then look it up via findByKey
+    // CONSIDER, for a generic getParent, using getParentKey from HasParent and then look it up via findByKey (#40)
   }
 
   implicit object GeneralTreeBuilderString extends GeneralTreeBuilder[String] {
-    // CONSIDER moving the intelligence from here into a ValueOps object
+    // CONSIDER moving the intelligence from here into a ValueOps object (#40)
     def getParent(tree: Tree[String], t: String): Option[Node[String]] = tree.find(t.substring(0, t.length - 1))
   }
 
@@ -1014,7 +1014,7 @@ object GeneralTree {
 }
 
 object UnvaluedBinaryTree {
-  // CONSIDER creating a common TreeBuilder for all binary trees
+  // CONSIDER creating a common TreeBuilder for all binary trees (#89)
   abstract class UnvaluedBinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {
     def buildTree(maybeValue: Option[A], children: Seq[Node[A]]): Tree[A] = {
       val ns = children filterNot (_ == Empty)
@@ -1034,9 +1034,9 @@ object UnvaluedBinaryTree {
       }
     }
 
-    // CONSIDER simplify this: now that we explicitly order n1, n2 we don't have to be so particular about the various non-overlapping cases
+    // CONSIDER simplify this: now that we explicitly order n1, n2 we don't have to be so particular about the various non-overlapping cases (#90)
     def buildTree(x: Node[A], y: Node[A]): Tree[A] = {
-      // XXX if x,y are ordered correctly (or overlapping) we create n1, n2 in same order, otherwise we flip the order
+      // ASIDE if x,y are ordered correctly (or overlapping) we create n1, n2 in same order, otherwise we flip the order
       val (n1, n2) = if (AbstractBinaryTree.isOrdered(x, y)) (x, y) else (y, x)
       assert(AbstractBinaryTree.isOrdered(n1, n2), s"logic error: $n1 and $n2 are not properly ordered")
       n1 match {
@@ -1087,7 +1087,7 @@ object UnvaluedBinaryTree {
 
     def getParent(tree: Tree[A], t: A): Option[Node[A]] = {
       @tailrec def inner(tree: Node[A], t: A, parent: Option[Node[A]]): Option[Node[A]] = tree match {
-        // CONSIDER rewriting the unapply method so that l and r are of type Tree[T]
+        // CONSIDER rewriting the unapply method so that l and r are of type Tree[T] (#91)
         // CHECK that this terminates
         case AbstractBinaryTree(_, l, r) =>
           if (isOverlap(t, l)) inner(l, t, Some(tree))
@@ -1124,8 +1124,8 @@ object UnvaluedBinaryTree {
 
 object BinaryTree {
 
-  // TODO implement this properly, given that there are values in BinaryTree
-  // CONSIDER eliminate danger of infinite recursion in this method, perhaps make it tail-recursive
+  // TODO implement this properly, given that there are values in BinaryTree (#34)
+  // CONSIDER eliminate danger of infinite recursion in this method, perhaps make it tail-recursive (#36)
 
   abstract class BinaryTreeBuilder[A: Ordering] extends TreeBuilder[A] {
     /**
