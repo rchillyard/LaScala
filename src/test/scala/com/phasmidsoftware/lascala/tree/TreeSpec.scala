@@ -230,7 +230,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
     //noinspection ScalaUnusedSymbol
     @unused val tree4 = GeneralTree(1, List(GeneralTree(4, List(Leaf(10), Leaf(11)))))
     tree1.like(tree2) should matchPattern { case Kleenean(Some(false)) => }
-    // CONSIDER understand why this doesn't work. At appears to yield Some(true)
+    // CONSIDER understand why this doesn't work. At appears to yield Some(true) (#121)
     //    tree3.like(tree4) should matchPattern {case Kleenean(Some(true)) => }
   }
   it should "work for UnvaluedBinaryTree" in {
@@ -318,7 +318,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
     }).toList shouldBe Seq(Leaf(1), Leaf(3), Leaf(5))
   }
 
-  // CONSIDER try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error
+  // CONSIDER try to understand why this bit of code -- which hasn't actually changed -- suddenly causes a weird compiler error (#122)
   //  it should "work correctly for unsorted Flatland tree" in {
   //    val uo = Option(getClass.getResource("flatland.txt"))
   //    uo should matchPattern { case Some(_) => }
@@ -349,7 +349,7 @@ class TreeSpec extends AnyFlatSpec with Matchers {
 
   behavior of "createIndexedTree"
   it should "work for UnvaluedBinaryTree" in {
-    // TODO there is definitely something wrong with the indexes for a Binary tree, although the GeneralTree is fine.
+    // TODO there is definitely something wrong with the indexes for a Binary tree, although the GeneralTree is fine. (#123)
     val tree = UnvaluedBinaryTree(UnvaluedBinaryTree(Leaf(1), Leaf(3)), UnvaluedBinaryTree(Leaf(5), Leaf(6)))
     val indexedTree = Tree.createIndexedTree(tree).asInstanceOf[IndexedTree[Int]]
     indexedTree.lIndex should matchPattern { case Some(0) => }
@@ -374,8 +374,8 @@ class TreeSpec extends AnyFlatSpec with Matchers {
 
   }
   /**
-    * CONSIDER reimplement this using GeneralTree instead of GeneralKVTree.
-    * XXX I think it should work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
+    * CONSIDER reimplement this using GeneralTree instead of GeneralKVTree. (#124)
+    * ASIDE I think it should work -- it just requires not importing GeneralTree._ which gives non-standard behavior (we should fix that too)
     *
     * This test is based on the description of the "nested set model" in Wikipedia: https://en.wikipedia.org/wiki/Nested_set_model
     *

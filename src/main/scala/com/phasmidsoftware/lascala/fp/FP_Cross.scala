@@ -19,7 +19,7 @@ object FP_Cross {
   def contains[X](ox: Option[X], x: X): Boolean = ox.contains(x)
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * Method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *
@@ -36,7 +36,7 @@ object FP_Cross {
     (for {t1 <- ty1; if g(t1); t2 <- ty2} yield f(t1, t2)) recoverWith { case _: java.util.NoSuchElementException => default }
 
   /**
-    * TODO unit test
+    * TODO unit test (#31)
     *
     * Method to map a pair of Try values (of same underlying type) into a Try value of another type (which could be the same of course)
     *

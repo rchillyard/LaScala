@@ -151,7 +151,7 @@ case class Gaussian[T: Fractional](mean: T, sd: T) extends BaseNumericFuzzy[T](m
 
   private def sqr[X: Fractional](x: X): X = implicitly[Fractional[X]].times(x, x)
 
-  // TODO implement this properly
+  // TODO implement this properly (#92)
   private def sqrt[X: Fractional](x: X): X = Fuzzy.pow(implicitly[Fractional[X]].toDouble(x), 0.5).asInstanceOf[X]
 
   override def toString(): String = s"$mean +- ($sd)"
@@ -252,7 +252,7 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   //  def exp[U: Fractional](uf: NumericFuzzy[U]): NumericFuzzy[Double] = {
   //    val e = uf.toDouble
-  //    // TODO add in the error from uf
+  //    // TODO add in the error from uf (#93)
   //    mapFuncExp(powerTx(e), x => powerTx(e - 1)(tf.toDouble(x)) * e )(uf.isExact && e == 0)
   //  }
 
@@ -264,11 +264,11 @@ abstract class BaseNumericFuzzy[T: Fractional](t: T) extends NumericFuzzy[T] {
 
   def power(e: Int): NumericFuzzy[T] = mapFuncExp(powerT[T](e), x => frT.times(pow(x, e - 1), frT.fromInt(e)))(e == 0)
 
-  // TODO add in the error due to the power function
+  // TODO add in the error due to the power function (#94)
   def power(e: Double): NumericFuzzy[Double] = mapFuncExp[Double](powerTx(e), x => powerTx(e - 1)(frT.toDouble(x)) * e)(e == 0)
 
 
-  // TODO add in the error due to the exp function
+  // TODO add in the error due to the exp function (#95)
   def exp: NumericFuzzy[Double] = mapFunc[Double](x => Fuzzy.exp(frT.toDouble(x)), x => Fuzzy.exp(frT.toDouble(x)))
 
   def compare(that: Fuzzy[T]): Int = {
@@ -397,7 +397,7 @@ object Fuzzy {
   val comparisonProbabilityThreshold = 0.5
 
   /**
-    * TODO do this properly
+    * TODO do this properly (#96)
     *
     * @param m the input value
     * @tparam M the input type

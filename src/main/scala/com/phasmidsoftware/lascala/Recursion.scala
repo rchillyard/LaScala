@@ -86,7 +86,7 @@ object Recursion {
     * Generic tail-recursive method with counting.
     * Typically, this is used to traverse through a tree, starting at the root of the tree.
     *
-    * CONSIDER reformulating the quick-return function to take an S as its input, rather than an R. That would, however, not be trivial.
+    * CONSIDER reformulating the quick-return function to take an S as its input, rather than an R. That would, however, not be trivial. (#56)
     *
     * @param f  the map function which takes a C and T and produces an S.
     * @param g  the reduce function which accumulates the result (the accumulator is passed as its first parameter and an S value is passed as the second).
@@ -123,7 +123,7 @@ object Recursion {
       }
 }
 
-// CONSIDER this is broken but should be fixed!
+// CONSIDER this is broken but should be fixed! (#57)
 
 //object Factorial {
 //  def f(x: BigInt, y: Int): BigInt = x * y

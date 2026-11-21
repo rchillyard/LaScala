@@ -16,7 +16,7 @@ import scala.util.{Failure, Success, Try}
   *
   * Created by scalaprof on 6/5/16.
   *
-  * CONSIDER move this into values package
+  * CONSIDER move this into values package (#82)
   */
 trait Valuable[X] extends Orderable[X] {
   /**

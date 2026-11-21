@@ -94,7 +94,7 @@ object Spy {
     *
     * It is recommended simply to import Spy._ before invoking this method.
     *
-    * CONSIDER renaming this method as debug and providing warn, info, etc. versions
+    * CONSIDER renaming this method as debug and providing warn, info, etc. versions (#74)
     *
     * @param w       a String to be used as the prefix of the resulting message
     * @param b       if true AND if spying is true, the spyFunc will be called (defaults to true)
@@ -177,7 +177,7 @@ object Spy {
   def getPrintlnSpyFunc(ps: PrintStream = System.out): String => Spy = { s => Spy(ps.println(prefix + s)) }
 
   /**
-    * CONSIDER refactor so that an x which is a Failure will be logged as an exception.
+    * CONSIDER refactor so that an x which is a Failure will be logged as an exception. (#75)
     * The way the code is now, if X happens to be Try[Y], we will be given a Success(Failure(y)) and this will be formatted in the normal way.
     *
     */
@@ -201,7 +201,7 @@ object Spy {
 
       implicit val spyFunc: String => Spy = s => Spy(sb.append(s))
 
-      // CONSIDER reworking this so that the result is "Success(...)" instead of "Success: ..."
+      // CONSIDER reworking this so that the result is "Success(...)" instead of "Success: ..." (#76)
       spy(s"Success", z, b)
       sb.toString
     // NOTE: If the value to be spied on is Failure(_) then we invoke get the localized message of the cause

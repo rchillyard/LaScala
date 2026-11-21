@@ -132,12 +132,12 @@ class RationalSpec extends AnyFlatSpec with Matchers {
     val r = Rational(2147483647)
     r shouldEqual r
   }
-  // TODO making this a BigInt rational is cheating really
+  // TODO making this a BigInt rational is cheating really (#51)
   "D2147483647" should "hash alright" in {
     val r = Rational[BigInt](1, 2147483647)
     r.hashCode() shouldBe 2147483618
   }
-  // TODO making this a BigInt rational is cheating really
+  // TODO making this a BigInt rational is cheating really (#51)
   it should "be equal to itself" in {
     val r = Rational[BigInt](1, 2147483647)
     r shouldEqual r
@@ -211,7 +211,7 @@ class RationalSpec extends AnyFlatSpec with Matchers {
   it should "equal 4/9 when squared" in {
     (Rational(2, 3) ^ 2) should be(Rational(4, 9))
   }
-  // XXX: this fails with 2.10
+  // ASIDE: this fails with 2.10
   //  it should "barf when toInt invoked" in {
   //    an[RationalException] should be thrownBy Rational(2, 3).toInt
   //    val thrown = the[Exception] thrownBy Rational(2, 3).toInt

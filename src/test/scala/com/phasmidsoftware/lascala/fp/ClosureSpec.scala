@@ -36,7 +36,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     c() shouldBe Success(true)
   }
 
-  // CONSIDER investigate why this doesn't work
+  // CONSIDER investigate why this doesn't work (#110)
   ignore should "apply for a closure where the parameter is itself a Closure" in {
     val getPi: Product => String = { _ => math.Pi.toString }
     val f1 = RenderableFunction({ (s: String) => s == "Hello" }, "isHello", RenderableFunction.callByValue(1))
@@ -104,7 +104,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     val sArg1 = "p1"
     val col1 = "col1"
     val val1 = "42"
-    // XXX: create an empty set of variables
+    // ASIDE: create an empty set of variables
     val variables = mutable.HashMap[String, String]()
     implicit val lookup: String => Try[String] = { s => Spy.spy(s"lookup $s", FP.optionToTry(variables.get(s))) }
 
@@ -121,7 +121,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     val c: Closure[String, Int] = Spy.spy("c", Closure[String, Int](fFunction, p2))
     c.render shouldBe "Closure(RenderableFunction[List(java.lang.String),Int](1,  stringToInt(p1?)), Right(Closure(RenderableFunction[List(java.lang.String),scala.util.Try](1,  lookup(a?)), Left(\"col1\"))))"
     val dy = Spy.spy("dy", for (d <- c.partiallyApply) yield d)
-    // XXX: provide the variable values at the last moment
+    // ASIDE: provide the variable values at the last moment
     variables.put(col1, val1)
     (for (d <- dy; r <- d()) yield r) match {
       case Success(s) => s shouldBe 42
@@ -197,7 +197,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     val val2 = "VALUE_2"
     val val3 = "VALUE_3"
     val val4 = "VALUE_4"
-    // XXX: create an empty set of variables
+    // ASIDE: create an empty set of variables
     val variables = mutable.HashMap[String, String]()
     implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s)) }
 
@@ -223,7 +223,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
     val p7 = Spy.spy("p7", Left(val4))
     val c = Spy.spy("c", Closure[String, String](fFunction, p4, p5, p6, p7))
     val dy = Spy.spy("dy", for (d <- c partiallyApply) yield d)
-    // XXX: provide the variable values at the last moment
+    // ASIDE: provide the variable values at the last moment
     variables.put(col1, val1)
     variables.put(col2, val2)
     (for (d <- dy; r <- d()) yield r) match {
@@ -236,7 +236,7 @@ class ClosureSpec extends AnyFlatSpec with Matchers {
   it should "match" in {
     val sArg1 = "p1"
     val col1 = "col1"
-    // XXX: create an empty set of variables
+    // ASIDE: create an empty set of variables
     val variables = mutable.HashMap[String, String]()
     implicit val lookup: String => Try[String] = { s => FP.optionToTry(variables.get(s)) }
 

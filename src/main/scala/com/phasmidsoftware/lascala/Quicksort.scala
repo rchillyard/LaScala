@@ -12,7 +12,7 @@ import scala.collection.Factory
   */
 object Quicksort {
   /**
-    * TODO fix the shadowing problem
+    * TODO fix the shadowing problem (#53)
     */
   //noinspection TypeParameterShadow
   def qsort[E, D[E] <: Seq[E]]

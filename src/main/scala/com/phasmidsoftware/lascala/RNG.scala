@@ -7,9 +7,9 @@ import scala.annotation.unused
 /**
   * Very primitive implementation of a state-based random number generator
   *
-  * CONSIDER reworking this entire package, particularly using map instead of defining things like DoubleRNG.
+  * CONSIDER reworking this entire package, particularly using map instead of defining things like DoubleRNG. (#54)
   *
-  * CONSIDER having RNG extend FilterMonadic or at least implement flatMap
+  * CONSIDER having RNG extend FilterMonadic or at least implement flatMap (#55)
   *
   * @tparam A the underlying type of this Random Number Generator
   */

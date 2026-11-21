@@ -63,7 +63,7 @@ class RPNSpec extends AnyFlatSpec with Matchers {
     rpn.evaluate should matchPattern { case Success(2) => }
   }
   it should "evaluate 5 1 2 + 4 * + 3 - correctly" in {
-    // CONSIDER why do we need to create this lookup method when there is a default defined.
+    // CONSIDER why do we need to create this lookup method when there is a default defined. (#116)
     // ... I believe it's because there are really two implicit values passed in to the RPN.apply method and if
     // ... we define one, we must define the other.
     val lookupTable = Map[String, Int]()

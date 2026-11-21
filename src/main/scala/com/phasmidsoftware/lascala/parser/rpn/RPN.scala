@@ -20,7 +20,7 @@ case class Constant[X: Valuable](xt: Try[X]) extends Token[X] with Evaluable[X] 
 }
 
 case class Number[X: Valuable](n: String) extends Token[X] with Evaluable[X] {
-  // CONSIDER move this into implicit parameter
+  // CONSIDER move this into implicit parameter (#44)
   implicit val pattern: String = ""
 
   def evaluate: Try[X] = Valuable[X].fromString(n)
@@ -44,7 +44,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
   def push(t: Token[X]) = RPN(t :: stack)
 
   def evaluate: Try[X] = {
-    // CONSIDER moving this into implicit parameter
+    // CONSIDER moving this into implicit parameter (#44)
     implicit val pattern = ""
     val (xt, xts) = inner(stack)
     if (xts.isEmpty) xt
@@ -74,7 +74,7 @@ case class RPN[X: Valuable](stack: List[Token[X]]) extends Token[X] with Evaluab
 
 object Token {
   def apply[X: Valuable](s: String)(implicit lookup: String => Option[X]): Token[X] = {
-    // CONSIDER checking orderableToken first
+    // CONSIDER checking orderableToken first (#83)
     val n: Valuable[X] = Valuable[X]
     val floatingR = """(-?(\d+(\.\d*)?|\d*\.\d+)([eE][+-]?\d+)?)""".r
     val lookupR = """\$(\w+)""".r

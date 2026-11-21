@@ -19,7 +19,7 @@ import scala.util._
   *
   * Created by scalaprof on 1/11/17.
   *
-  * TODO change Seq to List in definition of cbn
+  * TODO change Seq to List in definition of cbn (#69)
   *
   * @param arity the number of input parameters that are required to fully apply the given function (f)
   * @param w     a human-readable representation of the function
@@ -131,7 +131,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
   /**
     * Method to partially apply the function f to this RenderableFunction.
     *
-    * CONSIDER inline this method
+    * CONSIDER inline this method (#70)
     *
     * @param f the function
     * @param z the corresponding FunctionString
@@ -161,7 +161,7 @@ case class RenderableFunction[R: ClassTag](arity: Int, w: FunctionString, cbn: L
 
 
   /**
-    * XXX in practice, the only real use for this, currently, is method evaluationStyle
+    * ASIDE in practice, the only real use for this, currently, is method evaluationStyle
     *
     * @return if true, then this function can be eagerly evaluated.
     */
@@ -338,7 +338,7 @@ object RenderableFunction {
       else throw RenderableFunctionException(s"$x of type ${x.getClass} cannot be converted to $tc")
   }
 
-  // CONSIDER using use assert instead
+  // CONSIDER using use assert instead (#71)
   def asserting[A](b: => Boolean, w: => String, f: => A): A = if (b) f else throw AssertingError(w)
 
   def apply[R: ClassTag](arity: Int, func: (Product) => R, w: String, cbn: Seq[Boolean], cs: ParamClasses): RenderableFunction[R] = RenderableFunction(arity, FunctionString(w, arity, cbn), cbn.toList, cs)(func)
@@ -509,7 +509,7 @@ object RenderableFunction {
   /**
     * This method unwraps x if it is a Try[T] otherwise, it assumes x to be a T.
     *
-    * CONSIDER refactoring so that this method is not necessary.
+    * CONSIDER refactoring so that this method is not necessary. (#72)
     * (Exactly why we need this method -- when we already have apply(Product) to take care of this, I don't know).
     *
     * @param x a value of any type
@@ -599,7 +599,7 @@ object RenderableFunction {
     n match {
       case 1 =>
         val f1: Tuple1[T] => R = f
-        // CONSIDER see why we have to call extract. It should never be necessary.
+        // CONSIDER see why we have to call extract. It should never be necessary. (#73)
         val g0: (Product) => R = { (_: Product) => f1(Tuple1(extract[T](t()))) }
         g0
       case 2 =>

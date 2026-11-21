@@ -104,7 +104,7 @@ object FuzzyParser {
     def compare(x: Int, y: Int): Int = x.compare(y)
   }
 
-  // TODO eliminate?
+  // TODO eliminate? (#97)
   implicit object FractionalStringInt extends FromString[Int] with IntIsIntegral {
     def fromString(s: String): Int = s.toInt
 

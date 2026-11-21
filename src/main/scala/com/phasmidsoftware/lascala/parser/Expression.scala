@@ -7,7 +7,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * Separated from RuleParser by scalaprof on 7/8/16 at which time evaluate and asQuotedString added.
   *
-  * TODO Trait Expression which needs a better description
+  * TODO Trait Expression which needs a better description (#77)
   */
 trait Expression {
   def toRPN: List[String]

@@ -164,7 +164,7 @@ abstract class TupleStreamBase[X <: Product](parser: CsvParser, @unused input: L
 
   protected def headerRow: String
 
-  // CONSIDER inlining this method
+  // CONSIDER inlining this method (#78)
   private def stringToTryTuple(f: String => Try[Scalar])(s: String): Try[X] = {
     def rowIsCompatible(ws: List[String]): Boolean = header.isValidRow(ws.size)
 
@@ -207,7 +207,7 @@ case class CSV[X <: Product](parser: CsvParser, input: LazyList[String], givenHe
     */
   def tuples: LazyList[X] = {
     val xts = dataLines map stringToTuple(parser.elementParser)
-    // CONSIDER replacing with FP.toOption
+    // CONSIDER replacing with FP.toOption (#45)
     for (xt <- xts; x <- xt.recoverWith({ case t => carper(t.getLocalizedMessage); Failure(new Exception("logged already")) }).toOption) yield x
   }
 
@@ -248,7 +248,7 @@ case class TupleStream[X <: Product](parser: CsvParser, input: LazyList[String],
 
   def header: Header = getHeader(givenHeader)
 
-  // CONSIDER replacing with FP.toOption
+  // CONSIDER replacing with FP.toOption (#45)
   def tuplesPartial(allowPartial: Boolean = false): LazyList[X] = for (t <- dataLines map stringToTuple(x => Success(x), allowPartial); x <- t.toOption) yield x
 
   def tuples: LazyList[X] = tuplesPartial()
@@ -432,7 +432,7 @@ object CsvParser {
 //  private val laxParser = defaultParser :^ (s => s)
   private val date0 = """^(\d{2,4}-\d{1,2}-\d{1,2})$""".r
   private val date1 = """^(\d{1,2}\/\d{1,2}\/\d{2,4})$""".r
-  // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats
+  // CONSIDER: date2 is basically the same as date1 but enclosed in quotes. We should allow that for all date formats (#79)
   private val date2 =
     """^\"(\d{1,2}\/\d{1,2}\/\d{2,4})\"$""".r
   // ISO 8601
