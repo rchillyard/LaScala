@@ -211,7 +211,7 @@ class RationalSpec extends AnyFlatSpec with Matchers {
   it should "equal 4/9 when squared" in {
     (Rational(2, 3) ^ 2) should be(Rational(4, 9))
   }
-  // ASIDE: this fails with 2.10
+  // ASIDE a commented-out test, disabled for a Scala version this no longer builds against (#141).
   //  it should "barf when toInt invoked" in {
   //    an[RationalException] should be thrownBy Rational(2, 3).toInt
   //    val thrown = the[Exception] thrownBy Rational(2, 3).toInt

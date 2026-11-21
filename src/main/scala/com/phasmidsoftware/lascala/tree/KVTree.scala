@@ -47,7 +47,8 @@ abstract class KVTree[K, +V]()(implicit vo: ValueOps[K, V]) extends Branch[V] wi
   * @tparam V the underlying value type of this GeneralTree
   */
 case class GeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
-// NOTE: works only with Scala 2.11
+// ASIDE a commented-out alternative, kept from when this had to compile under several Scala
+// versions. Its original reason no longer applies (#141).
   // abstract class AbstractGeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implicit vo: ValueOps[K, V]) extends KVTree[K, V] {
   /**
     * @return (optional) value
@@ -55,7 +56,8 @@ case class GeneralKVTree[K, V](value: Option[V], children: List[Node[V]])(implic
   def get: Option[V] = value
 }
 
-// NOTE: works only with Scala 2.11
+// ASIDE a commented-out alternative, kept from when this had to compile under several Scala
+// versions. Its original reason no longer applies (#141).
 ///**
 //  * A general branch of a KV-tree, where there is a value at the node itself and the number of children is unbounded.
 //  * Parallel to GeneralTree

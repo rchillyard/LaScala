@@ -3,7 +3,8 @@ package com.phasmidsoftware.lascala.values
 import scala.annotation.nowarn
 
 /**
-  * Appendix to Rational class: only for Scala 2.11
+  * An appendix to Rational, holding what used to differ between Scala versions.
+  * CONSIDER folding this back into Rational: the build targets one Scala version now (#142).
   *
   * @author scalaprof
   */

@@ -130,7 +130,6 @@ class AccountRecordTest extends AnyFlatSpec with Matchers {
         //noinspection ScalaUnusedSymbol
         @unused val results = Spy.noSpy(for (x <- values; y <- values) yield (x, y, FP.contains(mptt.contains(x.key, y.key), tree.includes(x, y))))
         Spy.log(s"checking for disagreement between tree and MPTT:")
-        // NOTE: The following part of the test only works with Scala 2.11
         //          val badResults = results filter (!_._3)
         //          Spy.log(s"${badResults.size} incompatible results out of ${results.size}")
         //          def show(x: AccountRecord, y: AccountRecord, z: Boolean) = {if (!z) println(s"$x, $y, ${mptt.contains(x.key, y.key)},${tree.includes(x, y)}")}

@@ -12,7 +12,6 @@ import scala.annotation.unused
 import scala.util.Try
 
 /**
-  * The test contained here does not compile in 2.10 (in fact it crashes the compiler)
   * Created by scalaprof on 10/19/16.
   */
 class MPTT2Spec extends AnyFlatSpec with Matchers {
