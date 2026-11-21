@@ -971,7 +971,7 @@ object Tree {
     def inner(r: Seq[Node[A]], work: (Int, Seq[Node[A]])): Seq[Node[A]] = {
       work._2 match {
         case Nil => r
-        // NOTE this looks totally wrong!!
+        // FIXME this looks totally wrong!! (#134)
         case h :: t => inner(r :+ createIndexedTree(h, work._1), (work._1 + 2 * h.size, t))
       }
     }

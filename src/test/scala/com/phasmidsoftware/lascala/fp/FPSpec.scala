@@ -329,7 +329,7 @@ class FPSpec extends AnyFlatSpec with Matchers with Futures with ScalaFutures {
 
     val test = map2(t1, t2)(Principal.apply)
 
-    // NOTE: this was originally a Failure and I have broken that.
+    // FIXME this was originally a Failure and I have broken that. (#135)
     test should matchPattern { case Success(_) => }
   }
 
