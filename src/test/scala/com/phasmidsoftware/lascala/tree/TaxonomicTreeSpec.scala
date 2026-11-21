@@ -207,7 +207,7 @@ class TaxonomicTreeSpec extends AnyFlatSpec with Matchers {
     xy should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List())) => }
     val ty = for (xt <- xy) yield for (t <- xt.get) yield (t.po, t.taxa)
     ty should matchPattern { case Success(Some((None, _))) => }
-    // NOTE: addNode is protected so, for now at least, we use :+ as a surrogate
+    // TODO addNode is protected so, for now at least, we use :+ as a surrogate (#138)
     val ny = for (x <- xy) yield x :+ treeBuilder.buildLeaf(Taxon(Some(a), Seq(p -> _a)))
     ny should matchPattern { case Success(GeneralKVTreeWithScaffolding(Some(Taxon(None, _)), List(Leaf(Taxon(Some(_), _))))) => }
     (for (n <- ny) yield n.children) should matchPattern { case Success(List(Leaf(Taxon(Some(_), _)))) => }
